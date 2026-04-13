@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 // =============================================
 // TopBar — Componente padrão de cabeçalho
@@ -21,6 +22,14 @@ interface TopBarProps {
 export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const handleLogout = () => {
+    setIsProfileOpen(false);
+    document.cookie = 'siding_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    router.push('/login');
+    router.refresh();
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -107,15 +116,15 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
                 onClick={() => setIsProfileOpen(false)}
               >
                 <span className="material-symbols-outlined text-[18px] text-[#ababa8]" translate="no">person</span>
-                Perfil
+                Profile
               </button>
               <div className="h-px bg-white/5 my-1" />
               <button 
                 className="w-full text-left px-4 py-3 text-sm text-[#ff7351] hover:bg-[#ff7351]/10 transition-colors flex items-center gap-3"
-                onClick={() => setIsProfileOpen(false)}
+                onClick={handleLogout}
               >
                 <span className="material-symbols-outlined text-[18px]" translate="no">logout</span>
-                Sair
+                Sign Out
               </button>
             </div>
           )}
