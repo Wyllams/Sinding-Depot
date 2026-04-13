@@ -724,21 +724,43 @@ function NewServiceModal({ onClose }: { onClose: () => void }) {
             </p>
           </div>
 
+
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase font-black tracking-widest text-[#ababa8]">Assigned Partner</label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none text-[18px]" translate="no">storefront</span>
+              <select defaultValue="" className="w-full appearance-none bg-[#181a18] border border-[#474846]/30 py-4 pl-11 pr-10 rounded-xl text-sm text-[#faf9f5] font-medium cursor-pointer focus:ring-1 focus:ring-[#aeee2a] outline-none hover:border-[#aeee2a]/50 transition-colors">
+                <option value="" disabled>Select a partner...</option>
+                <option>Apex Exteriors LLC</option>
+                <option>Premier Siding Co.</option>
+                <option>SunShield Contractors</option>
+                <option>Ironclad Roofing Group</option>
+                <option>Skyline Windows &amp; Doors</option>
+                <option>ProFlow Gutters Inc.</option>
+                <option>DeckMaster Builders</option>
+                <option>ColorPro Painting Services</option>
+                <option>ClearHaul Dumpster Co.</option>
+              </select>
+              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none" translate="no">expand_more</span>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-[10px] uppercase font-black tracking-widest text-[#ababa8]">Service Discipline</label>
             <div className="relative">
               <select className="w-full appearance-none bg-[#181a18] border border-[#474846]/30 py-4 pl-4 pr-10 rounded-xl text-sm text-[#faf9f5] font-medium cursor-pointer focus:ring-1 focus:ring-[#aeee2a] outline-none hover:border-[#aeee2a]/50 transition-colors">
-                <option>Siding & Exteriors</option>
+                <option>Siding &amp; Exteriors</option>
                 <option>Roofing</option>
-                <option>Windows & Doors</option>
-                <option>Gutters & Downspouts</option>
-                <option>Decks & Patios</option>
+                <option>Windows &amp; Doors</option>
+                <option>Gutters &amp; Downspouts</option>
+                <option>Decks &amp; Patios</option>
                 <option>Exterior Painting</option>
                 <option>Dumpster</option>
               </select>
               <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none" translate="no">expand_more</span>
             </div>
           </div>
+
 
           <div className="grid grid-cols-2 gap-4">
              <CustomDatePickerDropup label="Target Start" />
