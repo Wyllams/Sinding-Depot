@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BuildFlow Settings | Enterprise Plan</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-dim": "#eedc47",
+                    "on-tertiary": "#685e00",
+                    "tertiary": "#fff7cf",
+                    "on-primary-fixed-variant": "#425f00",
+                    "surface-variant": "#242624",
+                    "surface-container-high": "#1e201e",
+                    "on-background": "#faf9f5",
+                    "on-tertiary-fixed-variant": "#6a6000",
+                    "on-secondary": "#515600",
+                    "secondary-dim": "#d5dc50",
+                    "secondary-fixed": "#e3eb5d",
+                    "on-primary-container": "#334b00",
+                    "primary-fixed-dim": "#a0df14",
+                    "error": "#ff7351",
+                    "primary-fixed": "#aeee2a",
+                    "on-tertiary-container": "#5f5600",
+                    "surface-container-highest": "#242624",
+                    "primary": "#aeee2a",
+                    "surface-container-low": "#121412",
+                    "secondary-container": "#5e6300",
+                    "on-surface-variant": "#ababa8",
+                    "surface-container": "#181a18",
+                    "surface-dim": "#0d0f0d",
+                    "secondary": "#e3eb5d",
+                    "on-error-container": "#ffd2c8",
+                    "inverse-surface": "#faf9f5",
+                    "surface": "#0d0f0d",
+                    "on-primary": "#3a5400",
+                    "on-tertiary-fixed": "#4b4400",
+                    "outline": "#747673",
+                    "secondary-fixed-dim": "#d5dc50",
+                    "on-primary-fixed": "#2b4000",
+                    "surface-tint": "#aeee2a",
+                    "outline-variant": "#474846",
+                    "on-secondary-container": "#f9ff8b",
+                    "error-container": "#b92902",
+                    "tertiary-fixed-dim": "#eedc47",
+                    "error-dim": "#d53d18",
+                    "on-secondary-fixed": "#3f4200",
+                    "on-surface": "#faf9f5",
+                    "background": "#0d0f0d",
+                    "inverse-primary": "#496900",
+                    "tertiary-container": "#fdeb54",
+                    "surface-container-lowest": "#000000",
+                    "primary-container": "#a0df14",
+                    "primary-dim": "#a0df14",
+                    "on-error": "#450900",
+                    "tertiary-fixed": "#fdeb54",
+                    "surface-bright": "#2a2d2a",
+                    "inverse-on-surface": "#545553",
+                    "on-secondary-fixed-variant": "#5b6000"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(36, 38, 36, 0.4);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+        }
+        input:focus, select:focus {
+            outline: none !important;
+            border-color: #aeee2a !important;
+            box-shadow: 0 0 0 1px #aeee2a;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body antialiased">
+<!-- SideNavBar Anchor -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-[#121412] flex flex-col py-8 gap-2 z-50">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-on-primary-fixed" style="font-variation-settings: 'FILL' 1;">construction</span>
+</div>
+<div>
+<h2 class="text-xl font-bold text-[#faf9f5] font-headline">BuildFlow HQ</h2>
+<p class="text-xs text-on-surface-variant opacity-70">Enterprise Plan</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="group px-6 py-3 flex items-center gap-3 text-[#faf9f5] opacity-60 hover:opacity-100 hover:bg-[#242624] hover:text-[#aeee2a] transition-all cursor-pointer font-inter text-sm font-medium">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</div>
+<div class="group px-6 py-3 flex items-center gap-3 text-[#faf9f5] opacity-60 hover:opacity-100 hover:bg-[#242624] hover:text-[#aeee2a] transition-all cursor-pointer font-inter text-sm font-medium">
+<span class="material-symbols-outlined">construction</span>
+<span>Projects</span>
+</div>
+<div class="group px-6 py-3 flex items-center gap-3 text-[#faf9f5] opacity-60 hover:opacity-100 hover:bg-[#242624] hover:text-[#aeee2a] transition-all cursor-pointer font-inter text-sm font-medium">
+<span class="material-symbols-outlined">analytics</span>
+<span>Analytics</span>
+</div>
+<div class="group px-6 py-3 flex items-center gap-3 text-[#faf9f5] opacity-60 hover:opacity-100 hover:bg-[#242624] hover:text-[#aeee2a] transition-all cursor-pointer font-inter text-sm font-medium">
+<span class="material-symbols-outlined">group</span>
+<span>Team</span>
+</div>
+<div class="group px-6 py-3 flex items-center gap-3 text-[#aeee2a] font-bold border-r-4 border-[#aeee2a] bg-gradient-to-r from-[#aeee2a]/10 to-transparent translate-x-1 transition-transform cursor-pointer font-inter text-sm font-medium">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span>Settings</span>
+</div>
+</nav>
+<div class="mt-auto px-6 pt-6 border-t border-outline-variant/10">
+<div class="flex items-center gap-3 p-3 rounded-xl hover:bg-[#242624] transition-colors cursor-pointer">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="professional male architect portrait with warm lighting and blurred office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOPOY8mqPutpS9lFQMRXOlEw2KHSVJ5I4EFePC2qFvyKm0tEFyNf6PxnKZV559EK-fCWbLjWJGG0jHoMF53mvtgsf6ygUoUuKC7vp4imtV14J_A7lUoIxHezAtBQIAh8v0iPCS9omMHID3tI06SiRGCAMhQRYFBi0w25iDemhLuFWwKoIa3CxLrWhFPID3wCnGuxxlKVVkUSHeKF2pEzkO8Lo79E4XIF_yBKvA6ja1KF53EN2ox0Hxb3XZ_s3mrYp9BkAW2KM4_9o"/>
+<div class="flex-1 overflow-hidden">
+<p class="text-sm font-semibold truncate text-[#faf9f5]">Alex Rivera</p>
+<p class="text-xs text-on-surface-variant truncate">Admin Account</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen bg-background pb-20">
+<!-- TopAppBar Anchor -->
+<header class="fixed top-0 left-64 right-0 z-40 bg-[#0d0f0d] flex justify-between items-center px-8 py-6">
+<h1 class="text-3xl font-headline font-extrabold tracking-tight text-[#faf9f5]">Settings</h1>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="absolute inset-y-0 left-3 flex items-center text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">search</span>
+</span>
+<input class="bg-surface-container-high border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary text-on-surface" placeholder="Search settings..." type="text"/>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+</header>
+<div class="mt-24 px-8 max-w-7xl mx-auto space-y-10">
+<!-- General & Profile Section -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-1">
+<h3 class="text-xl font-headline font-bold text-on-background">Organization Profile</h3>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">Update your company's core identity, branding, and operational timezone.</p>
+</div>
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-surface-container-low p-8 rounded-2xl space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-label">Legal Name</label>
+<input class="w-full bg-surface-container-high border-none rounded-xl py-3 px-4 text-on-surface font-medium" type="text" value="Acme Corporation"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-label">Tax ID</label>
+<input class="w-full bg-surface-container-high border-none rounded-xl py-3 px-4 text-on-surface font-medium" type="text" value="12-3456789"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-label">Timezone</label>
+<select class="w-full bg-surface-container-high border-none rounded-xl py-3 px-4 text-on-surface font-medium appearance-none">
+<option>GMT-8:00 Pacific Time</option>
+<option>GMT-5:00 Eastern Time</option>
+<option>GMT+0:00 Universal Time</option>
+</select>
+</div>
+<div class="space-y-4">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-label">Branding Logo</label>
+<div class="flex items-center gap-8 p-6 border-2 border-dashed border-outline-variant/30 rounded-2xl bg-background/50 group hover:border-primary transition-colors cursor-pointer">
+<div class="w-16 h-16 bg-surface-container-highest rounded-xl flex items-center justify-center overflow-hidden border border-outline-variant/20">
+<span class="material-symbols-outlined text-3xl opacity-20">image</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-semibold text-on-surface">Upload company logo</p>
+<p class="text-xs text-on-surface-variant mt-1">Recommended size 512x512px. PNG, JPG or SVG.</p>
+</div>
+<button class="px-5 py-2 bg-surface-container-highest text-on-surface text-sm font-semibold rounded-xl hover:bg-surface-variant transition-colors border border-outline-variant/20">
+                                    Choose File
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Team & Roles Section -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-1">
+<h3 class="text-xl font-headline font-bold text-on-background">Team &amp; Permissions</h3>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">Manage your project crew and their Role-Based Access Control (RBAC) levels.</p>
+<div class="mt-6 flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface-container-highest text-primary text-[10px] font-bold uppercase tracking-widest rounded-full">4 Members</span>
+<span class="px-3 py-1 bg-surface-container-highest text-on-tertiary-fixed text-[10px] font-bold uppercase tracking-widest rounded-full">Admin Override Active</span>
+</div>
+</div>
+<div class="lg:col-span-2">
+<div class="bg-surface-container-low rounded-2xl overflow-hidden overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/10">
+<th class="px-6 py-5 text-xs font-bold uppercase tracking-[0.1em] text-on-surface-variant font-label">Team Member</th>
+<th class="px-6 py-5 text-xs font-bold uppercase tracking-[0.1em] text-on-surface-variant font-label">Role</th>
+<th class="px-6 py-5 text-xs font-bold uppercase tracking-[0.1em] text-on-surface-variant font-label text-right">RBAC Access</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Member 1 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="headshot of smiling young woman with dark hair against a soft teal background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_hXkDr_iDcHfVCzm8tyL01EZLHdLxTOH0n4orrUe0BXxAirOzejkxlF7LBxLIZrQz-v2tdvFEAK5mHsn94vf0tcx01w5JAgKd8WTF3-dEo3AMFd2dcPZ441SiXmvkSzbYoA9d8VCO1K6vHRNwK_ODPzIfWVYIGzWRox5P49TtS5HdzE1pJP4t0Keer8QPG8JY9M2ymVf9oIho31g2mf5fZDAxkSNLgjkWzzUTS0cj2uFmmLzRKfUljcdEwN-wLiauc9GxWP140h4"/>
+<div>
+<p class="text-sm font-semibold text-on-surface">Sarah Johnson</p>
+<p class="text-xs text-on-surface-variant">s.johnson@acmecorp.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<select class="bg-surface-container-highest border-none rounded-lg py-1.5 px-3 text-xs font-medium text-on-surface focus:ring-1 focus:ring-primary">
+<option selected="">Admin</option>
+<option>Manager</option>
+<option>Analyst</option>
+</select>
+</td>
+<td class="px-6 py-4 text-right">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-[0_0_15px_-3px_rgba(174,238,42,0.4)]"></div>
+</label>
+</td>
+</tr>
+<!-- Member 2 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="portrait of a male professional with beard looking thoughtful in dramatic studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmb-BxrBKsn6g4rJSylSAVb6pMEdSNxb7vtW3ZeJD5jLKehe_oI3BOKGviy7fuaP8elfoToAr9Pemg871V-CuMzR9nhtwCTvMWD3fRQvd4Io91QCQcLP5zZLF9Trixy2_NKR6vVVTYKgV1z4RomK7bqWJve_5KJ6Fsqy_IP74zGDoofGgUvgD794-J3zPfhojYZDXiL1dIvzDtV8ji-wVjd0B0ckXZZ1V1JXLm7y7HrHNlifMyrM8Dvss8BwXZsuyUguRwub4kHgg"/>
+<div>
+<p class="text-sm font-semibold text-on-surface">Mike Rodriguez</p>
+<p class="text-xs text-on-surface-variant">m.rodriguez@acmecorp.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<select class="bg-surface-container-highest border-none rounded-lg py-1.5 px-3 text-xs font-medium text-on-surface focus:ring-1 focus:ring-primary">
+<option>Admin</option>
+<option selected="">Project Manager</option>
+<option>Analyst</option>
+</select>
+</td>
+<td class="px-6 py-4 text-right">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-[0_0_15px_-3px_rgba(174,238,42,0.4)]"></div>
+</label>
+</td>
+</tr>
+<!-- Member 3 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="professional woman of color smiling in office setting with natural window light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwOfhheAYhMrJTOqiEdSJcReZLWcRFs-XxNzCtXC_n0zdkRjQbR9Dw6sEgP0AspMuXOV3OpOd84-U4RDx7u0a9aAV3-jVeB4sxBL4aN-Q0DDIYbyR3hfR6CPpm_JjNHJZuUUlFdU5VdCtLFMR8U210Qz7HMCNPRr358HWah1ZrvEJFDRl_EUD6SJ7VR1DTNcZmAXXpO53n450ns21ZUV1X07AAO-3XypJBAV2GjFxXV8LCVUNA0sAGSkkw5phV2cQFQUGJLUv-rmI"/>
+<div>
+<p class="text-sm font-semibold text-on-surface">Sania Hanson</p>
+<p class="text-xs text-on-surface-variant">s.hanson@acmecorp.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<select class="bg-surface-container-highest border-none rounded-lg py-1.5 px-3 text-xs font-medium text-on-surface focus:ring-1 focus:ring-primary">
+<option selected="">Admin</option>
+<option>Manager</option>
+<option>Analyst</option>
+</select>
+</td>
+<td class="px-6 py-4 text-right">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-[0_0_15px_-3px_rgba(174,238,42,0.4)]"></div>
+</label>
+</td>
+</tr>
+<!-- Member 4 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="close-up portrait of a young man with glasses in bright outdoor daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADF8fv9A0xS5Vqeuw2O3wLSHvur94wFELV1UAE2PZITLI2a3KFFxIoYQdi0p5uz2O1GkonszhVIJVJ5rFhaezGStcyoqnpWeobSJnNI_YIgQ3gbiiulX2zjpFfPumQha33-oJiKxKq_kYr-doLVlq8IY5HevSTVd-4bW5fFptZ_Bfq9Z6LZkAnre0aJ7eXgW1wgpySr9NJsmS7beSbrRlWs0BI_qrunlq1gWQxQpyn-PYm8V2IHSLdPPKKzzwKiHDewFHz65wYCkA"/>
+<div>
+<p class="text-sm font-semibold text-on-surface">Jostin Smith</p>
+<p class="text-xs text-on-surface-variant">j.smith@acmecorp.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<select class="bg-surface-container-highest border-none rounded-lg py-1.5 px-3 text-xs font-medium text-on-surface focus:ring-1 focus:ring-primary">
+<option selected="">Admin</option>
+<option>Manager</option>
+<option>Analyst</option>
+</select>
+</td>
+<td class="px-6 py-4 text-right">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-[0_0_15px_-3px_rgba(174,238,42,0.4)]"></div>
+</label>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Bottom Floating Action -->
+<div class="flex justify-end gap-4 pt-10 border-t border-outline-variant/10">
+<button class="px-8 py-3 bg-surface-container-high text-on-surface font-semibold rounded-xl hover:bg-surface-variant transition-all border border-outline-variant/20">
+                    Discard Changes
+                </button>
+<button class="px-8 py-3 bg-primary text-on-primary-fixed font-bold rounded-xl shadow-[0_8px_30px_rgb(174,238,42,0.2)] hover:scale-[1.02] active:scale-95 transition-all">
+                    Save Configurations
+                </button>
+</div>
+</div>
+</main>
+<!-- Contextual FAB (Hidden as per Settings screen suppression mandate) -->
+</body></html>

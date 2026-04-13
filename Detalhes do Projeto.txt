@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#121412",
+                    "on-primary-fixed-variant": "#425f00",
+                    "on-error": "#450900",
+                    "on-background": "#faf9f5",
+                    "surface-bright": "#2a2d2a",
+                    "on-primary": "#3a5400",
+                    "on-secondary-fixed-variant": "#5b6000",
+                    "tertiary-fixed": "#fdeb54",
+                    "outline": "#747673",
+                    "on-tertiary-fixed-variant": "#6a6000",
+                    "surface-container-highest": "#242624",
+                    "on-primary-fixed": "#2b4000",
+                    "error-container": "#b92902",
+                    "secondary-dim": "#d5dc50",
+                    "surface-container-high": "#1e201e",
+                    "tertiary-container": "#fdeb54",
+                    "on-secondary-container": "#f9ff8b",
+                    "on-tertiary-fixed": "#4b4400",
+                    "tertiary": "#fff7cf",
+                    "on-tertiary-container": "#5f5600",
+                    "on-surface-variant": "#ababa8",
+                    "primary-fixed-dim": "#a0df14",
+                    "surface-tint": "#aeee2a",
+                    "surface-container": "#181a18",
+                    "inverse-on-surface": "#545553",
+                    "surface": "#0d0f0d",
+                    "error": "#ff7351",
+                    "inverse-primary": "#496900",
+                    "surface-variant": "#242624",
+                    "on-primary-container": "#334b00",
+                    "primary-fixed": "#aeee2a",
+                    "surface-dim": "#0d0f0d",
+                    "secondary-fixed": "#e3eb5d",
+                    "inverse-surface": "#faf9f5",
+                    "primary-container": "#a0df14",
+                    "secondary-container": "#5e6300",
+                    "tertiary-fixed-dim": "#eedc47",
+                    "secondary": "#e3eb5d",
+                    "tertiary-dim": "#eedc47",
+                    "secondary-fixed-dim": "#d5dc50",
+                    "background": "#0d0f0d",
+                    "primary": "#aeee2a",
+                    "primary-dim": "#a0df14",
+                    "surface-container-lowest": "#000000",
+                    "on-secondary-fixed": "#3f4200",
+                    "on-error-container": "#ffd2c8",
+                    "outline-variant": "#474846",
+                    "on-secondary": "#515600",
+                    "error-dim": "#d53d18",
+                    "on-tertiary": "#685e00",
+                    "on-surface": "#faf9f5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #0d0f0d; color: #faf9f5; }
+        .font-headline { font-family: 'Manrope', sans-serif; letter-spacing: -0.02em; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-card { background: rgba(36, 38, 36, 0.4); backdrop-filter: blur(40px); border: 1px solid rgba(250, 249, 245, 0.15); }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full flex flex-col py-8 px-4 bg-[#121412] dark:bg-[#121412] h-screen w-64 rounded-none border-none z-50">
+<div class="mb-10 px-4">
+<h1 class="text-2xl font-bold tracking-tight text-[#aeee2a] dark:text-[#aeee2a] font-headline">ProBuild</h1>
+<p class="text-xs text-on-surface-variant font-medium">Construction Hub</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 dark:text-gray-500 font-medium hover:bg-[#242624] hover:text-[#faf9f5] transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#aeee2a] font-bold border-r-4 border-[#aeee2a] bg-[#242624] transition-colors duration-200 rounded-l-xl" href="#">
+<span class="material-symbols-outlined">work</span>
+<span>Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 dark:text-gray-500 font-medium hover:bg-[#242624] hover:text-[#faf9f5] transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Documents</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 dark:text-gray-500 font-medium hover:bg-[#242624] hover:text-[#faf9f5] transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Crew</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 dark:text-gray-500 font-medium hover:bg-[#242624] hover:text-[#faf9f5] transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span>Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 dark:text-gray-500 font-medium hover:bg-[#242624] hover:text-[#faf9f5] transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-4">
+<button class="w-full py-3 bg-primary text-on-primary font-bold rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">add</span>
+                New Project
+            </button>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="sticky top-0 z-40 flex justify-between items-center w-full px-8 py-4 ml-64 max-w-[calc(100%-16rem)] bg-[#0d0f0d]/60 backdrop-blur-3xl dark:bg-[#0d0f0d]/60 border-b border-[#faf9f5]/15 shadow-[0_40px_40px_rgba(0,0,0,0.08)]">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-primary tracking-widest uppercase">Active Phase</span>
+<h2 class="text-xl font-black text-[#faf9f5] font-headline uppercase">OAKWOOD OFFICE PARK</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="p-2 text-[#faf9f5]/70 hover:bg-[#242624]/50 rounded-full transition-all duration-300">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
+<img alt="Project Manager Profile" class="w-10 h-10 rounded-full object-cover border-2 border-primary" data-alt="Professional project manager in construction attire with a hard hat in the background, soft lighting, professional portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAig0qP2tCvaqMkR48Ot_E4RW5IgQeZHmBFz2qa70hMgq_L-31oOGUl8xFhUNhp5FKNtcwavpqHmP3lo6b9DP779zu-l6oAE8qVU-IGkW5WRLoH8LbKF8tvkVM6LTsydTaT1I55MDzh3Qbgx_Ub_HYrr1MUPXVSfeCJdDOn9l5JFY0ITn9OWH1ppGCGeEHM7JmgykMt8hgUvXoCqjx7S7jVZJiuTLpSOcN3GhURkGgMj2KvkBC3Y3tHoxdpuBP145xWk5zFnHIz5a0"/>
+<span class="material-symbols-outlined text-[#faf9f5]/70">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-8 min-h-screen">
+<!-- Hero Header -->
+<div class="mb-10">
+<div class="flex flex-wrap items-center gap-4 mb-4">
+<h1 class="text-4xl md:text-5xl font-extrabold font-headline text-on-surface">Job Detail: OAKWOOD OFFICE PARK</h1>
+</div>
+<div class="flex flex-wrap items-center gap-3">
+<span class="px-4 py-1.5 bg-primary text-on-primary text-xs font-bold rounded-full tracking-wider">STATUS: IN PROGRESS - ACTIVE</span>
+<span class="px-4 py-1.5 bg-error text-on-error text-xs font-bold rounded-full tracking-wider uppercase">PRIORITY: HIGH</span>
+<div class="flex items-center gap-2 text-on-surface-variant ml-4">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-sm font-medium">1400 Oak Ave, Seattle</span>
+</div>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: Timeline (4/12) -->
+<div class="lg:col-span-4 space-y-6">
+<div class="bg-surface-container-low rounded-xl p-6">
+<h3 class="text-lg font-bold font-headline mb-8 border-b border-outline-variant/30 pb-4">JOB TIMELINE</h3>
+<div class="relative pl-8 space-y-10">
+<div class="absolute left-3 top-2 bottom-2 w-0.5 bg-outline-variant"></div>
+<!-- Timeline Item -->
+<div class="relative">
+<div class="absolute -left-8 top-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center ring-4 ring-background">
+<span class="material-symbols-outlined text-on-primary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-bold text-on-surface">Foundation Pour</h4>
+<span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">2H AGO</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Phase 2 pour completed for North Wing. Quality check passed.</p>
+<p class="text-[11px] mt-2 font-semibold text-outline">Sept 18, 2023</p>
+</div>
+</div>
+<!-- Timeline Item -->
+<div class="relative">
+<div class="absolute -left-8 top-1 w-6 h-6 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center ring-4 ring-background">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">construction</span>
+</div>
+<div>
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-bold text-on-surface">Structural Steel Install</h4>
+<span class="text-[10px] font-bold text-on-surface-variant bg-surface-container-highest px-2 py-0.5 rounded">3D AGO</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Main structural frame delivery and initial assembly on site.</p>
+<p class="text-[11px] mt-2 font-semibold text-outline">Sept 15, 2023</p>
+</div>
+</div>
+<!-- Timeline Item -->
+<div class="relative">
+<div class="absolute -left-8 top-1 w-6 h-6 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center ring-4 ring-background">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">task_alt</span>
+</div>
+<div>
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-bold text-on-surface">Permits Approved</h4>
+<span class="text-[10px] font-bold text-on-surface-variant bg-surface-container-highest px-2 py-0.5 rounded">1W AGO</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">All city building permits signed and posted on site trailer.</p>
+<p class="text-[11px] mt-2 font-semibold text-outline">Sept 10, 2023</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Site Map Placeholder -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden aspect-video relative group cursor-pointer">
+<img alt="Job Site Map" class="w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" data-alt="Digital architectural map layout of an office park with topographical lines and modern structural overlays" data-location="Seattle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXYRwkZuE7uAxmwIsiSwrovrl8JaOG-QOX4jOMntyJdOFX7xC4pW8UVK8_R_wX62XGjZ3CnAmwSyZP09hN3l9lt76OuvJ43JHm1E0R43w4-jwUAOMsTYsWvGX-J7Q9synXREBx7QM1oPR1uB6gcnlB0wWbr7AX4RvXu12PrI9gIotaLbB66vdYJif-XK85a09F9jkt9Yg9SZx5lNVQtq9TCs6Dtj6M424HGRwN735bq-0Ij4nSsDgD2BbVcFDHX9WUbijlanozPUk"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<span class="text-xs font-bold text-primary uppercase">Site Location</span>
+<h4 class="font-bold">1400 Oak Ave, Seattle, WA</h4>
+</div>
+<button class="absolute top-4 right-4 bg-primary text-on-primary p-2 rounded-lg shadow-xl">
+<span class="material-symbols-outlined">fullscreen</span>
+</button>
+</div>
+</div>
+<!-- Right Column: Actions, Crew, Blocker, Docs (8/12) -->
+<div class="lg:col-span-8 space-y-8">
+<!-- Quick Actions -->
+<div>
+<h3 class="text-xs font-bold text-on-surface-variant tracking-[0.2em] mb-4 uppercase">Quick Actions</h3>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+<button class="flex flex-col items-center justify-center gap-3 p-6 glass-card rounded-xl hover:bg-primary/20 transition-all group">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">event_note</span>
+<span class="text-[10px] font-bold uppercase text-center">Schedule Inspection</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-3 p-6 glass-card rounded-xl hover:bg-primary/20 transition-all group">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">request_quote</span>
+<span class="text-[10px] font-bold uppercase text-center">Request Quote</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-3 p-6 glass-card rounded-xl hover:bg-primary/20 transition-all group">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">history_edu</span>
+<span class="text-[10px] font-bold uppercase text-center">Create Daily Log</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-3 p-6 glass-card rounded-xl hover:bg-primary/20 transition-all group">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">map</span>
+<span class="text-[10px] font-bold uppercase text-center">View Map</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-3 p-6 glass-card rounded-xl hover:bg-primary/20 transition-all group">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">chat_bubble</span>
+<span class="text-[10px] font-bold uppercase text-center">Message Crew</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Assigned Crews -->
+<div class="bg-surface-container-low rounded-xl p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-sm font-bold font-headline uppercase tracking-widest">ASSIGNED CREWS</h3>
+<button class="text-primary text-xs font-bold">MANAGE</button>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-high border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-2 h-8 bg-primary rounded-full"></div>
+<span class="font-bold text-sm">Crew A</span>
+</div>
+<div class="flex -space-x-2">
+<img alt="Member" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="Portrait of a construction worker wearing a reflective vest and safety glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_5V4zS-Z0DbkLNunKBzTyl7ZnSLykN958CWvZyCa01Qlk4-QI5a6f7nw10iZu4pnPT7sCBGhfdo259HoH8T-hOKOCNjm9DIOwRypzidFJ8U8ndz13OH0izto9Ivj61o1G0xH3beERt_QS3n_rFFiA6iN2YXKQ28D-6pDuUePLqz22jVu2YGDIKcoT2qmuPPZjf0CqaSgpi2rIIOnQ5Rm0HRoFenbGN5fsV9_hIrVwrqCqa4hwe6K0UH3Cozm9cV6xP53-e_t-Uu8"/>
+<img alt="Member" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="Female engineer with site plans and white hard hat, professional industrial setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgrIIYOBHdWG2y_-pnhioiaauSQdOLDTfYIs8gktqfqktIGAgaPIpnaBdt_JPlDVUrLgYhgW07VgRIg85ncoCYw6AwdYTUoG6n8JoT_T2xvxfkcV3Du2aXg0yz-3s6w0Jem4uJOpJyAP6i1myVoLO-ZvvPIFbmdzMHF2Yj05T5_gBhtypFgfRkWqG8Iet5qIaoybvyUmjCZA1l0WBDnK3c1C7_5DD2dl8PBEe6QBvQ0catSVqcFDUFI-HK9I5cL-qVWeeurP6qM20"/>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-high bg-surface-container-highest flex items-center justify-center text-[10px] font-bold text-on-surface-variant">+4</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-high border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-2 h-8 bg-secondary rounded-full"></div>
+<span class="font-bold text-sm">Crew B</span>
+</div>
+<div class="flex -space-x-2">
+<img alt="Member" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="Architect looking at building site, wearing hard hat and safety gear, natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-I9lqLIL1APBXzWNM2Ccd3x9FcXqqgQQFEIzj4WDEuszwiC9ITk3tcOFN_fst4Alg2GA_ZMBWdxoxGkXU4qAVODEigikQIYckW4CZCecyt7dKPuFhHtQ2xVzAPQBa9M0X_Ndrz-Iy-jnrWnvD5CHC4ruKG0zV4YSbDiLoW_DcnD2lrIokQMQONUj3Kuai7Bpu6o008a3fbeNSGp-InKOOtNVOgBhfoKeZBVks00a4WKtf7jX-NSUliHLbqIbrGiUWJkJ3wQYkGwg"/>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-high bg-surface-container-highest flex items-center justify-center text-[10px] font-bold text-on-surface-variant">+2</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-high border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-2 h-8 bg-tertiary-fixed-dim rounded-full"></div>
+<span class="font-bold text-sm">Alpha Group</span>
+</div>
+<div class="flex -space-x-2">
+<img alt="Member" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="Technician working on industrial equipment, dramatic lighting, precision focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCw2FA_y7Y6BiOHMBwjNEVJ55mXtEZ1L0l5yQo_982HomvTuMEo1SdTfBI4tgfjLLD9dRXzB-3r01duRORRDNeKXhmyIkFQ01HwFGTTKuA4IjBfQ7qZuHTVyD04MBYVXNO0q0m-QiJzcxAaExv1BYVIJIdpdybkuqZUxf7tCSmgdChRaI4m9Lu5T01If3B7NZ-HeMTUdc4OK6qj18uLwJALEULz9qLwgHQiv83hO9_0j4VBdtZ9rgk7NZamjsRMEKc7QcuPYiyImFg"/>
+<img alt="Member" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="Senior construction supervisor on site with rugged features and protective equipment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAXW_HIaIgQw3t8TRLhtTQg1AKfjc9hPB4pdPWk8anCC17xmAVh8svT0XNCqmAT-Yn3bATaoRlYPnvJZp3L8WezvXZMpT0tnDo1awmWLYXWnMQD97BLh3itmjTARReEGwZCxdEmVWNPw3iLVdZ8IuVGr32FQAM1qqLATyvulUwW2dQwOGS-CWVlTOsj19oGrV6UYMFe-9lEyc4Txn2c5Ep8aV_md30PqIWHQn4eYrgcvUmRmCnMm1oy6nWBvCMtvUDDFkOmR_TIOI"/>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-high border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-2 h-8 bg-outline rounded-full"></div>
+<span class="font-bold text-sm">Beta Team</span>
+</div>
+<span class="text-xs font-medium text-on-surface-variant">8 members</span>
+</div>
+</div>
+</div>
+<!-- Pending Blockers -->
+<div class="bg-surface-container-low rounded-xl p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-sm font-bold font-headline uppercase tracking-widest">PENDING BLOCKERS</h3>
+<button class="text-error text-xs font-bold">URGENT</button>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-4 p-4 rounded-lg bg-error/10 border border-error/20">
+<span class="material-symbols-outlined text-error">cloud</span>
+<div>
+<p class="font-bold text-sm">Weather Delay</p>
+<p class="text-xs text-on-surface-variant">Forecast: Heavy Rain for 48h</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 rounded-lg bg-surface-container-high border border-outline-variant/10">
+<span class="material-symbols-outlined text-tertiary-fixed-dim">inventory_2</span>
+<div>
+<p class="font-bold text-sm">Material Shortage</p>
+<p class="text-xs text-on-surface-variant">Backordered: Rebar 5/8"</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 rounded-lg bg-surface-container-high border border-outline-variant/10">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+<div>
+<p class="font-bold text-sm">Inspection Pending</p>
+<p class="text-xs text-on-surface-variant">Electrical Rough-in (Tier 2)</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Documents -->
+<div class="bg-surface-container-low rounded-xl p-6">
+<div class="flex justify-between items-center mb-6 px-2">
+<h3 class="text-sm font-bold font-headline uppercase tracking-widest">RECENT DOCUMENTS</h3>
+<button class="flex items-center gap-2 text-primary font-bold text-xs">
+<span class="material-symbols-outlined text-sm">upload</span>
+                            ADD DOCUMENT
+                        </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full">
+<thead>
+<tr class="text-left text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
+<th class="pb-4 px-2">Document Name</th>
+<th class="pb-4 px-2">Type</th>
+<th class="pb-4 px-2">Uploaded</th>
+<th class="pb-4 px-2 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="group hover:bg-surface-container-high transition-colors">
+<td class="py-4 px-2 font-bold">Architectural Plans V4</td>
+<td class="py-4 px-2"><span class="px-2 py-0.5 bg-surface-container-highest rounded text-[10px] font-bold">BLUEPRINT</span></td>
+<td class="py-4 px-2 text-on-surface-variant">Sept 12, 2023</td>
+<td class="py-4 px-2 text-right">
+<button class="text-primary hover:underline font-bold text-xs uppercase">View</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-high transition-colors">
+<td class="py-4 px-2 font-bold">Site Survey PDF</td>
+<td class="py-4 px-2"><span class="px-2 py-0.5 bg-surface-container-highest rounded text-[10px] font-bold">SURVEY</span></td>
+<td class="py-4 px-2 text-on-surface-variant">Sept 10, 2023</td>
+<td class="py-4 px-2 text-right">
+<button class="text-primary hover:underline font-bold text-xs uppercase">View</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-high transition-colors">
+<td class="py-4 px-2 font-bold">Safety Manual 2023</td>
+<td class="py-4 px-2"><span class="px-2 py-0.5 bg-surface-container-highest rounded text-[10px] font-bold">SAFETY</span></td>
+<td class="py-4 px-2 text-on-surface-variant">Aug 28, 2023</td>
+<td class="py-4 px-2 text-right">
+<button class="text-primary hover:underline font-bold text-xs uppercase">View</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-high transition-colors border-none">
+<td class="py-4 px-2 font-bold">Permit Approval Docs</td>
+<td class="py-4 px-2"><span class="px-2 py-0.5 bg-surface-container-highest rounded text-[10px] font-bold">LEGAL</span></td>
+<td class="py-4 px-2 text-on-surface-variant">Aug 15, 2023</td>
+<td class="py-4 px-2 text-right">
+<button class="text-primary hover:underline font-bold text-xs uppercase">View</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

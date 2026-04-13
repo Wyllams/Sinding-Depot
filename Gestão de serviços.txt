@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Service Management - Luminous Construction</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#0d0f0d",
+                        "secondary-dim": "#d5dc50",
+                        "on-secondary-fixed-variant": "#5b6000",
+                        "on-primary": "#3a5400",
+                        "on-secondary-container": "#f9ff8b",
+                        "surface-container-low": "#121412",
+                        "on-secondary": "#515600",
+                        "background": "#0d0f0d",
+                        "on-error": "#450900",
+                        "primary-fixed-dim": "#a0df14",
+                        "on-tertiary-fixed-variant": "#6a6000",
+                        "secondary": "#e3eb5d",
+                        "on-tertiary-container": "#5f5600",
+                        "on-tertiary": "#685e00",
+                        "inverse-primary": "#496900",
+                        "surface-bright": "#2a2d2a",
+                        "on-tertiary-fixed": "#4b4400",
+                        "primary": "#aeee2a",
+                        "on-primary-fixed-variant": "#425f00",
+                        "on-secondary-fixed": "#3f4200",
+                        "on-background": "#faf9f5",
+                        "on-surface-variant": "#ababa8",
+                        "inverse-surface": "#faf9f5",
+                        "tertiary-dim": "#eedc47",
+                        "on-surface": "#faf9f5",
+                        "on-primary-fixed": "#2b4000",
+                        "secondary-fixed": "#e3eb5d",
+                        "error-dim": "#d53d18",
+                        "inverse-on-surface": "#545553",
+                        "outline-variant": "#474846",
+                        "on-primary-container": "#334b00",
+                        "outline": "#747673",
+                        "primary-dim": "#a0df14",
+                        "on-error-container": "#ffd2c8",
+                        "surface-variant": "#242624",
+                        "tertiary-fixed-dim": "#eedc47",
+                        "surface-container-lowest": "#000000",
+                        "surface-tint": "#aeee2a",
+                        "tertiary-fixed": "#fdeb54",
+                        "tertiary": "#fff7cf",
+                        "surface-container-high": "#1e201e",
+                        "surface-container-highest": "#242624",
+                        "secondary-fixed-dim": "#d5dc50",
+                        "primary-fixed": "#aeee2a",
+                        "error": "#ff7351",
+                        "surface-container": "#181a18",
+                        "tertiary-container": "#fdeb54",
+                        "secondary-container": "#5e6300",
+                        "surface": "#0d0f0d",
+                        "primary-container": "#a0df14",
+                        "error-container": "#b92902"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(36, 38, 36, 0.4);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-64 bg-[#121412] flex flex-col py-8 px-4 z-40">
+<div class="mb-12 px-4">
+<h1 class="text-[#aeee2a] font-black text-xl tracking-tighter uppercase">Luminous</h1>
+<p class="text-on-surface-variant text-xs font-medium uppercase tracking-widest">Construction Mgmt</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-faf9f5/40 hover:text-faf9f5 hover:bg-[#242624] transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#aeee2a] border-r-4 border-[#aeee2a] bg-[#242624] transition-all duration-200 rounded-l-lg" href="#">
+<span class="material-symbols-outlined">construction</span>
+<span class="font-medium">Active Services</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-faf9f5/40 hover:text-faf9f5 hover:bg-[#242624] transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-medium">Crew Management</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-faf9f5/40 hover:text-faf9f5 hover:bg-[#242624] transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-medium">Financials</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-faf9f5/40 hover:text-faf9f5 hover:bg-[#242624] transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-medium">Reports</span>
+</a>
+</nav>
+<div class="mt-auto space-y-2 px-4 border-t border-outline-variant/10 pt-6">
+<button class="w-full bg-primary text-on-primary font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 mb-6 hover:brightness-110 transition-all">
+<span class="material-symbols-outlined">add</span>
+<span>New Project</span>
+</button>
+<a class="flex items-center gap-3 py-2 text-faf9f5/40 hover:text-faf9f5 transition-colors" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="text-sm font-medium">Support</span>
+</a>
+<a class="flex items-center gap-3 py-2 text-faf9f5/40 hover:text-faf9f5 transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-sm font-medium">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-64 h-20 bg-[#0d0f0d]/80 backdrop-blur-xl z-30 flex justify-between items-center px-8 border-b border-outline-variant/5">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container border-none rounded-lg py-2 pl-10 pr-4 text-on-surface focus:ring-1 focus:ring-primary" placeholder="Search services..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="flex items-center gap-3 pl-6 border-l border-outline-variant/20">
+<div class="text-right">
+<p class="text-sm font-bold">Alex Sterling</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest font-medium">Project Manager</p>
+</div>
+<img alt="Project Manager Profile" class="w-10 h-10 rounded-full border border-primary/20" data-alt="Close-up portrait of a professional project manager in a clean office setting, confident expression, soft natural lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEGIaqWRjQMjfp2Ah67PRLk0dQOgjTBbro_2OrGgvlzAlpaJYvtsvu0fKAehCYbueYqFR6FNBP7R0lwEzZ1o7GMhtbAKDI2Xc_VoI_9KOpaAkCbPtExm_wvZyQDZdM9QmcLzCL6NAr0aLKOZb79XOOMv5Rt6Ob0U_eV4WrS1nOF5pbmoIzyugmJiiQ_s0Cc4DVd4yHfjah_3_HB7FTHKBCtSP7WApyAlee498L0AWer9LwpGivrsU1Ely_VjIXivU200V7b4JTJbY"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 mt-20 p-8 min-h-screen">
+<div class="max-w-7xl mx-auto">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+<div>
+<h2 class="font-headline text-4xl font-extrabold tracking-tighter mb-2">Service Management</h2>
+<p class="text-on-surface-variant font-medium">Overseeing 12 active construction streams across 3 sites.</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<select class="appearance-none bg-surface-container border-none py-3 pl-4 pr-10 rounded-xl text-on-surface font-medium cursor-pointer focus:ring-1 focus:ring-primary">
+<option>All Services</option>
+<option>Structural</option>
+<option>Finishing</option>
+<option>MEP</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+<button class="bg-primary text-on-primary font-bold py-3 px-6 rounded-xl flex items-center gap-2 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(174,238,42,0.1)]">
+<span class="material-symbols-outlined">add_circle</span>
+<span>New Service</span>
+</button>
+</div>
+</div>
+<!-- Services Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Card 1: Siding Installation -->
+<div class="bg-surface-container-low rounded-2xl p-6 border-l-4 border-error overflow-hidden group hover:bg-surface-container transition-colors duration-300">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline text-2xl font-bold mb-1">Siding Installation</h3>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Target Finish:</span>
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface">Oct 18, 2023</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="bg-error-container text-on-error-container px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                                Blocking
+                            </span>
+</div>
+</div>
+<div class="mb-6">
+<div class="flex justify-between items-end mb-2">
+<span class="text-primary font-black text-2xl">75%</span>
+<span class="text-on-surface-variant text-xs">Completing exterior wrap</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 75%"></div>
+</div>
+</div>
+<div class="bg-error/5 rounded-lg p-3 mb-6 border border-error/10">
+<p class="text-error text-xs font-bold uppercase flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">report_problem</span>
+                            Issue: Material Shortage: Cedar Siding
+                        </p>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-3">
+<img alt="Crew Member" class="w-10 h-10 rounded-full border-2 border-surface-container-low" data-alt="Portrait of a construction worker in a safety helmet, gritty atmosphere, hard morning light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCW0FzHqWWSEFbR9EGCGX0PTbOQjtdQNPdIupEIpy6bWecx2Oe4EfDtfAfgHhs9jaz4NeWIrtV-OHMuzm8-6OjtZlJRGzcriDf4D9fvqshyutdfhme5o6J2IKeBOZEv2NM55wwBOW-u3m5gJr3mqJ0Wd-bQsQLmATEEFMAcvlmtF2SjiLqpYuKXVNH6yj-C-SZtJ36aBq6YZJ6U5NUKyRu6QOEJzVz5fw1AC2QWlW9hHOmFOjNY2lfwgtQCwq0cpDSczjBuHV5Dbwc"/>
+<img alt="Crew Member" class="w-10 h-10 rounded-full border-2 border-surface-container-low" data-alt="Portrait of a female architect in a reflective vest on a construction site, shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPNqIuzYkFcwTSOQo-zsZ6VO3OIZEthkKPZg36_8tX9JnD70DAnw2wWciNYHtV07bTIG4XYAeYstbzL85gtnp6MxX0mS0yoRCuPsw_8xdr2Vd6L-JQHIP0J94a74_bdfK34C8j1BDrfYwGEQL8Ippyt8yCZFfbtWDVRLHCd8iONIFgYOdUGBxF53RdIkMKudZAJ-TCdAY72Em_84Rl8zF3lrWHN1F23DAdga7UtQFGJHUqktQyovWmVwdUO6nRJdf-ATEW82qWUF8"/>
+<img alt="Crew Member" class="w-10 h-10 rounded-full border-2 border-surface-container-low" data-alt="Senior site foreman with graying hair and blue eyes, outdoor site setting with cranes in background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKfQTM3vyqFmQD1c8ivMp0VwQ7w1yURCt2VmkHKy4WJWZZHh8SgaQRRA1832xaImLrl4KUCFhAjgtd8t6IFcXSggwFqkhAmhPwNbLtJ6z5NDaab5N3hL7HjE0MnJBNXIbAy14gdDWsxyLEssR40KcgzQkaqe1ivONaEh_PJgB5EL_QCll0oShqw8H_tq_K7ObErSt5lJaS9nywZIA25S-hYkBnHqan0XzNdWdBqkZN35hHNZoQP6Oa1klW2y0KW-uiNJs6nYQGSrY"/>
+<div class="w-10 h-10 rounded-full border-2 border-surface-container-low bg-surface-container-highest flex items-center justify-center text-[10px] font-bold">+2</div>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 text-xs font-bold text-on-surface border border-outline-variant/30 rounded-lg hover:bg-surface-container-highest transition-colors uppercase tracking-widest">Message Crew</button>
+<button class="px-4 py-2 text-xs font-bold text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors uppercase tracking-widest">View Details</button>
+</div>
+</div>
+</div>
+<!-- Card 2: Painting & Finishes -->
+<div class="bg-surface-container-low rounded-2xl p-6 border-l-4 border-primary overflow-hidden group hover:bg-surface-container transition-colors duration-300">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline text-2xl font-bold mb-1">Painting &amp; Finishes</h3>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Target Finish:</span>
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface">Nov 05, 2023</span>
+</div>
+</div>
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">In Progress</span>
+</div>
+<div class="mb-6">
+<div class="flex justify-between items-end mb-2">
+<span class="text-primary font-black text-2xl">60%</span>
+<span class="text-on-surface-variant text-xs">Priming second floor interiors</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 60%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-3">
+<img alt="Crew Member" class="w-10 h-10 rounded-full border-2 border-surface-container-low" data-alt="Painter in white overalls splattered with paint, smiling, workshop background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-4fNMPLmV5U7AZMUdO_zWMguL-_NWMoh9t6oj1XrDBUyWzZYQD5SxWkaAVp3cSsHldVdCRFly1pJMWxH0T980Nb1_50Pftc_lYHXiVyLpSnzhhi_oXHEKtLvd0TFmmiYmnC15-NHoUEL8hBItO-IGIwDh7iUze0qrdzUDZhzXekj4BjKKfPt8lytcrlyRcFhGgDl8wNOBxwFFCMi8sLWW7gLyRNEr4s92UyNW792iFyYeuvd7CTU5O9v0d6527m1wLItgYarZMFk"/>
+<img alt="Crew Member" class="w-10 h-10 rounded-full border-2 border-surface-container-low" data-alt="Man in high-visibility vest checking documents on a tablet." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCndWf2S-bno5mVYc5tR8eTZTECtznxZyaDVotnQ4jZA8JI6AGWlaIu9C_y-fMHsey3sdfOoKonsOyFdVdDKd1yM_ZmKFYhfpilJC6XGPtOFqGNnhsMvh7Yv2z8QhpJCXk3lTPXbs9aEE2tadGeigEEk4991tjQoaMHqqVIya-PhfW6sMckEgFRPvQRoHp5YZ4qVBEOjpO0g619-U_Q7_1W6vE75BeNnO_wM-hkLZwKiw4ppNpljCx-nuyKjl_k7T0i-fmxgz7BSwo"/>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 text-xs font-bold text-on-surface border border-outline-variant/30 rounded-lg hover:bg-surface-container-highest transition-colors uppercase tracking-widest">Message Crew</button>
+<button class="px-4 py-2 text-xs font-bold text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors uppercase tracking-widest">View Details</button>
+</div>
+</div>
+</div>
+<!-- Card 3: Roofing & Insulation -->
+<div class="bg-surface-container-low rounded-2xl p-6 border-l-4 border-tertiary-fixed-dim overflow-hidden group hover:bg-surface-container transition-colors duration-300">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline text-2xl font-bold mb-1">Roofing &amp; Insulation</h3>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Target Finish:</span>
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface">Dec 01, 2023</span>
+</div>
+</div>
+<span class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">On Hold</span>
+</div>
+<div class="mb-6">
+<div class="flex justify-between items-end mb-2">
+<span class="text-primary font-black text-2xl">30%</span>
+<span class="text-on-surface-variant text-xs">Awaiting permit clearance</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 30%"></div>
+</div>
+</div>
+<div class="bg-surface-container-highest rounded-lg p-3 mb-6 border border-outline-variant/10">
+<p class="text-on-surface-variant text-xs font-bold uppercase flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">hourglass_empty</span>
+                            Blocker: Permits - 30% processed
+                        </p>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-3">
+<img alt="Crew Member" class="w-10 h-10 rounded-full border-2 border-surface-container-low" data-alt="Tech professional in a dark polo shirt, neutral background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzthspXoNibovEQg8srv_90kGLGhCGXkXzTTI5jrmRz8SBFerG8fjy2cHaza7O7hoNcXNjOKyQ7i8XalMANR53PNoAOCsgCcolbME99Z_AGf7Kl1VehSbDnIe2SD06gQCgS51FsNmaiuzJ17EFrKNROtrLWDs0fJYwfrvEqr--sABOrXvCxfjKbpVsLOOZeqvLKBA4Cfo5K6dFmLM299gbxwFIQpGKsGHzF6Xwe9p9rtiY4RZNDKBxFiSq1tkLgL5jI4XEkYD4eBw"/>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 text-xs font-bold text-on-surface border border-outline-variant/30 rounded-lg hover:bg-surface-container-highest transition-colors uppercase tracking-widest">Message Crew</button>
+<button class="px-4 py-2 text-xs font-bold text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors uppercase tracking-widest">View Details</button>
+</div>
+</div>
+</div>
+<!-- Card 4: Drywall & Framing -->
+<div class="bg-surface-container-low rounded-2xl p-6 border-l-4 border-primary overflow-hidden group hover:bg-surface-container transition-colors duration-300">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline text-2xl font-bold mb-1">Drywall &amp; Framing</h3>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Target Finish:</span>
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface">Oct 25, 2023</span>
+</div>
+</div>
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">Wrapping Up</span>
+</div>
+<div class="mb-6">
+<div class="flex justify-between items-end mb-2">
+<span class="text-primary font-black text-2xl">90%</span>
+<span class="text-on-surface-variant text-xs">Final sanding and inspection</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 90%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-3">
+<img alt="Crew Member" class="w-10 h-10 rounded-full border-2 border-surface-container-low" data-alt="Young man with goggles on forehead, dust-covered clothes, determined look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkv9ChcAyY5t8PEv8ASOrCn5zftd7osvCe3tOx_rL3yqcamsM_noOgKnnDJVXCeVAnuZI9kPNt0cXwlCHrSLIPG65FdMS1K9u39IVEHc7ygj-3c1VWtBxMROGitTXC9dvKjyU2F305xSsUnA6GsoePWN5Yn328aQHoFrsw7YAnWDrn0dZetdevVQpTplQ3dF0sVb8jO5Jd-wF2xbYDMd9nQG5-kYPjY-PQCihE1KXg2OHsXWw36sSHEnF7x5_D56PWD-7pvbBBZ-0"/>
+<img alt="Crew Member" class="w-10 h-10 rounded-full border-2 border-surface-container-low" data-alt="Man in business casual attire on a construction site with hardhat." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCznyK77MaZK7ROPcsIFKPP-0jxQyyUvk2FoeO2nmaVSBYFx10WbcTGBmL4nxYy6UgOZXLrNgfS-Xzt3XsYt35tpe700Vqc4PnPerYMlHk-QRn2_YRxOre7i53VKuXMdIGZmu_JVjjMhFWiIVdCN9ljnY8smOzufkyYOsPb8clu-v8GAzEXM3ccclWKuOqzkT-nNtov8GHQSINnprOKXoB_zh0xfn_dc2sN5V1GNhU0fJtrjjzPpMZOFRBWn5OKbDgulpt2shptPRA"/>
+<div class="w-10 h-10 rounded-full border-2 border-surface-container-low bg-surface-container-highest flex items-center justify-center text-[10px] font-bold">+8</div>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 text-xs font-bold text-on-surface border border-outline-variant/30 rounded-lg hover:bg-surface-container-highest transition-colors uppercase tracking-widest">Message Crew</button>
+<button class="px-4 py-2 text-xs font-bold text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors uppercase tracking-widest">View Details</button>
+</div>
+</div>
+</div>
+<!-- Card 5: HVAC Installation -->
+<div class="bg-surface-container-low rounded-2xl p-6 border-l-4 border-outline overflow-hidden group hover:bg-surface-container transition-colors duration-300">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline text-2xl font-bold mb-1">HVAC Installation</h3>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Target Start:</span>
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface">Jan 10, 2024</span>
+</div>
+</div>
+<span class="bg-surface-container-highest text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">Scheduled</span>
+</div>
+<div class="mb-6">
+<div class="flex justify-between items-end mb-2">
+<span class="text-on-surface-variant font-black text-2xl">0%</span>
+<span class="text-on-surface-variant text-xs">Waiting for structural completion</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-outline" style="width: 0%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-3 opacity-50">
+<div class="w-10 h-10 rounded-full border-2 border-surface-container-low bg-surface-container-highest flex items-center justify-center text-[10px] font-bold">Unassigned</div>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 text-xs font-bold text-on-surface border border-outline-variant/30 rounded-lg hover:bg-surface-container-highest transition-colors uppercase tracking-widest">Assign Crew</button>
+<button class="px-4 py-2 text-xs font-bold text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors uppercase tracking-widest">View Schedule</button>
+</div>
+</div>
+</div>
+<!-- Add Bento-style Placeholder -->
+<div class="bg-surface-container-low rounded-2xl p-6 border-2 border-dashed border-outline-variant/20 flex flex-col items-center justify-center text-center">
+<div class="w-16 h-16 bg-surface-container-highest rounded-full flex items-center justify-center mb-4 text-on-surface-variant">
+<span class="material-symbols-outlined text-3xl">add_business</span>
+</div>
+<h3 class="text-lg font-bold mb-2">Initialize New Service</h3>
+<p class="text-sm text-on-surface-variant mb-6 max-w-[240px]">Create a new construction pipeline and assign a specialized crew.</p>
+<button class="text-primary font-bold uppercase tracking-widest text-xs hover:underline">Quick Setup Guide</button>
+</div>
+</div>
+<!-- Dashboard Stats Ticker (Floating Glass) -->
+<div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+<p class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Active Personnel</p>
+<div class="flex items-end gap-3">
+<span class="text-4xl font-headline font-extrabold text-primary">42</span>
+<span class="text-xs text-primary/60 font-bold mb-2">+4 Today</span>
+</div>
+</div>
+<div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+<p class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Total Progress (All Sites)</p>
+<div class="flex items-end gap-3">
+<span class="text-4xl font-headline font-extrabold text-primary">68%</span>
+<span class="text-xs text-primary/60 font-bold mb-2">On Track</span>
+</div>
+</div>
+<div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+<p class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Material Fulfillment</p>
+<div class="flex items-end gap-3">
+<span class="text-4xl font-headline font-extrabold text-error">82%</span>
+<span class="text-xs text-error/60 font-bold mb-2">2 Delays</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

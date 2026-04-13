@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* =============================================
+   BUILDFLOW / SIDING DEPOT DESIGN SYSTEM
+   Standard CSS variables - compatible with
+   Tailwind v4 and VS Code CSS linter
+   ============================================= */
+
+:root {
+  /* Legacy Siding Depot tokens */
+  --color-siding-green: #b2d234;
+  --color-siding-green-hover: #9abc29;
+  --color-siding-dark: #0a0a0a;
+  --color-siding-card: #1f1f1f;
+
+  /* Material Design 3 - BuildFlow palette */
+  --color-primary: #aeee2a;
+  --color-primary-dim: #a0df14;
+  --color-on-primary: #3a5400;
+
+  --color-secondary: #e3eb5d;
+  --color-secondary-container: #5e6300;
+  --color-on-secondary-container: #f9ff8b;
+
+  --color-tertiary-container: #fdeb54;
+  --color-on-tertiary-container: #5f5600;
+
+  --color-error: #ff7351;
+  --color-error-container: #b92902;
+  --color-on-error: #450900;
+
+  --color-background: #0d0f0d;
+  --color-surface: #0d0f0d;
+  --color-surface-container: #181a18;
+  --color-surface-container-low: #121412;
+  --color-surface-container-high: #1e201e;
+  --color-surface-container-highest: #242624;
+  --color-surface-variant: #242624;
+  --color-on-surface: #faf9f5;
+  --color-on-surface-variant: #ababa8;
+
+  --color-outline: #747673;
+  --color-outline-variant: #474846;
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-headline: 'Manrope', system-ui, sans-serif;
+}
+
+/* Base */
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+}
+
+/* Cursor pointer global — sobrescreve o reset do Tailwind Preflight */
+button,
+a,
+select,
+[role="button"],
+label[for] {
+  cursor: pointer !important;
+}
+
+/* BuildFlow glass card - matches Stitch design */
+.glass-card {
+  background: rgba(36, 38, 36, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Material Symbols icon font - prevent translation breaking ligatures */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+}

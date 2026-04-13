@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Iron &amp; Lime | Operational Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#faf9f5",
+                        "surface-container-low": "#121412",
+                        "error-container": "#b92902",
+                        "error": "#ff7351",
+                        "outline": "#747673",
+                        "outline-variant": "#474846",
+                        "secondary-fixed-dim": "#d5dc50",
+                        "secondary-fixed": "#e3eb5d",
+                        "on-primary-fixed-variant": "#425f00",
+                        "on-secondary-container": "#f9ff8b",
+                        "surface-bright": "#2a2d2a",
+                        "on-error-container": "#ffd2c8",
+                        "primary-fixed": "#aeee2a",
+                        "on-tertiary-fixed-variant": "#6a6000",
+                        "secondary": "#e3eb5d",
+                        "surface-container-lowest": "#000000",
+                        "tertiary": "#fff7cf",
+                        "tertiary-dim": "#eedc47",
+                        "on-primary-container": "#334b00",
+                        "primary": "#aeee2a",
+                        "surface-container": "#181a18",
+                        "primary-container": "#a0df14",
+                        "on-tertiary-container": "#5f5600",
+                        "inverse-surface": "#faf9f5",
+                        "tertiary-fixed": "#fdeb54",
+                        "primary-dim": "#a0df14",
+                        "inverse-primary": "#496900",
+                        "secondary-container": "#5e6300",
+                        "on-secondary-fixed-variant": "#5b6000",
+                        "error-dim": "#d53d18",
+                        "surface-tint": "#aeee2a",
+                        "secondary-dim": "#d5dc50",
+                        "on-primary-fixed": "#2b4000",
+                        "primary-fixed-dim": "#a0df14",
+                        "on-secondary-fixed": "#3f4200",
+                        "on-surface": "#faf9f5",
+                        "tertiary-fixed-dim": "#eedc47",
+                        "surface-dim": "#0d0f0d",
+                        "on-tertiary": "#685e00",
+                        "on-surface-variant": "#ababa8",
+                        "surface": "#0d0f0d",
+                        "background": "#0d0f0d",
+                        "on-primary": "#3a5400",
+                        "on-tertiary-fixed": "#4b4400",
+                        "on-secondary": "#515600",
+                        "surface-variant": "#242624",
+                        "surface-container-high": "#1e201e",
+                        "on-error": "#450900",
+                        "inverse-on-surface": "#545553",
+                        "surface-container-highest": "#242624",
+                        "tertiary-container": "#fdeb54"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0d0f0d;
+            color: #faf9f5;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(36, 38, 36, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0d0f0d;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #242624;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen overflow-hidden">
+<!-- Sidebar Navigation (JSON Anchor) -->
+<aside class="fixed left-0 h-full w-64 bg-[#121412] flex flex-col p-4 gap-2 border-r border-[#ffffff]/15 transition-all duration-300 ease-in-out z-50">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">construction</span>
+</div>
+<span class="text-[#aeee2a] font-black text-xl tracking-tight">Iron &amp; Lime</span>
+</div>
+<div class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-white hover:bg-[#242624] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-inter body-md tracking-normal">Dashboard</span>
+</a>
+<!-- Active State: Schedule -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-[#aeee2a] border-r-2 border-[#aeee2a] bg-gradient-to-r from-[#aeee2a]/10 to-transparent transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_view_week</span>
+<span class="font-inter body-md tracking-normal">Schedule</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-white hover:bg-[#242624] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">construction</span>
+<span class="font-inter body-md tracking-normal">Projects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-white hover:bg-[#242624] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+<span class="font-inter body-md tracking-normal">Equipment</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-white hover:bg-[#242624] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-inter body-md tracking-normal">Reports</span>
+</a>
+</div>
+<div class="mt-auto pt-6 border-t border-white/5 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-white hover:bg-[#242624] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-inter body-md tracking-normal">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-white hover:bg-[#242624] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-inter body-md tracking-normal">Support</span>
+</a>
+<div class="mt-4 p-3 glass-card rounded-xl">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="professional headshot of a construction site manager with a confident expression and neutral lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCflYgHBoJxKbCwYebusFSKR30tVNXTQmCf8xhlz2tPkZ6gUdOLj57GQ9kRkatRuO-ttos7zrF-Bf9QAZ73AJeC1cFsdAxGPWrqA5KBkn7VH5yiFLcGmJg6e_bKjgh7gqkVS1RRThk-y_ezr0l4mscLEVf_BqaIllws7pahFydcKLSUYLUM-8dqw62RE42wj7BtQsgj_IJlerecOCoP2yPU_N4o7pqSO-grOPMjXjbXpnFcyPX7PlKWeWtNw6g1GHl8XeenNMK1ZKQ"/>
+<div>
+<p class="text-on-surface text-sm font-semibold">Project Alpha</p>
+<p class="text-on-surface-variant text-xs">Site Manager</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
+<!-- Top Navigation Bar (JSON Anchor) -->
+<header class="bg-[#0d0f0d] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-40">
+<div class="flex items-center flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl py-2 pl-10 pr-4 text-sm text-on-surface placeholder:text-on-surface-variant focus:ring-1 focus:ring-primary/30" placeholder="Search tasks, teams, or projects..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-[#242624] transition-colors duration-200 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-[#242624] transition-colors duration-200">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Operational Content Area -->
+<div class="flex-1 flex flex-col p-6 overflow-hidden">
+<!-- Page Header & Filters -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div>
+<h1 class="font-headline tracking-tighter text-3xl font-extrabold text-on-surface mb-1">Operational Schedule</h1>
+<p class="text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+                        Weekly View (Oct 16 - Oct 22, 2023)
+                    </p>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex bg-surface-container-low rounded-xl p-1">
+<button class="px-4 py-1.5 text-sm font-medium bg-surface-container-high rounded-lg text-on-surface">Week</button>
+<button class="px-4 py-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface">Today</button>
+</div>
+<button class="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-xl text-sm font-medium text-on-surface hover:bg-surface-container-high transition-colors">
+                        All Projects <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+<button class="flex items-center gap-2 bg-primary text-on-primary-container px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/10 hover:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                        New Job
+                    </button>
+</div>
+</div>
+<!-- Schedule Grid -->
+<div class="flex-1 bg-surface-container-low rounded-3xl overflow-hidden flex flex-col">
+<!-- Grid Header (Days) -->
+<div class="grid grid-cols-[240px_repeat(7,1fr)] bg-surface-container-high">
+<div class="p-5 text-on-surface-variant text-xs font-bold uppercase tracking-widest border-r border-white/5">Crew / Team</div>
+<div class="p-5 text-center flex flex-col border-r border-white/5">
+<span class="text-on-surface-variant text-[10px] font-bold uppercase">MON</span>
+<span class="text-on-surface font-headline font-bold text-lg">16</span>
+</div>
+<div class="p-5 text-center flex flex-col border-r border-white/5">
+<span class="text-on-surface-variant text-[10px] font-bold uppercase">TUE</span>
+<span class="text-on-surface font-headline font-bold text-lg">17</span>
+</div>
+<div class="p-5 text-center flex flex-col border-r border-white/5">
+<span class="text-on-surface-variant text-[10px] font-bold uppercase">WED</span>
+<span class="text-on-surface font-headline font-bold text-lg">18</span>
+</div>
+<div class="p-5 text-center flex flex-col border-r border-white/5">
+<span class="text-on-surface-variant text-[10px] font-bold uppercase">THU</span>
+<span class="text-on-surface font-headline font-bold text-lg">19</span>
+</div>
+<div class="p-5 text-center flex flex-col border-r border-white/5">
+<span class="text-on-surface-variant text-[10px] font-bold uppercase">FRI</span>
+<span class="text-on-surface font-headline font-bold text-lg">20</span>
+</div>
+<div class="p-5 text-center flex flex-col border-r border-white/5">
+<span class="text-on-surface-variant text-[10px] font-bold uppercase">SAT</span>
+<span class="text-on-surface font-headline font-bold text-lg opacity-40">21</span>
+</div>
+<div class="p-5 text-center flex flex-col">
+<span class="text-on-surface-variant text-[10px] font-bold uppercase">SUN</span>
+<span class="text-on-surface font-headline font-bold text-lg opacity-40">22</span>
+</div>
+</div>
+<!-- Grid Rows -->
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<!-- Crew A Row -->
+<div class="grid grid-cols-[240px_repeat(7,1fr)] min-h-[140px] border-b border-white/5 group">
+<div class="p-6 border-r border-white/5 flex flex-col justify-center">
+<h3 class="font-headline font-extrabold text-on-surface">Crew A</h3>
+<p class="text-on-surface-variant text-xs mb-3">Foundation &amp; Framing</p>
+<div class="flex -space-x-2">
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-low object-cover" data-alt="close-up portrait of construction worker wearing hardhat" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBA3ny-ciecDCveNUmgTBhCLll0m0YBeaYkP1_VVbF_PlYXjIVRciKrBZyfuzp-52d-JL7PzF_ozyZyp9VZebwM0wi5Oa-8TNePWmkK1MAiYrhLXFF_8mYj0O_r1e9a1_LE86clCa0gFx_2Zg3DtMEmLyVBpPTunc51uBFkZOss2fAs8sFVk8mEwvSqnYqTtvcYMhOSeI5_qT1jrXwiDvnTYiDva2Rw9pzV5csJXd-yJR8y3PyCIZoS8boxidqfciNU-dYSY0pEFE"/>
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-low object-cover" data-alt="professional portrait of an engineering consultant in studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6FaskL0rPj3ztQejbtFjLxREyLjX60FeUu0VSB3_Hhh7T9nsRO9eOM2WGDO6O2MUEhFaVdMJIZ3ReqpPsSsbfjMZroxAXSKN_UOalsMvl9wvKNeIwgmcgY9qI5cP7BXIn_ZjTeybMCUH4M-bwFDTh0OTd5V6mqffpgsXgFY6w0MGvYcuZ3_hrczlM417Ox6g7O6RXAcUqH4JzBO0lImnlgQKfx6969jzWr96zGfFAUrqSRNGToqSzHXbO1lt8gR0V2kUwYA-zHO4"/>
+<div class="w-7 h-7 rounded-full border-2 border-surface-container-low bg-surface-container-highest flex items-center justify-center text-[10px] font-bold text-primary">+2</div>
+</div>
+</div>
+<div class="relative col-span-7 grid grid-cols-7 h-full">
+<!-- Background Grid Lines -->
+<div class="absolute inset-0 grid grid-cols-7 pointer-events-none">
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="h-full"></div>
+</div>
+<!-- Card 1: Site Prep -->
+<div class="absolute left-[2%] top-6 bottom-6 w-[40%] px-4 py-3 glass-card rounded-2xl flex flex-col justify-between hover:bg-white/5 transition-colors cursor-pointer group/card z-10">
+<div class="flex items-center justify-between">
+<span class="text-on-surface font-bold text-sm">#104 Site Prep</span>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="text-[10px] font-bold text-primary uppercase tracking-wider">In Progress</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant text-[11px]">
+<span class="material-symbols-outlined text-xs">location_on</span>
+                                    Downtown Hub
+                                </div>
+</div>
+</div>
+</div>
+<!-- Crew B Row -->
+<div class="grid grid-cols-[240px_repeat(7,1fr)] min-h-[140px] border-b border-white/5 group">
+<div class="p-6 border-r border-white/5 flex flex-col justify-center">
+<h3 class="font-headline font-extrabold text-on-surface">Crew B</h3>
+<p class="text-on-surface-variant text-xs mb-3">Foundation &amp; Framing</p>
+<div class="flex -space-x-2">
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-low object-cover" data-alt="portrait of a man with beard smiling warmly" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCw41bko0oEKh47penKDslzoMt0-vNt-INfuxPQXQYIxTPxZZHuTJ9JptAEof9OH-KBC3_KPoOT1Z-SlSmeIjM4dYmMhehtH3z2StxkvucK_d1u04SFNgh87qnO0PyMHi4wZTPQu28t4G1JeHMncyuxU6_hwM1UvY3M9JVAh-OBBLUgCNzvLEZ_LfXywhX9WUbC58ZBjNG1EhT5qu-E8mVrbuB25wCtmM-4krjqxyzlFb9mmxR-MtsAmSVtM2sVVT5dMyKqSUceXeA"/>
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-low object-cover" data-alt="headshot of a woman with glasses and confident gaze" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAitgR0ix4Xhfsw6_T7ZH3Kfpekf98blhj4eZrG33PpOJk0Cw_b5k0fxbq1zPvfoZIjl92YtG7hpY1ZtxGdjpUbys1vGxH2sjxEwsWaQug0El1g8q-Q2mnD2rjVXv0n5OAWrlepN0QDc4bYnuCZrOBFcHdd-ARGO-Y2sKH3y98-vTNk4n1BVuIeOSztQ_dMzmE91PIPrbxDOLSh2o-29CUkl6HZD8OeJkdFSvcVbAcrSa58m_Dcl3FDRKIDSeuKxuHSbQCNbkULqqU"/>
+<div class="w-7 h-7 rounded-full border-2 border-surface-container-low bg-surface-container-highest flex items-center justify-center text-[10px] font-bold text-primary">+2</div>
+</div>
+</div>
+<div class="relative col-span-7 grid grid-cols-7 h-full">
+<!-- Background Grid Lines -->
+<div class="absolute inset-0 grid grid-cols-7 pointer-events-none">
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="h-full"></div>
+</div>
+<!-- Card 2: Roofing -->
+<div class="absolute left-[15.5%] top-4 w-[26.5%] px-3 py-2.5 glass-card rounded-2xl flex flex-col gap-1 z-10">
+<div class="flex items-center justify-between">
+<span class="text-on-surface font-bold text-[13px]">#105 Roofing</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+<span class="text-on-surface-variant text-[10px]">Oak Creek Resid...</span>
+</div>
+<!-- Card 3: Alert Conflict -->
+<div class="absolute left-[44.5%] top-4 w-[12%] px-3 py-2.5 bg-tertiary-container/10 border border-tertiary-dim/30 backdrop-blur-md rounded-2xl flex flex-col gap-1 z-10">
+<div class="flex items-center justify-between">
+<span class="text-tertiary-dim font-bold text-[13px]">#108</span>
+<span class="material-symbols-outlined text-tertiary-dim text-sm">warning</span>
+</div>
+<span class="text-tertiary-dim text-[10px]">Conflict</span>
+</div>
+<!-- Card 4: Plumbing -->
+<div class="absolute left-[72.5%] top-4 w-[25.5%] px-3 py-2.5 glass-card border-error/20 rounded-2xl flex flex-col gap-1 z-10">
+<div class="flex items-center justify-between">
+<span class="text-on-surface font-bold text-[13px]">#110 Plumbing</span>
+<span class="w-2 h-2 rounded-full bg-error"></span>
+</div>
+<span class="text-on-surface-variant text-[10px]">Main St. Plaza</span>
+</div>
+</div>
+</div>
+<!-- Crew C Row -->
+<div class="grid grid-cols-[240px_repeat(7,1fr)] min-h-[140px] border-b border-white/5 group">
+<div class="p-6 border-r border-white/5 flex flex-col justify-center">
+<h3 class="font-headline font-extrabold text-on-surface">Crew C</h3>
+<p class="text-on-surface-variant text-xs mb-3">Foundation &amp; Framing</p>
+<div class="flex -space-x-2">
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-low object-cover" data-alt="portrait of a man with glasses and serious expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUqEwOO_FMGiJxZH7_P3M3-b27rx12RFdwb5g5tZXyODbruLZIu3SlVmvCqIY5RXPf_-tWx-GNoYCzcThric3Ce0dEyJkfPHzsgCTgduInRom9ZRTWMnmlPPKJwH9mhGD1ouPkGNiTnYPYlDqGIUvM5R9ag5QeV7gC3mBFo2R5mMTBJ1eRZ5g6zYXV26ZKAs7580LO6QrWsyYmFedMPyOA29674a7-VLOyn8BgVBIRo095hGZ_KkOwNBhozqoj8f-V4kVX25ePTgE"/>
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-low object-cover" data-alt="headshot of a smiling woman in office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsIadKYAi8QLJknDXPGizj4FxRFdgt6ic44gljkP2gx3IuHjV09vAaBb7i61zyOGSDnU85_BbRnNwtnzATMSn9kISYoyC_PWJletpuMNnMF3u1g99MOBc5OlLi7mbWy10oJMAwKVffWZ3W3YiRw6IAz9M2EDpDwhrcYGuD892Q25Kl-2oIYyFPShbBPioZMOdHNY4LGH7yfSowHhOxVAkHJtdfpzZj-gSFqR7C-eG2a-XmDOUUZ1VJfUZGm7_tsBqFJGpU6a4e9eo"/>
+<div class="w-7 h-7 rounded-full border-2 border-surface-container-low bg-surface-container-highest flex items-center justify-center text-[10px] font-bold text-primary">+2</div>
+</div>
+</div>
+<div class="relative col-span-7 grid grid-cols-7 h-full">
+<!-- Background Grid Lines -->
+<div class="absolute inset-0 grid grid-cols-7 pointer-events-none">
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="h-full"></div>
+</div>
+<!-- Card 5: Roofing (Crew C) -->
+<div class="absolute left-[15.5%] top-6 bottom-6 w-[26.5%] px-4 py-3 glass-card rounded-2xl flex flex-col justify-between z-10">
+<span class="text-on-surface font-bold text-sm">#108 Roofing</span>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant text-[11px]">Industrial Park</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+</div>
+<!-- Card 6: Plumbing (Crew C) -->
+<div class="absolute left-[58.5%] top-6 bottom-6 w-[26.5%] px-4 py-3 glass-card border-error/20 rounded-2xl flex flex-col justify-between z-10">
+<span class="text-on-surface font-bold text-sm">#112 Plumbing</span>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant text-[11px]">River Heights</span>
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Crew D Row -->
+<div class="grid grid-cols-[240px_repeat(7,1fr)] min-h-[140px] border-b border-white/5 group">
+<div class="p-6 border-r border-white/5 flex flex-col justify-center">
+<h3 class="font-headline font-extrabold text-on-surface">Crew D</h3>
+<p class="text-on-surface-variant text-xs mb-3">Foundation &amp; Framing</p>
+<div class="flex -space-x-2">
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-low object-cover" data-alt="portrait of a woman looking away from camera with thoughtful expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADPpN97R57epewUIVw0GloThPcjDdMAU0g2Jt6aWhC4izVbgC-rsV-etYlmsgohuUPd9Gbj5f0mNngCh3doffyGUkkUiuoDIZpfkoxxgetvuPy0Md3aiS0Z9EiBpgeZY74VmMuRiYvaFkqDzzhB8klioxmWoddWktmux6YQBlI1dFrR5jTPvDwuAkbuvjhQBUHO1mlI_esQ78uEU5Umfc31pRdYubGoouC5-N64bEIDsBcFGBJ1pOwAi-eFdgg08ZPp0Ils_T1glM"/>
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-low object-cover" data-alt="portrait of an older man with kind eyes and warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7yzBwkY6bP6C8dfXN-bgo8Tav_3xmvhz7hIXXrM1a3-M-vM8PeUy0J_kg1n_2YDjwKv_WUcEj0eXL3IizuP8BsusJX9Mt8RHhBVX-fxSQLkdDIPPrZtn-ropsMwJq1bZarFY81W2YL3SKrsE-6-ldovdY_IuuhY1L1dVdxFo30BWY6BTsAh2m2f_XcgPTvqkxlBgDV32v6O2YmtVgA54qyClMnGObBS42dyBt40TvwEfVKHLp1ixWMva1jkjLzFfkGLp7E_mNCBw"/>
+<div class="w-7 h-7 rounded-full border-2 border-surface-container-low bg-surface-container-highest flex items-center justify-center text-[10px] font-bold text-primary">+2</div>
+</div>
+</div>
+<div class="relative col-span-7 grid grid-cols-7 h-full">
+<!-- Background Grid Lines -->
+<div class="absolute inset-0 grid grid-cols-7 pointer-events-none">
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="border-r border-white/5 h-full"></div>
+<div class="h-full"></div>
+</div>
+<!-- Card 7: Site Prep -->
+<div class="absolute left-[15.5%] top-6 bottom-6 w-[26.5%] px-4 py-3 glass-card rounded-2xl flex flex-col justify-between z-10">
+<span class="text-on-surface font-bold text-sm">#104 Site Prep</span>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant text-[11px]">Downtown Hub</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+</div>
+<!-- Card 8: Plumbing (Crew D) -->
+<div class="absolute left-[72.5%] top-6 bottom-6 w-[25.5%] px-4 py-3 glass-card border-error/20 rounded-2xl flex flex-col justify-between z-10">
+<span class="text-on-surface font-bold text-sm">#112 Plumbing</span>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant text-[11px]">River Heights</span>
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Stats / Legend -->
+<div class="mt-6 flex items-center gap-8 px-2">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="text-xs text-on-surface-variant uppercase tracking-widest font-bold">In Progress</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-error"></span>
+<span class="text-xs text-on-surface-variant uppercase tracking-widest font-bold">Plumbing / Critical</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-tertiary-dim"></span>
+<span class="text-xs text-on-surface-variant uppercase tracking-widest font-bold">Conflict</span>
+</div>
+<div class="ml-auto text-on-surface-variant text-xs">
+                    Total active crews: <span class="text-on-surface font-bold">4</span> | Total scheduled jobs: <span class="text-on-surface font-bold">12</span>
+</div>
+</div>
+</div>
+</main>
+</body></html>

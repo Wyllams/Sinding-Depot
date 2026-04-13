@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Crews &amp; Partners Directory | Luminous</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#f9ff8b",
+                        "error-dim": "#d53d18",
+                        "on-primary-fixed": "#2b4000",
+                        "primary": "#aeee2a",
+                        "on-primary": "#3a5400",
+                        "outline-variant": "#474846",
+                        "on-error": "#450900",
+                        "on-primary-container": "#334b00",
+                        "tertiary-dim": "#eedc47",
+                        "on-secondary-fixed-variant": "#5b6000",
+                        "on-secondary": "#515600",
+                        "on-surface": "#faf9f5",
+                        "primary-fixed-dim": "#a0df14",
+                        "on-tertiary-fixed-variant": "#6a6000",
+                        "primary-dim": "#a0df14",
+                        "on-surface-variant": "#ababa8",
+                        "on-tertiary-container": "#5f5600",
+                        "surface-variant": "#242624",
+                        "error-container": "#b92902",
+                        "surface-container-highest": "#242624",
+                        "tertiary-fixed": "#fdeb54",
+                        "surface": "#0d0f0d",
+                        "secondary-dim": "#d5dc50",
+                        "tertiary-fixed-dim": "#eedc47",
+                        "on-tertiary": "#685e00",
+                        "tertiary-container": "#fdeb54",
+                        "on-error-container": "#ffd2c8",
+                        "secondary-fixed-dim": "#d5dc50",
+                        "surface-container": "#181a18",
+                        "surface-container-low": "#121412",
+                        "surface-bright": "#2a2d2a",
+                        "inverse-surface": "#faf9f5",
+                        "error": "#ff7351",
+                        "tertiary": "#fff7cf",
+                        "inverse-primary": "#496900",
+                        "on-tertiary-fixed": "#4b4400",
+                        "inverse-on-surface": "#545553",
+                        "secondary-fixed": "#e3eb5d",
+                        "surface-tint": "#aeee2a",
+                        "primary-container": "#a0df14",
+                        "secondary-container": "#5e6300",
+                        "outline": "#747673",
+                        "surface-dim": "#0d0f0d",
+                        "secondary": "#e3eb5d",
+                        "surface-container-lowest": "#000000",
+                        "on-background": "#faf9f5",
+                        "background": "#0d0f0d",
+                        "on-secondary-fixed": "#3f4200",
+                        "on-primary-fixed-variant": "#425f00",
+                        "primary-fixed": "#aeee2a",
+                        "surface-container-high": "#1e201e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0d0f0d;
+            color: #faf9f5;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(36, 38, 36, 0.4);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-[#121412] flex flex-col py-6 px-4 gap-2">
+<div class="mb-8 px-4">
+<h1 class="text-xl font-black text-[#faf9f5] tracking-tight">PROJECT ALPHA</h1>
+<p class="text-[10px] text-zinc-500 font-bold tracking-[0.2em] uppercase mt-1">Site Command</p>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-500 hover:text-[#faf9f5] hover:bg-[#242624] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-xs font-bold tracking-wider uppercase">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-500 hover:text-[#faf9f5] hover:bg-[#242624] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">architecture</span>
+<span class="text-xs font-bold tracking-wider uppercase">Projects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-500 hover:text-[#faf9f5] hover:bg-[#242624] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-xs font-bold tracking-wider uppercase">Scheduling</span>
+</a>
+<!-- Active Tab: Crews & Partners -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#aeee2a] border-r-2 border-[#aeee2a] bg-[#1a1c1a] transition-all duration-300" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="text-xs font-bold tracking-wider uppercase">Crews &amp; Partners</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-500 hover:text-[#faf9f5] hover:bg-[#242624] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+<span class="text-xs font-bold tracking-wider uppercase">Materials</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-500 hover:text-[#faf9f5] hover:bg-[#242624] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-xs font-bold tracking-wider uppercase">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-500 hover:text-[#faf9f5] hover:bg-[#242624] transition-all duration-300 mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-xs font-bold tracking-wider uppercase">Settings</span>
+</a>
+</nav>
+</aside>
+<main class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center h-16 px-8 bg-[#0d0f0d] fixed top-0 right-0 left-64 z-50">
+<div class="flex items-center gap-4 flex-1 max-w-xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xl">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-1 focus:ring-primary text-on-surface" placeholder="Search crews, specialties, or projects..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative text-zinc-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-[#0d0f0d]"></span>
+</button>
+<div class="flex items-center gap-3 pl-6 border-l border-zinc-800">
+<div class="text-right">
+<p class="text-sm font-bold text-on-surface">Alex R. Admin</p>
+<p class="text-[10px] text-zinc-500 uppercase tracking-widest">Site Command</p>
+</div>
+<img alt="User profile" class="w-10 h-10 rounded-xl object-cover bg-surface-container-high" data-alt="Close-up portrait of a professional man in a construction safety vest against a blurred outdoor background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsE2dFWsmhjOC63Tw5SXtkgs9cMPZkpwsrC8Ipzwray63vjb6k-Ia_efzntXiMqFZi-CAylnbtQsVI66A42PzBNXnRsJyHAQ8p3fltcmAwn6azxR__cqz6HC8OIPOIQzbc6ZuJZTA5pSLxc4LcYYtoT_bCN10NtTuxLXegLlFYMHQBic1AZKoUOWxBxAGi34vocWgwPGuwmgvF2rFHluXb6eEkKYfZK53R6Be2rmmA0b0tDxr0y5bjUaPBHIofKrPzmU-c77eeNT8"/>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="mt-16 p-8">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
+<div>
+<h2 class="text-4xl font-extrabold font-headline tracking-tighter mb-2">Crews &amp; Partners <span class="text-primary">Directory</span></h2>
+<p class="text-zinc-500 font-medium">84 total active crews across 12 regions</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<button class="px-5 py-2.5 rounded-full bg-primary text-on-primary text-xs font-bold transition-all">All Crews</button>
+<button class="px-5 py-2.5 rounded-full bg-surface-container-high text-zinc-400 hover:text-on-surface text-xs font-bold transition-all">Subcontractors</button>
+<button class="px-5 py-2.5 rounded-full bg-surface-container-high text-zinc-400 hover:text-on-surface text-xs font-bold transition-all">Available</button>
+<button class="px-5 py-2.5 rounded-full bg-surface-container-high text-zinc-400 hover:text-on-surface text-xs font-bold transition-all">Specialized</button>
+</div>
+</div>
+<!-- Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+<!-- Crew Card 1 -->
+<div class="group flex flex-col bg-surface-container-low rounded-2xl overflow-hidden transition-all duration-300 hover:translate-y-[-4px]">
+<div class="p-6 flex-1">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="text-xl font-bold font-headline group-hover:text-primary transition-colors">Siding Crew Alpha</h3>
+<p class="text-zinc-400 text-sm">Siding &amp; Exterior Specialist</p>
+</div>
+<span class="material-symbols-outlined text-zinc-600 hover:text-primary cursor-pointer">more_vert</span>
+</div>
+<!-- Avatar Group -->
+<div class="flex flex-col gap-3 mb-6">
+<div class="flex -space-x-3 overflow-hidden">
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Female construction worker smiling wearing safety glasses and helmet" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf81ZuTer4nReX7WEU6tm4hPVjccTtURZ5GgM3XfqzWoaS3iH8q_gU7TtAYERAE712Tz_3e9CUDPY1mzovTeGWsumBKNa3z2MZzZiEbcJyO1vQAYH8wguxoSIPSGScBluZ-wrCIs8ycf3OmBNlq2TXUWZYU5SswOLzuETIV3fP0xE1jOVIWVtn3l3ILWKrrWtglSQaMmrtpnOUiWsPmwYKAWH9yh8iw4PLWXDL5ejLFqBpi8v6oNsUHJJPyvDVKs66MVWvkwYtWPA"/>
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Portrait of a young male laborer with dust on face smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtypKyrC2iR_t2dhU1YhfHOWp6pId0EG6HRLE5_dNmQeXcvQlP9SW8sQIo2t-r2c08LT7vSbdxlBIXF589FkrgsWx6CAYOsWGmg-KhAYnL_dl-BYyM64RDFC1cr_apLSNOD3ZrITbVrEdskpA8zf962_-srhqL85VXCg3qRl6I1FBbPGtABZVHoNrhi0Ayc_NG5QeX3gACGI23ehSnB6IADTJQ_WxoabMvzDJU6WMUKdRlMdDq4uqIm3xkP71KRrH_XnawglRyCiM"/>
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Bearded man in reflective gear at a construction site" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2p6p99uEp-KdNGe9kgWSz9375lqWLjjU6t7QR_sAn42xHDsq93AFgNPyf-4kK0y73BvFHsXqAwrp9csp3T_fu-sv3AvGHlWfAy2j-u-93UeheFDVQGmXu2vxwABgq2_1PbOF22Ng8D4ooJhmTYWSzqWE_odBafhFKF4kijhOEA-yiF7XkPMEA7oKN8zXaxOZ96cfK2XhPmexR1WwYzOgszbaUXtN3aQGlmduMIkZxJKCqTUep1L_tzhWQF3VNxYdyV2qZdXSfXD0"/>
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Professional woman architect with blueprint roll on site" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCWVIpnvCfQTKy0K5NWIANAYU0R06Nc1n4GCJqwTNnrZQutpuuoULF6cC2V-UqzUEDyDY4jtTI2qy-GqU-7liMtk5MkMDhAEaUwHNLUK8M5ukYX60IRhMgwnmNQHwboncwN17NKDZy0oo7qlrwF39K6yFKhxy5wB1uLlJ94VkqV-aQ8GiVRnyrzd5BsioRxgmb_e9Yuln4Vukv8a29208Uua3YymD7FpaR5eQVwlpbgvmS7OVWItS40bZaPpl_mbAwKGSUNUhzrKY"/>
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Man in hard hat giving thumbs up on sunny morning" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCJC57IIP5hRwRvzFcuNcvWXzct9Wwccm6I_Ma4mjujxH0h6y3y9A-E5NvHyj0sSQ_hUnR6iOT52kZtgDxEekzEpK6oYDYJftsJaDdCsc377VQLQPJNPLbDrsVvrcn8LSmk4Jsaxsih7c5h04103_ldKaUwd7QyK-cxLgRlrQp_uKAyl2OQOrrrrUlwFw7fQl06gX_plZqb_XsHGn-CREmArUe6xnlh_lkcK4IXgS02VmzzUuxqWfLnAIlZ-gJqhxT8xDQMeDga8Q"/>
+<div class="flex items-center justify-center h-10 w-10 rounded-full ring-2 ring-[#121412] bg-surface-container-highest text-[10px] font-bold">+1</div>
+</div>
+<p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Lead: Marcos Rivera + 5 specialists</p>
+</div>
+<!-- Tag Pills -->
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-zinc-300 text-[10px] font-bold uppercase tracking-wider">Vinyl Siding</span>
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-zinc-300 text-[10px] font-bold uppercase tracking-wider">HardiePlank</span>
+<span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">Safety Certified</span>
+</div>
+<!-- Capacity Chart -->
+<div class="mb-6">
+<div class="flex justify-between items-center mb-3">
+<p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Current Capacity</p>
+<p class="text-[10px] font-bold text-primary">82% BUSY</p>
+</div>
+<div class="flex items-end justify-between h-12 gap-1.5">
+<div class="w-full bg-primary rounded-t-sm" style="height: 60%"></div>
+<div class="w-full bg-primary rounded-t-sm" style="height: 85%"></div>
+<div class="w-full bg-primary rounded-t-sm" style="height: 100%"></div>
+<div class="w-full bg-primary rounded-t-sm" style="height: 40%"></div>
+<div class="w-full bg-primary rounded-t-sm" style="height: 70%"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm" style="height: 10%"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm" style="height: 10%"></div>
+</div>
+<div class="flex justify-between mt-2">
+<span class="text-[8px] text-zinc-600 font-bold">M</span>
+<span class="text-[8px] text-zinc-600 font-bold">T</span>
+<span class="text-[8px] text-zinc-600 font-bold">W</span>
+<span class="text-[8px] text-zinc-600 font-bold">T</span>
+<span class="text-[8px] text-zinc-600 font-bold">F</span>
+<span class="text-[8px] text-zinc-600 font-bold">S</span>
+<span class="text-[8px] text-zinc-600 font-bold">S</span>
+</div>
+</div>
+<!-- Buttons -->
+<div class="grid grid-cols-2 gap-3">
+<button class="py-2.5 rounded-xl border border-primary text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/5 transition-all">View Details</button>
+<button class="py-2.5 rounded-xl bg-primary text-on-primary text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all">Assign Project</button>
+</div>
+</div>
+<!-- Footer Status -->
+<div class="px-6 py-4 bg-surface-container-high flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(174,238,42,0.6)]"></span>
+<span class="text-[10px] font-bold text-on-surface tracking-wider uppercase">Available</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-zinc-500 text-sm">groups</span>
+<span class="text-[10px] font-bold text-zinc-300">6 Members</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[10px] font-bold text-zinc-300">4.9</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Crew Card 2 -->
+<div class="group flex flex-col bg-surface-container-low rounded-2xl overflow-hidden transition-all duration-300 hover:translate-y-[-4px]">
+<div class="p-6 flex-1">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="text-xl font-bold font-headline group-hover:text-primary transition-colors">Framing Kings</h3>
+<p class="text-zinc-400 text-sm">Structural Framing &amp; Decking</p>
+</div>
+<span class="material-symbols-outlined text-zinc-600 hover:text-primary cursor-pointer">more_vert</span>
+</div>
+<div class="flex flex-col gap-3 mb-6">
+<div class="flex -space-x-3 overflow-hidden">
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Senior construction supervisor pointing at plans" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrE2Tr7bstK5b34nS1fnwMTVxrTE4rZV3CcuOsXQxNBBXDru-anYIihjSdD3UJ-WwY3I4dDwyWofqMFXySKjABCKQiKp3pP5dnK3Cx7GC3aRPZwvnKDPVItPBOa8EysFg5MklK-J7MYfDi8i6vgpgsjSKrDvmtBqPg83pzG-FGGaxMLJS5ctZAmqg59z-ul2b_lK3AOrVURhZiF31y4A9do5Hd1bWd5Ku1o9H048b6x377uCSf34vLA7LPWEExbteAsbjDi70ugvA"/>
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Mid-shot of construction worker carrying timber" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_4r4xb8589yhYTv0jIXyDj7RT8mmTyCwn3thdrmFvyjfGHgYwAGszUn1AAr_coAALpr4tCHFR5_CIYwje8knoJ4xGYeKDZpU_eRj4t2cCP11aAymP5_DCjLvvS03yDwybFJdgZ1GfSHUi8hcnN-skn0D6E_3BWrU_pzYk2tz-T1Lzw2JEbOgojvjGKOpHS7tM6t2jdqqKRfj4hhhVF_v3W5hAywWXLrk1dNCz5oj2GzxFY6Y6hBVX01w_mbJFGRbGIpIJYwcDHSo"/>
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Experienced craftsman in workshop environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB21fq3FW8xM2KbYAVWWWrZkirORMUq0irEzNU127yg0TzDsp5wm_bFVyYnb0J6gJVtTBDL5F9zLnIl1cyzYwZYRq76FW9rdL71DPqIXc3ckD_xtwwp7_9rcWx4TBKyJ7NOsy9uEzeAcLwWERLX8KHRkE-n2IqNz_zWrD2ZOkdM9YNK2UiTydx11yGIWZ7O2OZwglikTt-gINwaxnKxLOIDoS4Vp90Dvx2DKLqjjA7_FxnTpt0Jh4rB3o9m6A42_7a-DgMbYIZEAc0"/>
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Female site manager checking tablet" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC563oULgDRevx1_cT4PAQ_yw1iYJUetjeLzo0ZOyrX36XS5VbmrHqVJH_-GMKgEw3kX-a8I6_sw2UDbaiy2z8IQgZyWKUzXVzuB8VgyuZgXnicOJzLRCSuo1oCd8MAJXQMTRuUa7g3sQ_4zOw9Jbn94Huyt6pc1siJtcq4lXtQzLz22Lc9q0K-bUgpDG4tcDk-KyKoicaGJ4jyN4V7cVrQO8lMR0UbibU0-qToM7I4O7mP8PAyWVAi49jcZzJp8QCjo563qoPv1VM"/>
+<div class="flex items-center justify-center h-10 w-10 rounded-full ring-2 ring-[#121412] bg-surface-container-highest text-[10px] font-bold">+8</div>
+</div>
+<p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Lead: David Stone + 11 specialists</p>
+</div>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-zinc-300 text-[10px] font-bold uppercase tracking-wider">Heavy Timber</span>
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-zinc-300 text-[10px] font-bold uppercase tracking-wider">LSL Framing</span>
+<span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">Master Builder</span>
+</div>
+<div class="mb-6">
+<div class="flex justify-between items-center mb-3">
+<p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Current Capacity</p>
+<p class="text-[10px] font-bold text-secondary">35% BUSY</p>
+</div>
+<div class="flex items-end justify-between h-12 gap-1.5">
+<div class="w-full bg-secondary rounded-t-sm" style="height: 30%"></div>
+<div class="w-full bg-secondary rounded-t-sm" style="height: 40%"></div>
+<div class="w-full bg-secondary rounded-t-sm" style="height: 25%"></div>
+<div class="w-full bg-secondary rounded-t-sm" style="height: 15%"></div>
+<div class="w-full bg-secondary rounded-t-sm" style="height: 40%"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm" style="height: 10%"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm" style="height: 10%"></div>
+</div>
+<div class="flex justify-between mt-2">
+<span class="text-[8px] text-zinc-600 font-bold">M</span>
+<span class="text-[8px] text-zinc-600 font-bold">T</span>
+<span class="text-[8px] text-zinc-600 font-bold">W</span>
+<span class="text-[8px] text-zinc-600 font-bold">T</span>
+<span class="text-[8px] text-zinc-600 font-bold">F</span>
+<span class="text-[8px] text-zinc-600 font-bold">S</span>
+<span class="text-[8px] text-zinc-600 font-bold">S</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="py-2.5 rounded-xl border border-primary text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/5 transition-all">View Details</button>
+<button class="py-2.5 rounded-xl bg-primary text-on-primary text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all">Assign Project</button>
+</div>
+</div>
+<div class="px-6 py-4 bg-surface-container-high flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(227,235,93,0.4)]"></span>
+<span class="text-[10px] font-bold text-secondary tracking-wider uppercase">Opening Soon</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-zinc-500 text-sm">groups</span>
+<span class="text-[10px] font-bold text-zinc-300">12 Members</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[10px] font-bold text-zinc-300">4.7</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Crew Card 3 -->
+<div class="group flex flex-col bg-surface-container-low rounded-2xl overflow-hidden transition-all duration-300 hover:translate-y-[-4px]">
+<div class="p-6 flex-1">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="text-xl font-bold font-headline group-hover:text-primary transition-colors">Foundation Pros</h3>
+<p class="text-zinc-400 text-sm">Concrete &amp; Excavation Specialists</p>
+</div>
+<span class="material-symbols-outlined text-zinc-600 hover:text-primary cursor-pointer">more_vert</span>
+</div>
+<div class="flex flex-col gap-3 mb-6">
+<div class="flex -space-x-3 overflow-hidden">
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Portrait of a seasoned engineer with beard" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEY-eLRHpyImW8DMmmPVSJKx8edZp0itMiOc8vVdZcZ1-oWPK0N8jLaO4TUyP4Q8wN008CQchYIELTH951kpK7pMTf0AOW1jDGpAjcHHXfcwuHV159kjTt65C_MBX7j2fF4CcUOhddCeqTgc47L5DzevwYEVKN2i_XDQDDIDxvd48qNiIuqXpMVWDRHXY7fZpwCoBZ66FXo8R2YZrQNJ4KLg9K-GNVD9q6aGtVMakfRjMITM7VotHyo466OCku8PMwnG98d0rEedU"/>
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Professional man in work uniform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChSdzqqJh6xdYLvb2ak96R3TB2kZWrRapynMBQHQ1rzMaSkGwJcNObaHtFQsaNY2uCuF1hhVxju_XZode2aua1t5FypuYSDYD1Q5-Yu80tbSu3GjsReZeCwo6CdhV1-LfX0p3ubDkRQLkZELJQ9pse9rr7N6ssKP6b0A0RqTQlP4ThEKcenGQhLp5pwMEhxVPVonumdAJi_ikqaiO1S8-8_pOupvRAis6_YtXiEvQea36GMqx8575TlVs1dx1p5ONagwKl1cbJwYg"/>
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Female supervisor looking at site coordinates" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKXG9WX-R3VTAbLBXUsc0RFKwIZi4BDWnTUVxAOMxI7IIHSKH-qZ44n6SS3fvEBuoj_ZLTSudQ0WMbEUIrcNUDxp4XuTvbrlUsxUYS8The2-kH_rkJq1xUAVVL3ff9ij_thKxmiUPZaxSOOt54puBhw6MvXGd3mU1Tb1ch1-pPO2Wz2CGdb9GAcEPvE1t2FhUstYKu6xEAZ-7Uu_HL9NnYB0fFlUfsmeNDIvxRS2LEnM_pTqSco9bmA_i10yuL4C4iKuXHZMJ_d6k"/>
+<div class="flex items-center justify-center h-10 w-10 rounded-full ring-2 ring-[#121412] bg-surface-container-highest text-[10px] font-bold">+5</div>
+</div>
+<p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Lead: Sarah Jenkins + 7 specialists</p>
+</div>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-zinc-300 text-[10px] font-bold uppercase tracking-wider">Post-Tension</span>
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-zinc-300 text-[10px] font-bold uppercase tracking-wider">Excavation</span>
+<span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">OSHA 30</span>
+</div>
+<div class="mb-6">
+<div class="flex justify-between items-center mb-3">
+<p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Current Capacity</p>
+<p class="text-[10px] font-bold text-error">100% BUSY</p>
+</div>
+<div class="flex items-end justify-between h-12 gap-1.5">
+<div class="w-full bg-error rounded-t-sm" style="height: 100%"></div>
+<div class="w-full bg-error rounded-t-sm" style="height: 100%"></div>
+<div class="w-full bg-error rounded-t-sm" style="height: 100%"></div>
+<div class="w-full bg-error rounded-t-sm" style="height: 100%"></div>
+<div class="w-full bg-error rounded-t-sm" style="height: 100%"></div>
+<div class="w-full bg-error rounded-t-sm" style="height: 80%"></div>
+<div class="w-full bg-error rounded-t-sm" style="height: 60%"></div>
+</div>
+<div class="flex justify-between mt-2">
+<span class="text-[8px] text-zinc-600 font-bold">M</span>
+<span class="text-[8px] text-zinc-600 font-bold">T</span>
+<span class="text-[8px] text-zinc-600 font-bold">W</span>
+<span class="text-[8px] text-zinc-600 font-bold">T</span>
+<span class="text-[8px] text-zinc-600 font-bold">F</span>
+<span class="text-[8px] text-zinc-600 font-bold">S</span>
+<span class="text-[8px] text-zinc-600 font-bold">S</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="py-2.5 rounded-xl border border-primary text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/5 transition-all">View Details</button>
+<button class="py-2.5 rounded-xl bg-primary/20 text-primary cursor-not-allowed text-[10px] font-bold uppercase tracking-widest" disabled="">Full Capacity</button>
+</div>
+</div>
+<div class="px-6 py-4 bg-surface-container-high flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error shadow-[0_0_8px_rgba(255,115,81,0.4)]"></span>
+<span class="text-[10px] font-bold text-error tracking-wider uppercase">Booked Out</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-zinc-500 text-sm">groups</span>
+<span class="text-[10px] font-bold text-zinc-300">8 Members</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[10px] font-bold text-zinc-300">5.0</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Crew Card 4 (Glass Variant) -->
+<div class="group flex flex-col glass-card rounded-2xl overflow-hidden transition-all duration-300 hover:translate-y-[-4px] border border-outline-variant/15">
+<div class="p-6 flex-1">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="text-xl font-bold font-headline group-hover:text-primary transition-colors">Electric Arc Co.</h3>
+<p class="text-zinc-400 text-sm">Master Electricians &amp; Smart Home</p>
+</div>
+<span class="material-symbols-outlined text-zinc-600 hover:text-primary cursor-pointer">more_vert</span>
+</div>
+<div class="flex flex-col gap-3 mb-6">
+<div class="flex -space-x-3 overflow-hidden">
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Portrait of electrician in branded workwear" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzLP9rs5gyLjqHFUIoWausOSOo0l8pudGi1o2GujbajlJ1Rgo7EHk0rsU3R51F4w0tJclvd7hn_zq2SQhGsg6oZhQPSqkfrlVPrw-zEcyQRmJrPEndRpbrK9peBekNLKpbnjAPuvrKl9VDo7lNUEisImab3KG6eRlABDMh0RciNpUx0sTYdcTWvyf_QbE2clvEe11eipUCoBCKw7JpOH_Eu14-1Wjto8ONhJEZnLbEiQAMfjRq2UadeKk6y6KwXbfp-0uXREDQbls"/>
+<img alt="Crew Member" class="inline-block h-10 w-10 rounded-full ring-2 ring-[#121412] object-cover" data-alt="Woman with goggles working on electrical panel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLee54bzu4CEi1hDRJ9g6Z6lVQSwi0p15N-DhSs5JBGaiYQTPQpT-bmW4OAjC2GqVqpsGzwMqsRQ3BsFLxngn8129zd0hpra8umiM-UaXIwq-SY3rgHpOfBm_ltRt_XT5jlcO7WCEq21znLGAxlrP7JiU1uvjZDfMwLUX5ltSlaZuZ9Uy24Z2d9gUqgn5hFi42ADufE7LDQy1Kbe-mFS3421PqfG1lH2eof_8i08AUy5gylwIgOXj60liSJbiZFm2GAnAlKKUx-wI"/>
+<div class="flex items-center justify-center h-10 w-10 rounded-full ring-2 ring-[#121412] bg-surface-container-highest text-[10px] font-bold">+2</div>
+</div>
+<p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Lead: J. Chen + 3 specialists</p>
+</div>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">HVAC Integrated</span>
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-zinc-300 text-[10px] font-bold uppercase tracking-wider">Industrial</span>
+</div>
+<div class="mb-6">
+<div class="flex justify-between items-center mb-3">
+<p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Current Capacity</p>
+<p class="text-[10px] font-bold text-primary">15% BUSY</p>
+</div>
+<div class="flex items-end justify-between h-12 gap-1.5">
+<div class="w-full bg-primary rounded-t-sm" style="height: 10%"></div>
+<div class="w-full bg-primary rounded-t-sm" style="height: 15%"></div>
+<div class="w-full bg-primary rounded-t-sm" style="height: 10%"></div>
+<div class="w-full bg-primary rounded-t-sm" style="height: 20%"></div>
+<div class="w-full bg-primary rounded-t-sm" style="height: 15%"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm" style="height: 10%"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm" style="height: 10%"></div>
+</div>
+<div class="flex justify-between mt-2">
+<span class="text-[8px] text-zinc-600 font-bold">M</span>
+<span class="text-[8px] text-zinc-600 font-bold">T</span>
+<span class="text-[8px] text-zinc-600 font-bold">W</span>
+<span class="text-[8px] text-zinc-600 font-bold">T</span>
+<span class="text-[8px] text-zinc-600 font-bold">F</span>
+<span class="text-[8px] text-zinc-600 font-bold">S</span>
+<span class="text-[8px] text-zinc-600 font-bold">S</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="py-2.5 rounded-xl border border-primary text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/5 transition-all">View Details</button>
+<button class="py-2.5 rounded-xl bg-primary text-on-primary text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all">Assign Project</button>
+</div>
+</div>
+<div class="px-6 py-4 bg-surface-container-high/60 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(174,238,42,0.6)]"></span>
+<span class="text-[10px] font-bold text-on-surface tracking-wider uppercase">High Availability</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-zinc-500 text-sm">groups</span>
+<span class="text-[10px] font-bold text-zinc-300">4 Members</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[10px] font-bold text-zinc-300">4.8</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB -->
+<button class="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</body></html>

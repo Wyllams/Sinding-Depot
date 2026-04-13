@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BuildFlow - Construction Management Dashboard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-variant": "#242624",
+                      "secondary-fixed-dim": "#d5dc50",
+                      "secondary": "#e3eb5d",
+                      "on-tertiary": "#685e00",
+                      "inverse-on-surface": "#545553",
+                      "primary": "#aeee2a",
+                      "outline": "#747673",
+                      "outline-variant": "#474846",
+                      "surface-container-high": "#1e201e",
+                      "on-tertiary-fixed": "#4b4400",
+                      "on-tertiary-container": "#5f5600",
+                      "on-error-container": "#ffd2c8",
+                      "background": "#0d0f0d",
+                      "error": "#ff7351",
+                      "on-primary-fixed-variant": "#425f00",
+                      "on-primary-fixed": "#2b4000",
+                      "tertiary-dim": "#eedc47",
+                      "secondary-fixed": "#e3eb5d",
+                      "tertiary-fixed-dim": "#eedc47",
+                      "on-surface": "#faf9f5",
+                      "primary-dim": "#a0df14",
+                      "tertiary": "#fff7cf",
+                      "secondary-dim": "#d5dc50",
+                      "surface-container-highest": "#242624",
+                      "on-secondary-fixed": "#3f4200",
+                      "on-error": "#450900",
+                      "surface-container-lowest": "#000000",
+                      "surface-dim": "#0d0f0d",
+                      "on-secondary-fixed-variant": "#5b6000",
+                      "on-primary": "#3a5400",
+                      "secondary-container": "#5e6300",
+                      "on-tertiary-fixed-variant": "#6a6000",
+                      "error-dim": "#d53d18",
+                      "inverse-surface": "#faf9f5",
+                      "primary-fixed-dim": "#a0df14",
+                      "surface-tint": "#aeee2a",
+                      "on-surface-variant": "#ababa8",
+                      "surface-bright": "#2a2d2a",
+                      "on-background": "#faf9f5",
+                      "primary-container": "#a0df14",
+                      "tertiary-fixed": "#fdeb54",
+                      "on-secondary": "#515600",
+                      "surface-container": "#181a18",
+                      "error-container": "#b92902",
+                      "surface-container-low": "#121412",
+                      "primary-fixed": "#aeee2a",
+                      "tertiary-container": "#fdeb54",
+                      "inverse-primary": "#496900",
+                      "surface": "#0d0f0d",
+                      "on-secondary-container": "#f9ff8b",
+                      "on-primary-container": "#334b00"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(36, 38, 36, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary">
+<!-- SideNavBar Anchor -->
+<aside class="bg-[#121412] h-screen w-64 fixed left-0 top-0 flex flex-col py-6 z-50 overflow-y-auto">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-xl" style="font-variation-settings: 'FILL' 1;">architecture</span>
+</div>
+<div>
+<h1 class="text-2xl font-bold tracking-tighter text-[#aeee2a] font-headline">BuildFlow</h1>
+<p class="text-[10px] text-on-surface-variant font-label tracking-widest uppercase">Construction Management</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1 px-4">
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-[#aeee2a] font-bold border-r-4 border-[#aeee2a] bg-[#242624]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label">Dashboard</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-zinc-500 hover:text-zinc-200 hover:bg-[#242624]" href="#">
+<span class="material-symbols-outlined">engineering</span>
+<span class="font-label">Projects</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-zinc-500 hover:text-zinc-200 hover:bg-[#242624]" href="#">
+<span class="material-symbols-outlined">request_quote</span>
+<span class="font-label">Change Orders</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-zinc-500 hover:text-zinc-200 hover:bg-[#242624]" href="#">
+<span class="material-symbols-outlined">report_problem</span>
+<span class="font-label">Issues</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-zinc-500 hover:text-zinc-200 hover:bg-[#242624]" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-label">Schedule</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-zinc-500 hover:text-zinc-200 hover:bg-[#242624]" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label">RFIs</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-zinc-500 hover:text-zinc-200 hover:bg-[#242624]" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span class="font-label">Reports</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-zinc-500 hover:text-zinc-200 hover:bg-[#242624]" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label">Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full bg-primary hover:bg-primary-dim text-on-primary font-bold py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 scale-95 active:scale-90 font-headline">
+<span class="material-symbols-outlined">add</span>
+                New Project
+            </button>
+</div>
+</aside>
+<!-- TopAppBar Anchor -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-40 bg-[#0d0f0d]/80 backdrop-blur-xl flex justify-between items-center px-8 h-16 ml-64">
+<div class="flex-1 max-w-xl">
+<div class="relative flex items-center group">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface-container border-none focus:ring-1 focus:ring-primary/30 rounded-xl pl-12 text-sm text-on-surface placeholder:text-on-surface-variant h-10" placeholder="Search project files, RFIs, or teams..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-surface-variant text-zinc-400 hover:text-white transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-surface-variant text-zinc-400 hover:text-white transition-all">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-px bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-3 pl-2">
+<div class="text-right">
+<p class="text-sm font-bold text-on-surface font-label">Marcus Thorne</p>
+<p class="text-[10px] text-on-surface-variant font-label tracking-tighter">Project Director</p>
+</div>
+<img alt="User Profile Avatar" class="w-10 h-10 rounded-xl border border-outline-variant object-cover" data-alt="Close-up portrait of a professional male project manager in a clean dark studio setting with soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHapVJ3LOaMjs63N5lhg2gclABAP3TqbEVnzkRR57MihwZJCYOGu_8X621zxJoJYwfjV9nQaRMOgL6rflsXwsXU7pbKMTWVW-T-45L5wVusKlPgV6ucsPBXmNQJd-WRPbT_Ig4CIVz9Ft3CJ_5YZhdjrKtqHZbjFjCDMMJB_M7Aur3hF2XUu4fFALQiFAYOlGxK87pN1fK4Q7WB7AoDiyQLC0M2-t7AHjkhYrlHT3MqhVzeQs1MedaUD3nrjrw7w7fTxfEied7bj0"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="ml-64 pt-24 px-8 pb-12 min-h-screen">
+<div class="mb-8">
+<h2 class="text-4xl font-extrabold tracking-tighter font-headline text-on-surface">Overview</h2>
+<p class="text-on-surface-variant font-body">Global project metrics and operational health.</p>
+</div>
+<!-- Bento Grid Metrics -->
+<div class="grid grid-cols-12 gap-6 mb-10">
+<!-- Metric Card 1: Active Projects -->
+<div class="col-span-12 lg:col-span-4 glass-card rounded-2xl p-6 border-t border-white/5">
+<div class="flex justify-between items-start mb-6">
+<span class="text-[11px] font-bold tracking-[0.2em] text-on-surface-variant uppercase font-label">Active Projects</span>
+<span class="material-symbols-outlined text-primary">analytics</span>
+</div>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-4xl font-extrabold font-headline">24</span>
+<span class="text-on-surface-variant font-medium">projects</span>
+</div>
+<div class="relative h-[80px] w-full mb-4 overflow-hidden rounded-lg bg-surface-container">
+<div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(90deg, transparent 50%, rgba(174,238,42,0.1) 50%), linear-gradient(0deg, transparent 50%, rgba(174,238,42,0.1) 50%); background-size: 10px 10px;"></div>
+<div class="absolute bottom-0 left-0 w-full h-[60%] flex items-end px-2 gap-1">
+<div class="bg-primary/20 w-full h-[40%] rounded-t-sm"></div>
+<div class="bg-primary/40 w-full h-[70%] rounded-t-sm"></div>
+<div class="bg-primary w-full h-[55%] rounded-t-sm"></div>
+<div class="bg-primary w-full h-[90%] rounded-t-sm"></div>
+<div class="bg-primary/60 w-full h-[45%] rounded-t-sm"></div>
+<div class="bg-primary w-full h-[75%] rounded-t-sm"></div>
+<div class="bg-primary w-full h-[100%] rounded-t-sm shadow-[0_0_15px_rgba(174,238,42,0.5)]"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label">
+<span class="text-on-surface-variant">Fleet Utilization</span>
+<span class="text-primary font-bold">88%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%] shadow-[0_0_8px_rgba(174,238,42,0.6)]"></div>
+</div>
+</div>
+</div>
+<!-- Metric Card 2: Pending Change Orders -->
+<div class="col-span-12 lg:col-span-5 glass-card rounded-2xl p-6 border-t border-white/5 relative overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<span class="text-[11px] font-bold tracking-[0.2em] text-on-surface-variant uppercase font-label">Pending Change Orders</span>
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full font-label tracking-tight">Highlighted</span>
+</div>
+<div class="flex flex-col gap-1 mb-8">
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-extrabold font-headline">17</span>
+<span class="text-on-surface-variant font-medium">orders</span>
+</div>
+<span class="text-primary text-2xl font-bold font-headline">$89,450</span>
+<span class="text-xs text-on-surface-variant">Total Value Pending Approval</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 bg-surface-container-high rounded-xl">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Average Wait</p>
+<p class="text-lg font-bold font-headline">4.2 Days</p>
+</div>
+<div class="p-4 bg-surface-container-high rounded-xl">
+<p class="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Impact Risk</p>
+<p class="text-lg font-bold font-headline text-secondary">Medium</p>
+</div>
+</div>
+</div>
+<!-- Metric Card 3: Blocking Issues -->
+<div class="col-span-12 lg:col-span-3 glass-card rounded-2xl p-6 border-t border-white/5">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[11px] font-bold tracking-[0.2em] text-on-surface-variant uppercase font-label">Blocking Issues</span>
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex items-baseline gap-2 mb-6">
+<span class="text-4xl font-extrabold font-headline text-error">9</span>
+<span class="text-on-surface-variant font-medium">critical issues</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">plumbing</span>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold font-label">MEP Team</p>
+<div class="h-1 w-full bg-surface-container-highest rounded-full mt-1">
+<div class="h-full bg-error w-3/4"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">construction</span>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold font-label">Structural Eng.</p>
+<div class="h-1 w-full bg-surface-container-highest rounded-full mt-1">
+<div class="h-full bg-error w-1/2"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">electric_bolt</span>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold font-label">Grid Systems</p>
+<div class="h-1 w-full bg-surface-container-highest rounded-full mt-1">
+<div class="h-full bg-primary w-1/4"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Project Table Section -->
+<div class="bg-surface-container-low rounded-3xl overflow-hidden border border-outline-variant/15">
+<div class="px-8 py-6 flex justify-between items-center bg-surface-container/50">
+<h3 class="text-xl font-bold font-headline tracking-tight">Upcoming Projects</h3>
+<button class="text-primary hover:bg-primary/10 px-4 py-2 rounded-lg text-sm font-bold font-label transition-colors">View All Schedule</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/30">
+<th class="px-8 py-4 text-[10px] font-bold tracking-[0.1em] text-on-surface-variant uppercase font-label">Project Name</th>
+<th class="px-6 py-4 text-[10px] font-bold tracking-[0.1em] text-on-surface-variant uppercase font-label">Location</th>
+<th class="px-6 py-4 text-[10px] font-bold tracking-[0.1em] text-on-surface-variant uppercase font-label">Start Date</th>
+<th class="px-6 py-4 text-[10px] font-bold tracking-[0.1em] text-on-surface-variant uppercase font-label">Client</th>
+<th class="px-6 py-4 text-[10px] font-bold tracking-[0.1em] text-on-surface-variant uppercase font-label">Budget</th>
+<th class="px-6 py-4 text-[10px] font-bold tracking-[0.1em] text-on-surface-variant uppercase font-label">Status</th>
+<th class="px-8 py-4 text-[10px] font-bold tracking-[0.1em] text-on-surface-variant uppercase font-label">Manager</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-8 py-5 font-bold text-sm">Zenith Heights Phase II</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Austin, TX</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Oct 12, 2024</td>
+<td class="px-6 py-5 text-sm font-medium">Nexus Real Estate</td>
+<td class="px-6 py-5 text-sm font-bold text-primary">$12.4M</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold rounded-full font-label">In Review</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-variant border border-outline-variant/30 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a young project manager with a friendly expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAr49BTqxnBNk3ZbuUU5LnvdhRxtmDjgUmbYR16gpZXv1hoaIYD5sfN9_V_7TsWcUaeEMZtBrHgfURSBUjuxD0gNOf2z_nY1pk2KU1lIWU2imiVnJLieYSduIO74OGqodWpU_KWHlkkGGXFuvt_HLKpPSRFaVn4q7HMnjc5Teq06PxtPs4eJy75F7nQgDtJOsneoYEKTyiHHg1dBYy-MTmcyi7P5ohobg31xjjxE5JYtPvAVLxJ3fumIzqLIdSuxIFoGQSnXryaFo"/>
+</div>
+<span class="text-xs font-medium">Sarah Jenkins</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-8 py-5 font-bold text-sm">Harbor Bridge Renovation</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Miami, FL</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Nov 04, 2024</td>
+<td class="px-6 py-5 text-sm font-medium">Coastal Authorities</td>
+<td class="px-6 py-5 text-sm font-bold text-primary">$4.8M</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full font-label">Planning</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-variant border border-outline-variant/30 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close-up of a middle-aged male executive in professional attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdKiFohH6tuKyjMA3re5OJERUZbLHyRy6HmSCoNx-1pwtFU1vdX2xqkawE-Dv7eIPSHRSZ6dTDhZsFRK-TNE9kil1ldQqHxyv6fXscAcBypMPNCfzfAPBEvJRJQ0wBpxnk2MyKkajDnAagwqR_RD0QrlF70PYumB9oWbgEC4aq_xwNv3Dn5-bJBbu3ec5JvhEU039BSRca-cdUqopdGJG87OpDvIHg56ivvkqYvSLtH3qz4hMlGkA4-w6wvF87rK4EQ4_io8symBg"/>
+</div>
+<span class="text-xs font-medium">David Chen</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-8 py-5 font-bold text-sm">Eco-Park Logistics Hub</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Seattle, WA</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Dec 01, 2024</td>
+<td class="px-6 py-5 text-sm font-medium">Green Global Inc.</td>
+<td class="px-6 py-5 text-sm font-bold text-primary">$32.0M</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[10px] font-bold rounded-full font-label">Pending</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-variant border border-outline-variant/30 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a smiling female operations manager with professional lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8txlBQQHc_KmiSRefMVYqtrzvt6Hzgxxowg165D-uRX6dL61XOwpOb-A5O5SxcqI5SLskgLA6Wgi8jv8iPjs1THiIpe4kSjxB4-PZclB0NcTg1dHbVca7bKWRx-oQz-YsLynj5FhrwvKLiZZKU66eZtp40D5yIX3tJ6BeNTUUlbRiMeCnzo-_D0nCR7xybY5EJYi_WZ35IbPt3MyxVGp6fzGr-V-djNoR3CYIltu9lId8E2xQTelykXmqcVMMb8gyu4vdcegAGq0"/>
+</div>
+<span class="text-xs font-medium">Elena Rodriguez</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-8 py-5 font-bold text-sm">The Pinnacle Residences</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Chicago, IL</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Jan 15, 2025</td>
+<td class="px-6 py-5 text-sm font-medium">Vantage Living</td>
+<td class="px-6 py-5 text-sm font-bold text-primary">$18.2M</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold rounded-full font-label">In Review</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-variant border border-outline-variant/30 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Professional profile photo of a young man in a minimalist office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx6be4T46k3P_itQKrnBTzprvwAKOHTtPfPOe9Xf8vbm_ZspFsT30eXLMqd5YRV2W5eD7PXNvBoo_t0Cc--f02CQPN2hEU7Y5-STS9DBMNskc5vwqE2UXtlSSjGRqHoW_vq_wt1qwYim7BSAF7skNqCGx2y5QWEI0AvfNZj_WlfaAxM37TQVR3xDClqkBXE2L6_BNWv3DRElDUw08-5eXtCz14xcspvbO25M1MHj9FdQ0XVT2AE41-chaptZLjO098kvIgYgNkSlM"/>
+</div>
+<span class="text-xs font-medium">Michael Watts</span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<!-- Contextual FAB Suppression: Hiding as per rules for detailed dashboard -->
+</body></html>

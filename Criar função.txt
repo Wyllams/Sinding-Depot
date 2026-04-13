@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Role | Iron &amp; Lime</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#515600",
+                        "surface-container-low": "#121412",
+                        "primary-fixed": "#aeee2a",
+                        "surface-container": "#181a18",
+                        "error-container": "#b92902",
+                        "tertiary-fixed": "#fdeb54",
+                        "primary-container": "#a0df14",
+                        "on-primary-container": "#334b00",
+                        "on-secondary-container": "#f9ff8b",
+                        "inverse-primary": "#496900",
+                        "tertiary-container": "#fdeb54",
+                        "surface": "#0d0f0d",
+                        "inverse-surface": "#faf9f5",
+                        "on-tertiary-fixed-variant": "#6a6000",
+                        "error-dim": "#d53d18",
+                        "secondary-container": "#5e6300",
+                        "on-primary": "#3a5400",
+                        "on-error": "#450900",
+                        "surface-dim": "#0d0f0d",
+                        "on-secondary-fixed-variant": "#5b6000",
+                        "surface-container-lowest": "#000000",
+                        "on-background": "#faf9f5",
+                        "surface-bright": "#2a2d2a",
+                        "primary-fixed-dim": "#a0df14",
+                        "surface-tint": "#aeee2a",
+                        "on-surface-variant": "#ababa8",
+                        "tertiary-dim": "#eedc47",
+                        "on-primary-fixed-variant": "#425f00",
+                        "on-primary-fixed": "#2b4000",
+                        "tertiary-fixed-dim": "#eedc47",
+                        "on-surface": "#faf9f5",
+                        "secondary-fixed": "#e3eb5d",
+                        "surface-container-highest": "#242624",
+                        "secondary-dim": "#d5dc50",
+                        "tertiary": "#fff7cf",
+                        "on-secondary-fixed": "#3f4200",
+                        "primary-dim": "#a0df14",
+                        "secondary-fixed-dim": "#d5dc50",
+                        "surface-variant": "#242624",
+                        "primary": "#aeee2a",
+                        "inverse-on-surface": "#545553",
+                        "secondary": "#e3eb5d",
+                        "on-tertiary": "#685e00",
+                        "background": "#0d0f0d",
+                        "error": "#ff7351",
+                        "surface-container-high": "#1e201e",
+                        "outline-variant": "#474846",
+                        "on-tertiary-fixed": "#4b4400",
+                        "outline": "#747673",
+                        "on-error-container": "#ffd2c8",
+                        "on-tertiary-container": "#5f5600"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(36, 38, 36, 0.4);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+        }
+        .glow-primary {
+            box-shadow: 0 0 20px rgba(174, 238, 42, 0.2);
+        }
+        .glow-error {
+            box-shadow: 0 0 20px rgba(255, 115, 81, 0.25);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#121412] border-r border-white/10 flex flex-col py-8 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-2xl font-bold tracking-tighter text-[#aeee2a] font-headline">Iron &amp; Lime</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-medium mt-1">Construction Management</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-[#242624] transition-all duration-200 rounded-xl group" href="#">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="font-medium text-sm">Dashboard</span>
+</a>
+<!-- Projects -->
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-[#242624] transition-all duration-200 rounded-xl group" href="#">
+<span class="material-symbols-outlined text-[22px]">construction</span>
+<span class="font-medium text-sm">Projects</span>
+</a>
+<!-- Teams -->
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-[#242624] transition-all duration-200 rounded-xl group" href="#">
+<span class="material-symbols-outlined text-[22px]">groups</span>
+<span class="font-medium text-sm">Teams</span>
+</a>
+<!-- Roles & Permissions (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#aeee2a] font-bold border-r-2 border-[#aeee2a] bg-[#242624]/50 rounded-l-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+<span class="font-medium text-sm">Roles &amp; Permissions</span>
+</a>
+<!-- Integrations -->
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-[#242624] transition-all duration-200 rounded-xl group" href="#">
+<span class="material-symbols-outlined text-[22px]">extension</span>
+<span class="font-medium text-sm">Integrations</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-[#242624] transition-all duration-200 rounded-xl group" href="#">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+<span class="font-medium text-sm">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-white/5 px-2">
+<button class="w-full py-3 px-4 bg-primary text-on-primary font-bold rounded-xl text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all glow-primary">
+<span class="material-symbols-outlined text-lg">add</span>
+                New Project
+            </button>
+<div class="flex items-center gap-3 mt-6">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="professional portrait of a project manager wearing a clean construction vest and hardhat, modern studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU58JHorl9SVNVZ30aFxBSriqdrQibWJbubgZH3gJlGmuSYu1DRnWjeI2kDJFhc4lzik63tDNKgAY95_R4-OZyocx0F50wq6EhCw_MIPdBuHcEpX1sBlQaXzZjo7s1zbO3ZkXTLzaBeeZEMctul-I5V5y1MVSuvEJLz6TMBPW3DCoGr88qO0PnbK2WSl2_YTPt5DvWwjq8K_4g1ZxncXPCHQlLuw1Lf7lEr2yA0qykQWZn60RfWlOngEbFA5t5Le54tkj6Qzo0v-E"/>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Alex Rivera</p>
+<p class="text-[10px] text-on-surface-variant">Admin Control</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen relative">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-40 bg-[#0d0f0d]/80 backdrop-blur-xl border-b border-white/5 h-20 flex justify-between items-center px-8">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">arrow_back_ios</span>
+<h2 class="font-headline text-lg font-semibold tracking-tight">Roles &amp; Permissions</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-xl">search</span>
+<input class="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-outline" placeholder="Search parameters..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Canvas Content -->
+<section class="pt-28 pb-12 px-12 max-w-6xl">
+<div class="mb-10">
+<h1 class="font-headline text-4xl font-extrabold tracking-tighter text-on-surface mb-2">Create Role</h1>
+<p class="text-on-surface-variant max-w-2xl">Define a new architectural permission set for your organization. Assign granular access to features and data modules.</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Role Identity (Left Side) -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<div class="p-6 rounded-2xl bg-surface-container-low border border-white/5">
+<label class="block text-xs font-bold uppercase tracking-widest text-primary mb-4">Role Identity</label>
+<div class="space-y-4">
+<div>
+<label class="text-[11px] text-on-surface-variant uppercase mb-1.5 block font-medium">Role Name</label>
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-3 px-4 text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary/20 transition-all" placeholder="e.g. Senior Project Architect" type="text"/>
+</div>
+<div>
+<label class="text-[11px] text-on-surface-variant uppercase mb-1.5 block font-medium">Description</label>
+<textarea class="w-full bg-surface-container-highest border-none rounded-xl py-3 px-4 text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Define the scope of this role..." rows="3"></textarea>
+</div>
+</div>
+</div>
+<div class="p-6 rounded-2xl glass-card border border-white/10 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 blur-3xl rounded-full group-hover:bg-primary/20 transition-all"></div>
+<h4 class="text-sm font-bold text-on-surface mb-2">Inherit Permissions</h4>
+<p class="text-xs text-on-surface-variant mb-4">Start with a template based on an existing role to save time.</p>
+<button class="w-full py-2.5 px-4 rounded-xl border border-outline-variant text-xs font-bold hover:bg-surface-container-highest transition-colors">Select Template</button>
+</div>
+</div>
+<!-- Feature Permissions (Main Table Area) -->
+<div class="col-span-12 lg:col-span-8">
+<div class="rounded-2xl bg-surface-container-low border border-white/5 overflow-hidden">
+<div class="p-6 border-b border-white/5 flex justify-between items-center bg-surface-container-high/50">
+<div>
+<h3 class="font-headline text-lg font-bold">Feature Permissions</h3>
+<p class="text-xs text-on-surface-variant mt-1">Grant specific interaction levels for each module.</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-surface-container-highest text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="py-4 px-6 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Feature</th>
+<th class="py-4 px-6 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant text-center">View</th>
+<th class="py-4 px-6 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant text-center">Edit</th>
+<th class="py-4 px-6 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant text-center">Hide</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<!-- Row 1: CRM Access -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-5 px-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">hub</span>
+<span class="font-medium text-sm">CRM Access</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+<td class="py-5 px-6 text-center">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center mx-auto glow-primary">
+<span class="material-symbols-outlined text-on-primary text-xs font-bold">check</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+</tr>
+<!-- Row 2: Pipeline Management -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-5 px-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">account_tree</span>
+<span class="font-medium text-sm">Pipeline Management</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+<td class="py-5 px-6 text-center">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center mx-auto glow-primary">
+<span class="material-symbols-outlined text-on-primary text-xs font-bold">check</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+</tr>
+<!-- Row 3: Reporting -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-5 px-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">bar_chart</span>
+<span class="font-medium text-sm">Reporting</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center mx-auto glow-primary">
+<span class="material-symbols-outlined text-on-primary text-xs font-bold">check</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+</tr>
+<!-- Row 4: Deal Closure -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-5 px-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">handshake</span>
+<span class="font-medium text-sm">Deal Closure</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+<td class="py-5 px-6 text-center">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center mx-auto glow-primary">
+<span class="material-symbols-outlined text-on-primary text-xs font-bold">check</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+</tr>
+<!-- Row 5: Leads Database -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-5 px-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">database</span>
+<span class="font-medium text-sm">Leads Database</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+<td class="py-5 px-6 text-center">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center mx-auto glow-primary">
+<span class="material-symbols-outlined text-on-primary text-xs font-bold">check</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+</tr>
+<!-- Row 6: Activity Logs (HIDE SELECTED IN RED) -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="py-5 px-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">history_edu</span>
+<span class="font-medium text-sm">Activity Logs</span>
+</div>
+</td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+<td class="py-5 px-6 text-center"><div class="w-5 h-5 rounded-full border-2 border-outline-variant mx-auto"></div></td>
+<td class="py-5 px-6 text-center">
+<div class="w-6 h-6 rounded-full bg-error flex items-center justify-center mx-auto glow-error">
+<span class="material-symbols-outlined text-on-error text-xs font-bold" style="font-variation-settings: 'FILL' 1;">visibility_off</span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Form Actions -->
+<div class="mt-8 flex justify-end items-center gap-4">
+<button class="px-8 py-3 rounded-full font-bold text-on-surface-variant hover:text-on-surface transition-colors">Cancel</button>
+<button class="px-10 py-3 bg-primary text-on-primary rounded-full font-bold glow-primary hover:scale-[1.02] active:scale-95 transition-all">Create Role</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual Floating Indicator (Bottom Right) -->
+<div class="fixed bottom-8 right-8 z-50">
+<div class="glass-card border border-primary/20 rounded-full px-6 py-3 flex items-center gap-4 glow-primary">
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-surface" data-alt="avatar of team member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAE8AJVSSy8vBiA9dfyJ5vZCM9oUopxm8MWKNj_jCk787FN_dV9kzQ088iF2j-GA_1hsydBJ9dacdg5TnvN5N-Pz5qrzj36pxzdicVnsjSFNhOoJE8MjOk1HGxibVa-kHjsNADZtTi8SuaNxZVgew2dMNsrpV3q3DFRtHEphx7mPoiC7X2wf-9nb-aeYNk-3ptqifmZd603fLpGOuclVd80gZsdvXx-NDQpyOIDpsGA57YlDmxY6SSoEILk-a2i6sZcErsEX0uyrQs"/>
+<img class="w-6 h-6 rounded-full border-2 border-surface" data-alt="avatar of team member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlEsu1jLFIX3Mhd3xDRlNiVAL5XG7iyAStYhzkjMJcFNUXharOGr3v-JgHDD74Ue4AUkDgf28aoAEAXDeL5N271VWOm8k1A6K8B3if_8WU2Lk1jT1ohPH2ZMdkeM6eHWt-PjFEg1GWm8AS--mT9aNwSZ-rp9DDcFf4jZQt3IlchHB3BnpwKHynhLfUUlXaJdGenlJyHsD9bzX6TYHCi8Wqhiazd0N4v6KCRMwkFPPJmHXbTPJvHZ1-4JtfZHfYtlIMEX4RmbPUc4Y"/>
+</div>
+<p class="text-[11px] font-bold text-on-surface uppercase tracking-tight">Active Designers: 2</p>
+</div>
+</div>
+</body></html>
