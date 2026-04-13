@@ -6,8 +6,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
 
 export const metadata: Metadata = {
-  title: "BuildFlow - Construction Management",
-  description: "Construction Management Platform",
+  title: "Siding Depot Command Center",
+  description: "Siding Depot Operations & Management Platform",
   other: { google: "notranslate" },
 };
 
