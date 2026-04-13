@@ -23,7 +23,7 @@ export function Sidebar() {
   return (
     <aside className="bg-[#121412] h-screen w-64 flex flex-col py-6 z-50 overflow-y-auto shrink-0">
       {/* Logo */}
-      <div className="px-6 mb-6 mt-2">
+      <div className="w-full flex justify-center mb-6 mt-2">
         <img 
           src="/logo-new.png" 
           alt="Siding Depot Logo" 
