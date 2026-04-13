@@ -24,14 +24,24 @@ export function Sidebar() {
 
   const sidebarContent = (
     <aside className="bg-[#121412] h-full w-64 flex flex-col py-6 z-50 overflow-y-auto shrink-0">
-      {/* Logo */}
-      <div className="w-full flex justify-center mb-6 mt-2">
+      {/* Logo + close button row */}
+      <div className="w-full flex items-center justify-center mb-6 mt-2 relative px-4">
         <img
           src="/logo-new.png"
           alt="Siding Depot Logo"
           className="w-[110px] h-auto object-contain"
           style={{ filter: "drop-shadow(0px 0px 8px rgba(174, 238, 42, 0.6)) drop-shadow(0px 0px 15px rgba(174, 238, 42, 0.3))" }}
         />
+        {/* Close button — only inside mobile drawer */}
+        {isOpen && (
+          <button
+            onClick={close}
+            className="lg:hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#242624] border border-white/10 flex items-center justify-center text-[#ababa8] hover:text-white transition-colors"
+            aria-label="Close menu"
+          >
+            <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
+          </button>
+        )}
       </div>
 
       {/* Nav */}
@@ -95,17 +105,7 @@ export function Sidebar() {
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Close button inside drawer header */}
-        <div className="relative h-full">
-          <button
-            onClick={close}
-            className="absolute top-4 right-[-44px] z-50 w-9 h-9 rounded-full bg-[#242624] border border-white/10 flex items-center justify-center text-[#ababa8] hover:text-white transition-colors"
-            aria-label="Close menu"
-          >
-            <span className="material-symbols-outlined text-[20px]" translate="no">close</span>
-          </button>
-          {sidebarContent}
-        </div>
+        {sidebarContent}
       </div>
     </>
   );
