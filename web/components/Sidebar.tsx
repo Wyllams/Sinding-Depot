@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const navItems = [
   { href: "/", icon: "dashboard", label: "Dashboard", filled: true },
@@ -19,6 +19,14 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    // Limpa o cookie de sessão diretamente no cliente também
+    document.cookie = 'siding_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    router.push('/login');
+    router.refresh();
+  };
 
   return (
     <aside className="bg-[#121412] h-screen w-64 flex flex-col py-6 z-50 overflow-y-auto shrink-0">
@@ -65,7 +73,16 @@ export function Sidebar() {
         })}
       </nav>
 
-
+      {/* Logout */}
+      <div className="px-4 pb-2 mt-2">
+        <button
+          onClick={handleLogout}
+          className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-zinc-500 hover:text-red-400 hover:bg-red-400/10"
+        >
+          <span className="material-symbols-outlined" translate="no">logout</span>
+          <span>Sign Out</span>
+        </button>
+      </div>
     </aside>
   );
 }
