@@ -731,15 +731,29 @@ function NewServiceModal({ onClose }: { onClose: () => void }) {
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none text-[18px]" translate="no">storefront</span>
               <select defaultValue="" className="w-full appearance-none bg-[#181a18] border border-[#474846]/30 py-4 pl-11 pr-10 rounded-xl text-sm text-[#faf9f5] font-medium cursor-pointer focus:ring-1 focus:ring-[#aeee2a] outline-none hover:border-[#aeee2a]/50 transition-colors">
                 <option value="" disabled>Select a partner...</option>
-                <option>Apex Exteriors LLC</option>
-                <option>Premier Siding Co.</option>
-                <option>SunShield Contractors</option>
-                <option>Ironclad Roofing Group</option>
-                <option>Skyline Windows &amp; Doors</option>
-                <option>ProFlow Gutters Inc.</option>
-                <option>DeckMaster Builders</option>
-                <option>ColorPro Painting Services</option>
-                <option>ClearHaul Dumpster Co.</option>
+                <optgroup label="── Siding Crews ──">
+                  <option value="XICARA">XICARA</option>
+                  <option value="XICARA 2">XICARA 2</option>
+                  <option value="WILMAR">WILMAR</option>
+                  <option value="WILMAR 2">WILMAR 2</option>
+                  <option value="SULA">SULA</option>
+                  <option value="LUIZ">LUIZ</option>
+                </optgroup>
+                <optgroup label="── Doors / Windows ──">
+                  <option value="SERGIO">SERGIO</option>
+                </optgroup>
+                <optgroup label="── Paint Crews ──">
+                  <option value="OSVIN">OSVIN</option>
+                  <option value="OSVIN 2">OSVIN 2</option>
+                  <option value="VICTOR">VICTOR</option>
+                  <option value="JUAN">JUAN</option>
+                </optgroup>
+                <optgroup label="── Gutters ──">
+                  <option value="LEANDRO">LEANDRO</option>
+                </optgroup>
+                <optgroup label="── Roofing ──">
+                  <option value="JOSUE">JOSUE</option>
+                </optgroup>
               </select>
               <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none" translate="no">expand_more</span>
             </div>
