@@ -23,27 +23,13 @@ export function Sidebar() {
   return (
     <aside className="bg-[#121412] h-screen w-64 flex flex-col py-6 z-50 overflow-y-auto shrink-0">
       {/* Logo */}
-      <div className="px-6 mb-10 flex items-center gap-3">
-        <div className="w-8 h-8 bg-[#aeee2a] rounded-lg flex items-center justify-center">
-          <span
-            className="material-symbols-outlined text-[#3a5400] text-xl"
-            translate="no"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            architecture
-          </span>
-        </div>
-        <div>
-          <h1
-            className="text-2xl font-bold tracking-tighter text-[#aeee2a]"
-            style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-          >
-            BuildFlow
-          </h1>
-          <p className="text-[10px] text-[#ababa8] tracking-widest uppercase">
-            Construction Management
-          </p>
-        </div>
+      <div className="px-6 mb-10 mt-2">
+        <img 
+          src="/logo-new.png" 
+          alt="Siding Depot Logo" 
+          className="w-[140px] h-auto object-contain" 
+          style={{ filter: "drop-shadow(0px 0px 8px rgba(174, 238, 42, 0.6)) drop-shadow(0px 0px 15px rgba(174, 238, 42, 0.3))" }}
+        />
       </div>
 
       {/* Nav */}
