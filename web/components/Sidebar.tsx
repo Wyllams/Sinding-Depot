@@ -23,11 +23,11 @@ export function Sidebar() {
   return (
     <aside className="bg-[#121412] h-screen w-64 flex flex-col py-6 z-50 overflow-y-auto shrink-0">
       {/* Logo */}
-      <div className="px-6 mb-10 mt-2">
+      <div className="px-6 mb-6 mt-2">
         <img 
           src="/logo-new.png" 
           alt="Siding Depot Logo" 
-          className="w-[140px] h-auto object-contain" 
+          className="w-[110px] h-auto object-contain" 
           style={{ filter: "drop-shadow(0px 0px 8px rgba(174, 238, 42, 0.6)) drop-shadow(0px 0px 15px rgba(174, 238, 42, 0.3))" }}
         />
       </div>
