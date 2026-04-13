@@ -81,15 +81,7 @@ const issueActivity: { heights: number[]; dimIdx: number }[] = [
   { heights: [8, 8, 8, 8, 8], dimIdx: -1 },
 ];
 
-const chartBars = [
-  { pct: 40, val: "12" },
-  { pct: 60, val: "18" },
-  { pct: 85, val: "25" },
-  { pct: 100, val: "31", active: true },
-  { pct: 70, val: "21" },
-  { pct: 45, val: "14" },
-  { pct: 30, val: "9" },
-];
+
 
 export default function IssuesPage() {
   return (
@@ -304,73 +296,7 @@ export default function IssuesPage() {
           </div>
         </div>
 
-        {/* Bottom Layout: Chart + Map */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
 
-          {/* Blocker Timeline Chart */}
-          <div className="lg:col-span-2 space-y-6">
-            <h3
-              className="text-lg font-bold text-[#faf9f5]"
-              style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-            >
-              Blocker Timeline Analysis
-            </h3>
-            <div
-              className="h-64 rounded-2xl flex items-end justify-between p-8 gap-2"
-              style={{
-                background: "rgba(36,38,36,0.4)",
-                backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255,255,255,0.05)",
-              }}
-            >
-              {chartBars.map((bar) => (
-                <div
-                  key={bar.val}
-                  className="relative group transition-all rounded-t-lg w-full"
-                  style={{
-                    height: `${bar.pct}%`,
-                    backgroundColor: bar.active ? "#aeee2a" : "rgba(174,238,42,0.2)",
-                  }}
-                >
-                  <div
-                    className={`absolute -top-7 left-1/2 -translate-x-1/2 text-[10px] font-bold transition-opacity ${
-                      bar.active ? "opacity-100 text-[#aeee2a]" : "opacity-0 group-hover:opacity-100"
-                    }`}
-                  >
-                    {bar.val}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Site Location Map */}
-          <div className="space-y-6">
-            <h3
-              className="text-lg font-bold text-[#faf9f5]"
-              style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-            >
-              Site Location
-            </h3>
-            <div className="h-64 rounded-2xl overflow-hidden relative group border border-[#474846]/20">
-              <img
-                alt="Job Site Map"
-                className="w-full h-full object-cover grayscale brightness-50 group-hover:scale-110 transition-transform duration-700"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcGQVEGilaGIU5ku5Y1Vz3nE7uqEbNUHfaLMHWs5uzw0I1pX6Jo2XJ-T704RKwTKu-kZhTPwgBwNZYZW7yLPqNQrSo6f3QI6z4GjNAGhBRNwdXZwI63doFNDVtiDSGcAgWr5QwI4HO_ZO-jxMtpo4JcmybtGhSA-N39HD3e6pgUlcFkTpM-zgbwAvP7D8oKHVZ-QuMNVbYi5fX8jdcV6a_PPR-TdGD7_V7kWGLZp9NDa0b3dOUd3Lrp9UcuIshB2jSr6M5PeFb3KM"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0d0f0d] via-transparent to-transparent" />
-              <div className="absolute bottom-6 left-6 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#aeee2a] flex items-center justify-center text-[#3a5400] shadow-lg shadow-[#aeee2a]/20">
-                  <span className="material-symbols-outlined" translate="no">location_on</span>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-[#faf9f5]">Axiom Tower Site A</p>
-                  <p className="text-[10px] text-[#aeee2a]">Sector 7-G | North Grid</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
       </div>
     </>
