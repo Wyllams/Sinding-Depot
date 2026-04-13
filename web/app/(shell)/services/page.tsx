@@ -336,7 +336,7 @@ function ServiceDetailsModal({ selectedService, onClose }: { selectedService: Se
                       <p className="text-[10px] uppercase tracking-widest font-bold text-[#ababa8] mb-1">Current Status</p>
                       <h3 className="text-xl font-bold text-[#faf9f5]">{selectedService.progressLabel}</h3>
                     </div>
-                    <span className="text-4xl font-extrabold" style={{ color: selectedService.progress === 0 ? "#ababa8" : "#aeee2a" }}>
+                    <span className="text-2xl sm:text-4xl font-extrabold" style={{ color: selectedService.progress === 0 ? "#ababa8" : "#aeee2a" }}>
                       {selectedService.progress}%
                     </span>
                   </div>
@@ -494,7 +494,7 @@ function ServiceDetailsModal({ selectedService, onClose }: { selectedService: Se
                    </p>
                  </div>
                ) : (
-                 <div className="p-8 rounded-2xl border border-[#474846]/20 bg-[#181a18] text-center flex flex-col items-center gap-3">
+                 <div className="p-4 sm:p-6 lg:p-8 rounded-2xl border border-[#474846]/20 bg-[#181a18] text-center flex flex-col items-center gap-3">
                    <div className="w-12 h-12 rounded-full bg-[#242624] flex items-center justify-center">
                      <span className="material-symbols-outlined text-[#aeee2a]" translate="no">check_circle</span>
                    </div>
@@ -705,7 +705,7 @@ function NewServiceModal({ onClose }: { onClose: () => void }) {
         {/* Modal Header */}
         <div className="flex items-start justify-between p-6 sm:p-8 border-b border-[#474846]/20 bg-[#181a18]/50">
           <div>
-            <h2 className="text-3xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+            <h2 className="text-xl sm:text-3xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
               Initialize New Service
             </h2>
             <p className="text-[#ababa8] text-sm mt-1">
@@ -837,13 +837,13 @@ export default function ServicesPage() {
         }
       />
 
-      <main className="p-8 min-h-screen">
+      <main className="p-4 sm:p-6 lg:p-8 min-h-screen">
         <div className="max-w-7xl mx-auto">
 
           {/* Page Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
             <div>
-              <h2 className="text-4xl font-extrabold tracking-tighter mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tighter mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                 Service Management
               </h2>
               <p className="text-[#ababa8] font-medium">Overseeing 12 active construction streams across 3 sites.</p>
@@ -905,7 +905,7 @@ export default function ServicesPage() {
               <div key={s.label} className="glass-card rounded-2xl p-5 border border-[#474846]/10">
                 <p className="text-[10px] font-black text-[#ababa8] uppercase tracking-widest mb-1">{s.label}</p>
                 <div className="flex items-end gap-3">
-                  <span className="text-3xl font-extrabold" style={{ fontFamily: "Manrope, system-ui, sans-serif", color: s.valueColor }}>
+                  <span className="text-xl sm:text-3xl font-extrabold" style={{ fontFamily: "Manrope, system-ui, sans-serif", color: s.valueColor }}>
                     {s.value}
                   </span>
                   <span className="text-xs font-bold mb-1" style={{ color: s.deltaColor, opacity: 0.6 }}>

@@ -114,13 +114,13 @@ export default function ReportsPage() {
     <>
       <TopBar title="Reports" />
 
-      <div className="p-8 space-y-10 min-h-screen pb-16">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-10 min-h-screen pb-16">
 
         {/* ── Page Header ───────────────────────────────────────── */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1
-              className="text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
+              className="text-xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Sales Dashboard

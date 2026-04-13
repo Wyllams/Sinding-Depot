@@ -66,11 +66,11 @@ export default function Dashboard() {
       <TopBar />
 
       {/* Main Canvas */}
-      <main className="px-8 pb-12 pt-8">
+      <main className="px-4 sm:px-6 lg:px-8 pb-12 pt-6 sm:pt-8">
         {/* Page Title */}
         <div className="mb-8">
           <h2
-            className="text-4xl font-extrabold tracking-tighter text-[#faf9f5]"
+            className="text-2xl sm:text-4xl font-extrabold tracking-tighter text-[#faf9f5]"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
           >
             Overview
@@ -79,7 +79,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── Bento Grid Metrics ── */}
-        <div className="grid grid-cols-12 gap-6 mb-10">
+        <div className="grid grid-cols-12 gap-4 sm:gap-6 mb-8 sm:mb-10">
 
           {/* Card 1: Active Projects */}
           <div className="col-span-12 lg:col-span-4 glass-card rounded-2xl p-6 border-t border-white/5">

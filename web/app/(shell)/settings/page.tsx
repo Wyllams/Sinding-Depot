@@ -8,7 +8,7 @@ export default function SettingsPage() {
     <>
       <TopBar title="Settings" />
 
-      <main className="px-8 pb-20 pt-8 min-h-screen bg-[#0d0f0d]">
+      <main className="px-4 sm:px-6 lg:px-8 pb-20 pt-8 min-h-screen bg-[#0d0f0d]">
         <div className="max-w-7xl mx-auto space-y-10">
           
           {/* General & Profile Section */}
@@ -205,10 +205,10 @@ export default function SettingsPage() {
 
           {/* Bottom Floating Action */}
           <div className="flex justify-end gap-4 pt-10 border-t border-[#474846]/10">
-            <button className="px-8 py-3 bg-[#181a18] text-[#faf9f5] font-semibold rounded-xl hover:bg-[#242624] transition-all border border-white/5">
+            <button className="px-4 sm:px-6 lg:px-8 py-3 bg-[#181a18] text-[#faf9f5] font-semibold rounded-xl hover:bg-[#242624] transition-all border border-white/5">
                 Discard Changes
             </button>
-            <button className="px-8 py-3 bg-[#aeee2a] text-[#3a5400] font-bold rounded-xl shadow-[0_8px_30px_rgb(174,238,42,0.2)] hover:scale-[1.02] active:scale-95 transition-all">
+            <button className="px-4 sm:px-6 lg:px-8 py-3 bg-[#aeee2a] text-[#3a5400] font-bold rounded-xl shadow-[0_8px_30px_rgb(174,238,42,0.2)] hover:scale-[1.02] active:scale-95 transition-all">
                 Save Configurations
             </button>
           </div>

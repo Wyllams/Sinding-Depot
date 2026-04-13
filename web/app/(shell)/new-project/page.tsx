@@ -350,7 +350,7 @@ export default function NewProjectPage() {
           {/* Page Title */}
           <div className="mb-12">
             <h1
-              className="text-4xl font-extrabold tracking-tight mb-2"
+              className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Create New Job
@@ -447,7 +447,7 @@ export default function NewProjectPage() {
               {/* Operational Status / Gating */}
               <div className="flex flex-col">
                 <SectionHeader icon="traffic" title="Operational Status" />
-                <div className="p-8 rounded-xl bg-[#121412] border border-[#474846]/15 h-full">
+                <div className="p-4 sm:p-6 lg:p-8 rounded-xl bg-[#121412] border border-[#474846]/15 h-full">
                   <div className="space-y-4">
                     <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8] ml-1">Initial Project Gate</label>
                     <div className="relative group w-full">
@@ -493,7 +493,7 @@ export default function NewProjectPage() {
               {/* Sales Person (SP) */}
               <div className="flex flex-col">
                 <SectionHeader icon="badge" title="Sales Person" />
-                <div className="p-8 rounded-xl bg-[#121412] border border-[#474846]/15 h-full">
+                <div className="p-4 sm:p-6 lg:p-8 rounded-xl bg-[#121412] border border-[#474846]/15 h-full">
                   <div className="space-y-4">
                     <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8] ml-1">Assigned Seller</label>
                      <div className="relative group w-full">
@@ -528,7 +528,7 @@ export default function NewProjectPage() {
             {/* Additional Information */}
             <section>
               <SectionHeader icon="description" title="Additional Information" />
-              <div className="p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+              <div className="p-4 sm:p-6 lg:p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
                 <div className="space-y-2">
                   <label className={labelCls}>Project Notes</label>
                   <textarea
@@ -544,7 +544,7 @@ export default function NewProjectPage() {
             <footer className="flex items-center justify-end gap-6 pt-4 pb-12">
               <Link href="/projects">
                 <button
-                  className="px-8 py-3 rounded-xl border border-[#474846] text-[#ababa8] font-bold hover:bg-[#1e201e] transition-all cursor-pointer"
+                  className="px-4 sm:px-6 lg:px-8 py-3 rounded-xl border border-[#474846] text-[#ababa8] font-bold hover:bg-[#1e201e] transition-all cursor-pointer"
                   type="button"
                 >
                   Cancel

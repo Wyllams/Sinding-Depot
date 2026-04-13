@@ -110,13 +110,13 @@ export default function ProjectsPage() {
       <TopBar title="Command Center" />
 
       {/* ── Main Content ── */}
-      <main className="px-8 pb-12 pt-6 min-h-screen bg-[#0d0f0d]">
+      <main className="px-4 sm:px-6 lg:px-8 pb-12 pt-6 min-h-screen bg-[#0d0f0d]">
 
         {/* Page Header */}
         <div className="flex justify-between items-end mb-8">
           <div>
             <h1
-              className="text-4xl font-extrabold tracking-tight text-[#faf9f5] mb-2"
+              className="text-2xl sm:text-4xl font-extrabold tracking-tight text-[#faf9f5] mb-2"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Construction Jobs

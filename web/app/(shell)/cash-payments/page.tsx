@@ -122,13 +122,13 @@ export default function CashPaymentsPage() {
     <>
       <TopBar title="Cash Payments" />
 
-      <main className="px-8 pb-20 pt-8 min-h-screen">
+      <main className="px-4 sm:px-6 lg:px-8 pb-20 pt-8 min-h-screen">
 
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1
-              className="text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
+              className="text-xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Cash Payments & Material Extra

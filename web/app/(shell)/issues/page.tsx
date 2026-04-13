@@ -106,13 +106,13 @@ export default function IssuesPage() {
       />
 
       {/* Content Canvas */}
-      <div className="p-8 space-y-8 min-h-screen">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 min-h-screen">
 
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <h2
-              className="text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
+              className="text-2xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Pending Issues & Blockers
@@ -123,14 +123,14 @@ export default function IssuesPage() {
               across Axiom Tower
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="px-5 py-2.5 bg-[#1e201e] hover:bg-[#242624] text-[#faf9f5] font-semibold rounded-xl flex items-center gap-2 transition-all">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <button className="px-4 sm:px-5 py-2 sm:py-2.5 bg-[#1e201e] hover:bg-[#242624] text-[#faf9f5] font-semibold rounded-xl flex items-center gap-2 transition-all text-sm">
               <span className="material-symbols-outlined text-sm" translate="no">download</span>
-              Export
+              <span className="hidden sm:inline">Export</span>
             </button>
-            <button className="px-5 py-2.5 bg-[#aeee2a] text-[#3a5400] font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-[#aeee2a]/10 active:scale-95 transition-all">
+            <button className="px-4 sm:px-5 py-2 sm:py-2.5 bg-[#aeee2a] text-[#3a5400] font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-[#aeee2a]/10 active:scale-95 transition-all text-sm">
               <span className="material-symbols-outlined text-sm" translate="no">add</span>
-              New Issue
+              <span className="hidden sm:inline">New Issue</span>
             </button>
           </div>
         </div>
@@ -193,7 +193,8 @@ export default function IssuesPage() {
 
         {/* Data Table */}
         <div className="bg-[#121412] rounded-xl overflow-hidden">
-          <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-[#1e201e]/50">
                 {["ID", "Title", "Project", "Status", "Priority", "Assigned To", "Due Date", "Activity"].map(
@@ -271,9 +272,10 @@ export default function IssuesPage() {
               ))}
             </tbody>
           </table>
+          </div>
 
           {/* Pagination Footer */}
-          <div className="px-8 py-6 border-t border-[#474846]/10 flex items-center justify-between text-[11px] font-bold tracking-widest uppercase text-[#ababa8]">
+          <div className="px-4 sm:px-8 py-4 sm:py-6 border-t border-[#474846]/10 flex flex-wrap items-center justify-between gap-4 text-[11px] font-bold tracking-widest uppercase text-[#ababa8]">
             <div className="flex items-center gap-4">
               <span className="cursor-pointer hover:text-[#aeee2a] transition-colors flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm" translate="no">swap_vert</span>

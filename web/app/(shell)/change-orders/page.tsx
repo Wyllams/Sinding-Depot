@@ -112,9 +112,9 @@ export default function ChangeOrdersPage() {
       <div className="flex flex-col min-h-screen pb-20">
 
         {/* Page Title under TopBar */}
-        <div className="px-8 pt-8 pb-4">
+        <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-4">
           <h1
-            className="text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
+            className="text-xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
           >
             Change Orders &amp; Approvals
@@ -123,7 +123,7 @@ export default function ChangeOrdersPage() {
         </div>
 
         {/* Filters Bar */}
-        <section className="px-8 mb-8 flex flex-wrap gap-4 items-center">
+        <section className="px-4 sm:px-6 lg:px-8 mb-8 flex flex-wrap gap-4 items-center">
           {/* Status toggle */}
           <div className="flex bg-[#121412] p-1 rounded-xl">
             <button
@@ -196,7 +196,7 @@ export default function ChangeOrdersPage() {
         </section>
 
         {/* Change Order Cards Grid */}
-        <section className="px-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <section className="px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredOrders.map((order) => (
             <div
               key={order.code}
@@ -417,7 +417,7 @@ export default function ChangeOrdersPage() {
             <div className="mt-10 pt-6 border-t border-[#474846]/30 flex justify-end gap-5">
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="px-8 py-3.5 rounded-xl border border-[#474846] text-[#faf9f5] font-bold hover:bg-[#242624] transition-colors"
+                className="px-4 sm:px-6 lg:px-8 py-3.5 rounded-xl border border-[#474846] text-[#faf9f5] font-bold hover:bg-[#242624] transition-colors"
               >
                 Cancel
               </button>
