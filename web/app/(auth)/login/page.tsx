@@ -16,6 +16,7 @@ export default function LoginPage() {
     setIsLoading(true);
     // Mock login delay
     setTimeout(() => {
+      document.cookie = "siding_session=1; path=/; max-age=86400";
       router.push("/");
     }, 1000);
   };
