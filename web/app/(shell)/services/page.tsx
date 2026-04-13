@@ -682,7 +682,22 @@ function CustomDatePickerDropup({ label }: { label: string }) {
 }
 
 // ─── New Service Modal ────────────────────────────────────────────────────────
+
+// Map: Service Discipline → available partners
+const DISCIPLINE_PARTNERS: Record<string, string[]> = {
+  "Siding & Exteriors": ["XICARA", "XICARA 2", "WILMAR", "WILMAR 2", "SULA", "LUIZ"],
+  "Roofing":            ["JOSUE"],
+  "Windows & Doors":    ["SERGIO"],
+  "Gutters & Downspouts": ["LEANDRO"],
+  "Exterior Painting":  ["OSVIN", "OSVIN 2", "VICTOR", "JUAN"],
+  "Decks & Patios":     [],
+  "Dumpster":           [],
+};
+
 function NewServiceModal({ onClose }: { onClose: () => void }) {
+  const [discipline, setDiscipline] = useState("Siding & Exteriors");
+  const availablePartners = DISCIPLINE_PARTNERS[discipline] ?? [];
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[#121412] w-full max-w-2xl rounded-3xl border border-[#474846]/30 shadow-2xl flex flex-col overflow-hidden relative shadow-[0_10px_50px_rgba(0,0,0,0.8)] border-t-[4px] border-t-[#aeee2a]">
@@ -705,6 +720,7 @@ function NewServiceModal({ onClose }: { onClose: () => void }) {
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-7 bg-[#121412]">
           
+          {/* Assigned Project */}
           <div className="space-y-2">
             <label className="text-[10px] uppercase font-black tracking-widest text-[#ababa8]">Assigned Project *</label>
             <div className="relative">
@@ -716,66 +732,55 @@ function NewServiceModal({ onClose }: { onClose: () => void }) {
               </select>
               <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none" translate="no">expand_more</span>
             </div>
-            
-            {/* Aviso de Prevenção - Arquitetura Segura */}
             <p className="text-[10px] font-bold text-[#ff7351] flex items-center gap-1.5 mt-2 bg-[#ff7351]/5 border border-[#ff7351]/10 px-3 py-2 rounded-lg">
               <span className="material-symbols-outlined text-[16px]" translate="no">error</span>
               If the project doesn't exist yet, you must create its main envelope in the Projects module first.
             </p>
           </div>
 
+          {/* Service Discipline — now FIRST, drives the partner filter */}
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase font-black tracking-widest text-[#ababa8]">Service Discipline</label>
+            <div className="relative">
+              <select
+                value={discipline}
+                onChange={(e) => setDiscipline(e.target.value)}
+                className="w-full appearance-none bg-[#181a18] border border-[#474846]/30 py-4 pl-4 pr-10 rounded-xl text-sm text-[#faf9f5] font-medium cursor-pointer focus:ring-1 focus:ring-[#aeee2a] outline-none hover:border-[#aeee2a]/50 transition-colors"
+              >
+                {Object.keys(DISCIPLINE_PARTNERS).map((d) => (
+                  <option key={d}>{d}</option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none" translate="no">expand_more</span>
+            </div>
+          </div>
 
+          {/* Assigned Partner — filtered by discipline */}
           <div className="space-y-2">
             <label className="text-[10px] uppercase font-black tracking-widest text-[#ababa8]">Assigned Partner</label>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none text-[18px]" translate="no">storefront</span>
-              <select defaultValue="" className="w-full appearance-none bg-[#181a18] border border-[#474846]/30 py-4 pl-11 pr-10 rounded-xl text-sm text-[#faf9f5] font-medium cursor-pointer focus:ring-1 focus:ring-[#aeee2a] outline-none hover:border-[#aeee2a]/50 transition-colors">
-                <option value="" disabled>Select a partner...</option>
-                <optgroup label="── Siding Crews ──">
-                  <option value="XICARA">XICARA</option>
-                  <option value="XICARA 2">XICARA 2</option>
-                  <option value="WILMAR">WILMAR</option>
-                  <option value="WILMAR 2">WILMAR 2</option>
-                  <option value="SULA">SULA</option>
-                  <option value="LUIZ">LUIZ</option>
-                </optgroup>
-                <optgroup label="── Doors / Windows ──">
-                  <option value="SERGIO">SERGIO</option>
-                </optgroup>
-                <optgroup label="── Paint Crews ──">
-                  <option value="OSVIN">OSVIN</option>
-                  <option value="OSVIN 2">OSVIN 2</option>
-                  <option value="VICTOR">VICTOR</option>
-                  <option value="JUAN">JUAN</option>
-                </optgroup>
-                <optgroup label="── Gutters ──">
-                  <option value="LEANDRO">LEANDRO</option>
-                </optgroup>
-                <optgroup label="── Roofing ──">
-                  <option value="JOSUE">JOSUE</option>
-                </optgroup>
-              </select>
+              {availablePartners.length > 0 ? (
+                <select
+                  key={discipline}
+                  defaultValue=""
+                  className="w-full appearance-none bg-[#181a18] border border-[#474846]/30 py-4 pl-11 pr-10 rounded-xl text-sm text-[#faf9f5] font-medium cursor-pointer focus:ring-1 focus:ring-[#aeee2a] outline-none hover:border-[#aeee2a]/50 transition-colors"
+                >
+                  <option value="" disabled>Select a partner...</option>
+                  {availablePartners.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="w-full bg-[#181a18] border border-[#474846]/20 py-4 pl-11 pr-4 rounded-xl text-sm text-[#ababa8] italic">
+                  No partners registered for this discipline yet.
+                </div>
+              )}
               <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none" translate="no">expand_more</span>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase font-black tracking-widest text-[#ababa8]">Service Discipline</label>
-            <div className="relative">
-              <select className="w-full appearance-none bg-[#181a18] border border-[#474846]/30 py-4 pl-4 pr-10 rounded-xl text-sm text-[#faf9f5] font-medium cursor-pointer focus:ring-1 focus:ring-[#aeee2a] outline-none hover:border-[#aeee2a]/50 transition-colors">
-                <option>Siding &amp; Exteriors</option>
-                <option>Roofing</option>
-                <option>Windows &amp; Doors</option>
-                <option>Gutters &amp; Downspouts</option>
-                <option>Decks &amp; Patios</option>
-                <option>Exterior Painting</option>
-                <option>Dumpster</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none" translate="no">expand_more</span>
-            </div>
-          </div>
-
-
+          {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
              <CustomDatePickerDropup label="Target Start" />
              <CustomDatePickerDropup label="Target Finish" />
