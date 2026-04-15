@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Setup Supabase admin client to bypass row level security for webhooks
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!; // in prod, replace with service_role key
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+// NOTE: Client is created inside the handler (not at module level)
+// so that env vars are available at request-time, not build-time.
 
 export async function POST(req: Request) {
+  // Initialize Supabase client inside the handler to avoid build-time errors
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ error: 'Server configuration error: missing Supabase credentials.' }, { status: 500 });
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+
   try {
     const payload = await req.json();
 
