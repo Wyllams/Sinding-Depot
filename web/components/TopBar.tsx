@@ -45,27 +45,42 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
   // ── Fetch logged-in user profile ─────────────────────
   useEffect(() => {
     let mounted = true;
+
     const loadProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !mounted) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !mounted) return;
 
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, role, avatar_url")
-        .eq("id", user.id)
-        .single();
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name, role, avatar_url")
+          .eq("id", user.id)
+          .single();
 
-      if (data && mounted) {
-        setProfile({
-          full_name:  data.full_name  || user.email?.split("@")[0] || "User",
-          role:       data.role       || "admin",
-          avatar_url: data.avatar_url || null,
-        });
+        if (data && mounted) {
+          setProfile({
+            full_name:  data.full_name  || user.email?.split("@")[0] || "User",
+            role:       data.role       || "admin",
+            avatar_url: data.avatar_url || null,
+          });
+        }
+      } catch (e) {
+        console.error("TopBar: failed to load profile", e);
       }
     };
+
     loadProfile();
-    return () => { mounted = false; };
+
+    // Re-fetch whenever the settings page saves the profile
+    const handleProfileUpdated = () => loadProfile();
+    window.addEventListener("profile-updated", handleProfileUpdated);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("profile-updated", handleProfileUpdated);
+    };
   }, []);
+
 
   const handleLogout = async () => {
     setIsProfileOpen(false);

@@ -91,6 +91,9 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file || !myProfile) return;
 
+    // Reset the input so the same file can be re-selected if needed
+    e.target.value = "";
+
     setUploadingAvatar(true);
     try {
       const ext      = file.name.split(".").pop();
@@ -106,22 +109,28 @@ export default function SettingsPage() {
         .from("avatars")
         .getPublicUrl(filePath);
 
-      // Add cache-buster so TopBar re-renders with new image
+      // Add cache-buster so browser doesn't serve stale image
       const avatarUrl = `${publicUrl}?t=${Date.now()}`;
 
-      await supabase
+      const { error: updateErr } = await supabase
         .from("profiles")
         .update({ avatar_url: avatarUrl })
         .eq("id", myProfile.id);
 
+      if (updateErr) throw updateErr;
+
       setMyProfile(prev => prev ? { ...prev, avatar_url: avatarUrl } : null);
-    } catch (err) {
+
+      // Notify TopBar to refresh the profile avatar immediately
+      window.dispatchEvent(new Event("profile-updated"));
+    } catch (err: any) {
       console.error("Avatar upload error:", err);
-      alert("Failed to upload avatar. Please try again.");
+      alert(`Failed to upload avatar: ${err?.message || "Please try again."}`);
     } finally {
       setUploadingAvatar(false);
     }
   };
+
 
   // ── Save Profile ─────────────────────────────────
   const handleSaveProfile = async () => {
@@ -137,13 +146,17 @@ export default function SettingsPage() {
       setMyProfile(prev => prev ? { ...prev, full_name: editName.trim(), phone: editPhone.trim() } : null);
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 3000);
-    } catch (err) {
+
+      // Notify TopBar so the name updates immediately in the header
+      window.dispatchEvent(new Event("profile-updated"));
+    } catch (err: any) {
       console.error("Save profile error:", err);
-      alert("Failed to save profile.");
+      alert(`Failed to save profile: ${err?.message || "Please try again."}`);
     } finally {
       setSavingProfile(false);
     }
   };
+
 
   // ── Role change (team) ────────────────────────────
   const handleRoleChange = async (id: string, newRole: string) => {
