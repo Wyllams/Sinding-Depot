@@ -2,6 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import ClientForm from "@/components/coc/ClientForm";
 import { TopBar } from "@/components/TopBar";
 
+// Force dynamic rendering — uses service role key that is never available at build time.
+export const dynamic = "force-dynamic";
+
 // =============================================
 // PUBLIC ROUTE: Customer Certificate of Completion
 // URL: /projects/[jobId]/coc/[docId]

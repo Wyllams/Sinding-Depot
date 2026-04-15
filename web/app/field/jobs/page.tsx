@@ -2,6 +2,9 @@ import { FieldTopBar } from "@/components/field/FieldTopBar";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 
+// Force dynamic rendering — this page fetches live DB data and must never be pre-rendered at build time.
+export const dynamic = "force-dynamic";
+
 export default async function FieldJobsList() {
   // Para a listagem de hoje, criamos cliente com ANON Key, pois a RLS permite acesso de dashboard para admins. O ideal é supabaseServer
   const supabaseAdmin = createClient(
