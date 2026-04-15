@@ -28,12 +28,12 @@ const GATE_CONFIG: Record<string, { color: string; icon: string; title: string; 
 
 // Map job_status → display values
 const STATUS_MAP: Record<string, { label: string; style: string }> = {
-  active:             { label: "Active",            style: "bg-green-500/10 text-green-400 border border-green-500/20"          },
-  draft:              { label: "Draft",             style: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20"         },
-  pending_scheduling: { label: "Pending Scheduling",style: "bg-[#60b8f5]/10 text-[#60b8f5] border border-[#60b8f5]/20"         },
-  on_hold:            { label: "On Hold",           style: "bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20"         },
-  completed:          { label: "Completed",         style: "bg-[#ababa8]/10 text-[#ababa8] border border-[#ababa8]/20"         },
-  cancelled:          { label: "Cancelled",         style: "bg-[#ba1212]/10 text-[#ba1212] border border-[#ba1212]/20"         },
+  active:             { label: "Ready to Start",    style: "bg-green-500/10 text-green-400 border border-green-500/20"          },
+  draft:              { label: "Not Yet Contacted", style: "bg-[#60b8f5]/10 text-[#60b8f5] border border-[#60b8f5]/20"          },
+  pending_scheduling: { label: "Pending",           style: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20"          },
+  on_hold:            { label: "Pending",           style: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20"          },
+  completed:          { label: "Pending",           style: "bg-[#ababa8]/10 text-[#ababa8] border border-[#ababa8]/20"          },
+  cancelled:          { label: "Pending",           style: "bg-[#ba1212]/10 text-[#ba1212] border border-[#ba1212]/20"          },
 };
 
 // SP color by salesperson name (first name prefix match)
@@ -259,10 +259,10 @@ export default function ProjectsPage() {
               className="bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] transition-colors outline-none border-none appearance-none w-36"
             >
               <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="draft">Draft</option>
-              <option value="pending_scheduling">Pending Scheduling</option>
-              <option value="on_hold">On Hold</option>
+              <option value="active">Confirmed (Ready to Start)</option>
+              <option value="draft">Tentative (Not Yet Contacted)</option>
+              <option value="pending_scheduling">Pending</option>
+              <option value="on_hold">Pending (On Hold)</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
             </select>

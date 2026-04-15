@@ -132,13 +132,8 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
         {rightSlot && <>{rightSlot}<div className="hidden sm:block w-px h-6 bg-[#474846]/50" /></>}
 
         {/* Bell */}
-        <button className="p-2 text-[#ababa8] hover:text-[#faf9f5] transition-colors rounded-full hover:bg-[#242624]">
-          <span className="material-symbols-outlined text-[22px]" translate="no">notifications</span>
-        </button>
-
-        {/* Help — hidden on small screens */}
         <button className="hidden sm:flex p-2 text-[#ababa8] hover:text-[#faf9f5] transition-colors rounded-full hover:bg-[#242624]">
-          <span className="material-symbols-outlined text-[22px]" translate="no">help</span>
+          <span className="material-symbols-outlined text-[22px]" translate="no">notifications</span>
         </button>
 
         {/* Divider */}
