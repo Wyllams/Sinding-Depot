@@ -250,7 +250,7 @@ export default function ReportsPage() {
         year: { start: `${y}-01-01`, end: `${y}-12-31` },
       };
 
-      /** Upsert genérico de uma meta */
+      /** Upsert genérico de uma meta — com tratamento de erro explícito */
       const upsertGoal = async (opts: {
         salesperson_id?: string;
         is_company_goal?: boolean;
@@ -259,7 +259,8 @@ export default function ReportsPage() {
         target_value: number;
         notes: string;
       }) => {
-        const q = supabase
+        // Constrói o filtro de busca encadeando corretamente (Supabase JS v2)
+        let q = supabase
           .from("sales_goals")
           .select("id")
           .eq("goal_type", "revenue")
@@ -267,15 +268,25 @@ export default function ReportsPage() {
           .eq("period_end", opts.period_end)
           .eq("is_company_goal", !!opts.is_company_goal);
 
-        if (opts.salesperson_id) q.eq("salesperson_id", opts.salesperson_id);
-        else q.is("salesperson_id", null);
-
-        const { data: existing } = await q.maybeSingle();
-        if (existing) {
-          await supabase.from("sales_goals").update({ target_value: opts.target_value }).eq("id", existing.id);
+        // IMPORTANTE: reatribuir q para que o filtro seja aplicado
+        if (opts.salesperson_id) {
+          q = q.eq("salesperson_id", opts.salesperson_id) as typeof q;
         } else {
-          await supabase.from("sales_goals").insert({
-            salesperson_id:  opts.salesperson_id || null,
+          q = q.is("salesperson_id", null) as typeof q;
+        }
+
+        const { data: existing, error: selectErr } = await q.maybeSingle();
+        if (selectErr) throw new Error(`SELECT failed: ${selectErr.message}`);
+
+        if (existing) {
+          const { error: updateErr } = await supabase
+            .from("sales_goals")
+            .update({ target_value: opts.target_value })
+            .eq("id", existing.id);
+          if (updateErr) throw new Error(`UPDATE failed: ${updateErr.message}`);
+        } else {
+          const { error: insertErr } = await supabase.from("sales_goals").insert({
+            salesperson_id:  opts.salesperson_id ?? null,
             is_company_goal: !!opts.is_company_goal,
             goal_type:       "revenue",
             period_start:    opts.period_start,
@@ -283,6 +294,7 @@ export default function ReportsPage() {
             target_value:    opts.target_value,
             notes:           opts.notes,
           });
+          if (insertErr) throw new Error(`INSERT failed: ${insertErr.message}`);
         }
       };
 
@@ -325,9 +337,11 @@ export default function ReportsPage() {
       }
 
       setShowGoalsModal(false);
-      fetchData(period);
+      await fetchData(period); // await garante que o dashboard atualiza antes de liberar o user
     } catch (e) {
-      console.error("Error saving goals:", e);
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("Error saving goals:", msg);
+      setError(`Failed to save goals: ${msg}`);
     } finally {
       setGoalsSaving(false);
     }
