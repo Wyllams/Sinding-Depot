@@ -190,7 +190,7 @@ export default function ProjectDetailPage() {
       const { data, error } = await supabase
         .from("jobs")
         .select(`
-          id, job_number, title, status, city, state, service_address_line_1, postal_code,
+          id, job_number, title, status, gate_status, city, state, service_address_line_1, postal_code,
           requested_start_date, target_completion_date, description,
           customer:customers (id, full_name, email, phone),
           salesperson:salespersons (full_name),
@@ -249,17 +249,24 @@ export default function ProjectDetailPage() {
 
       setJob(mapped);
 
-      // Derive gate from open blockers
-      const openBlocker = mapped.blockers.find((b) => b.status === "open");
-      if (openBlocker) {
-        const t = openBlocker.type?.toUpperCase();
-        if (t === "WEATHER") setGateStatus("OTHER_REPAIRS");
-        else if (t === "MATERIAL") setGateStatus("MATERIALS");
-        else if (t === "PERMIT") setGateStatus("PERMIT");
-        else if (t === "CUSTOMER") setGateStatus("NOT_CONTACTED");
-        else setGateStatus("OTHER_REPAIRS");
+      // Prioridade: gate_status salvo no DB → fallback: deriva dos blockers
+      const savedGate = (j as any).gate_status as string | null;
+      if (savedGate && GATE_CONFIG[savedGate]) {
+        // Usa exatamente o valor salvo pelo usuário
+        setGateStatus(savedGate);
       } else {
-        setGateStatus(mapped.status === "active" ? "READY" : "NOT_CONTACTED");
+        // Fallback: inferir do primeiro blocker aberto ou do status do job
+        const openBlocker = mapped.blockers.find((b) => b.status === "open");
+        if (openBlocker) {
+          const t = openBlocker.type?.toUpperCase();
+          if (t === "WEATHER") setGateStatus("OTHER_REPAIRS");
+          else if (t === "MATERIAL") setGateStatus("MATERIALS");
+          else if (t === "PERMIT") setGateStatus("PERMIT");
+          else if (t === "CUSTOMER") setGateStatus("NOT_CONTACTED");
+          else setGateStatus("OTHER_REPAIRS");
+        } else {
+          setGateStatus(mapped.status === "active" ? "READY" : "NOT_CONTACTED");
+        }
       }
     } catch (err) {
       console.error("[ProjectDetail] fetch error:", err);
@@ -274,7 +281,11 @@ export default function ProjectDetailPage() {
   async function handleGateChange(gate: string) {
     setGateStatus(gate);
     const newStatus = gate === "READY" ? "active" : gate === "NOT_CONTACTED" ? "draft" : "on_hold";
-    await supabase.from("jobs").update({ status: newStatus }).eq("id", jobId);
+    // Persiste TANTO o gate_status exato QUANTO o status operacional derivado
+    await supabase
+      .from("jobs")
+      .update({ status: newStatus, gate_status: gate })
+      .eq("id", jobId);
     setJob((prev) => prev ? { ...prev, status: newStatus } : prev);
   }
 
