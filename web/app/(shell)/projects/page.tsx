@@ -50,13 +50,14 @@ interface Job {
   job_number: string;
   title: string;
   status: string;
+  gate_status: string | null; // saved in DB
   city: string;
   state: string;
   requested_start_date: string | null;
   customer: { full_name: string } | null;
   salesperson: { full_name: string } | null;
   services: { service_type: { name: string } | null }[];
-  blocker_type: string | null; // derived from first open blocker
+  blocker_type: string | null; // gate exibido (prioridade: gate_status > derivado)
 }
 
 export default function ProjectsPage() {
@@ -83,6 +84,7 @@ export default function ProjectsPage() {
           job_number,
           title,
           status,
+          gate_status,
           city,
           state,
           requested_start_date,
@@ -106,21 +108,25 @@ export default function ProjectsPage() {
       if (error) throw error;
 
       const mapped: Job[] = (data ?? []).map((j: any) => {
-        // Derive gating status from first open blocker type
-        const openBlocker = (j.blockers ?? []).find((b: any) => b.status === "open");
-        let gate: string | null = null;
-        if (openBlocker) {
-          const t = (openBlocker.type ?? "").toUpperCase();
-          if (t === "CUSTOMER") gate = "NOT_CONTACTED";
-          else if (t === "PERMIT")   gate = "PERMIT";
-          else if (t === "MATERIAL") gate = "MATERIALS";
-          else if (t === "WEATHER")  gate = "OTHER_REPAIRS";
-          else if (t === "CREW")     gate = "NO_ANSWER";
-          else                       gate = "OTHER_REPAIRS";
-        } else if (j.status === "active") {
-          gate = "READY";
+        // Prioridade: gate_status salvo no DB → fallback: deriva dos blockers
+        let gate: string;
+        if (j.gate_status && GATE_CONFIG[j.gate_status]) {
+          gate = j.gate_status;
         } else {
-          gate = "NOT_CONTACTED";
+          const openBlocker = (j.blockers ?? []).find((b: any) => b.status === "open");
+          if (openBlocker) {
+            const t = (openBlocker.type ?? "").toUpperCase();
+            if (t === "CUSTOMER") gate = "NOT_CONTACTED";
+            else if (t === "PERMIT")   gate = "PERMIT";
+            else if (t === "MATERIAL") gate = "MATERIALS";
+            else if (t === "WEATHER")  gate = "OTHER_REPAIRS";
+            else if (t === "CREW")     gate = "NO_ANSWER";
+            else                       gate = "OTHER_REPAIRS";
+          } else if (j.status === "active") {
+            gate = "READY";
+          } else {
+            gate = "NOT_CONTACTED";
+          }
         }
 
         return {
@@ -128,6 +134,7 @@ export default function ProjectsPage() {
           job_number: j.job_number,
           title: j.title,
           status: j.status,
+          gate_status: j.gate_status ?? null,
           city: j.city,
           state: j.state,
           requested_start_date: j.requested_start_date,
@@ -188,17 +195,26 @@ export default function ProjectsPage() {
   }
 
   async function handleGateChange(jobId: string, gate: string) {
-    // Map gate → job_status
+    // Map gate → job_status operacional equivalente
     let newStatus = "active";
     if (gate === "READY") newStatus = "active";
     else if (gate === "NOT_CONTACTED") newStatus = "draft";
     else newStatus = "on_hold";
 
+    // Otimistic update na UI
     setJobs((prev) =>
-      prev.map((j) => (j.id === jobId ? { ...j, blocker_type: gate, status: newStatus } : j))
+      prev.map((j) =>
+        j.id === jobId
+          ? { ...j, blocker_type: gate, gate_status: gate, status: newStatus }
+          : j
+      )
     );
 
-    await supabase.from("jobs").update({ status: newStatus as any }).eq("id", jobId);
+    // Persiste AMBOS os campos no banco
+    await supabase
+      .from("jobs")
+      .update({ status: newStatus as any, gate_status: gate })
+      .eq("id", jobId);
   }
 
   return (
