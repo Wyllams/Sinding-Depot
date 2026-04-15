@@ -101,9 +101,14 @@ export function NotificationBell() {
     if (!n.related_entity_id) return;
 
     if (n.notification_type === "new_job") {
-      router.push(`/projects?highlight=${n.related_entity_id}`);
+      // Navega para a página de DETALHES do projeto
+      // Usa window.location.href para garantir reload completo da página de detalhe
+      window.location.href = `/projects/${n.related_entity_id}`;
     } else if (n.notification_type === "new_change_order") {
-      router.push(`/change-orders?highlight=${n.related_entity_id}`);
+      window.location.href = `/projects/${n.related_entity_id}`;
+    } else if (n.related_entity_id) {
+      // Fallback genérico: tenta navegar para o projeto relacionado
+      router.push(`/projects/${n.related_entity_id}`);
     }
   }, [markRead, router]);
 
