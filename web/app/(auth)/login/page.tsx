@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
+// ─── Portal Email Domain ─────────────────────────────
+const CUSTOMER_EMAIL_DOMAIN = "customer.sidingdepot.app";
+
 function LoginFormHeader() {
   const searchParams = useSearchParams();
   const role = searchParams.get("role") || "admin";
@@ -20,7 +23,7 @@ function LoginFormHeader() {
     subtitle = <>Welcome! Thank you for your hard work and partnership. Let's execute another perfect job today.</>;
   } else if (role === "customer" || role === "client") {
     title = "Customer Portal";
-    subtitle = <>Welcome to your project hub! We are fully committed to bringing your vision to life with the highest quality.</>;
+    subtitle = <>Welcome to your project hub! Use your <span className="font-bold text-white">username</span> and <span className="font-bold text-white">password</span> sent to your email to access your project.</>;
   }
 
   return (
@@ -44,9 +47,13 @@ function LoginFormHeader() {
   );
 }
 
-export default function LoginPage() {
+function LoginFormContent() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const searchParams = useSearchParams();
+  const roleParam = searchParams.get("role") || "admin";
+  const isCustomerMode = roleParam === "customer" || roleParam === "client";
+
+  const [identifier, setIdentifier] = useState(""); // email or username
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,12 +61,24 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!identifier || !password) return;
     setIsLoading(true);
     setError(null);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      // For customer mode, convert username to the derived portal email
+      let emailForAuth = identifier;
+      if (isCustomerMode) {
+        // If user typed their username (not an email), derive the portal email
+        if (!identifier.includes("@")) {
+          emailForAuth = `${identifier.toLowerCase()}@${CUSTOMER_EMAIL_DOMAIN}`;
+        }
+      }
+
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: emailForAuth,
+        password,
+      });
       if (authError) throw authError;
 
       if (authData?.user) {
@@ -86,10 +105,15 @@ export default function LoginPage() {
       }
       
       router.refresh();
-    } catch (err: any) {
-      const msg = err?.message ?? "";
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      const msg = errObj?.message ?? "";
       if (msg.toLowerCase().includes("invalid login")) {
-        setError("Invalid email or password. Please try again.");
+        setError(
+          isCustomerMode
+            ? "Invalid username or password. Please check the credentials sent to your email."
+            : "Invalid email or password. Please try again."
+        );
       } else if (msg.toLowerCase().includes("email not confirmed")) {
         setError("Please confirm your email address before signing in.");
       } else {
@@ -101,55 +125,51 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full max-w-sm">
-      {/* Brand Header */}
-      <Suspense fallback={<div className="mb-8 flex flex-col items-center text-center"><h1 className="text-3xl font-black text-[#faf9f5]">Welcome Back</h1></div>}>
-        <LoginFormHeader />
-      </Suspense>
+    <div className="w-full">
+      <form onSubmit={handleSubmit} className="space-y-6">
 
-      {/* Login Form */}
-      <div className="w-full">
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-          {/* Error Banner */}
-          {error && (
-            <div className="flex items-start gap-3 bg-[#ff7351]/10 border border-[#ff7351]/25 rounded-xl px-4 py-3">
-              <span className="material-symbols-outlined text-[#ff7351] shrink-0 text-[18px] mt-0.5" translate="no">error</span>
-              <p className="text-xs text-[#ff7351] font-bold leading-relaxed">{error}</p>
-            </div>
-          )}
-
-          {/* Email Input */}
-          <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
-              Work Email
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[#474846] text-xl" translate="no">mail</span>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(null); }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && email && password) {
-                    e.preventDefault();
-                    handleSubmit(e as any);
-                  }
-                }}
-                placeholder="nick@sidingdepot.com"
-                required
-                autoComplete="email"
-                className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/50 focus:bg-[#121412] transition-all"
-              />
-            </div>
+        {/* Error Banner */}
+        {error && (
+          <div className="flex items-start gap-3 bg-[#ff7351]/10 border border-[#ff7351]/25 rounded-xl px-4 py-3">
+            <span className="material-symbols-outlined text-[#ff7351] shrink-0 text-[18px] mt-0.5" translate="no">error</span>
+            <p className="text-xs text-[#ff7351] font-bold leading-relaxed">{error}</p>
           </div>
+        )}
 
-          {/* Password Input */}
-          <div>
-            <div className="flex items-center justify-between mb-2 px-1">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8]">
-                Password
-              </label>
+        {/* Identifier Input (Email or Username) */}
+        <div>
+          <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+            {isCustomerMode ? "Username" : "Work Email"}
+          </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[#474846] text-xl" translate="no">
+              {isCustomerMode ? "person" : "mail"}
+            </span>
+            <input
+              type={isCustomerMode ? "text" : "email"}
+              value={identifier}
+              onChange={(e) => { setIdentifier(e.target.value); setError(null); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && identifier && password) {
+                  e.preventDefault();
+                  handleSubmit(e as unknown as React.FormEvent);
+                }
+              }}
+              placeholder={isCustomerMode ? "Nick_Magalhaes" : "nick@sidingdepot.com"}
+              required
+              autoComplete={isCustomerMode ? "username" : "email"}
+              className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/50 focus:bg-[#121412] transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Password Input */}
+        <div>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8]">
+              Password
+            </label>
+            {!isCustomerMode && (
               <Link
                 href="/forgot-password"
                 className="text-[10px] font-bold text-[#aeee2a] hover:text-white transition-colors"
@@ -157,54 +177,89 @@ export default function LoginPage() {
               >
                 Forgot?
               </Link>
-            </div>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[#474846] text-xl" translate="no">lock</span>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setError(null); }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && email && password) {
-                    e.preventDefault();
-                    handleSubmit(e as any);
-                  }
-                }}
-                placeholder="Enter your password"
-                required
-                autoComplete="current-password"
-                className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl pl-12 pr-12 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/50 focus:bg-[#121412] transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#474846] hover:text-[#aeee2a] transition-colors"
-              >
-                <span className="material-symbols-outlined text-lg" translate="no">
-                  {showPassword ? "visibility_off" : "visibility"}
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading || !email || !password}
-            className="w-full mt-2 relative overflow-hidden group bg-[#aeee2a] text-[#121412] rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-70 transition-all hover:brightness-110 active:scale-[0.98]"
-          >
-            <span className={`flex items-center justify-center gap-2 ${isLoading ? "opacity-0" : "opacity-100"}`}>
-              Sign In to Dashboard
-              <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform" translate="no">arrow_forward</span>
-            </span>
-            {isLoading && (
-              <span className="absolute inset-0 flex items-center justify-center">
-                <span className="w-5 h-5 border-2 border-[#121412]/30 border-t-[#121412] rounded-full animate-spin" />
-              </span>
             )}
-          </button>
-        </form>
+          </div>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[#474846] text-xl" translate="no">lock</span>
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(null); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && identifier && password) {
+                  e.preventDefault();
+                  handleSubmit(e as unknown as React.FormEvent);
+                }
+              }}
+              placeholder="Enter your password"
+              required
+              autoComplete="current-password"
+              className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl pl-12 pr-12 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/50 focus:bg-[#121412] transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#474846] hover:text-[#aeee2a] transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg" translate="no">
+                {showPassword ? "visibility_off" : "visibility"}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={isLoading || !identifier || !password}
+          className="w-full mt-2 relative overflow-hidden group bg-[#aeee2a] text-[#121412] rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-70 transition-all hover:brightness-110 active:scale-[0.98]"
+        >
+          <span className={`flex items-center justify-center gap-2 ${isLoading ? "opacity-0" : "opacity-100"}`}>
+            {isCustomerMode ? "Access My Project" : "Sign In to Dashboard"}
+            <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform" translate="no">arrow_forward</span>
+          </span>
+          {isLoading && (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <span className="w-5 h-5 border-2 border-[#121412]/30 border-t-[#121412] rounded-full animate-spin" />
+            </span>
+          )}
+        </button>
+      </form>
+
+      {/* Portal Switch Links */}
+      <div className="mt-6 text-center">
+        {isCustomerMode ? (
+          <p className="text-[11px] text-[#474846]">
+            Are you a Siding Depot team member?{" "}
+            <Link href="/login" className="text-[#aeee2a] font-bold hover:text-white transition-colors">
+              Team Login →
+            </Link>
+          </p>
+        ) : (
+          <p className="text-[11px] text-[#474846]">
+            Are you a customer?{" "}
+            <Link href="/login?role=customer" className="text-[#aeee2a] font-bold hover:text-white transition-colors">
+              Customer Portal →
+            </Link>
+          </p>
+        )}
       </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <div className="w-full max-w-sm">
+      {/* Brand Header */}
+      <Suspense fallback={<div className="mb-8 flex flex-col items-center text-center"><h1 className="text-3xl font-black text-[#faf9f5]">Welcome Back</h1></div>}>
+        <LoginFormHeader />
+      </Suspense>
+
+      {/* Login Form */}
+      <Suspense fallback={<div className="text-center text-[#ababa8]">Loading...</div>}>
+        <LoginFormContent />
+      </Suspense>
 
       <p className="text-center mt-8 text-[11px] font-bold text-[#474846]">
         Secure access for Siding Depot personnel only.

@@ -25,7 +25,7 @@ const MODULES: Module[] = [
   { key: "windows_tracker",name: "Windows Tracker",  icon: "sensor_window",        description: "Window installation tracking" },
   { key: "services",       name: "Services",         icon: "construction",         description: "Service calls and requests" },
   { key: "schedule",       name: "Schedule",         icon: "calendar_today",       description: "Operational and sales calendars" },
-  { key: "reports",        name: "Reports",          icon: "assessment",           description: "Sales and performance reports" },
+  { key: "reports",        name: "Sales",          icon: "assessment",           description: "Sales and performance reports" },
 ];
 
 const PERMISSION_CONFIG: Record<Permission, { label: string; color: string; icon: string; activeColor: string }> = {

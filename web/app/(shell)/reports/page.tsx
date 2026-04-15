@@ -592,7 +592,7 @@ ${
   // -- Render
   return (
     <>
-      <TopBar title="Reports" />
+      <TopBar title="Sales" />
 
       <div className="p-4 sm:p-6 lg:p-8 space-y-8 min-h-screen pb-16">
 
