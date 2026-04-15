@@ -159,20 +159,6 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
           >
-            {/* Name + role */}
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-bold text-[#faf9f5] leading-tight flex items-center justify-end gap-1">
-                {displayName}
-                <span
-                  className="material-symbols-outlined text-[16px] text-[#ababa8] transition-transform duration-200"
-                  style={{ transform: isProfileOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-                  translate="no"
-                >
-                  expand_more
-                </span>
-              </p>
-              <p className="text-xs text-[#ababa8]">{displayRole}</p>
-            </div>
 
             {/* Avatar */}
             {profile?.avatar_url ? (
