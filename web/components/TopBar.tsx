@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSidebar } from "./SidebarContext";
 import { supabase } from "../lib/supabase";
@@ -39,7 +38,6 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const { toggle } = useSidebar();
 
   // ── Fetch logged-in user profile ─────────────────────
@@ -84,10 +82,11 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
 
   const handleLogout = async () => {
     setIsProfileOpen(false);
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    // Use the server-side logout route so auth cookies are cleared
+    // *before* the middleware runs, preventing it from redirecting back
+    window.location.href = '/api/logout';
   };
+
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
