@@ -56,38 +56,95 @@ function getInitials(name: string): string {
 }
 
 // ── Period helpers ─────────────────────────────────────────────────────────
-type PeriodKey = "Month" | "Quarter" | "Year";
+type PeriodKey = "Week" | "Month" | "Quarter" | "Semester" | "Year";
 
+/** Retorna { start, end, label } para cada período */
 function getPeriodDates(p: PeriodKey): { start: string; end: string; label: string } {
   const now = new Date();
   const y = now.getFullYear();
   const m = now.getMonth(); // 0-indexed
 
+  if (p === "Week") {
+    const d = now.getDay(); // 0=Sunday
+    const diff = (d === 0 ? -6 : 1) - d; // Monday
+    const mon = new Date(now);
+    mon.setDate(now.getDate() + diff);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    return {
+      start: mon.toISOString().slice(0, 10),
+      end:   sun.toISOString().slice(0, 10),
+      label: `Week of ${mon.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+    };
+  }
   if (p === "Month") {
     const start = new Date(y, m, 1);
-    const end = new Date(y, m + 1, 0);
+    const end   = new Date(y, m + 1, 0);
     return {
       start: start.toISOString().slice(0, 10),
-      end: end.toISOString().slice(0, 10),
+      end:   end.toISOString().slice(0, 10),
       label: start.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
     };
   }
   if (p === "Quarter") {
     const qStart = Math.floor(m / 3) * 3;
-    const start = new Date(y, qStart, 1);
-    const end = new Date(y, qStart + 3, 0);
+    const start  = new Date(y, qStart, 1);
+    const end    = new Date(y, qStart + 3, 0);
     return {
       start: start.toISOString().slice(0, 10),
-      end: end.toISOString().slice(0, 10),
+      end:   end.toISOString().slice(0, 10),
       label: `Q${Math.floor(qStart / 3) + 1} ${y}`,
+    };
+  }
+  if (p === "Semester") {
+    const half  = m < 6 ? 0 : 1;
+    const start = new Date(y, half * 6, 1);
+    const end   = new Date(y, half * 6 + 6, 0);
+    return {
+      start: start.toISOString().slice(0, 10),
+      end:   end.toISOString().slice(0, 10),
+      label: `H${half + 1} ${y}`,
     };
   }
   // Year
   return {
     start: `${y}-01-01`,
-    end: `${y}-12-31`,
+    end:   `${y}-12-31`,
     label: `Full Year ${y}`,
   };
+}
+
+/** Dado um período de meta e o período do dashboard, retorna a meta proporcional.
+ *  Ex: meta mensal = 100k com período = Week → 100k / 4.33 ≈ 23k
+ *  Isso permite que a meta seja definida em qualquer granularidade e comparada a qualquer período.
+ */
+function prorateMeta(goalPeriod: GoalPeriodKey, goalValue: number, dashPeriod: PeriodKey): number {
+  // Converte tudo para "meses" como unidade base
+  const toMonths: Record<string, number> = {
+    week: 12 / 52,     // ≈ 0.231
+    month: 1,
+    quarter: 3,
+    semester: 6,
+    year: 12,
+  };
+  const goalMonths = toMonths[goalPeriod];
+  const dashMonths = toMonths[dashPeriod.toLowerCase()];
+  if (!goalMonths || !dashMonths) return goalValue;
+  return (goalValue / goalMonths) * dashMonths;
+}
+
+type GoalPeriodKey = "week" | "month" | "quarter" | "semester" | "year";
+
+/** Dado um period_start e period_end em YYYY-MM-DD, identifica automaticamente o tipo de período */
+function classifyGoalPeriod(start: string, end: string): GoalPeriodKey {
+  const s = new Date(start);
+  const e = new Date(end);
+  const days = Math.round((e.getTime() - s.getTime()) / 86400000) + 1;
+  if (days <=  8) return "week";
+  if (days <=  35) return "month";
+  if (days <= 100) return "quarter";
+  if (days <= 190) return "semester";
+  return "year";
 }
 
 function fmt(n: number): string {
@@ -98,6 +155,10 @@ function fmt(n: number): string {
 
 // ── Main Component ─────────────────────────────────────────────────────────
 
+// Todos os 5 períodos de meta
+type GoalState = { week: string; month: string; quarter: string; semester: string; year: string };
+const EMPTY_GOAL: GoalState = { week: "", month: "", quarter: "", semester: "", year: "" };
+
 export default function ReportsPage() {
   const [period, setPeriod] = useState<PeriodKey>("Month");
   const [data, setData] = useState<DashboardData | null>(null);
@@ -107,63 +168,89 @@ export default function ReportsPage() {
   const [hoveredSp, setHoveredSp] = useState<string | null>(null);
 
   // ── Goals Modal ──────────────────────────────────────────────────────────
-  const [showGoalsModal, setShowGoalsModal]   = useState(false);
-  const [goalsSaving,   setGoalsSaving]       = useState(false);
-  const [companyGoal,   setCompanyGoal]       = useState({ monthly: "", quarterly: "", yearly: "" });
-  const [goalInputs,    setGoalInputs]        = useState<Record<string, { monthly: string; quarterly: string; yearly: string }>>({}); 
+  const [showGoalsModal, setShowGoalsModal] = useState(false);
+  const [goalsSaving,   setGoalsSaving]     = useState(false);
+  const [companyGoal,   setCompanyGoal]     = useState<GoalState>({ ...EMPTY_GOAL });
+  const [goalInputs,    setGoalInputs]      = useState<Record<string, GoalState>>({});
 
+  // ─────────────────────────────────────────────────────────
+  // Abre o modal e carrega as metas salvas (5 períodos)
+  // ─────────────────────────────────────────────────────────
   const openGoalsModal = async () => {
     if (!data) return;
-    // Load individual inputs
-    const inputs: Record<string, { monthly: string; quarterly: string; yearly: string }> = {};
+
+    // Inicializa inputs individuais
+    const inputs: Record<string, GoalState> = {};
     data.salespeople.forEach((sp) => {
-      inputs[sp.id] = {
-        monthly:   sp.monthly_goal > 0 ? String(sp.monthly_goal) : "",
-        quarterly: "",
-        yearly:    "",
-      };
+      inputs[sp.id] = { ...EMPTY_GOAL };
     });
-    setGoalInputs(inputs);
 
-    // Load company goal
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    const monthStart = `${y}-${String(m + 1).padStart(2, "0")}-01`;
-
-    const { data: cgData } = await supabase
+    // Busca TODAS as metas salvas (empresa + individuais)
+    const { data: allGoals } = await supabase
       .from("sales_goals")
-      .select("target_value, period_start, period_end")
-      .eq("is_company_goal", true)
+      .select("salesperson_id, is_company_goal, target_value, period_start, period_end")
       .eq("goal_type", "revenue");
 
-    const cgMap: Record<string, string> = {};
-    (cgData || []).forEach((g: any) => {
-      const ps = g.period_start?.slice(0, 7);
-      if (ps) cgMap[ps] = String(g.target_value);
+    const newCompany: GoalState = { ...EMPTY_GOAL };
+
+    (allGoals || []).forEach((g: any) => {
+      const periodType = classifyGoalPeriod(g.period_start, g.period_end);
+      const val = String(g.target_value);
+
+      if (g.is_company_goal) {
+        newCompany[periodType] = val;
+      } else if (g.salesperson_id && inputs[g.salesperson_id]) {
+        inputs[g.salesperson_id][periodType] = val;
+      }
     });
 
-    const thisMonth = `${y}-${String(m + 1).padStart(2, "0")}`;
-    const thisQ     = `${y}-${String(Math.floor(m / 3) * 3 + 1).padStart(2, "0")}`;
-
-    setCompanyGoal({
-      monthly:   cgMap[thisMonth] || "",
-      quarterly: cgMap[thisQ]    || "",
-      yearly:    cgMap[`${y}-01`] || "",
-    });
-
+    setCompanyGoal(newCompany);
+    setGoalInputs(inputs);
     setShowGoalsModal(true);
   };
 
+  // ─────────────────────────────────────────────────────────
+  // Salva metas (empresa e individuais) para todos os períodos
+  // ─────────────────────────────────────────────────────────
   const saveGoals = async () => {
     if (!data) return;
     setGoalsSaving(true);
     try {
       const now = new Date();
-      const y = now.getFullYear();
-      const m = now.getMonth();
+      const y   = now.getFullYear();
+      const m   = now.getMonth();
 
-      // Helper: upsert a sales_goal row
+      // Calcula as datas dos 5 períodos uma única vez
+      const periodRanges: Record<GoalPeriodKey, { start: string; end: string }> = {
+        week: (() => {
+          const d    = now.getDay();
+          const diff = (d === 0 ? -6 : 1) - d;
+          const mon  = new Date(now); mon.setDate(now.getDate() + diff);
+          const sun  = new Date(mon); sun.setDate(mon.getDate() + 6);
+          return { start: mon.toISOString().slice(0, 10), end: sun.toISOString().slice(0, 10) };
+        })(),
+        month: {
+          start: `${y}-${String(m + 1).padStart(2, "0")}-01`,
+          end:   new Date(y, m + 1, 0).toISOString().slice(0, 10),
+        },
+        quarter: (() => {
+          const qs = Math.floor(m / 3) * 3;
+          return {
+            start: `${y}-${String(qs + 1).padStart(2, "0")}-01`,
+            end:   new Date(y, qs + 3, 0).toISOString().slice(0, 10),
+          };
+        })(),
+        semester: (() => {
+          const half = m < 6 ? 0 : 1;
+          return {
+            start: new Date(y, half * 6, 1).toISOString().slice(0, 10),
+            end:   new Date(y, half * 6 + 6, 0).toISOString().slice(0, 10),
+          };
+        })(),
+        year: { start: `${y}-01-01`, end: `${y}-12-31` },
+      };
+
+      /** Upsert genérico de uma meta */
       const upsertGoal = async (opts: {
         salesperson_id?: string;
         is_company_goal?: boolean;
@@ -172,7 +259,7 @@ export default function ReportsPage() {
         target_value: number;
         notes: string;
       }) => {
-        const matchQuery = supabase
+        const q = supabase
           .from("sales_goals")
           .select("id")
           .eq("goal_type", "revenue")
@@ -180,52 +267,61 @@ export default function ReportsPage() {
           .eq("period_end", opts.period_end)
           .eq("is_company_goal", !!opts.is_company_goal);
 
-        if (opts.salesperson_id) matchQuery.eq("salesperson_id", opts.salesperson_id);
-        else matchQuery.is("salesperson_id", null);
+        if (opts.salesperson_id) q.eq("salesperson_id", opts.salesperson_id);
+        else q.is("salesperson_id", null);
 
-        const { data: existing } = await matchQuery.maybeSingle();
+        const { data: existing } = await q.maybeSingle();
         if (existing) {
           await supabase.from("sales_goals").update({ target_value: opts.target_value }).eq("id", existing.id);
         } else {
           await supabase.from("sales_goals").insert({
-            salesperson_id: opts.salesperson_id || null,
+            salesperson_id:  opts.salesperson_id || null,
             is_company_goal: !!opts.is_company_goal,
-            goal_type: "revenue",
-            period_start: opts.period_start,
-            period_end: opts.period_end,
-            target_value: opts.target_value,
-            notes: opts.notes,
+            goal_type:       "revenue",
+            period_start:    opts.period_start,
+            period_end:      opts.period_end,
+            target_value:    opts.target_value,
+            notes:           opts.notes,
           });
         }
       };
 
-      // ── Company Goal ──────────────────────────────────────────────
-      const monthStart = `${y}-${String(m + 1).padStart(2, "0")}-01`;
-      const monthEnd   = new Date(y, m + 1, 0).toISOString().slice(0, 10);
-      const qStart     = Math.floor(m / 3) * 3;
-      const qStartDate = `${y}-${String(qStart + 1).padStart(2, "0")}-01`;
-      const qEndDate   = new Date(y, qStart + 3, 0).toISOString().slice(0, 10);
+      // Salva metas da empresa
+      const PERIOD_LABELS: Record<GoalPeriodKey, string> = {
+        week: "Weekly", month: "Monthly", quarter: "Quarterly",
+        semester: "Semiannual", year: "Yearly",
+      };
 
-      const cgMonthly   = parseFloat(companyGoal.monthly)   || 0;
-      const cgQuarterly = parseFloat(companyGoal.quarterly) || 0;
-      const cgYearly    = parseFloat(companyGoal.yearly)    || 0;
+      for (const [pk, range] of Object.entries(periodRanges) as [GoalPeriodKey, { start: string; end: string }][]) {
+        const val = parseFloat(companyGoal[pk]) || 0;
+        if (val > 0) {
+          await upsertGoal({
+            is_company_goal: true,
+            period_start: range.start,
+            period_end:   range.end,
+            target_value: val,
+            notes: `Company ${PERIOD_LABELS[pk]} goal`,
+          });
+        }
+      }
 
-      if (cgMonthly   > 0) await upsertGoal({ is_company_goal: true, period_start: monthStart,   period_end: monthEnd,   target_value: cgMonthly,   notes: "Company monthly goal" });
-      if (cgQuarterly > 0) await upsertGoal({ is_company_goal: true, period_start: qStartDate,   period_end: qEndDate,   target_value: cgQuarterly, notes: "Company quarterly goal" });
-      if (cgYearly    > 0) await upsertGoal({ is_company_goal: true, period_start: `${y}-01-01`, period_end: `${y}-12-31`, target_value: cgYearly,   notes: "Company yearly goal" });
-
-      // ── Individual Goals ──────────────────────────────────────────
+      // Salva metas individuais
       for (const sp of data.salespeople) {
         const input = goalInputs[sp.id];
         if (!input) continue;
-
-        const monthVal = parseFloat(input.monthly)   || 0;
-        const qVal     = parseFloat(input.quarterly) || 0;
-        const yVal     = parseFloat(input.yearly)    || 0;
-
-        if (monthVal > 0) await upsertGoal({ salesperson_id: sp.id, period_start: monthStart,   period_end: monthEnd,   target_value: monthVal, notes: `Monthly goal — ${sp.full_name}` });
-        if (qVal     > 0) await upsertGoal({ salesperson_id: sp.id, period_start: qStartDate,   period_end: qEndDate,   target_value: qVal,     notes: `Quarterly goal — ${sp.full_name}` });
-        if (yVal     > 0) await upsertGoal({ salesperson_id: sp.id, period_start: `${y}-01-01`, period_end: `${y}-12-31`, target_value: yVal,   notes: `Yearly goal — ${sp.full_name}` });
+        for (const [pk, range] of Object.entries(periodRanges) as [GoalPeriodKey, { start: string; end: string }][]) {
+          const val = parseFloat(input[pk]) || 0;
+          if (val > 0) {
+            await upsertGoal({
+              salesperson_id: sp.id,
+              is_company_goal: false,
+              period_start: range.start,
+              period_end:   range.end,
+              target_value: val,
+              notes: `${PERIOD_LABELS[pk]} goal — ${sp.full_name}`,
+            });
+          }
+        }
       }
 
       setShowGoalsModal(false);
@@ -282,43 +378,68 @@ export default function ReportsPage() {
         statsMap[j.salesperson_id].revenue += Number(j.contract_amount);
       });
 
-      // Get goals for the period
-      const { data: goalsData } = await supabase
+      // ── Busca TODAS as metas salvas ──────────────────────────────────────
+      const { data: allGoals } = await supabase
         .from("sales_goals")
-        .select("salesperson_id, target_value")
-        .eq("goal_type", "revenue")
-        .lte("period_start", periodDates.start)
-        .gte("period_end", periodDates.start);
+        .select("salesperson_id, is_company_goal, target_value, period_start, period_end")
+        .eq("goal_type", "revenue");
 
-      const goalMap: Record<string, number> = {};
-      (goalsData || []).forEach((g) => {
-        goalMap[g.salesperson_id] = (goalMap[g.salesperson_id] || 0) + Number(g.target_value);
+      /**
+       * Para cada salesperson e para a empresa, pegamos a meta mais específica
+       * que cobre o período selecionado no dashboard.
+       * Prioridade: meta do mesmo período > meta prorata de outro período.
+       * Se existir uma company goal, ela é usada como totalGoal (não soma das individuais).
+       */
+      const indivGoalMap: Record<string, number> = {};
+      let companyGoalValue = 0;
+
+      (allGoals || []).forEach((g: any) => {
+        const goalPeriod = classifyGoalPeriod(g.period_start, g.period_end);
+        // Proratea a meta para o período atual do dashboard
+        const prorated = prorateMeta(goalPeriod, Number(g.target_value), p);
+
+        if (g.is_company_goal) {
+          // Pega a meta de empresa mais específica (menor diferença de período)
+          // Simplificação: usa a última encontrada; no futuro pode priorizar.
+          companyGoalValue = prorated;
+        } else if (g.salesperson_id) {
+          // Para individuais: soma apenas se for mais recente / mais relevante
+          // Simplificação: usa o maior valor pro-rateado entre as metas disponíveis
+          indivGoalMap[g.salesperson_id] = Math.max(
+            indivGoalMap[g.salesperson_id] || 0,
+            prorated
+          );
+        }
       });
 
       // Build salesperson stats
       const salespeople: SalespersonStats[] = spData.map((sp, idx) => {
-        const stats = statsMap[sp.id] || { jobs: 0, revenue: 0 };
-        const monthlyGoal = goalMap[sp.id] || 0;
-        const goalPct = monthlyGoal > 0 ? Math.min((stats.revenue / monthlyGoal) * 100, 999) : 0;
+        const stats    = statsMap[sp.id] || { jobs: 0, revenue: 0 };
+        const spGoal   = indivGoalMap[sp.id] || 0;
+        const goalPct  = spGoal > 0 ? Math.min((stats.revenue / spGoal) * 100, 999) : 0;
         return {
-          id: sp.id,
-          full_name: sp.full_name,
-          initials: getInitials(sp.full_name),
-          color: getSpColor(sp.full_name, idx),
+          id:             sp.id,
+          full_name:      sp.full_name,
+          initials:       getInitials(sp.full_name),
+          color:          getSpColor(sp.full_name, idx),
           jobs_sold_count: stats.jobs,
-          total_revenue: stats.revenue,
-          monthly_goal: monthlyGoal,
-          goal_pct: goalPct,
+          total_revenue:  stats.revenue,
+          monthly_goal:   spGoal,
+          goal_pct:       goalPct,
         };
       });
 
       // Sort by revenue desc
       salespeople.sort((a, b) => b.total_revenue - a.total_revenue);
 
-      const totalGoal = salespeople.reduce((s, sp) => s + sp.monthly_goal, 0);
-      const totalSold = salespeople.reduce((s, sp) => s + sp.total_revenue, 0);
-      const totalJobs = salespeople.reduce((s, sp) => s + sp.jobs_sold_count, 0);
+      const totalSold   = salespeople.reduce((s, sp) => s + sp.total_revenue, 0);
+      const totalJobs   = salespeople.reduce((s, sp) => s + sp.jobs_sold_count, 0);
       const averageTicket = totalJobs > 0 ? totalSold / totalJobs : 0;
+
+      // Se há company goal definida, usa ela. Senão, soma das individuais.
+      const totalGoal = companyGoalValue > 0
+        ? companyGoalValue
+        : salespeople.reduce((s, sp) => s + sp.monthly_goal, 0);
 
       setData({
         totalGoal,
@@ -402,11 +523,11 @@ ${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved
               Set Goals
             </button>
             <div className="flex bg-[#0d0f0d] p-1 rounded-xl border border-white/5">
-              {(["Month", "Quarter", "Year"] as PeriodKey[]).map((p) => (
+              {(["Week", "Month", "Quarter", "Semester", "Year"] as PeriodKey[]).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     period === p
                       ? "bg-[#242624] text-[#aeee2a] shadow-inner"
                       : "text-[#ababa8] hover:text-[#faf9f5]"
@@ -914,7 +1035,7 @@ ${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved
             </div>
 
             <div className="p-6 space-y-6">
-              {/* ── Company Goal (top section) ────────────────────────── */}
+              {/* ── Company Goal (5 períodos) ─────────────────────────── */}
               <div
                 className="rounded-2xl p-5 space-y-4"
                 style={{ background: "rgba(174,238,42,0.04)", border: "1px solid rgba(174,238,42,0.12)" }}
@@ -923,16 +1044,19 @@ ${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved
                   <span className="material-symbols-outlined text-[#aeee2a] text-xl" translate="no">business</span>
                   <div>
                     <p className="text-sm font-black text-[#aeee2a] uppercase tracking-widest">Company Total Goal</p>
-                    <p className="text-[10px] text-[#ababa8] mt-0.5">Overall revenue target for Siding Depot</p>
+                    <p className="text-[10px] text-[#ababa8] mt-0.5">Define a meta por período — preencha apenas os que quiser usar</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                {/* 5 inputs: Week / Month / Quarter / Semester / Year */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {([
-                    { key: "monthly",   label: "Monthly"   },
-                    { key: "quarterly", label: "Quarterly" },
-                    { key: "yearly",    label: "Yearly"    },
-                  ] as const).map(({ key, label }) => (
+                    { key: "week",     label: "Weekly"     },
+                    { key: "month",    label: "Monthly"    },
+                    { key: "quarter",  label: "Quarterly"  },
+                    { key: "semester", label: "Semiannual" },
+                    { key: "year",     label: "Yearly"     },
+                  ] as { key: GoalPeriodKey; label: string }[]).map(({ key, label }) => (
                     <div key={key} className="space-y-1">
                       <label className="text-[9px] text-[#ababa8] uppercase tracking-widest font-bold">{label}</label>
                       <div className="relative">
@@ -949,22 +1073,22 @@ ${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved
                   ))}
                 </div>
 
-                {/* Auto-computed total from individuals */}
+                {/* Sugestão: soma dos individuais */}
                 {(() => {
-                  const autoTotal = data?.salespeople.reduce((sum, sp) => {
-                    return sum + (parseFloat(goalInputs[sp.id]?.monthly || "0") || 0);
+                  const autoMonth = data?.salespeople.reduce((sum, sp) => {
+                    return sum + (parseFloat(goalInputs[sp.id]?.month || "0") || 0);
                   }, 0) || 0;
-                  if (autoTotal > 0) return (
+                  if (autoMonth > 0) return (
                     <p className="text-[10px] text-[#ababa8]">
-                      📊 Sum of individual monthly targets:{" "}
-                      <span className="text-[#aeee2a] font-bold">${autoTotal.toLocaleString()}</span>
+                      📊 Soma das metas mensais individuais:{" "}
+                      <span className="text-[#aeee2a] font-bold">${autoMonth.toLocaleString()}</span>
                       {" — "}
                       <button
                         type="button"
-                        onClick={() => setCompanyGoal(prev => ({ ...prev, monthly: String(autoTotal) }))}
+                        onClick={() => setCompanyGoal(prev => ({ ...prev, month: String(autoMonth) }))}
                         className="text-[#aeee2a] underline hover:opacity-70 transition-opacity"
                       >
-                        Apply this total
+                        Aplicar como Monthly
                       </button>
                     </p>
                   );
@@ -1004,12 +1128,14 @@ ${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved
                         )}
                       </div>
 
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {([
-                          { key: "monthly",   label: "Monthly"   },
-                          { key: "quarterly", label: "Quarterly" },
-                          { key: "yearly",    label: "Yearly"    },
-                        ] as const).map(({ key, label }) => (
+                          { key: "week",     label: "Weekly"     },
+                          { key: "month",    label: "Monthly"    },
+                          { key: "quarter",  label: "Quarterly"  },
+                          { key: "semester", label: "Semiannual" },
+                          { key: "year",     label: "Yearly"     },
+                        ] as { key: GoalPeriodKey; label: string }[]).map(({ key, label }) => (
                           <div key={key} className="space-y-1">
                             <label className="text-[9px] text-[#ababa8] uppercase tracking-widest font-bold">{label}</label>
                             <div className="relative">
