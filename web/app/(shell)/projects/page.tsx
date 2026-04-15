@@ -29,7 +29,7 @@ const GATE_CONFIG: Record<string, { color: string; icon: string; title: string; 
 // Map job_status → display values
 const STATUS_MAP: Record<string, { label: string; style: string }> = {
   active:             { label: "Ready to Start",    style: "bg-green-500/10 text-green-400 border border-green-500/20"          },
-  draft:              { label: "Not Yet Contacted", style: "bg-[#60b8f5]/10 text-[#60b8f5] border border-[#60b8f5]/20"          },
+  draft:              { label: "Not Yet Contacted", style: "bg-[#ba1212]/10 text-[#ff4444] border border-[#ba1212]/40"          },
   pending_scheduling: { label: "Pending",           style: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20"          },
   on_hold:            { label: "Pending",           style: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20"          },
   completed:          { label: "Pending",           style: "bg-[#ababa8]/10 text-[#ababa8] border border-[#ababa8]/20"          },
