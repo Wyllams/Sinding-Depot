@@ -385,31 +385,50 @@ export default function ReportsPage() {
         .eq("goal_type", "revenue");
 
       /**
-       * Para cada salesperson e para a empresa, pegamos a meta mais específica
-       * que cobre o período selecionado no dashboard.
-       * Prioridade: meta do mesmo período > meta prorata de outro período.
-       * Se existir uma company goal, ela é usada como totalGoal (não soma das individuais).
+       * Prioridade para seleção de meta:
+       * 1. Meta do MESMO período que o dashboard (exact match) → usa diretamente
+       * 2. Qualquer outra meta → proratea para o período do dashboard
+       * Se existir company goal, ela é o totalGoal. Senão, soma das individuais.
        */
-      const indivGoalMap: Record<string, number> = {};
-      let companyGoalValue = 0;
+      const dashPeriodKey = p.toLowerCase() as GoalPeriodKey;
+
+      // Mapas: exact = meta do mesmo tipo | prorated = melhor prorata disponível
+      const indivExact:    Record<string, number> = {};
+      const indivProrated: Record<string, number> = {};
+      let   companyExact    = 0;
+      let   companyProrated = 0;
 
       (allGoals || []).forEach((g: any) => {
         const goalPeriod = classifyGoalPeriod(g.period_start, g.period_end);
-        // Proratea a meta para o período atual do dashboard
-        const prorated = prorateMeta(goalPeriod, Number(g.target_value), p);
+        const isExact    = goalPeriod === dashPeriodKey;
+        const prorated   = isExact
+          ? Number(g.target_value)  // sem prorata: já é o período certo
+          : prorateMeta(goalPeriod, Number(g.target_value), p);
 
         if (g.is_company_goal) {
-          // Pega a meta de empresa mais específica (menor diferença de período)
-          // Simplificação: usa a última encontrada; no futuro pode priorizar.
-          companyGoalValue = prorated;
+          if (isExact) {
+            companyExact = Number(g.target_value);
+          } else {
+            // Mantém o maior prorata entre as metas disponíveis
+            companyProrated = Math.max(companyProrated, prorated);
+          }
         } else if (g.salesperson_id) {
-          // Para individuais: soma apenas se for mais recente / mais relevante
-          // Simplificação: usa o maior valor pro-rateado entre as metas disponíveis
-          indivGoalMap[g.salesperson_id] = Math.max(
-            indivGoalMap[g.salesperson_id] || 0,
-            prorated
-          );
+          if (isExact) {
+            indivExact[g.salesperson_id] = Number(g.target_value);
+          } else {
+            indivProrated[g.salesperson_id] = Math.max(
+              indivProrated[g.salesperson_id] || 0,
+              prorated
+            );
+          }
         }
+      });
+
+      // Resolve: exact tem prioridade sobre prorated
+      const companyGoalValue = companyExact > 0 ? companyExact : companyProrated;
+      const indivGoalMap: Record<string, number> = {};
+      [...Object.keys(indivExact), ...Object.keys(indivProrated)].forEach((id) => {
+        indivGoalMap[id] = indivExact[id] ?? indivProrated[id] ?? 0;
       });
 
       // Build salesperson stats
@@ -568,10 +587,10 @@ ${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved
           <>
             {/* ── KPI Cards ──────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Total Goal */}
+              {/* Total Goal — label dinâmico conforme o período selecionado */}
               <KpiCard
                 icon="flag"
-                label="Monthly Goal"
+                label={`${period} Goal`}
                 value={fmt(data.totalGoal)}
                 sub={data.period.label}
                 color="#aeee2a"
