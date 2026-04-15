@@ -13,7 +13,7 @@ const navItems = [
   { href: "/windows-tracker", icon: "window", label: "Windows Tracker" },
   { href: "/services", icon: "warning", label: "Services" },
   { href: "/schedule", icon: "calendar_today", label: "Schedule" },
-  { href: "/reports", icon: "assessment", label: "Sales" },
+  { href: "/sales-reports", icon: "assessment", label: "Sales" },
   { href: "/settings", icon: "settings", label: "Settings" },
 ];
 
