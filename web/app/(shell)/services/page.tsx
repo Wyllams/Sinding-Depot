@@ -6,6 +6,15 @@ import { supabase } from "../../../lib/supabase";
 import { NewServiceCallModal } from "../../../components/NewServiceCallModal";
 import { ServiceReportPanel } from "../../../components/ServiceReportPanel";
 
+interface JobRef {
+  job_number: string;
+  title: string;
+}
+
+interface ProfileRef {
+  full_name: string;
+}
+
 interface ServiceCall {
   id: string;
   title: string;
@@ -13,8 +22,8 @@ interface ServiceCall {
   status: string;
   type: string;
   reported_at: string;
-  jobs?: { job_number: string; title: string };
-  profiles?: { full_name: string };
+  jobs?: JobRef[] | null;
+  profiles?: ProfileRef[] | null;
 }
 
 export default function ServicesPage() {
@@ -46,7 +55,7 @@ export default function ServicesPage() {
     if (error) {
       console.error("Error fetching service calls:", error);
     } else if (data) {
-      setServiceCalls(data);
+      setServiceCalls(data as ServiceCall[]);
     }
     setIsLoading(false);
   };
@@ -227,7 +236,7 @@ export default function ServicesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5 text-sm text-[#faf9f5]">
-                        <span className="font-bold">{issue.jobs?.job_number}</span> - {issue.jobs?.title}
+                        <span className="font-bold">{issue.jobs?.[0]?.job_number}</span> - {issue.jobs?.[0]?.title}
                       </td>
                       <td className="px-6 py-5">
                         <span
@@ -239,9 +248,9 @@ export default function ServicesPage() {
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-[#242624] flex items-center justify-center text-[10px] font-bold border border-[#474846] text-[#faf9f5] uppercase">
-                            {issue.profiles?.full_name ? issue.profiles.full_name.substring(0, 2) : "UN"}
+                            {issue.profiles?.[0]?.full_name ? issue.profiles[0].full_name.substring(0, 2) : "UN"}
                           </div>
-                          <span className="text-xs text-[#faf9f5]">{issue.profiles?.full_name || "Unassigned"}</span>
+                          <span className="text-xs text-[#faf9f5]">{issue.profiles?.[0]?.full_name || "Unassigned"}</span>
                         </div>
                       </td>
                       <td className="px-6 py-5 text-right text-xs font-bold text-[#faf9f5]">
