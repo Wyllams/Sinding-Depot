@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSidebar } from "./SidebarContext";
 import { supabase } from "../lib/supabase";
+import { NotificationBell } from "./NotificationBell";
 
 // =============================================
 // TopBar — Componente padrão de cabeçalho
@@ -146,9 +147,7 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
         {rightSlot && <>{rightSlot}<div className="hidden sm:block w-px h-6 bg-[#474846]/50" /></>}
 
         {/* Bell */}
-        <button className="hidden sm:flex p-2 text-[#ababa8] hover:text-[#faf9f5] transition-colors rounded-full hover:bg-[#242624]">
-          <span className="material-symbols-outlined text-[22px]" translate="no">notifications</span>
-        </button>
+        <NotificationBell />
 
         {/* Divider */}
         <div className="hidden sm:block w-px h-8 bg-[#474846]/50 mx-1" />
