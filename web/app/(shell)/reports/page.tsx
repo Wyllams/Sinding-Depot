@@ -494,38 +494,102 @@ export default function ReportsPage() {
     fetchData(period);
   }, [period, fetchData]);
 
-  // ── Weekly Summary Copy ─────────────────────────────────────────────────
-  const weeklySummaryText = data
-    ? `📊 *Weekly Sales Update – Siding Depot*
+  // ── Computed KPIs ───────────────────────────────────────────────────────
+  const overallPct = data && data.totalGoal > 0 ? Math.min((data.totalSold / data.totalGoal) * 100, 100) : 0;
+  const remaining = data ? Math.max(data.totalGoal - data.totalSold, 0) : 0;
 
-Week of ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${new Date().getFullYear()}
+  // Dias restantes no período — dinâmico conforme o period selecionado
+  const periodDaysLeft = (() => {
+    const now = new Date();
+    if (period === "Week") {
+      const d = now.getDay();
+      return d === 0 ? 0 : 7 - d; // domingo = 0 dias restantes
+    }
+    if (period === "Month") {
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      return lastDay - now.getDate();
+    }
+    if (period === "Quarter") {
+      const m = now.getMonth();
+      const qEnd = new Date(now.getFullYear(), Math.ceil((m + 1) / 3) * 3, 0);
+      return Math.ceil((qEnd.getTime() - now.getTime()) / 86400000);
+    }
+    if (period === "Semester") {
+      const m = now.getMonth();
+      const semEnd = m < 6 ? new Date(now.getFullYear(), 6, 0) : new Date(now.getFullYear(), 12, 0);
+      return Math.ceil((semEnd.getTime() - now.getTime()) / 86400000);
+    }
+    // Year
+    const yearEnd = new Date(now.getFullYear(), 11, 31);
+    return Math.ceil((yearEnd.getTime() - now.getTime()) / 86400000);
+  })();
+
+  // Label do período para a mensagem
+  const periodLabel: Record<PeriodKey, string> = {
+    Week:     "Weekly",
+    Month:    "Monthly",
+    Quarter:  "Quarterly",
+    Semester: "Semiannual",
+    Year:     "Annual",
+  };
+  const periodEmoji: Record<PeriodKey, string> = {
+    Week:     "📅",
+    Month:    "📆",
+    Quarter:  "🕑",
+    Semester: "📈",
+    Year:     "🌟",
+  };
+  const periodUnit: Record<PeriodKey, string> = {
+    Week:     "days",
+    Month:    "days",
+    Quarter:  "days",
+    Semester: "days",
+    Year:     "days",
+  };
+
+  // ── Summary Message — dinâmico por período ─────────────────────────────
+  const summaryText = data
+    ? `${periodEmoji[period]} *${periodLabel[period]} Sales Update – Siding Depot*
+
+${data.period.label}
 
 ✅ *Total Sold:* ${fmt(data.totalSold)}
 ✅ *Jobs Closed:* ${data.totalJobs}
 ✅ *Avg Ticket:* ${fmt(data.averageTicket)}
-${data.totalGoal > 0 ? `🎯 *Monthly Goal:* ${fmt(data.totalGoal)}\n📈 *Progress:* ${((data.totalSold / data.totalGoal) * 100).toFixed(1)}%` : ""}
-${data.totalGoal > 0 && data.totalSold < data.totalGoal ? `💰 *Remaining:* ${fmt(data.totalGoal - data.totalSold)}` : ""}
-${data.salespeople.length > 0 ? `\n🏆 *Top Performer:* ${data.salespeople[0].full_name} (${fmt(data.salespeople[0].total_revenue)})` : ""}
-${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved! Amazing work team!" : `\n💪 Let's finish strong!`}
+${
+  data.totalGoal > 0
+    ? `🎯 *${periodLabel[period]} Goal:* ${fmt(data.totalGoal)}\n📈 *Progress:* ${((data.totalSold / data.totalGoal) * 100).toFixed(1)}%`
+    : ""
+}
+${
+  data.totalGoal > 0 && data.totalSold < data.totalGoal
+    ? `💰 *Remaining:* ${fmt(data.totalGoal - data.totalSold)}`
+    : ""
+}
+${
+  data.salespeople.length > 0
+    ? `\n🏆 *Top Performer:* ${data.salespeople[0].full_name} (${fmt(data.salespeople[0].total_revenue)})`
+    : ""
+}
+${
+  data.totalGoal > 0 && data.totalSold >= data.totalGoal
+    ? "\n🎉 ${periodLabel[period]} goal achieved! Amazing work team!"
+    : `\n💪 Let's finish strong! ${periodDaysLeft} ${periodUnit[period]} left.`
+}
 
 – Siding Depot HQ`
     : "";
 
+
   const handleCopy = () => {
-    if (!weeklySummaryText) return;
-    navigator.clipboard.writeText(weeklySummaryText).then(() => {
+    if (!summaryText) return;
+    navigator.clipboard.writeText(summaryText).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     });
   };
 
-  // ── Computed KPIs ───────────────────────────────────────────────────────
-  const overallPct = data && data.totalGoal > 0 ? Math.min((data.totalSold / data.totalGoal) * 100, 100) : 0;
-  const remaining = data ? Math.max(data.totalGoal - data.totalSold, 0) : 0;
-  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-  const daysLeft = daysInMonth - new Date().getDate();
-
-  // ── Render ──────────────────────────────────────────────────────────────
+  // -- Render
   return (
     <>
       <TopBar title="Reports" />
@@ -623,7 +687,7 @@ ${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved
                 icon="trending_up"
                 label="Remaining"
                 value={fmt(remaining)}
-                sub={`${daysLeft} days left`}
+                sub={`${periodDaysLeft} days left in ${period.toLowerCase()}`}
                 color={remaining === 0 ? "#aeee2a" : "#ff7351"}
               />
               {/* Total Jobs */}
@@ -851,7 +915,7 @@ ${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-[#ababa8]">Days left</span>
-                    <span className="text-[#ababa8] font-bold">{daysLeft}d</span>
+                    <span className="text-[#ababa8] font-bold">{periodDaysLeft}d</span>
                   </div>
                 </div>
               </div>
@@ -975,7 +1039,7 @@ ${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
-                      Weekly Summary
+                      {periodLabel[period]} Summary
                     </h3>
                     <p className="text-[10px] text-[#ababa8]">Ready-to-copy for WhatsApp / Email</p>
                   </div>
@@ -990,7 +1054,7 @@ ${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved
                     minHeight: "220px",
                   }}
                 >
-                  {weeklySummaryText}
+                  {summaryText}
                 </div>
 
                 {/* Actions */}
