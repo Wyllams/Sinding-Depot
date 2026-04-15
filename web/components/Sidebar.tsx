@@ -7,12 +7,11 @@ import { useSidebar } from "./SidebarContext";
 const navItems = [
   { href: "/", icon: "dashboard", label: "Dashboard", filled: true },
   { href: "/projects", icon: "engineering", label: "Projects" },
-  { href: "/services", icon: "construction", label: "Services" },
   { href: "/crews", icon: "groups", label: "Crews" },
   { href: "/change-orders", icon: "request_quote", label: "Change Orders" },
   { href: "/cash-payments", icon: "payments", label: "Cash Payments" },
   { href: "/windows-tracker", icon: "window", label: "Windows Tracker" },
-  { href: "/issues", icon: "report_problem", label: "Issues" },
+  { href: "/services", icon: "warning", label: "Services" },
   { href: "/schedule", icon: "calendar_today", label: "Schedule" },
   { href: "/reports", icon: "assessment", label: "Reports" },
   { href: "/settings", icon: "settings", label: "Settings" },

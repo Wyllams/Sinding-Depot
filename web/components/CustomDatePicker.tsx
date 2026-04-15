@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 
+// Guard against SSR — document.body is only available on the client
+
 // =============================================
 // CustomDatePicker — Siding Depot brand
 // Dark mode, #aeee2a accent, Sundays blocked
@@ -75,17 +77,23 @@ export default function CustomDatePicker({
   today.setHours(12, 0, 0, 0);
 
   const initialDate = value ? fromIso(value) : today;
-  const [open,   setOpen]   = useState(false);
-  const [viewY,  setViewY]  = useState(initialDate.getFullYear());
-  const [viewM,  setViewM]  = useState(initialDate.getMonth());
+  const [open,      setOpen]      = useState(false);
+  const [viewY,     setViewY]     = useState(initialDate.getFullYear());
+  const [viewM,     setViewM]     = useState(initialDate.getMonth());
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Position of the dropdown
+  // Only render portals after the component mounts on the client (avoids SSR crash)
+  useEffect(() => { setIsMounted(true); }, []);
+
+  // Position of the dropdown (viewport coords — used with position:fixed)
   const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 300 });
 
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dropRef    = useRef<HTMLDivElement>(null);
 
-  // Calculate portal position when opening
+  // Calculate portal position when opening.
+  // Since the panel uses position:fixed, getBoundingClientRect() already gives
+  // viewport-relative coords — do NOT add scrollX/scrollY.
   const updatePosition = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
@@ -95,20 +103,20 @@ export default function CustomDatePicker({
     const viewportW = window.innerWidth;
 
     // Open below trigger, flip up if not enough space
-    let top  = rect.bottom + 8 + window.scrollY;
+    let top  = rect.bottom + 8;
     let left = alignRight
-      ? rect.right - CALENDAR_W + window.scrollX
-      : rect.left  + window.scrollX;
+      ? rect.right - CALENDAR_W
+      : rect.left;
 
-    // Clamp horizontally
-    if (left + CALENDAR_W > viewportW + window.scrollX) {
-      left = viewportW + window.scrollX - CALENDAR_W - 8;
+    // Clamp horizontally so it never overflows the viewport
+    if (left + CALENDAR_W > viewportW) {
+      left = viewportW - CALENDAR_W - 8;
     }
     if (left < 8) left = 8;
 
-    // Flip vertically if below viewport
+    // Flip vertically if the calendar would render below the viewport
     if (rect.bottom + CALENDAR_H > viewportH) {
-      top = rect.top - CALENDAR_H - 8 + window.scrollY;
+      top = rect.top - CALENDAR_H - 8;
     }
 
     setDropPos({ top, left, width: CALENDAR_W });
@@ -167,8 +175,8 @@ export default function CustomDatePicker({
   const selectedTs = value ? fromIso(value).setHours(12, 0, 0, 0) : null;
   const todayTs    = today.getTime();
 
-  // Calendar panel (rendered via portal)
-  const calendarPanel = open ? createPortal(
+  // Calendar panel (rendered via portal — guarded with isMounted to avoid SSR crash)
+  const calendarPanel = open && isMounted ? createPortal(
     <div
       ref={dropRef}
       style={{

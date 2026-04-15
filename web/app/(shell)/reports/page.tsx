@@ -1,122 +1,384 @@
 "use client";
 
-import { useState } from "react";
-
+import { useState, useEffect, useCallback } from "react";
 import { TopBar } from "../../../components/TopBar";
+import { supabase } from "../../../lib/supabase";
 
 // =============================================
-// Sales Dashboard / Reports
-// Criado do zero seguindo o MVP spec:
-// Módulo 10 — Sales Dashboard
-// Rota: /reports
+// Sales Dashboard — Tarefa 2.2
+// Conectado ao Supabase: sales_snapshots + sales_goals + salespersons + jobs
 // =============================================
 
-// ---- Data -----------------------------------------------------------
-const kpis = [
-  {
-    label: "Sales Goal",
-    value: "$280,000",
-    sub: "Monthly target",
-    icon: "flag",
-    color: "#aeee2a",
-    bg: "rgba(174,238,42,0.08)",
-    trend: null,
-  },
-  {
-    label: "Sold So Far",
-    value: "$214,500",
-    sub: "76.6% of goal",
-    icon: "attach_money",
-    color: "#aeee2a",
-    bg: "rgba(174,238,42,0.08)",
-    trend: { dir: "up", val: "+12% vs last month" },
-  },
-  {
-    label: "Remaining to Goal",
-    value: "$65,500",
-    sub: "18 days left",
-    icon: "trending_up",
-    color: "#ff7351",
-    bg: "rgba(255,115,81,0.08)",
-    trend: null,
-  },
-  {
-    label: "Total Jobs Sold",
-    value: "38",
-    sub: "This month",
-    icon: "work",
-    color: "#aeee2a",
-    bg: "rgba(174,238,42,0.08)",
-    trend: { dir: "up", val: "+4 vs last month" },
-  },
-  {
-    label: "Average Ticket",
-    value: "$5,645",
-    sub: "Per job",
-    icon: "receipt_long",
-    color: "#e3eb5d",
-    bg: "rgba(227,235,93,0.08)",
-    trend: { dir: "up", val: "+8% vs last month" },
-  },
-];
+// ── Types ──────────────────────────────────────────────────────────────────
 
-const salespeople = [
-  { name: "Jordan Miles",    initials: "JM", jobs: 12, total: "$67,200", pct: 90, trend: "up" },
-  { name: "Sofia Reyes",     initials: "SR", jobs: 9,  total: "$54,300", pct: 72, trend: "up" },
-  { name: "Derek Holt",      initials: "DH", jobs: 8,  total: "$46,800", pct: 63, trend: "down" },
-  { name: "Amara Osei",      initials: "AO", jobs: 6,  total: "$31,200", pct: 42, trend: "up" },
-  { name: "Chris Vega",      initials: "CV", jobs: 3,  total: "$15,000", pct: 20, trend: "down" },
-];
+interface SalespersonStats {
+  id: string;
+  full_name: string;
+  initials: string;
+  color: string;
+  jobs_sold_count: number;
+  total_revenue: number;
+  monthly_goal: number;
+  goal_pct: number;
+}
 
-// Chart Data — Multi-line by salesperson
-const lineChartData = [
-  { label: "W38", JM: { c: 15, n: 5, l: 2 }, SR: { c: 10, n: 3, l: 1 }, DH: { c: 5, n: 2, l: 0 }, AO: { c: 8, n: 1, l: 3 }, CV: { c: 3, n: 4, l: 1 } },
-  { label: "W39", JM: { c: 18, n: 6, l: 1 }, SR: { c: 12, n: 4, l: 0 }, DH: { c: 8, n: 3, l: 1 }, AO: { c: 10, n: 2, l: 4 }, CV: { c: 5, n: 3, l: 2 } },
-  { label: "W40", JM: { c: 14, n: 4, l: 3 }, SR: { c: 15, n: 5, l: 2 }, DH: { c: 10, n: 4, l: 1 }, AO: { c: 12, n: 3, l: 2 }, CV: { c: 6, n: 2, l: 1 } },
-  { label: "W41", JM: { c: 22, n: 8, l: 2 }, SR: { c: 18, n: 6, l: 1 }, DH: { c: 12, n: 5, l: 2 }, AO: { c: 15, n: 4, l: 1 }, CV: { c: 8, n: 4, l: 3 } },
-  { label: "W42", JM: { c: 20, n: 7, l: 1 }, SR: { c: 16, n: 5, l: 3 }, DH: { c: 15, n: 6, l: 1 }, AO: { c: 14, n: 3, l: 2 }, CV: { c: 10, n: 5, l: 2 } },
-  { label: "W43", JM: { c: 25, n: 9, l: 0 }, SR: { c: 22, n: 7, l: 1 }, DH: { c: 18, n: 5, l: 2 }, AO: { c: 16, n: 4, l: 1 }, CV: { c: 12, n: 6, l: 1 } }, // Current
-  { label: "W44", JM: { c: 12, n: 15, l: 0 }, SR: { c: 10, n: 12, l: 0 }, DH: { c: 8, n: 8, l: 0 }, AO: { c: 6, n: 10, l: 0 }, CV: { c: 5, n: 6, l: 0 } },
-  { label: "W45", JM: { c: 5, n: 20, l: 0 }, SR: { c: 4, n: 15, l: 0 }, DH: { c: 3, n: 12, l: 0 }, AO: { c: 2, n: 8, l: 0 }, CV: { c: 2, n: 10, l: 0 } },
-];
+interface DashboardData {
+  totalGoal: number;
+  totalSold: number;
+  totalJobs: number;
+  averageTicket: number;
+  salespeople: SalespersonStats[];
+  period: { start: string; end: string; label: string };
+}
 
-const spMeta = {
-  JM: { name: "Jordan Miles", color: "#aeee2a" },
-  SR: { name: "Sofia Reyes", color: "#e3eb5d" },
-  DH: { name: "Derek Holt", color: "#faf9f5" },
-  AO: { name: "Amara Osei", color: "#ababa8" },
-  CV: { name: "Chris Vega", color: "#ff7351" },
+// ── Color Map (Obsidian spec) ──────────────────────────────────────────────
+const SP_COLORS: Record<string, string> = {
+  Matt:    "#22c55e",
+  Armando: "#ef4444",
+  Ruby:    "#a855f7",
 };
+const DEFAULT_COLORS = ["#aeee2a", "#e3eb5d", "#faf9f5", "#ababa8", "#ff7351", "#38bdf8"];
 
-type SpId = keyof typeof spMeta;
-const spIds = Object.keys(spMeta) as SpId[];
+function getSpColor(name: string, idx: number): string {
+  for (const [key, color] of Object.entries(SP_COLORS)) {
+    if (name.toLowerCase().includes(key.toLowerCase())) return color;
+  }
+  return DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
+}
 
-// Weekly summary copy
-const weeklySummary = `📊 Weekly Sales Update – Siding Depot
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0].toUpperCase())
+    .join("");
+}
 
-Week of Oct 23–29, 2023
+// ── Period helpers ─────────────────────────────────────────────────────────
+type PeriodKey = "Month" | "Quarter" | "Year";
 
-✅ Total Sold: $53,100
-✅ Jobs Closed: 9
-✅ Avg Ticket: $5,900
+function getPeriodDates(p: PeriodKey): { start: string; end: string; label: string } {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth(); // 0-indexed
 
-🏆 Top Performer: Jordan Miles ($19,200)
+  if (p === "Month") {
+    const start = new Date(y, m, 1);
+    const end = new Date(y, m + 1, 0);
+    return {
+      start: start.toISOString().slice(0, 10),
+      end: end.toISOString().slice(0, 10),
+      label: start.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    };
+  }
+  if (p === "Quarter") {
+    const qStart = Math.floor(m / 3) * 3;
+    const start = new Date(y, qStart, 1);
+    const end = new Date(y, qStart + 3, 0);
+    return {
+      start: start.toISOString().slice(0, 10),
+      end: end.toISOString().slice(0, 10),
+      label: `Q${Math.floor(qStart / 3) + 1} ${y}`,
+    };
+  }
+  // Year
+  return {
+    start: `${y}-01-01`,
+    end: `${y}-12-31`,
+    label: `Full Year ${y}`,
+  };
+}
 
-📈 We're at 76.6% of our monthly goal.
-💪 $65,500 remaining — let's finish strong!
+function fmt(n: number): string {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}k`;
+  return `$${n.toFixed(0)}`;
+}
 
-– Siding Depot HQ`;
+// ── Main Component ─────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
-  const [hoveredPoint, setHoveredPoint] = useState<{ spId: SpId, weekIdx: number, weekLabel: string, x: number, y: number } | null>(null);
+  const [period, setPeriod] = useState<PeriodKey>("Month");
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [hoveredSp, setHoveredSp] = useState<string | null>(null);
 
+  // ── Goals Modal ──────────────────────────────────────────────────────────
+  const [showGoalsModal, setShowGoalsModal]   = useState(false);
+  const [goalsSaving,   setGoalsSaving]       = useState(false);
+  const [companyGoal,   setCompanyGoal]       = useState({ monthly: "", quarterly: "", yearly: "" });
+  const [goalInputs,    setGoalInputs]        = useState<Record<string, { monthly: string; quarterly: string; yearly: string }>>({}); 
+
+  const openGoalsModal = async () => {
+    if (!data) return;
+    // Load individual inputs
+    const inputs: Record<string, { monthly: string; quarterly: string; yearly: string }> = {};
+    data.salespeople.forEach((sp) => {
+      inputs[sp.id] = {
+        monthly:   sp.monthly_goal > 0 ? String(sp.monthly_goal) : "",
+        quarterly: "",
+        yearly:    "",
+      };
+    });
+    setGoalInputs(inputs);
+
+    // Load company goal
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const monthStart = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+
+    const { data: cgData } = await supabase
+      .from("sales_goals")
+      .select("target_value, period_start, period_end")
+      .eq("is_company_goal", true)
+      .eq("goal_type", "revenue");
+
+    const cgMap: Record<string, string> = {};
+    (cgData || []).forEach((g: any) => {
+      const ps = g.period_start?.slice(0, 7);
+      if (ps) cgMap[ps] = String(g.target_value);
+    });
+
+    const thisMonth = `${y}-${String(m + 1).padStart(2, "0")}`;
+    const thisQ     = `${y}-${String(Math.floor(m / 3) * 3 + 1).padStart(2, "0")}`;
+
+    setCompanyGoal({
+      monthly:   cgMap[thisMonth] || "",
+      quarterly: cgMap[thisQ]    || "",
+      yearly:    cgMap[`${y}-01`] || "",
+    });
+
+    setShowGoalsModal(true);
+  };
+
+  const saveGoals = async () => {
+    if (!data) return;
+    setGoalsSaving(true);
+    try {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+
+      // Helper: upsert a sales_goal row
+      const upsertGoal = async (opts: {
+        salesperson_id?: string;
+        is_company_goal?: boolean;
+        period_start: string;
+        period_end: string;
+        target_value: number;
+        notes: string;
+      }) => {
+        const matchQuery = supabase
+          .from("sales_goals")
+          .select("id")
+          .eq("goal_type", "revenue")
+          .eq("period_start", opts.period_start)
+          .eq("period_end", opts.period_end)
+          .eq("is_company_goal", !!opts.is_company_goal);
+
+        if (opts.salesperson_id) matchQuery.eq("salesperson_id", opts.salesperson_id);
+        else matchQuery.is("salesperson_id", null);
+
+        const { data: existing } = await matchQuery.maybeSingle();
+        if (existing) {
+          await supabase.from("sales_goals").update({ target_value: opts.target_value }).eq("id", existing.id);
+        } else {
+          await supabase.from("sales_goals").insert({
+            salesperson_id: opts.salesperson_id || null,
+            is_company_goal: !!opts.is_company_goal,
+            goal_type: "revenue",
+            period_start: opts.period_start,
+            period_end: opts.period_end,
+            target_value: opts.target_value,
+            notes: opts.notes,
+          });
+        }
+      };
+
+      // ── Company Goal ──────────────────────────────────────────────
+      const monthStart = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+      const monthEnd   = new Date(y, m + 1, 0).toISOString().slice(0, 10);
+      const qStart     = Math.floor(m / 3) * 3;
+      const qStartDate = `${y}-${String(qStart + 1).padStart(2, "0")}-01`;
+      const qEndDate   = new Date(y, qStart + 3, 0).toISOString().slice(0, 10);
+
+      const cgMonthly   = parseFloat(companyGoal.monthly)   || 0;
+      const cgQuarterly = parseFloat(companyGoal.quarterly) || 0;
+      const cgYearly    = parseFloat(companyGoal.yearly)    || 0;
+
+      if (cgMonthly   > 0) await upsertGoal({ is_company_goal: true, period_start: monthStart,   period_end: monthEnd,   target_value: cgMonthly,   notes: "Company monthly goal" });
+      if (cgQuarterly > 0) await upsertGoal({ is_company_goal: true, period_start: qStartDate,   period_end: qEndDate,   target_value: cgQuarterly, notes: "Company quarterly goal" });
+      if (cgYearly    > 0) await upsertGoal({ is_company_goal: true, period_start: `${y}-01-01`, period_end: `${y}-12-31`, target_value: cgYearly,   notes: "Company yearly goal" });
+
+      // ── Individual Goals ──────────────────────────────────────────
+      for (const sp of data.salespeople) {
+        const input = goalInputs[sp.id];
+        if (!input) continue;
+
+        const monthVal = parseFloat(input.monthly)   || 0;
+        const qVal     = parseFloat(input.quarterly) || 0;
+        const yVal     = parseFloat(input.yearly)    || 0;
+
+        if (monthVal > 0) await upsertGoal({ salesperson_id: sp.id, period_start: monthStart,   period_end: monthEnd,   target_value: monthVal, notes: `Monthly goal — ${sp.full_name}` });
+        if (qVal     > 0) await upsertGoal({ salesperson_id: sp.id, period_start: qStartDate,   period_end: qEndDate,   target_value: qVal,     notes: `Quarterly goal — ${sp.full_name}` });
+        if (yVal     > 0) await upsertGoal({ salesperson_id: sp.id, period_start: `${y}-01-01`, period_end: `${y}-12-31`, target_value: yVal,   notes: `Yearly goal — ${sp.full_name}` });
+      }
+
+      setShowGoalsModal(false);
+      fetchData(period);
+    } catch (e) {
+      console.error("Error saving goals:", e);
+    } finally {
+      setGoalsSaving(false);
+    }
+  };
+
+  // ── Data Fetcher ────────────────────────────────────────────────────────
+  const fetchData = useCallback(async (p: PeriodKey) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const periodDates = getPeriodDates(p);
+
+      // Get salespersons
+      const { data: spData, error: spErr } = await supabase
+        .from("salespersons")
+        .select("id, full_name")
+        .eq("active", true);
+      if (spErr) throw spErr;
+
+      if (!spData || spData.length === 0) {
+        setData(null);
+        setLoading(false);
+        return;
+      }
+
+      // For month period: use snapshots (pre-aggregated, most accurate)
+      // For quarter/year: aggregate from jobs directly
+      let statsMap: Record<string, { jobs: number; revenue: number }> = {};
+
+      // Aggregate from jobs for ALL periods (real-time, webhook-synced)
+      const { data: jobsData, error: jobsErr } = await supabase
+        .from("jobs")
+        .select("salesperson_id, contract_amount, contract_signed_at, created_at")
+        .in("status", ["active", "on_hold", "completed", "pending_scheduling", "draft"])
+        .gt("contract_amount", 0);
+      if (jobsErr) throw jobsErr;
+
+      // Filter by period dates — use contract_signed_at or fallback to created_at
+      (jobsData || []).forEach((j) => {
+        if (!j.salesperson_id) return;
+        const jobDate = j.contract_signed_at || j.created_at;
+        if (!jobDate) return;
+        const d = jobDate.slice(0, 10); // YYYY-MM-DD
+        if (d < periodDates.start || d > periodDates.end) return;
+
+        if (!statsMap[j.salesperson_id]) statsMap[j.salesperson_id] = { jobs: 0, revenue: 0 };
+        statsMap[j.salesperson_id].jobs += 1;
+        statsMap[j.salesperson_id].revenue += Number(j.contract_amount);
+      });
+
+      // Get goals for the period
+      const { data: goalsData } = await supabase
+        .from("sales_goals")
+        .select("salesperson_id, target_value")
+        .eq("goal_type", "revenue")
+        .lte("period_start", periodDates.start)
+        .gte("period_end", periodDates.start);
+
+      const goalMap: Record<string, number> = {};
+      (goalsData || []).forEach((g) => {
+        goalMap[g.salesperson_id] = (goalMap[g.salesperson_id] || 0) + Number(g.target_value);
+      });
+
+      // Build salesperson stats
+      const salespeople: SalespersonStats[] = spData.map((sp, idx) => {
+        const stats = statsMap[sp.id] || { jobs: 0, revenue: 0 };
+        const monthlyGoal = goalMap[sp.id] || 0;
+        const goalPct = monthlyGoal > 0 ? Math.min((stats.revenue / monthlyGoal) * 100, 999) : 0;
+        return {
+          id: sp.id,
+          full_name: sp.full_name,
+          initials: getInitials(sp.full_name),
+          color: getSpColor(sp.full_name, idx),
+          jobs_sold_count: stats.jobs,
+          total_revenue: stats.revenue,
+          monthly_goal: monthlyGoal,
+          goal_pct: goalPct,
+        };
+      });
+
+      // Sort by revenue desc
+      salespeople.sort((a, b) => b.total_revenue - a.total_revenue);
+
+      const totalGoal = salespeople.reduce((s, sp) => s + sp.monthly_goal, 0);
+      const totalSold = salespeople.reduce((s, sp) => s + sp.total_revenue, 0);
+      const totalJobs = salespeople.reduce((s, sp) => s + sp.jobs_sold_count, 0);
+      const averageTicket = totalJobs > 0 ? totalSold / totalJobs : 0;
+
+      setData({
+        totalGoal,
+        totalSold,
+        totalJobs,
+        averageTicket,
+        salespeople,
+        period: periodDates,
+      });
+    } catch (e: unknown) {
+      console.error("Sales Dashboard error:", e);
+      setError("Failed to load sales data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData(period);
+  }, [period, fetchData]);
+
+  // ── Weekly Summary Copy ─────────────────────────────────────────────────
+  const weeklySummaryText = data
+    ? `📊 *Weekly Sales Update – Siding Depot*
+
+Week of ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${new Date().getFullYear()}
+
+✅ *Total Sold:* ${fmt(data.totalSold)}
+✅ *Jobs Closed:* ${data.totalJobs}
+✅ *Avg Ticket:* ${fmt(data.averageTicket)}
+${data.totalGoal > 0 ? `🎯 *Monthly Goal:* ${fmt(data.totalGoal)}\n📈 *Progress:* ${((data.totalSold / data.totalGoal) * 100).toFixed(1)}%` : ""}
+${data.totalGoal > 0 && data.totalSold < data.totalGoal ? `💰 *Remaining:* ${fmt(data.totalGoal - data.totalSold)}` : ""}
+${data.salespeople.length > 0 ? `\n🏆 *Top Performer:* ${data.salespeople[0].full_name} (${fmt(data.salespeople[0].total_revenue)})` : ""}
+${data.totalGoal > 0 && data.totalSold >= data.totalGoal ? "\n🎉 Goal achieved! Amazing work team!" : `\n💪 Let's finish strong!`}
+
+– Siding Depot HQ`
+    : "";
+
+  const handleCopy = () => {
+    if (!weeklySummaryText) return;
+    navigator.clipboard.writeText(weeklySummaryText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  };
+
+  // ── Computed KPIs ───────────────────────────────────────────────────────
+  const overallPct = data && data.totalGoal > 0 ? Math.min((data.totalSold / data.totalGoal) * 100, 100) : 0;
+  const remaining = data ? Math.max(data.totalGoal - data.totalSold, 0) : 0;
+  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  const daysLeft = daysInMonth - new Date().getDate();
+
+  // ── Render ──────────────────────────────────────────────────────────────
   return (
     <>
       <TopBar title="Reports" />
 
-      <div className="p-4 sm:p-6 lg:p-8 space-y-10 min-h-screen pb-16">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-8 min-h-screen pb-16">
 
-        {/* ── Page Header ───────────────────────────────────────── */}
+        {/* ── Page Header ──────────────────────────────────────────────── */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1
@@ -125,17 +387,28 @@ export default function ReportsPage() {
             >
               Sales Dashboard
             </h1>
-            <p className="text-[#ababa8] text-sm mt-1">Commercial performance overview for Siding Depot</p>
+            <p className="text-[#ababa8] text-sm mt-1">
+              Commercial performance overview — {data?.period.label ?? "Loading..."}
+            </p>
           </div>
-          {/* Period filter */}
+
+          {/* Period Filter + Actions */}
           <div className="flex items-center gap-3">
-            <div className="flex bg-[#121412] p-1 rounded-xl">
-              {["Week", "Month", "Quarter", "Year"].map((p, i) => (
+            <button
+              onClick={openGoalsModal}
+              className="px-4 py-2 bg-[#1e201e] hover:bg-[#242624] text-[#faf9f5] font-semibold rounded-xl flex items-center gap-2 transition-all text-xs border border-white/5 hover:border-[#aeee2a]/20"
+            >
+              <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">flag</span>
+              Set Goals
+            </button>
+            <div className="flex bg-[#0d0f0d] p-1 rounded-xl border border-white/5">
+              {(["Month", "Quarter", "Year"] as PeriodKey[]).map((p) => (
                 <button
                   key={p}
+                  onClick={() => setPeriod(p)}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    i === 1
-                      ? "bg-[#242624] text-[#aeee2a]"
+                    period === p
+                      ? "bg-[#242624] text-[#aeee2a] shadow-inner"
                       : "text-[#ababa8] hover:text-[#faf9f5]"
                   }`}
                 >
@@ -143,400 +416,710 @@ export default function ReportsPage() {
                 </button>
               ))}
             </div>
-
+            <button
+              onClick={() => fetchData(period)}
+              title="Refresh"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#1e201e] border border-white/5 text-[#ababa8] hover:text-[#aeee2a] transition-all hover:border-[#aeee2a]/20"
+            >
+              <span className="material-symbols-outlined text-base" translate="no">refresh</span>
+            </button>
           </div>
         </div>
 
-        {/* ── KPI Cards ─────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
-          {kpis.map((kpi) => (
+        {/* ── Error / Loading States ────────────────────────────────────── */}
+        {error && (
+          <div className="rounded-xl p-4 bg-[#ff7351]/10 border border-[#ff7351]/20 text-[#ff7351] text-sm flex items-center gap-3">
+            <span className="material-symbols-outlined" translate="no">error</span>
+            {error}
+          </div>
+        )}
+
+        {loading && (
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-10 h-10 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
+              <p className="text-[#ababa8] text-sm">Loading sales data...</p>
+            </div>
+          </div>
+        )}
+
+        {!loading && data && (
+          <>
+            {/* ── KPI Cards ──────────────────────────────────────────────── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Total Goal */}
+              <KpiCard
+                icon="flag"
+                label="Monthly Goal"
+                value={fmt(data.totalGoal)}
+                sub={data.period.label}
+                color="#aeee2a"
+              />
+              {/* Sold So Far */}
+              <KpiCard
+                icon="attach_money"
+                label="Sold So Far"
+                value={fmt(data.totalSold)}
+                sub={`${overallPct.toFixed(1)}% of goal`}
+                color="#aeee2a"
+                trend={overallPct >= 75 ? { dir: "up", val: "On track" } : overallPct >= 50 ? { dir: "up", val: "Making progress" } : { dir: "down", val: "Needs attention" }}
+              />
+              {/* Remaining */}
+              <KpiCard
+                icon="trending_up"
+                label="Remaining"
+                value={fmt(remaining)}
+                sub={`${daysLeft} days left`}
+                color={remaining === 0 ? "#aeee2a" : "#ff7351"}
+              />
+              {/* Total Jobs */}
+              <KpiCard
+                icon="work"
+                label="Total Jobs"
+                value={String(data.totalJobs)}
+                sub="Closed this period"
+                color="#aeee2a"
+              />
+            </div>
+
+            {/* Average Ticket full-width */}
             <div
-              key={kpi.label}
-              className="rounded-2xl p-5 flex flex-col gap-3"
+              className="rounded-2xl p-4 flex items-center justify-between"
               style={{
                 background: "rgba(36,38,36,0.4)",
+                border: "1px solid rgba(174,238,42,0.08)",
                 backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255,255,255,0.05)",
               }}
             >
-              {/* Icon */}
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: kpi.bg }}
-              >
-                <span
-                  className="material-symbols-outlined text-[22px]"
-                  translate="no"
-                  style={{ color: kpi.color }}
-                >
-                  {kpi.icon}
-                </span>
-              </div>
-              {/* Value */}
-              <div>
-                <p
-                  className="text-2xl font-black leading-tight"
-                  style={{ color: kpi.color, fontFamily: "Manrope, system-ui, sans-serif" }}
-                >
-                  {kpi.value}
-                </p>
-                <p className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold mt-0.5">
-                  {kpi.label}
-                </p>
-                <p className="text-[10px] text-[#ababa8] mt-0.5">{kpi.sub}</p>
-              </div>
-              {/* Trend */}
-              {kpi.trend && (
-                <div className="flex items-center gap-1">
-                  <span
-                    className="material-symbols-outlined text-xs"
-                    translate="no"
-                    style={{ color: kpi.trend.dir === "up" ? "#aeee2a" : "#ff7351" }}
-                  >
-                    {kpi.trend.dir === "up" ? "trending_up" : "trending_down"}
-                  </span>
-                  <span
-                    className="text-[10px] font-bold"
-                    style={{ color: kpi.trend.dir === "up" ? "#aeee2a" : "#ff7351" }}
-                  >
-                    {kpi.trend.val}
-                  </span>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#e3eb5d]/10">
+                  <span className="material-symbols-outlined text-[#e3eb5d] text-lg" translate="no">receipt_long</span>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* ── Chart + Summary ─────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* Multi-line Sales Chart */}
-          <div
-            className="lg:col-span-2 rounded-2xl p-6"
-            style={{
-              background: "rgba(36,38,36,0.4)",
-              backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255,255,255,0.05)",
-            }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3
-                className="text-lg font-bold text-[#faf9f5]"
+                <div>
+                  <p className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">Average Ticket</p>
+                  <p className="text-[#ababa8] text-xs mt-0.5">Per job sold this period</p>
+                </div>
+              </div>
+              <p
+                className="text-3xl font-black text-[#e3eb5d]"
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
               >
-                Performance Timeline by Salesperson
-              </h3>
-              <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">
-                Last 8 weeks
-              </span>
+                {fmt(data.averageTicket)}
+              </p>
             </div>
 
-            {/* Custom Grouped Bar Chart */}
-            <div className="relative w-full h-56 mt-8 flex items-end justify-between gap-1 md:gap-3" onMouseLeave={() => setHoveredPoint(null)}>
-              
-              {/* Grid lines */}
-              <div className="absolute inset-x-0 inset-y-0 flex flex-col justify-between pointer-events-none pb-6 z-0">
-                {[0, 1, 2, 3].map((i) => (
-                  <div key={i} className="w-full h-px border-t border-dashed border-[#474846]/40" />
-                ))}
-              </div>
+            {/* ── Chart + Goal Progress ────────────────────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-              {lineChartData.map((d, wIdx) => {
-                const isHoveredWeek = hoveredPoint?.weekIdx === wIdx;
-                const isFirst = wIdx === 0;
-                const isLast = wIdx === lineChartData.length - 1;
+              {/* Salesperson Bar Chart */}
+              <div
+                className="lg:col-span-2 rounded-2xl p-6"
+                style={{
+                  background: "rgba(36,38,36,0.4)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                }}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                    Performance by Salesperson
+                  </h3>
+                  <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">
+                    Revenue · {data.period.label}
+                  </span>
+                </div>
 
-                return (
-                  <div key={d.label} className="relative flex flex-col items-center flex-1 h-full justify-end z-10 w-full group">
-                    
-                    {/* Tooltip Card (Render ONLY if this is the hovered week) */}
-                    {isHoveredWeek && hoveredPoint && (
-                      <div className={`absolute z-30 bottom-full mb-2 pointer-events-none transition-all duration-200 ${isFirst ? "left-0" : isLast ? "right-0" : "left-1/2 -translate-x-1/2"}`}>
-                        <div className="bg-[#0d0f0d]/90 backdrop-blur-xl border border-[#474846] rounded-xl p-3 min-w-[160px] shadow-[0_8px_30px_rgb(0,0,0,0.8)]">
-                          <div className="text-[10px] text-[#ababa8] font-bold uppercase tracking-wider mb-2 border-b border-white/10 pb-1">
-                            {hoveredPoint.weekLabel} · <span style={{ color: spMeta[hoveredPoint.spId].color }}>{spMeta[hoveredPoint.spId].name}</span>
+                {/* Horizontal Bars */}
+                <div className="space-y-4">
+                  {data.salespeople.map((sp, i) => {
+                    // Bar shows progress vs individual goal (not vs max revenue)
+                    const goalRef = sp.monthly_goal > 0 ? sp.monthly_goal : (data.salespeople[0]?.total_revenue || 1);
+                    const barWidth = Math.min((sp.total_revenue / goalRef) * 100, 100);
+                    const isHovered = hoveredSp === sp.id;
+
+                    return (
+                      <div
+                        key={sp.id}
+                        className="group cursor-pointer"
+                        onMouseEnter={() => setHoveredSp(sp.id)}
+                        onMouseLeave={() => setHoveredSp(null)}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            {/* Avatar */}
+                            <div
+                              className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-transform group-hover:scale-110"
+                              style={{
+                                background: `${sp.color}20`,
+                                border: `1.5px solid ${sp.color}60`,
+                                color: sp.color,
+                              }}
+                            >
+                              {sp.initials}
+                            </div>
+                            <span className={`text-sm font-semibold transition-colors ${isHovered ? "text-[#faf9f5]" : "text-[#ababa8]"}`}>
+                              {sp.full_name}
+                            </span>
+                            <span
+                              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                              style={{
+                                background: `${sp.color}15`,
+                                color: sp.color,
+                              }}
+                            >
+                              {sp.jobs_sold_count} job{sp.jobs_sold_count !== 1 ? "s" : ""}
+                            </span>
                           </div>
-
-                          <div className="space-y-1.5">
-                            {/* Fechadas */}
-                            <div className="flex justify-between items-center bg-[#242624]/60 p-1.5 rounded border border-[#aeee2a]/20">
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#aeee2a]"></span>
-                                <span className="text-[10px] text-[#faf9f5]">Fechadas</span>
-                              </div>
-                              <span className="text-[11px] font-bold text-[#aeee2a]">
-                                ${((lineChartData[hoveredPoint.weekIdx][hoveredPoint.spId as keyof typeof d] as {c:number}).c)}k
-                              </span>
-                            </div>
-                            
-                            {/* Em negociação */}
-                            <div className="flex justify-between items-center bg-[#242624]/40 p-1.5 rounded border border-[#e3eb5d]/10">
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#e3eb5d]"></span>
-                                <span className="text-[10px] text-[#ababa8]">Em Negociação</span>
-                              </div>
-                              <span className="text-[11px] font-bold text-[#e3eb5d]">
-                                ${((lineChartData[hoveredPoint.weekIdx][hoveredPoint.spId as keyof typeof d] as {n:number}).n)}k
-                              </span>
-                            </div>
-
-                            {/* Não fechadas / Lost */}
-                            <div className="flex justify-between items-center bg-[#242624]/40 p-1.5 rounded border border-[#ff7351]/10">
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#ff7351]"></span>
-                                <span className="text-[10px] text-[#ababa8]">Não Fechadas</span>
-                              </div>
-                              <span className="text-[11px] font-bold text-[#ff7351]">
-                                ${((lineChartData[hoveredPoint.weekIdx][hoveredPoint.spId as keyof typeof d] as {l:number}).l)}k
-                              </span>
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="text-sm font-black"
+                              style={{ color: sp.color, fontFamily: "Manrope, system-ui, sans-serif" }}
+                            >
+                              {fmt(sp.total_revenue)}
+                            </span>
+                            <span
+                              className="text-[10px] text-[#ababa8] w-9 text-right"
+                            >
+                              {sp.goal_pct.toFixed(0)}%
+                            </span>
                           </div>
                         </div>
-                      </div>
-                    )}
 
-                    {/* 5 Grouped Bars for the week */}
-                    <div className="flex items-end justify-center w-full h-full pb-6 gap-px md:gap-0.5">
-                      {spIds.map(spId => {
-                        const valObj = d[spId as keyof typeof d] as { c: number };
-                        const hPct = (valObj.c / 30) * 100;
-                        const minH = Math.max(hPct, 2); // min height 2%
-                        const isHovered = hoveredPoint?.spId === spId && hoveredPoint?.weekIdx === wIdx;
-
-                        return (
+                        {/* Bar track */}
+                        <div className="relative w-full h-2 bg-[#242624] rounded-full overflow-hidden">
+                          {/* Goal end marker (100% = goal achieved) */}
+                          {sp.monthly_goal > 0 && (
+                            <div
+                              className="absolute top-0 bottom-0 w-px bg-white/20 z-10"
+                              style={{ left: "100%" }}
+                            />
+                          )}
+                          {/* Revenue bar */}
                           <div
-                            key={spId}
-                            className="w-full max-w-[10px] rounded-t-sm transition-all cursor-pointer hover:-translate-y-1 relative"
+                            className="h-full rounded-full transition-all duration-700"
                             style={{
-                              height: `${minH}%`,
-                              backgroundColor: spMeta[spId].color,
-                              opacity: hoveredPoint ? (isHovered ? 1 : 0.2) : 0.9,
-                              boxShadow: isHovered ? `0 0 16px ${spMeta[spId].color}A0` : 'none',
-                              zIndex: isHovered ? 20 : 10
+                              width: `${barWidth}%`,
+                              background: `linear-gradient(90deg, ${sp.color}CC, ${sp.color})`,
+                              boxShadow: isHovered ? `0 0 12px ${sp.color}60` : "none",
                             }}
-                            onMouseEnter={() => setHoveredPoint({ spId, weekIdx: wIdx, weekLabel: d.label, x: 0, y: 0 })}
                           />
-                        );
-                      })}
-                    </div>
-                    {/* X-Label */}
-                    <span className="absolute bottom-0 text-[8px] text-[#ababa8] font-bold uppercase">{d.label}</span>
+                        </div>
+
+                        {/* Tooltip on hover */}
+                        {isHovered && sp.monthly_goal > 0 && (
+                          <div className="mt-1.5 flex items-center gap-4 text-[10px] text-[#ababa8]">
+                            <span>Goal: <span className="text-[#faf9f5] font-bold">{fmt(sp.monthly_goal)}</span></span>
+                            <span>Remaining: <span style={{ color: sp.total_revenue >= sp.monthly_goal ? "#aeee2a" : "#ff7351" }} className="font-bold">{fmt(Math.max(sp.monthly_goal - sp.total_revenue, 0))}</span></span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Legend */}
+                <div className="mt-6 pt-4 border-t border-white/5 flex items-center gap-1 flex-wrap">
+                  <div className="flex items-center gap-1 mr-2">
+                    <div className="w-5 h-px bg-white/20" />
+                    <span className="text-[9px] text-[#ababa8] uppercase tracking-widest">Monthly goal marker</span>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Legend */}
-            <div className="mt-8 flex items-center gap-4 flex-wrap">
-              {spIds.map(spId => (
-                <div key={spId} className="flex items-center gap-1.5 cursor-pointer group" onMouseEnter={() => setHoveredPoint({spId, weekIdx: 5, weekLabel: "W43", x: 0, y: 0})} onMouseLeave={() => setHoveredPoint(null)}>
-                  <span className="w-3 h-3 rounded-sm transition-transform group-hover:scale-110" style={{ background: spMeta[spId].color }} />
-                  <span className="text-[10px] text-[#ababa8] uppercase font-bold group-hover:text-[#faf9f5] transition-colors">
-                    {spMeta[spId].name.split(" ")[0]}
-                  </span>
                 </div>
-              ))}
+              </div>
+
+              {/* Goal Progress Circle */}
+              <div
+                className="rounded-2xl p-6 flex flex-col gap-6"
+                style={{
+                  background: "rgba(36,38,36,0.4)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                }}
+              >
+                <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                  {data.period.label}
+                </h3>
+
+                {/* Circular Progress SVG */}
+                <div className="flex flex-col items-center justify-center flex-1">
+                  <div className="relative w-40 h-40">
+                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                      <circle cx="50" cy="50" r="42" fill="none" stroke="#242624" strokeWidth="10" />
+                      <circle
+                        cx="50" cy="50" r="42"
+                        fill="none"
+                        stroke={overallPct >= 100 ? "#22c55e" : "#aeee2a"}
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 42}`}
+                        strokeDashoffset={`${2 * Math.PI * 42 * (1 - overallPct / 100)}`}
+                        style={{ transition: "stroke-dashoffset 1.2s ease" }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span
+                        className="text-3xl font-black"
+                        style={{
+                          color: overallPct >= 100 ? "#22c55e" : "#aeee2a",
+                          fontFamily: "Manrope, system-ui, sans-serif",
+                        }}
+                      >
+                        {overallPct.toFixed(1)}%
+                      </span>
+                      <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">of goal</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mini stats */}
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#ababa8]">Sold</span>
+                    <span className="text-[#aeee2a] font-bold">{fmt(data.totalSold)}</span>
+                  </div>
+                  <div className="w-full bg-[#242624] rounded-full h-1.5">
+                    <div
+                      className="h-1.5 rounded-full transition-all duration-700"
+                      style={{
+                        width: `${overallPct}%`,
+                        background: "linear-gradient(90deg, #aeee2a, #22c55e)",
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#ababa8]">Goal</span>
+                    <span className="text-[#faf9f5] font-bold">{fmt(data.totalGoal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm border-t border-white/5 pt-3">
+                    <span className="text-[#ababa8]">Remaining</span>
+                    <span className="font-bold" style={{ color: remaining === 0 ? "#aeee2a" : "#ff7351" }}>
+                      {remaining === 0 ? "✓ Achieved!" : fmt(remaining)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#ababa8]">Days left</span>
+                    <span className="text-[#ababa8] font-bold">{daysLeft}d</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Goal Progress */}
-          <div
-            className="rounded-2xl p-6 flex flex-col gap-6"
-            style={{
-              background: "rgba(36,38,36,0.4)",
-              backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255,255,255,0.05)",
-            }}
-          >
-            <h3
-              className="text-lg font-bold text-[#faf9f5]"
-              style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-            >
-              Monthly Goal
-            </h3>
+            {/* ── Salesperson Table + Weekly Message ───────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {/* Circular progress—SVG */}
-            <div className="flex flex-col items-center justify-center flex-1">
-              <div className="relative w-40 h-40">
-                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                  <circle cx="50" cy="50" r="42" fill="none" stroke="#242624" strokeWidth="10" />
-                  <circle
-                    cx="50" cy="50" r="42"
-                    fill="none"
-                    stroke="#aeee2a"
-                    strokeWidth="10"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 42}`}
-                    strokeDashoffset={`${2 * Math.PI * 42 * (1 - 0.766)}`}
-                    style={{ transition: "stroke-dashoffset 1s ease" }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span
-                    className="text-3xl font-black text-[#aeee2a]"
-                    style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
+              {/* Leaderboard Table */}
+              <div
+                className="lg:col-span-2 rounded-2xl overflow-hidden"
+                style={{
+                  background: "#121412",
+                  border: "1px solid rgba(255,255,255,0.04)",
+                }}
+              >
+                <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                    Leaderboard
+                  </h3>
+                  <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">{data.period.label}</span>
+                </div>
+
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-[#1e201e]/50">
+                      {["#", "Salesperson", "Jobs", "Revenue", "vs Goal"].map((col, i) => (
+                        <th
+                          key={col}
+                          className={`px-5 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest ${i === 2 ? "text-center" : i >= 3 ? "text-right" : ""}`}
+                        >
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {data.salespeople.map((sp, i) => (
+                      <tr
+                        key={sp.id}
+                        className="hover:bg-[#1e201e]/40 transition-colors cursor-pointer"
+                        onMouseEnter={() => setHoveredSp(sp.id)}
+                        onMouseLeave={() => setHoveredSp(null)}
+                      >
+                        {/* Rank */}
+                        <td className="px-5 py-4 w-10">
+                          {i === 0 ? (
+                            <span className="text-base">🏆</span>
+                          ) : (
+                            <span className="text-sm font-bold text-[#474846]">#{i + 1}</span>
+                          )}
+                        </td>
+                        {/* Name */}
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black"
+                              style={{
+                                background: `${sp.color}15`,
+                                border: `1.5px solid ${sp.color}40`,
+                                color: sp.color,
+                              }}
+                            >
+                              {sp.initials}
+                            </div>
+                            <span className="text-sm font-semibold text-[#faf9f5]">{sp.full_name}</span>
+                          </div>
+                        </td>
+                        {/* Jobs */}
+                        <td className="px-5 py-4 text-center text-sm text-[#faf9f5] font-bold">{sp.jobs_sold_count}</td>
+                        {/* Revenue */}
+                        <td className="px-5 py-4 text-right">
+                          <span
+                            className="text-sm font-black"
+                            style={{ color: sp.color, fontFamily: "Manrope, system-ui, sans-serif" }}
+                          >
+                            {fmt(sp.total_revenue)}
+                          </span>
+                        </td>
+                        {/* Goal % */}
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="w-20 bg-[#242624] rounded-full h-1.5">
+                              <div
+                                className="h-1.5 rounded-full transition-all duration-700"
+                                style={{
+                                  width: `${Math.min(sp.goal_pct, 100)}%`,
+                                  backgroundColor: sp.goal_pct >= 70 ? "#aeee2a" : sp.goal_pct >= 40 ? "#e3eb5d" : "#ff7351",
+                                }}
+                              />
+                            </div>
+                            <span className="text-[10px] text-[#ababa8] w-8 text-right">{sp.goal_pct.toFixed(0)}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {data.salespeople.length === 0 && (
+                  <div className="py-10 text-center text-[#ababa8] text-sm">
+                    No sales data for this period.
+                  </div>
+                )}
+              </div>
+
+              {/* Weekly Summary Message */}
+              <div
+                className="rounded-2xl p-6 flex flex-col gap-4"
+                style={{
+                  background: "rgba(36,38,36,0.4)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(174,238,42,0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">
+                      campaign
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                      Weekly Summary
+                    </h3>
+                    <p className="text-[10px] text-[#ababa8]">Ready-to-copy for WhatsApp / Email</p>
+                  </div>
+                </div>
+
+                {/* Message box */}
+                <div
+                  className="flex-1 rounded-xl p-4 text-[11px] text-[#faf9f5]/80 leading-relaxed whitespace-pre-line font-mono"
+                  style={{
+                    background: "rgba(13,15,13,0.6)",
+                    border: "1px solid rgba(71,72,70,0.3)",
+                    minHeight: "220px",
+                  }}
+                >
+                  {weeklySummaryText}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCopy}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                    style={{
+                      background: copied ? "#1a2e00" : "#aeee2a",
+                      color: copied ? "#aeee2a" : "#3a5400",
+                      border: copied ? "1px solid #aeee2a40" : "none",
+                    }}
                   >
-                    76.6%
-                  </span>
-                  <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">of goal</span>
+                    <span className="material-symbols-outlined text-sm" translate="no">
+                      {copied ? "check" : "content_copy"}
+                    </span>
+                    {copied ? "Copied!" : "Copy Message"}
+                  </button>
+                  <button
+                    onClick={() => fetchData(period)}
+                    title="Refresh data"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#242624] text-[#ababa8] text-xs font-bold hover:text-[#faf9f5] transition-all hover:bg-[#2e302e]"
+                  >
+                    <span className="material-symbols-outlined text-sm" translate="no">refresh</span>
+                  </button>
                 </div>
               </div>
             </div>
+          </>
+        )}
 
-            {/* Mini stats */}
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-[#ababa8]">Sold</span>
-                <span className="text-[#aeee2a] font-bold">$214,500</span>
-              </div>
-              <div className="w-full bg-[#242624] rounded-full h-1.5">
-                <div className="bg-[#aeee2a] h-1.5 rounded-full" style={{ width: "76.6%" }} />
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[#ababa8]">Remaining</span>
-                <span className="text-[#ff7351] font-bold">$65,500</span>
-              </div>
+        {/* ── Empty State ─────────────────────────────────────────────── */}
+        {!loading && !error && !data && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-[#1e201e] flex items-center justify-center">
+              <span className="material-symbols-outlined text-3xl text-[#474846]" translate="no">bar_chart</span>
             </div>
+            <p className="text-[#ababa8] text-sm">No sales data found for this period.</p>
+            <p className="text-[#474846] text-xs">Sales data will appear here once jobs are created with contract amounts.</p>
           </div>
-        </div>
+        )}
 
-        {/* ── Salesperson Table + Weekly Message ─────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      </div>
 
-          {/* Salesperson Table */}
+      {/* ── Goals Modal ──────────────────────────────────────────────── */}
+      {showGoalsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowGoalsModal(false)} />
           <div
-            className="lg:col-span-2 rounded-2xl overflow-hidden"
+            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl space-y-0"
             style={{
               background: "#121412",
-              border: "1px solid rgba(255,255,255,0.04)",
+              border: "1px solid rgba(174,238,42,0.15)",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 40px rgba(174,238,42,0.05)",
+              scrollbarWidth: "none",
             }}
           >
             {/* Header */}
-            <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
-              <h3
-                className="text-lg font-bold text-[#faf9f5]"
-                style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
+            <div className="flex items-center justify-between p-6 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[#aeee2a] text-xl" translate="no">flag</span>
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Set Sales Goals</h2>
+                  <p className="text-[10px] text-[#ababa8] uppercase tracking-widest">Company & individual targets</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowGoalsModal(false)}
+                className="w-8 h-8 rounded-lg bg-[#1e201e] flex items-center justify-center text-[#ababa8] hover:text-[#faf9f5] transition-all"
               >
-                Performance by Salesperson
-              </h3>
-              <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">Oct 2023</span>
+                <span className="material-symbols-outlined text-base" translate="no">close</span>
+              </button>
             </div>
 
-            {/* Table */}
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-[#1e201e]/50">
-                  {["Salesperson", "Jobs", "Revenue", "vs Goal", "Trend"].map((col, i) => (
-                    <th
-                      key={col}
-                      className={`px-6 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest ${
-                        i >= 2 ? "text-right" : ""
-                      }`}
-                    >
-                      {col}
-                    </th>
+            <div className="p-6 space-y-6">
+              {/* ── Company Goal (top section) ────────────────────────── */}
+              <div
+                className="rounded-2xl p-5 space-y-4"
+                style={{ background: "rgba(174,238,42,0.04)", border: "1px solid rgba(174,238,42,0.12)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#aeee2a] text-xl" translate="no">business</span>
+                  <div>
+                    <p className="text-sm font-black text-[#aeee2a] uppercase tracking-widest">Company Total Goal</p>
+                    <p className="text-[10px] text-[#ababa8] mt-0.5">Overall revenue target for Siding Depot</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  {([
+                    { key: "monthly",   label: "Monthly"   },
+                    { key: "quarterly", label: "Quarterly" },
+                    { key: "yearly",    label: "Yearly"    },
+                  ] as const).map(({ key, label }) => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-[9px] text-[#ababa8] uppercase tracking-widest font-bold">{label}</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aeee2a] text-xs font-bold">$</span>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={companyGoal[key]}
+                          onChange={(e) => setCompanyGoal(prev => ({ ...prev, [key]: e.target.value }))}
+                          className="w-full bg-[#0d0f0d] border border-[#aeee2a]/20 rounded-lg py-2.5 pl-7 pr-3 text-sm text-[#aeee2a] font-black placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/60 transition-colors"
+                        />
+                      </div>
+                    </div>
                   ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {salespeople.map((sp) => (
-                  <tr key={sp.name} className="hover:bg-[#1e201e]/40 transition-colors cursor-pointer">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#242624] border border-[#474846] flex items-center justify-center text-[11px] font-black text-[#aeee2a]">
+                </div>
+
+                {/* Auto-computed total from individuals */}
+                {(() => {
+                  const autoTotal = data?.salespeople.reduce((sum, sp) => {
+                    return sum + (parseFloat(goalInputs[sp.id]?.monthly || "0") || 0);
+                  }, 0) || 0;
+                  if (autoTotal > 0) return (
+                    <p className="text-[10px] text-[#ababa8]">
+                      📊 Sum of individual monthly targets:{" "}
+                      <span className="text-[#aeee2a] font-bold">${autoTotal.toLocaleString()}</span>
+                      {" — "}
+                      <button
+                        type="button"
+                        onClick={() => setCompanyGoal(prev => ({ ...prev, monthly: String(autoTotal) }))}
+                        className="text-[#aeee2a] underline hover:opacity-70 transition-opacity"
+                      >
+                        Apply this total
+                      </button>
+                    </p>
+                  );
+                  return null;
+                })()}
+              </div>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-white/5" />
+                <span className="text-[10px] text-[#474846] uppercase tracking-widest font-bold">Individual Targets</span>
+                <div className="flex-1 h-px bg-white/5" />
+              </div>
+
+              {/* ── Individual Salesperson Rows ───────────────────────── */}
+              <div className="space-y-3">
+                {data?.salespeople.map((sp) => {
+                  const input = goalInputs[sp.id];
+                  if (!input) return null;
+
+                  return (
+                    <div
+                      key={sp.id}
+                      className="rounded-xl p-4 space-y-3"
+                      style={{ background: "rgba(30,32,30,0.6)", border: "1px solid rgba(255,255,255,0.05)" }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black"
+                          style={{ background: `${sp.color}20`, border: `1.5px solid ${sp.color}60`, color: sp.color }}
+                        >
                           {sp.initials}
                         </div>
-                        <span className="text-sm font-semibold text-[#faf9f5]">{sp.name}</span>
+                        <span className="text-sm font-bold text-[#faf9f5]">{sp.full_name}</span>
+                        {sp.monthly_goal > 0 && (
+                          <span className="ml-auto text-[10px] text-[#ababa8]">Current: <span className="text-[#faf9f5] font-bold">${sp.monthly_goal.toLocaleString()}/mo</span></span>
+                        )}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm text-[#faf9f5] font-bold">{sp.jobs}</td>
-                    <td className="px-6 py-4 text-right">
-                      <span
-                        className="text-sm font-black"
-                        style={{ fontFamily: "Manrope, system-ui, sans-serif", color: "#aeee2a" }}
-                      >
-                        {sp.total}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="w-20 bg-[#242624] rounded-full h-1.5">
-                          <div
-                            className="h-1.5 rounded-full"
-                            style={{
-                              width: `${sp.pct}%`,
-                              backgroundColor: sp.pct >= 70 ? "#aeee2a" : sp.pct >= 40 ? "#e3eb5d" : "#ff7351",
-                            }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-[#ababa8] w-7 text-right">{sp.pct}%</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span
-                        className="material-symbols-outlined text-base"
-                        translate="no"
-                        style={{ color: sp.trend === "up" ? "#aeee2a" : "#ff7351" }}
-                      >
-                        {sp.trend === "up" ? "trending_up" : "trending_down"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
 
-          {/* Weekly Summary Message */}
-          <div
-            className="rounded-2xl p-6 flex flex-col gap-4"
-            style={{
-              background: "rgba(36,38,36,0.4)",
-              backdropFilter: "blur(20px)",
-              border: "1px solid rgba(174,238,42,0.08)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">
-                  campaign
-                </span>
+                      <div className="grid grid-cols-3 gap-3">
+                        {([
+                          { key: "monthly",   label: "Monthly"   },
+                          { key: "quarterly", label: "Quarterly" },
+                          { key: "yearly",    label: "Yearly"    },
+                        ] as const).map(({ key, label }) => (
+                          <div key={key} className="space-y-1">
+                            <label className="text-[9px] text-[#ababa8] uppercase tracking-widest font-bold">{label}</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] text-xs">$</span>
+                              <input
+                                type="number"
+                                placeholder="0"
+                                value={input[key]}
+                                onChange={(e) =>
+                                  setGoalInputs((prev) => ({
+                                    ...prev,
+                                    [sp.id]: { ...prev[sp.id], [key]: e.target.value },
+                                  }))
+                                }
+                                className="w-full bg-[#0d0f0d] border border-white/10 rounded-lg py-2 pl-7 pr-3 text-sm text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/40 transition-colors"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <h3
-                className="text-base font-bold text-[#faf9f5]"
-                style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-              >
-                Weekly Summary
-              </h3>
-            </div>
-            <p className="text-[11px] text-[#ababa8]">Ready-to-copy message for your team</p>
 
-            {/* Message box */}
-            <div
-              className="flex-1 rounded-xl p-4 text-[11px] text-[#faf9f5]/80 leading-relaxed whitespace-pre-line font-mono"
-              style={{
-                background: "rgba(13,15,13,0.6)",
-                border: "1px solid rgba(71,72,70,0.3)",
-                minHeight: "200px",
-              }}
-            >
-              {weeklySummary}
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#aeee2a] text-[#3a5400] text-xs font-bold hover:brightness-110 transition-all active:scale-95">
-                <span className="material-symbols-outlined text-sm" translate="no">content_copy</span>
-                Copy Message
-              </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#242624] text-[#ababa8] text-xs font-bold hover:text-[#faf9f5] transition-all">
-                <span className="material-symbols-outlined text-sm" translate="no">refresh</span>
-              </button>
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowGoalsModal(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-[#1e201e] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveGoals}
+                  disabled={goalsSaving}
+                  className="flex-1 py-2.5 rounded-xl bg-[#aeee2a] text-[#3a5400] text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                >
+                  {goalsSaving ? (
+                    <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-sm" translate="no">save</span>
+                      Save All Goals
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
-      </div>
+      )}
     </>
+  );
+}
+
+// ── KPI Card Sub-Component ─────────────────────────────────────────────────
+function KpiCard({
+  icon,
+  label,
+  value,
+  sub,
+  color,
+  trend,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+  sub: string;
+  color: string;
+  trend?: { dir: "up" | "down"; val: string };
+}) {
+  return (
+    <div
+      className="rounded-2xl p-5 flex flex-col gap-3"
+      style={{
+        background: "rgba(36,38,36,0.4)",
+        backdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.05)",
+      }}
+    >
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center"
+        style={{ background: `${color}15` }}
+      >
+        <span className="material-symbols-outlined text-[22px]" translate="no" style={{ color }}>
+          {icon}
+        </span>
+      </div>
+      <div>
+        <p className="text-2xl font-black leading-tight" style={{ color, fontFamily: "Manrope, system-ui, sans-serif" }}>
+          {value}
+        </p>
+        <p className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold mt-0.5">{label}</p>
+        <p className="text-[10px] text-[#ababa8] mt-0.5">{sub}</p>
+      </div>
+      {trend && (
+        <div className="flex items-center gap-1">
+          <span
+            className="material-symbols-outlined text-xs"
+            translate="no"
+            style={{ color: trend.dir === "up" ? "#aeee2a" : "#ff7351" }}
+          >
+            {trend.dir === "up" ? "trending_up" : "trending_down"}
+          </span>
+          <span className="text-[10px] font-bold" style={{ color: trend.dir === "up" ? "#aeee2a" : "#ff7351" }}>
+            {trend.val}
+          </span>
+        </div>
+      )}
+    </div>
   );
 }

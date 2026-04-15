@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { TopBar } from "../../../components/TopBar";
+import { supabase } from "../../../lib/supabase";
 
 // =============================================
 // Create New Job | Iron & Lime
@@ -22,6 +24,13 @@ const GATE_CONFIG: Record<string, { color: string, icon: string, title: string, 
   PERMIT: { color: "#747673", icon: "contract", title: "Pending Permit", desc: "Waiting on city or county permit clearance." }
 };
 type GateConfigKey = keyof typeof GATE_CONFIG;
+
+const SELLER_CONFIG = {
+  MATHEUS: { label: "Matheus (Matt)", color: "#22c55e", initial: "M" },
+  ARMANDO: { label: "Armando", color: "#ef4444", initial: "A" },
+  RUBY: { label: "Ruby", color: "#a855f7", initial: "R" },
+};
+type SellerConfigKey = keyof typeof SELLER_CONFIG;
 
 const services = [
   { id: "siding",   icon: "view_day",       label: "Siding", partners: ["Siding Depot", "Xicara", "Xicara 2", "Wilmar", "Wilmar 2", "Sula", "Luis"] },
@@ -319,15 +328,143 @@ function SectionHeader({ icon, title }: { icon: string; title: string }) {
 
 
 export default function NewProjectPage() {
+  const router = useRouter();
   const [selected, setSelected] = useState<string[]>(["siding"]);
   const [gateStatus, setGateStatus] = useState<GateConfigKey>("NOT_CONTACTED");
-  const [spStatus, setSpStatus] = useState<string>("M");
+  const [spStatus, setSpStatus] = useState<SellerConfigKey>("MATHEUS");
   
   const [openPartnerModal, setOpenPartnerModal] = useState<Service | null>(null);
   const [assignedPartners, setAssignedPartners] = useState<Record<string, string>>({});
   
+  // Form States
+  const [clientName, setClientName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zipCode, setZipCode] = useState("");
+  
+  const [jobTitle, setJobTitle] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [sq, setSq] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorObj, setErrorObj] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!clientName || !streetAddress || !city || !state || !zipCode || !jobTitle) {
+      setErrorObj("Please fill in all required fields (Client Name, Job Title, and Address).");
+      return;
+    }
+    setErrorObj(null);
+    setIsSubmitting(true);
+
+    try {
+      let customerId = "";
+      const { data: extCustomer } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("email", email || "unknown@sidingdepot.com")
+        .maybeSingle();
+
+      if (extCustomer) {
+        customerId = extCustomer.id;
+      } else {
+        const { data: newCustomer, error: custErr } = await supabase.from("customers").insert({
+          full_name: clientName,
+          company_name: companyName || null,
+          email: email || "unknown@sidingdepot.com",
+          phone: phone || "No Phone",
+          address_line_1: streetAddress,
+          city: city,
+          state: state,
+          postal_code: zipCode
+        }).select("id").single();
+        if (custErr) throw custErr;
+        customerId = newCustomer.id;
+      }
+
+      // Try fuzzy matching salesperson by first name
+      const { data: spMatch } = await supabase
+         .from("salespersons")
+         .select("id")
+         .ilike("full_name", `%${SELLER_CONFIG[spStatus].label.split(" ")[0]}%`)
+         .maybeSingle();
+      const spId = spMatch?.id || null;
+
+      const jobNumber = `JOB-${Math.floor(Math.random() * 900000) + 100000}`;
+      const jobStatus = "draft";
+
+      const { data: newJob, error: jobErr } = await supabase.from("jobs").insert({
+        customer_id: customerId,
+        salesperson_id: spId,
+        job_number: jobNumber,
+        title: jobTitle,
+        status: jobStatus,
+        service_address_line_1: streetAddress,
+        city: city,
+        state: state,
+        postal_code: zipCode,
+        requested_start_date: startDate || null,
+        target_completion_date: endDate || null,
+        description: notes
+      }).select("id").single();
+      
+      if (jobErr) throw jobErr;
+
+      // Seed Job Services
+      for (const svcId of selected) {
+        const { data: stData } = await supabase.from("service_types").select("id").ilike("code", svcId).maybeSingle();
+        let serviceTypeId = stData?.id;
+        
+        if (!serviceTypeId) {
+           const { data: newSt } = await supabase.from("service_types").insert({
+             code: svcId,
+             name: services.find((s) => s.id === svcId)?.label || svcId,
+             allows_dependencies: false
+           }).select("id").single();
+           if (newSt) serviceTypeId = newSt.id;
+        }
+
+        if (serviceTypeId) {
+            await supabase.from("job_services").insert({
+              job_id: newJob.id,
+              service_type_id: serviceTypeId,
+              scope_of_work: "Standard exterior work",
+              quantity: sq ? parseFloat(sq) : null,
+              unit_of_measure: "SQ"
+            });
+        }
+      }
+      
+      // If gateStatus specifies a blocker, insert blocker.
+      if (gateStatus && gateStatus !== "READY" && gateStatus !== "NOT_CONTACTED") {
+         let blocker_type = "other";
+         if (gateStatus === "PERMIT") blocker_type = "permit";
+         if (gateStatus === "WINDOWS" || gateStatus === "DOORS" || gateStatus === "MATERIALS") blocker_type = "material";
+         if (gateStatus === "FINANCING" || gateStatus === "HOA") blocker_type = "customer";
+         
+         await supabase.from("blockers").insert({
+            job_id: newJob.id,
+            type: blocker_type,
+            title: `Autogenerated Blocker: ${GATE_CONFIG[gateStatus].title}`,
+            description: GATE_CONFIG[gateStatus].desc,
+            status: "open"
+         });
+      }
+
+      router.push("/projects");
+    } catch (err: any) {
+      console.error(err);
+      setErrorObj(err.message || "Failed to create project");
+      setIsSubmitting(false);
+    }
+  };
 
   const toggle = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
@@ -358,27 +495,34 @@ export default function NewProjectPage() {
             <p className="text-[#ababa8] text-lg">Define details for a new project</p>
           </div>
 
-          <form className="space-y-12">
+          {errorObj && (
+            <div className="mb-6 p-4 rounded-xl bg-[#ff7351]/10 border border-[#ff7351]/30 text-[#ff7351] font-bold text-sm flex items-center gap-3">
+              <span className="material-symbols-outlined" translate="no">error</span>
+              {errorObj}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-12">
 
             {/* Client Information */}
             <section>
               <SectionHeader icon="person_add" title="Client Information" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
                 <div className="space-y-2">
-                  <label className={labelCls}>Client Name</label>
-                  <input className={inputCls} placeholder="John Doe" type="text" />
+                  <label className={labelCls}>Client Name *</label>
+                  <input required value={clientName} onChange={(e)=>setClientName(e.target.value)} className={inputCls} placeholder="John Doe" type="text" />
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Company Name</label>
-                  <input className={inputCls} placeholder="Acme Construction Co." type="text" />
+                  <input value={companyName} onChange={(e)=>setCompanyName(e.target.value)} className={inputCls} placeholder="Acme Construction Co." type="text" />
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Phone Number</label>
-                  <input className={inputCls} placeholder="(555) 000-0000" type="tel" />
+                  <input value={phone} onChange={(e)=>setPhone(e.target.value)} className={inputCls} placeholder="(555) 000-0000" type="tel" />
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Email</label>
-                  <input className={inputCls} placeholder="john@example.com" type="email" />
+                  <input value={email} onChange={(e)=>setEmail(e.target.value)} className={inputCls} placeholder="john@example.com" type="email" />
                 </div>
               </div>
             </section>
@@ -388,20 +532,20 @@ export default function NewProjectPage() {
               <SectionHeader icon="location_on" title="Project Address" />
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
                 <div className="md:col-span-4 space-y-2">
-                  <label className={labelCls}>Street Address</label>
-                  <input className={inputCls} placeholder="123 Industrial Way" type="text" />
+                  <label className={labelCls}>Street Address *</label>
+                  <input required value={streetAddress} onChange={(e)=>setStreetAddress(e.target.value)} className={inputCls} placeholder="123 Industrial Way" type="text" />
                 </div>
                 <div className="md:col-span-2 space-y-2">
-                  <label className={labelCls}>City</label>
-                  <input className={inputCls} placeholder="New York" type="text" />
+                  <label className={labelCls}>City *</label>
+                  <input required value={city} onChange={(e)=>setCity(e.target.value)} className={inputCls} placeholder="New York" type="text" />
                 </div>
                 <div className="space-y-2">
-                  <label className={labelCls}>State</label>
-                  <input className={inputCls} placeholder="GA" type="text" maxLength={2} />
+                  <label className={labelCls}>State *</label>
+                  <input required value={state} onChange={(e)=>setState(e.target.value)} className={inputCls} placeholder="GA" type="text" maxLength={2} />
                 </div>
                 <div className="space-y-2">
-                  <label className={labelCls}>ZIP Code</label>
-                  <input className={inputCls} placeholder="10001" type="text" />
+                  <label className={labelCls}>ZIP Code *</label>
+                  <input required value={zipCode} onChange={(e)=>setZipCode(e.target.value)} className={inputCls} placeholder="10001" type="text" />
                 </div>
               </div>
             </section>
@@ -409,10 +553,10 @@ export default function NewProjectPage() {
             {/* Job Details */}
             <section>
               <SectionHeader icon="architecture" title="Job Details" />
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
-                <div className="space-y-2">
-                  <label className={labelCls}>Job Title</label>
-                  <input className={inputCls} placeholder="Exterior Renovation" type="text" />
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+                <div className="space-y-2 xl:col-span-1">
+                  <label className={labelCls}>Job Title *</label>
+                  <input required value={jobTitle} onChange={(e)=>setJobTitle(e.target.value)} className={inputCls} placeholder="Exterior Renovation" type="text" />
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Start Date</label>
@@ -424,7 +568,7 @@ export default function NewProjectPage() {
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>SQ</label>
-                  <input className={inputCls} placeholder="e.g. 24.5" type="text" />
+                  <input value={sq} onChange={(e)=>setSq(e.target.value)} className={inputCls} placeholder="e.g. 24.5" type="text" />
                 </div>
               </div>
             </section>
@@ -499,19 +643,21 @@ export default function NewProjectPage() {
                      <div className="relative group w-full">
                       <select 
                         value={spStatus}
-                        onChange={(e) => setSpStatus(e.target.value)}
+                        onChange={(e) => setSpStatus(e.target.value as SellerConfigKey)}
                         className="w-full appearance-none bg-[#0a0a0a] border border-[#474846] rounded-xl pl-16 pr-8 py-3.5 text-xs font-black uppercase tracking-widest text-[#faf9f5] shadow-inner focus:outline-none focus:border-[#aeee2a] cursor-pointer transition-colors custom-select-arrow"
                       >
-                        <option value="M">M</option>
-                        <option value="R">Ruby (R)</option>
-                        <option value="A">A</option>
-                        <option value="F">F</option>
+                        {Object.entries(SELLER_CONFIG).map(([key, config]) => (
+                          <option key={key} value={key}>{config.label}</option>
+                        ))}
                       </select>
                       
                       {/* Avatar / Inicial Overlay */}
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 pointer-events-none bg-[#1a1c1a] border border-[#2a2d2a] text-[#4da8da]">
+                      <div 
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 pointer-events-none bg-[#1a1c1a] border border-[#2a2d2a]"
+                        style={{ color: SELLER_CONFIG[spStatus]?.color || '#4da8da' }}
+                      >
                         <span className="font-black text-sm uppercase">
-                          {spStatus === 'R' ? 'R' : spStatus}
+                          {SELLER_CONFIG[spStatus]?.initial || spStatus}
                         </span>
                       </div>
 
@@ -532,6 +678,8 @@ export default function NewProjectPage() {
                 <div className="space-y-2">
                   <label className={labelCls}>Project Notes</label>
                   <textarea
+                    value={notes}
+                    onChange={(e)=>setNotes(e.target.value)}
                     className={inputCls + " h-auto min-h-[160px] resize-none"}
                     placeholder="Provide any additional context or specific requirements for this job..."
                     rows={6}
@@ -551,11 +699,12 @@ export default function NewProjectPage() {
                 </button>
               </Link>
               <button
-                className="px-10 py-3 rounded-xl bg-[#aeee2a] text-[#3a5400] font-bold shadow-[0_0_20px_rgba(174,238,42,0.2)] hover:shadow-[0_0_30px_rgba(174,238,42,0.4)] transition-all active:scale-95 cursor-pointer"
+                className="px-10 py-3 rounded-xl bg-[#aeee2a] text-[#3a5400] font-bold shadow-[0_0_20px_rgba(174,238,42,0.2)] hover:shadow-[0_0_30px_rgba(174,238,42,0.4)] transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                 type="submit"
+                disabled={isSubmitting}
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
               >
-                Create Job
+                {isSubmitting ? "Creating..." : "Create Job"}
               </button>
             </footer>
           </form>

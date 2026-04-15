@@ -1,92 +1,122 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import CustomDatePicker from "../../../components/CustomDatePicker";
 import { TopBar } from "../../../components/TopBar";
+import { supabase } from "../../../lib/supabase";
 
 // =============================================
 // Change Orders & Approvals
-// Ported from Stitch HTML (Alterações de Pedido e Aprovações.txt)
 // Rota: /change-orders
+// Fluxo dupla aprovação:
+//   draft → pending_customer_approval → approved
 // =============================================
 
+// ─── Tipos ────────────────────────────────────────────────────────
 interface ChangeOrder {
-  code: string;
-  date: string;
-  client: string;
+  id: string;
+  title: string;
   description: string;
-  amount: string;
-  badge: { label: string; style: string };
+  status: "draft" | "pending_customer_approval" | "approved" | "rejected" | "cancelled";
+  proposed_amount: number | null;
+  approved_amount: number | null;
+  requested_at: string;
+  created_at: string;
+  job: {
+    id: string;
+    job_number: string;
+    customer: any;
+  } | null;
+  job_service: any;
 }
 
-const orders: ChangeOrder[] = [
-  {
-    code: "CO-942",
-    date: "24 OCT 2023",
-    client: "Apex Developments",
-    description: "RFI-112: Foundation Wall Reinforcement due to seismic code update.",
-    amount: "$18,450.00",
-    badge: { label: "APPROVED", style: "bg-[#aeee2a]/20 text-[#aeee2a]" },
-  },
-  {
-    code: "CO-941",
-    date: "23 OCT 2023",
-    client: "Zenith Heights",
-    description: "Electrical conduit rerouting for main lobby lighting fixtures.",
-    amount: "$4,200.00",
-    badge: { label: "SENT", style: "bg-[#e3eb5d]/10 text-[#e3eb5d]" },
-  },
-  {
-    code: "CO-940",
-    date: "22 OCT 2023",
-    client: "Harbor Plaza",
-    description: "HVAC ductwork adjustment for Floor 4 server room ventilation.",
-    amount: "$12,900.00",
-    badge: { label: "DRAFT", style: "bg-[#fff7cf]/10 text-[#fff7cf]" },
-  },
-  {
-    code: "CO-939",
-    date: "20 OCT 2023",
-    client: "Apex Developments",
-    description: "Exterior facade glazing replacement for sustainable glass units.",
-    amount: "$45,000.00",
-    badge: { label: "APPROVED", style: "bg-[#aeee2a]/20 text-[#aeee2a]" },
-  },
-  {
-    code: "CO-938",
-    date: "19 OCT 2023",
-    client: "Riverside Lofts",
-    description: "Kitchen cabinetry specification upgrade for Phase 1 units.",
-    amount: "$3,150.00",
-    badge: { label: "APPROVED", style: "bg-[#aeee2a]/20 text-[#aeee2a]" },
-  },
-  {
-    code: "CO-937",
-    date: "18 OCT 2023",
-    client: "Apex Developments",
-    description: "Landscape plumbing relocation due to utility main conflict.",
-    amount: "$7,800.00",
-    badge: { label: "SENT", style: "bg-[#e3eb5d]/10 text-[#e3eb5d]" },
-  },
-];
+// Status display config
+const STATUS_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {
+  draft:                      { label: "DRAFT",    badge: "bg-[#fff7cf]/10 text-[#fff7cf] border border-[#fff7cf]/20",   dot: "#fff7cf" },
+  pending_customer_approval:  { label: "PENDING",  badge: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20",   dot: "#e3eb5d" },
+  approved:                   { label: "APPROVED", badge: "bg-[#aeee2a]/20 text-[#aeee2a] border border-[#aeee2a]/30",   dot: "#aeee2a" },
+  rejected:                   { label: "REJECTED", badge: "bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20",   dot: "#ff7351" },
+  cancelled:                  { label: "CANCELLED",badge: "bg-[#474846]/20 text-[#ababa8] border border-[#474846]/30",   dot: "#747673" },
+};
 
-const attachments = [
-  { icon: "description", iconColor: "#e3eb5d", name: "Architectural_Plan_V3.pdf" },
-  { icon: "image", iconColor: "#aeee2a", name: "OnSite_Photo_1.jpg" },
-];
+// Filter tabs
+type TabFilter = "ALL" | "PENDING" | "APPROVED";
 
-export default function ChangeOrdersPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<"ALL" | "PENDING" | "APPROVED">("ALL");
-  const [filterStart, setFilterStart] = useState("");
-  const [filterEnd,   setFilterEnd]   = useState("");
+// ─── Helpers ───────────────────────────────────────────────────────
+function fmt$(n: number | null): string {
+  if (n == null) return "—";
+  return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
-  const filteredOrders = orders.filter((o) => {
-    if (activeFilter === "ALL") return true;
-    if (activeFilter === "APPROVED") return o.badge.label === "APPROVED";
-    if (activeFilter === "PENDING") return o.badge.label === "SENT" || o.badge.label === "DRAFT";
-    return true;
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
   });
+}
+
+// ─── Main Page ─────────────────────────────────────────────────────
+export default function ChangeOrdersPage() {
+  const [orders, setOrders] = useState<ChangeOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<TabFilter>("ALL");
+  const [filterStart, setFilterStart] = useState("");
+  const [filterEnd, setFilterEnd] = useState("");
+  const [search, setSearch] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<ChangeOrder | null>(null);
+
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from("change_orders")
+        .select(`
+          id, title, description, status,
+          proposed_amount, approved_amount,
+          requested_at, created_at,
+          job:jobs (
+            id, job_number,
+            customer:customers (full_name)
+          ),
+          job_service:job_services (
+            service_type:service_types (name)
+          )
+        `)
+        .order("created_at", { ascending: false });
+
+      if (activeFilter === "APPROVED") query = query.eq("status", "approved");
+      if (activeFilter === "PENDING")  query = query.in("status", ["draft", "pending_customer_approval"]);
+      if (filterStart) query = query.gte("created_at", filterStart);
+      if (filterEnd)   query = query.lte("created_at", filterEnd);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      setOrders((data ?? []) as unknown as ChangeOrder[]);
+    } catch (err) {
+      console.error("[ChangeOrdersPage] fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeFilter, filterStart, filterEnd]);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  // Local search
+  const filtered = orders.filter((o) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      o.title.toLowerCase().includes(q) ||
+      o.job?.customer?.full_name?.toLowerCase().includes(q) ||
+      o.job?.job_number?.toLowerCase().includes(q)
+    );
+  });
+
+  // Summary stats for header
+  const totalPending = orders.filter((o) => o.status === "pending_customer_approval").length;
+  const totalPendingValue = orders
+    .filter((o) => o.status === "pending_customer_approval")
+    .reduce((s, o) => s + (o.proposed_amount ?? 0), 0);
 
   return (
     <>
@@ -101,6 +131,8 @@ export default function ChangeOrdersPage() {
               search
             </span>
             <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="bg-[#1e201e] border-none rounded-xl py-2.5 pl-10 pr-4 text-sm w-[280px] focus:ring-1 focus:ring-[#aeee2a] text-[#faf9f5] outline-none placeholder:text-[#ababa8]"
               placeholder="Search Change Orders"
               type="text"
@@ -111,63 +143,60 @@ export default function ChangeOrdersPage() {
 
       <div className="flex flex-col min-h-screen pb-20">
 
-        {/* Page Title under TopBar */}
+        {/* Page Header */}
         <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-4">
-          <h1
-            className="text-xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
-            style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-          >
-            Change Orders &amp; Approvals
-          </h1>
-          <p className="text-[#ababa8] text-sm mt-1">Track and manage financial structural adjustments.</p>
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <h1
+                className="text-xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
+                style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
+              >
+                Change Orders & Approvals
+              </h1>
+              <p className="text-[#ababa8] text-sm mt-1">
+                {totalPending > 0 ? (
+                  <>
+                    <span className="text-[#e3eb5d] font-bold">{totalPending} orders</span> awaiting client approval —{" "}
+                    <span className="text-[#aeee2a] font-bold">${totalPendingValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span> total value
+                  </>
+                ) : (
+                  "Track and manage financial structural adjustments."
+                )}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Filters Bar */}
+        {/* Filter Bar */}
         <section className="px-4 sm:px-6 lg:px-8 mb-8 flex flex-wrap gap-4 items-center">
           {/* Status toggle */}
           <div className="flex bg-[#121412] p-1 rounded-xl">
-            <button
-              onClick={() => setActiveFilter("ALL")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                activeFilter === "ALL"
-                  ? "bg-[#242624] text-[#aeee2a]"
-                  : "text-[#ababa8] hover:text-[#faf9f5]"
-              }`}
-            >
-              ALL ORDERS
-            </button>
-            <button
-              onClick={() => setActiveFilter("PENDING")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                activeFilter === "PENDING"
-                  ? "bg-[#242624] text-[#e3eb5d]"
-                  : "text-[#ababa8] hover:text-[#faf9f5]"
-              }`}
-            >
-              PENDING
-            </button>
-            <button
-              onClick={() => setActiveFilter("APPROVED")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                activeFilter === "APPROVED"
-                  ? "bg-[#242624] text-[#aeee2a]"
-                  : "text-[#ababa8] hover:text-[#faf9f5]"
-              }`}
-            >
-              APPROVED
-            </button>
+            {(["ALL", "PENDING", "APPROVED"] as TabFilter[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveFilter(tab)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                  activeFilter === tab
+                    ? tab === "PENDING"
+                      ? "bg-[#242624] text-[#e3eb5d]"
+                      : tab === "APPROVED"
+                      ? "bg-[#242624] text-[#aeee2a]"
+                      : "bg-[#242624] text-[#faf9f5]"
+                    : "text-[#ababa8] hover:text-[#faf9f5]"
+                }`}
+              >
+                {tab === "ALL" ? "ALL ORDERS" : tab}
+              </button>
+            ))}
           </div>
 
-          {/* Divider */}
           <div className="h-8 w-px bg-[#474846]/30 hidden sm:block" />
-
-          {/* Spacer — empurra date range + botões para a direita */}
           <div className="flex-1" />
 
-          {/* Date range filters */}
+          {/* Date range */}
           <div className="flex items-center gap-2">
             <CustomDatePicker
-              value={filterStart ?? ""}
+              value={filterStart}
               onChange={setFilterStart}
               placeholder="Start date"
               disableSundays={false}
@@ -175,18 +204,17 @@ export default function ChangeOrdersPage() {
             />
             <span className="text-[#ababa8] text-[10px] font-black uppercase tracking-widest px-1">→</span>
             <CustomDatePicker
-              value={filterEnd ?? ""}
+              value={filterEnd}
               onChange={setFilterEnd}
               placeholder="End date"
               disableSundays={false}
               className="w-44"
-              alignRight={true}
+              alignRight
             />
           </div>
 
-
-          {/* Create Change Order Componente Lateral */}
-          <button 
+          {/* Create button */}
+          <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 bg-[#aeee2a] rounded-xl text-sm font-bold text-[#3a5400] shadow-[0_0_15px_rgba(174,238,42,0.15)] hover:shadow-[0_0_25px_rgba(174,238,42,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
           >
@@ -195,239 +223,598 @@ export default function ChangeOrdersPage() {
           </button>
         </section>
 
-        {/* Change Order Cards Grid */}
-        <section className="px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredOrders.map((order) => (
-            <div
-              key={order.code}
-              className="p-6 rounded-2xl flex flex-col justify-between group hover:scale-[1.02] transition-transform duration-300 cursor-pointer"
-              style={{
-                background: "rgba(36,38,36,0.4)",
-                backdropFilter: "blur(24px)",
-                border: "1px solid rgba(174,238,42,0.08)",
-              }}
-            >
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-[10px] font-bold text-[#ababa8] tracking-widest uppercase">
-                      {order.code} • {order.date}
-                    </p>
-                    <h3
-                      className="text-lg font-bold mt-1 group-hover:text-[#aeee2a] transition-colors"
-                      style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-                    >
-                      {order.client}
-                    </h3>
-                  </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${order.badge.style}`}
-                  >
-                    {order.badge.label}
-                  </span>
-                </div>
-                <p className="text-[#ababa8] text-sm leading-relaxed mb-6">{order.description}</p>
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-xs text-[#ababa8]">Amount</p>
-                  <p
-                    className="text-2xl font-black text-[#aeee2a]"
-                    style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-                  >
-                    {order.amount}
-                  </p>
-                </div>
-                <button className="w-10 h-10 flex items-center justify-center bg-[#242624] rounded-xl text-[#ababa8] hover:bg-[#aeee2a] hover:text-[#242624] hover:shadow-[0_0_15px_rgba(174,238,42,0.15)] hover:scale-105 active:scale-95 transition-all">
-                  <span className="material-symbols-outlined text-[20px]" translate="no">open_in_new</span>
-                </button>
-              </div>
+        {/* Cards Grid */}
+        <section className="px-4 sm:px-6 lg:px-8">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24 text-[#ababa8] gap-3">
+              <span className="material-symbols-outlined text-4xl animate-spin" translate="no">progress_activity</span>
+              <p className="text-sm font-bold">Loading change orders...</p>
             </div>
-          ))}
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-[#ababa8] gap-4">
+              <div className="w-16 h-16 rounded-full bg-[#1e201e] flex items-center justify-center">
+                <span className="material-symbols-outlined text-2xl text-[#aeee2a]" translate="no">request_quote</span>
+              </div>
+              <p className="text-base font-bold text-[#faf9f5]">No change orders found</p>
+              <p className="text-sm">
+                {search ? "Try a different search term." : "Create your first change order to get started."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filtered.map((order) => {
+                const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.draft;
+                const amount = order.status === "approved"
+                  ? order.approved_amount
+                  : order.proposed_amount;
+                const isDraft = order.status === "draft";
+                const isPending = order.status === "pending_customer_approval";
+
+                return (
+                  <div
+                    key={order.id}
+                    onClick={() => setSelectedOrder(order)}
+                    className="p-6 rounded-2xl flex flex-col justify-between group hover:scale-[1.02] transition-transform duration-300 cursor-pointer"
+                    style={{
+                      background: "rgba(36,38,36,0.4)",
+                      backdropFilter: "blur(24px)",
+                      border: "1px solid rgba(174,238,42,0.08)",
+                    }}
+                  >
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <p className="text-[10px] font-bold text-[#ababa8] tracking-widest uppercase">
+                            {order.job?.job_number ? `#${order.job.job_number}` : "—"} • {fmtDate(order.requested_at)}
+                          </p>
+                          <h3
+                            className="text-base font-bold mt-1 group-hover:text-[#aeee2a] transition-colors leading-tight"
+                            style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
+                          >
+                            {order.title}
+                          </h3>
+                          {order.job?.customer?.full_name && (
+                            <p className="text-xs text-[#ababa8] mt-0.5">{order.job.customer.full_name}</p>
+                          )}
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ml-2 ${cfg.badge}`}>
+                          {cfg.label}
+                        </span>
+                      </div>
+                      {order.description && (
+                        <p className="text-[#ababa8] text-sm leading-relaxed mb-4 line-clamp-2">
+                          {order.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-end justify-between mt-2">
+                      <div>
+                        <p className="text-xs text-[#ababa8]">
+                          {order.status === "approved" ? "Approved Amount" : "Proposed Amount"}
+                        </p>
+                        <p
+                          className="text-2xl font-black"
+                          style={{
+                            fontFamily: "Manrope, system-ui, sans-serif",
+                            color: order.status === "approved" ? "#aeee2a" : order.status === "rejected" ? "#ff7351" : "#faf9f5",
+                          }}
+                        >
+                          {fmt$(amount)}
+                        </p>
+                      </div>
+
+                      {/* Action button based on status */}
+                      {isDraft && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSubmitToClient(order.id);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-[#e3eb5d]/20 transition-colors"
+                          title="Send to client for approval"
+                        >
+                          <span className="material-symbols-outlined text-[14px]" translate="no">send</span>
+                          Send to Client
+                        </button>
+                      )}
+
+                      {isPending && (
+                        <div className="flex items-center gap-1.5 px-3 py-2 bg-[#e3eb5d]/5 text-[#e3eb5d] rounded-xl text-[10px] font-bold uppercase tracking-widest border border-[#e3eb5d]/10">
+                          <span className="material-symbols-outlined text-[14px] animate-pulse" translate="no">schedule</span>
+                          Awaiting Client
+                        </div>
+                      )}
+
+                      {order.status === "approved" && (
+                        <div className="w-10 h-10 flex items-center justify-center bg-[#aeee2a]/10 rounded-xl border border-[#aeee2a]/20">
+                          <span className="material-symbols-outlined text-[#aeee2a] text-[20px]" translate="no">check_circle</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       </div>
 
-      {/* ════════════════════════════════════════════════════
-          MODAL — CREATE CHANGE ORDER
-      ════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════
+          MODAL — Create Change Order
+      ══════════════════════════════════════════════════ */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div 
-             className="bg-[#181a18] border border-[#474846]/40 rounded-3xl shadow-2xl w-full max-w-3xl p-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto" 
-             style={{ scrollbarWidth: 'none' }}
-             onClick={(e) => e.stopPropagation()}
+        <CreateChangeOrderModal
+          onClose={() => setIsModalOpen(false)}
+          onSaved={() => {
+            setIsModalOpen(false);
+            fetchOrders();
+          }}
+        />
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          DRAWER — Change Order Detail
+      ══════════════════════════════════════════════════ */}
+      {selectedOrder && (
+        <ChangeOrderDrawer
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          onUpdated={() => {
+            setSelectedOrder(null);
+            fetchOrders();
+          }}
+        />
+      )}
+    </>
+  );
+
+  // ── Ação: Enviar para o Cliente (draft → pending_customer_approval)
+  async function handleSubmitToClient(id: string) {
+    try {
+      const { error } = await supabase
+        .from("change_orders")
+        .update({
+          status: "pending_customer_approval",
+          decided_at: null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+      fetchOrders();
+    } catch (err) {
+      console.error("[ChangeOrders] submit to client error:", err);
+    }
+  }
+}
+
+// ─── Modal: Create Change Order ────────────────────────────────────
+function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [jobs, setJobs] = useState<{ id: string; job_number: string; customer_name: string }[]>([]);
+  const [jobId, setJobId]           = useState("");
+  const [title, setTitle]           = useState("");
+  const [description, setDescription] = useState("");
+  const [amount, setAmount]         = useState("");
+  const [saving, setSaving]         = useState(false);
+  const [files,  setFiles]          = useState<File[]>([]);
+  const fileInputRef                = useRef<HTMLInputElement>(null);
+
+  // Load real projects for the select
+  useEffect(() => {
+    supabase
+      .from("jobs")
+      .select("id, job_number, customer:customers (full_name)")
+      .in("status", ["active", "draft", "on_hold"])
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .then(({ data }: { data: any[] | null }) => {
+        setJobs(
+          (data ?? []).map((j: any) => ({
+            id: j.id,
+            job_number: j.job_number,
+            customer_name: j.customer?.full_name ?? "—",
+          }))
+        );
+      });
+  }, []);
+
+  async function uploadFiles(coId: string) {
+    for (const file of files) {
+      const ext  = file.name.split(".").pop();
+      const path = `change-orders/${coId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("attachments").upload(path, file);
+      if (upErr) { console.error("CO upload error:", upErr); continue; }
+      const { data } = supabase.storage.from("attachments").getPublicUrl(path);
+      await supabase.from("change_order_attachments").insert({
+        change_order_id: coId,
+        file_name:       file.name,
+        url:             data.publicUrl,
+        mime_type:       file.type,
+        size_bytes:      file.size,
+      });
+    }
+  }
+
+  async function handleSubmit() {
+    if (!title.trim()) return;
+    setSaving(true);
+    try {
+      const { data: co, error } = await supabase.from("change_orders").insert({
+        job_id: jobId || null,
+        title: title.trim(),
+        description: description.trim(),
+        proposed_amount: amount ? parseFloat(amount) : null,
+        status: "draft",
+      }).select("id").single();
+      if (error) throw error;
+      if (co && files.length > 0) await uploadFiles(co.id);
+      onSaved();
+    } catch (err) {
+      console.error("[CreateChangeOrderModal] save error:", err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const getFileIcon = (file: File) => {
+    if (file.type.startsWith("image/")) return "image";
+    if (file.type.startsWith("video/")) return "videocam";
+    if (file.type.includes("pdf"))      return "picture_as_pdf";
+    return "attach_file";
+  };
+  const formatBytes = (b: number) => b < 1024 * 1024 ? `${(b / 1024).toFixed(0)} KB` : `${(b / (1024 * 1024)).toFixed(1)} MB`;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#181a18] border border-[#474846]/40 rounded-3xl shadow-2xl w-full max-w-3xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+        style={{ scrollbarWidth: "none" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-8 pb-6 border-b border-[#474846]/20">
+          <div className="flex items-center gap-4">
+            <div className="w-1.5 h-8 bg-[#aeee2a] rounded-full" />
+            <h2 className="text-2xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+              Create New Change Order
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-[#242624] flex items-center justify-center hover:bg-[#ba1212] hover:text-white transition-colors text-[#ababa8]"
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-1.5 h-8 bg-[#aeee2a] rounded-full" />
-                <h2
-                  className="text-2xl font-extrabold text-[#faf9f5]"
-                  style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
+            <span className="material-symbols-outlined text-[20px]" translate="no">close</span>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-8 space-y-6">
+          {/* Workflow hint */}
+          <div className="flex items-start gap-3 bg-[#242624] rounded-xl p-4 border border-[#474846]/20">
+            <span className="material-symbols-outlined text-[#e3eb5d] shrink-0 mt-0.5" translate="no">info</span>
+            <p className="text-xs text-[#ababa8] leading-relaxed">
+              <span className="text-[#e3eb5d] font-bold">Double Approval Flow:</span> After creating, you review pricing and send to the client. The client approves or rejects via their portal.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Project */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Project</label>
+              <div className="relative">
+                <select
+                  value={jobId}
+                  onChange={(e) => setJobId(e.target.value)}
+                  className="w-full bg-[#242624] border-none rounded-xl py-3.5 px-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] appearance-none outline-none font-bold text-sm"
                 >
-                  Create New Change Order
-                </h2>
+                  <option value="">Select a Project...</option>
+                  {jobs.map((j) => (
+                    <option key={j.id} value={j.id}>
+                      #{j.job_number} — {j.customer_name}
+                    </option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8]" translate="no">expand_more</span>
               </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                type="button"
-                className="w-10 h-10 rounded-full bg-[#242624] flex items-center justify-center hover:bg-[#ba1212] hover:text-[#fff] transition-colors text-[#ababa8]"
-              >
-                <span className="material-symbols-outlined text-[20px]" translate="no">close</span>
-              </button>
             </div>
 
-            {/* Modal Form Body */}
-            <div className="space-y-6">
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {/* Project */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#ababa8] tracking-widest uppercase">
-                    Project
-                  </label>
-                  <div className="relative">
-                    <select defaultValue="Select Project" className="w-full bg-[#242624] border-none rounded-xl py-3.5 px-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] appearance-none outline-none font-bold text-[14px]">
-                      <option disabled value="Select Project">Select a Project...</option>
-                      <option>Apex Developments</option>
-                      <option>Zenith Heights</option>
-                      <option>Harbor Plaza</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8]" translate="no">
-                      expand_more
-                    </span>
-                  </div>
-                </div>
-
-                {/* Service */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#ababa8] tracking-widest uppercase">
-                    Service
-                  </label>
-                  <div className="relative">
-                    <select defaultValue="Select Service" className="w-full bg-[#242624] border-none rounded-xl py-3.5 px-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] appearance-none outline-none font-bold text-[14px]">
-                      <option disabled value="Select Service">Select Target Service...</option>
-                      <option>Siding</option>
-                      <option>Doors & Windows</option>
-                      <option>Painting</option>
-                      <option>Gutters</option>
-                      <option>Roofing</option>
-                      <option>Decks</option>
-                      <option>Dumpster</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8]" translate="no">
-                      expand_more
-                    </span>
-                  </div>
-                </div>
-
-                {/* Change Title */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#ababa8] tracking-widest uppercase">
-                    Change Title
-                  </label>
-                  <input
-                    className="w-full bg-[#242624] border border-transparent hover:border-[#474846] rounded-xl py-3.5 px-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] outline-none placeholder:text-[#ababa8] font-bold text-[14px] transition-colors"
-                    placeholder="e.g. Front Door Replacement"
-                    type="text"
-                  />
-                </div>
-
-                {/* Estimated Amount */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#ababa8] tracking-widest uppercase">
-                    Estimated Amount
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-black text-[15px] pointer-events-none">
-                      $
-                    </span>
-                    <input
-                      className="w-full bg-[#242624] border border-transparent hover:border-[#474846] rounded-xl py-3.5 pl-8 pr-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] outline-none placeholder:text-[#474846] font-bold text-[16px] transition-colors tracking-wide"
-                      placeholder="0.00"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Detailed Description */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#ababa8] tracking-widest uppercase">
-                  Detailed Description
-                </label>
-                <textarea
-                  className="w-full bg-[#242624] border border-transparent hover:border-[#474846] rounded-xl py-4 px-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] outline-none resize-none placeholder:text-[#747673] font-medium text-[14px] transition-colors"
-                  placeholder="Explain the structural change requirements, materials, and labor implications..."
-                  rows={4}
+            {/* Estimated Amount */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Estimated Amount</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-black text-[15px] pointer-events-none">$</span>
+                <input
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full bg-[#242624] border border-transparent hover:border-[#474846] rounded-xl py-3.5 pl-8 pr-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] outline-none placeholder:text-[#474846] font-bold text-[16px] transition-colors tracking-wide"
+                  placeholder="0.00"
+                  type="number"
+                  step="0.01"
+                  min="0"
                 />
               </div>
-
-              {/* Attachments Section - Moved Here */}
-              <div className="space-y-3 pt-2">
-                 <label className="text-xs font-bold text-[#ababa8] tracking-widest uppercase block">
-                  Attachments
-                 </label>
-                 
-                 {/* Box dividida: Upload e Lista lado a lado ou col? */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Drop zone */}
-                    <div className="border-2 border-dashed border-[#474846]/40 rounded-xl p-8 flex flex-col items-center justify-center text-center bg-[#181a18] hover:border-[#aeee2a]/70 hover:bg-[#aeee2a]/5 transition-colors cursor-pointer group/drop">
-                      <span
-                        className="material-symbols-outlined text-4xl text-[#474846] group-hover/drop:text-[#aeee2a] mb-3 transition-colors"
-                        translate="no"
-                      >
-                        cloud_upload
-                      </span>
-                      <p className="text-sm font-bold text-[#faf9f5]">Drag files here</p>
-                      <p className="text-[11px] font-medium text-[#ababa8] mt-1">PDF, JPG, PNG up to 20MB</p>
-                    </div>
-
-                    {/* Attached file list */}
-                    <div className="space-y-2 flex flex-col justify-center">
-                      {attachments.map((att) => (
-                        <div
-                          key={att.name}
-                          className="flex items-center justify-between p-3.5 bg-[#242624] rounded-xl border border-[#474846]/20 shadow-sm"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span
-                              className="material-symbols-outlined text-[20px]"
-                              translate="no"
-                              style={{ color: att.iconColor }}
-                            >
-                              {att.icon}
-                            </span>
-                            <span className="text-[13px] font-bold text-[#faf9f5]">{att.name}</span>
-                          </div>
-                          <button className="text-[#ababa8] hover:text-[#ba1212] hover:bg-[#ba1212]/10 p-1 rounded-md transition-colors flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[16px]" translate="no">close</span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                 </div>
-              </div>
-
             </div>
 
-            {/* Modal Actions */}
-            <div className="mt-10 pt-6 border-t border-[#474846]/30 flex justify-end gap-5">
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 sm:px-6 lg:px-8 py-3.5 rounded-xl border border-[#474846] text-[#faf9f5] font-bold hover:bg-[#242624] transition-colors"
+            {/* Title */}
+            <div className="space-y-2 sm:col-span-2">
+              <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Change Title *</label>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-[#242624] border border-transparent hover:border-[#474846] rounded-xl py-3.5 px-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] outline-none placeholder:text-[#ababa8] font-bold text-sm transition-colors"
+                placeholder="e.g. Front Door Replacement"
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Detailed Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-[#242624] border border-transparent hover:border-[#474846] rounded-xl py-4 px-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] outline-none resize-none placeholder:text-[#747673] font-medium text-sm transition-colors"
+              placeholder="Explain the change requirements, materials, and labor implications..."
+              rows={4}
+            />
+          </div>
+
+          {/* Upload area */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Attachments</label>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-[#474846]/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-[#181a18] hover:border-[#aeee2a]/70 hover:bg-[#aeee2a]/5 transition-colors cursor-pointer group/drop"
+            >
+              <span className="material-symbols-outlined text-4xl text-[#474846] group-hover/drop:text-[#aeee2a] mb-3 transition-colors" translate="no">cloud_upload</span>
+              <p className="text-sm font-bold text-[#faf9f5]">Click to add files</p>
+              <p className="text-[11px] font-medium text-[#ababa8] mt-1">PDF, JPG, PNG, DOC up to 20MB each</p>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx"
+              onChange={(e) => { if (e.target.files) setFiles(prev => [...prev, ...Array.from(e.target.files!)]); }}
+              className="hidden"
+            />
+            {files.length > 0 && (
+              <div className="space-y-2">
+                {files.map((file, idx) => (
+                  <div key={idx} className="flex items-center gap-3 bg-[#242624] border border-white/5 rounded-xl px-4 py-2.5">
+                    <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">{getFileIcon(file)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-[#faf9f5] font-medium truncate">{file.name}</p>
+                      <p className="text-[10px] text-[#ababa8]">{formatBytes(file.size)}</p>
+                    </div>
+                    <button type="button" onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))} className="text-[#ababa8] hover:text-[#ff7351] transition-colors">
+                      <span className="material-symbols-outlined text-lg" translate="no">close</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-8 pb-8 pt-2 border-t border-[#474846]/30 flex justify-end gap-5">
+          <button
+            onClick={onClose}
+            className="px-6 py-3.5 rounded-xl border border-[#474846] text-[#faf9f5] font-bold hover:bg-[#242624] transition-colors text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving || !title.trim()}
+            className="px-10 py-3.5 rounded-xl bg-[#aeee2a] text-[#3a5400] font-black tracking-wide shadow-lg shadow-[#aeee2a]/20 hover:shadow-[#aeee2a]/40 hover:-translate-y-0.5 active:scale-95 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          >
+            {saving ? "Saving..." : files.length > 0 ? `Save & Upload ${files.length} file${files.length > 1 ? "s" : ""}` : "Save as Draft"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Drawer: Change Order Detail ───────────────────────────────────
+function ChangeOrderDrawer({
+  order,
+  onClose,
+  onUpdated,
+}: {
+  order: ChangeOrder;
+  onClose: () => void;
+  onUpdated: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.draft;
+
+  async function handleAction(action: "send" | "approve" | "reject") {
+    setLoading(true);
+    try {
+      const updates: Record<string, string> = {
+        send:    "pending_customer_approval",
+        approve: "approved",
+        reject:  "rejected",
+      };
+      const { error } = await supabase
+        .from("change_orders")
+        .update({
+          status: updates[action],
+          decided_at: action !== "send" ? new Date().toISOString() : null,
+          ...(action === "approve"
+            ? { approved_amount: order.proposed_amount }
+            : {}),
+        })
+        .eq("id", order.id);
+      if (error) throw error;
+      onUpdated();
+    } catch (err) {
+      console.error("[ChangeOrderDrawer] action error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
+      <div className="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-[#181a18] border-l border-[#474846]/30 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 border-b border-[#474846]/20 shrink-0">
+          <div className="flex-1 min-w-0 pr-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${cfg.badge}`}>
+                {cfg.label}
+              </span>
+              {order.job?.job_number && (
+                <span className="text-[10px] text-[#ababa8] font-bold">#{order.job.job_number}</span>
+              )}
+            </div>
+            <h2 className="text-lg font-extrabold text-[#faf9f5] leading-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+              {order.title}
+            </h2>
+            {order.job?.customer?.full_name && (
+              <p className="text-xs text-[#ababa8] mt-0.5">{order.job.customer.full_name}</p>
+            )}
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#242624] hover:bg-[#474846]/60 flex items-center justify-center transition-colors text-[#ababa8] shrink-0">
+            <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-5" style={{ scrollbarWidth: "none" }}>
+
+          {/* Amount */}
+          <div className="bg-[#242624] rounded-2xl p-5 border border-[#474846]/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-1">
+                  {order.status === "approved" ? "Approved Amount" : "Proposed Amount"}
+                </p>
+                <p
+                  className="text-3xl font-black"
+                  style={{
+                    fontFamily: "Manrope, system-ui, sans-serif",
+                    color: order.status === "approved" ? "#aeee2a" : "#faf9f5",
+                  }}
+                >
+                  {fmt$(order.status === "approved" ? order.approved_amount : order.proposed_amount)}
+                </p>
+              </div>
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                style={{ backgroundColor: `${cfg.dot}15`, border: `1px solid ${cfg.dot}30` }}
               >
-                Cancel
-              </button>
-              <button className="px-10 py-3.5 rounded-xl bg-[#aeee2a] text-[#3a5400] font-black tracking-wide shadow-lg shadow-[#aeee2a]/20 hover:shadow-[#aeee2a]/40 hover:-translate-y-0.5 active:scale-95 transition-all">
-                Submit Change Order
-              </button>
+                <span className="material-symbols-outlined text-2xl" style={{ color: cfg.dot }} translate="no">
+                  {order.status === "approved" ? "check_circle" : order.status === "rejected" ? "cancel" : "request_quote"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Workflow Status Timeline */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Approval Workflow</p>
+            <div className="space-y-2">
+              {[
+                { label: "Created as Draft",           done: true,                                                      icon: "draft"        },
+                { label: "Reviewed & Sent to Client",  done: order.status !== "draft",                                  icon: "send"         },
+                { label: "Client Decision",            done: order.status === "approved" || order.status === "rejected", icon: "how_to_vote"  },
+              ].map((step, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor: step.done ? "#aeee2a15" : "#24262415",
+                      border: `1px solid ${step.done ? "#aeee2a40" : "#47484640"}`,
+                    }}
+                  >
+                    <span
+                      className="material-symbols-outlined text-[14px]"
+                      style={{ color: step.done ? "#aeee2a" : "#747673" }}
+                      translate="no"
+                    >
+                      {step.done ? "check" : step.icon}
+                    </span>
+                  </div>
+                  <span className={`text-sm font-medium ${step.done ? "text-[#faf9f5]" : "text-[#747673]"}`}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Description */}
+          {order.description && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-2">Description</p>
+              <p className="text-sm text-[#faf9f5] leading-relaxed bg-[#242624] rounded-xl p-4 border border-[#474846]/20">
+                {order.description}
+              </p>
+            </div>
+          )}
+
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-[#242624] rounded-xl p-3 border border-[#474846]/20">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-1">Requested</p>
+              <p className="text-sm text-[#faf9f5] font-bold">{fmtDate(order.requested_at)}</p>
+            </div>
+            <div className="bg-[#242624] rounded-xl p-3 border border-[#474846]/20">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-1">Service</p>
+              <p className="text-sm text-[#faf9f5] font-bold">
+                {order.job_service?.service_type?.name ?? "—"}
+              </p>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Footer Actions */}
+        <div className="p-6 border-t border-[#474846]/20 shrink-0 space-y-3">
+          {order.status === "draft" && (
+            <button
+              onClick={() => handleAction("send")}
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-[#e3eb5d] text-[#5f5600] font-black text-sm shadow-lg hover:bg-[#d4da52] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[16px]" translate="no">send</span>
+              {loading ? "Sending..." : "Send to Client for Approval"}
+            </button>
+          )}
+          {order.status === "pending_customer_approval" && (
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleAction("reject")}
+                disabled={loading}
+                className="flex-1 py-3 rounded-xl bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20 font-bold text-sm hover:bg-[#ff7351]/20 transition-all active:scale-95 disabled:opacity-50"
+              >
+                Reject
+              </button>
+              <button
+                onClick={() => handleAction("approve")}
+                disabled={loading}
+                className="flex-1 py-3 rounded-xl bg-[#aeee2a] text-[#3a5400] font-black text-sm shadow-lg shadow-[#aeee2a]/20 hover:shadow-[#aeee2a]/40 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[16px]" translate="no">check_circle</span>
+                {loading ? "Saving..." : "Approve"}
+              </button>
+            </div>
+          )}
+          <button onClick={onClose} className="w-full py-2.5 rounded-xl border border-[#474846] text-[#ababa8] font-bold text-sm hover:bg-[#242624] transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
     </>
   );
 }
