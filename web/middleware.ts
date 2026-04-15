@@ -9,6 +9,14 @@ const PUBLIC_CONTRACT_REGEX = /^\/projects\/[^/]+\/contract(\/[^/]+)?/;
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // ─── Guard: se as env vars não estiverem configuradas, não bloqueia ──
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('[Middleware] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. Skipping auth check.');
+    return NextResponse.next({ request });
+  }
+
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
   const isPublicContract = PUBLIC_CONTRACT_REGEX.test(pathname);
   const isPublicRoute = isAuthRoute || isPublicContract;
@@ -17,8 +25,8 @@ export async function middleware(request: NextRequest) {
 
   // ─── Cria cliente Supabase SSR para ler/escrever cookies ──────
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
