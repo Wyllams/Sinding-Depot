@@ -5,8 +5,8 @@ import { TopBar } from "../../../components/TopBar";
 import { supabase } from "../../../lib/supabase";
 
 // =============================================
-// Sales Dashboard — Tarefa 2.2
-// Conectado ao Supabase: sales_snapshots + sales_goals + salespersons + jobs
+// Sales Dashboard — v2 (Monthly-centric)
+// Supabase: sales_goals + salespersons + jobs + sales_summaries
 // =============================================
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -22,6 +22,16 @@ interface SalespersonStats {
   goal_pct: number;
 }
 
+interface JobDetail {
+  id: string;
+  title: string;
+  contract_amount: number;
+  contract_signed_at: string | null;
+  city: string;
+  job_number: string;
+  status: string;
+}
+
 interface DashboardData {
   totalGoal: number;
   totalSold: number;
@@ -31,7 +41,7 @@ interface DashboardData {
   period: { start: string; end: string; label: string };
 }
 
-// ── Color Map (Obsidian spec) ──────────────────────────────────────────────
+// ── Color Map ──────────────────────────────────────────────────────────────
 const SP_COLORS: Record<string, string> = {
   Matt:    "#22c55e",
   Armando: "#ef4444",
@@ -47,104 +57,23 @@ function getSpColor(name: string, idx: number): string {
 }
 
 function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((n) => n[0].toUpperCase())
-    .join("");
+  return name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0].toUpperCase()).join("");
 }
 
-// ── Period helpers ─────────────────────────────────────────────────────────
-type PeriodKey = "Week" | "Month" | "Quarter" | "Semester" | "Year";
+// ── Month helpers ──────────────────────────────────────────────────────────
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
 
-/** Retorna { start, end, label } para cada período */
-function getPeriodDates(p: PeriodKey): { start: string; end: string; label: string } {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth(); // 0-indexed
-
-  if (p === "Week") {
-    const d = now.getDay(); // 0=Sunday
-    const diff = (d === 0 ? -6 : 1) - d; // Monday
-    const mon = new Date(now);
-    mon.setDate(now.getDate() + diff);
-    const sun = new Date(mon);
-    sun.setDate(mon.getDate() + 6);
-    return {
-      start: mon.toISOString().slice(0, 10),
-      end:   sun.toISOString().slice(0, 10),
-      label: `Week of ${mon.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
-    };
-  }
-  if (p === "Month") {
-    const start = new Date(y, m, 1);
-    const end   = new Date(y, m + 1, 0);
-    return {
-      start: start.toISOString().slice(0, 10),
-      end:   end.toISOString().slice(0, 10),
-      label: start.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-    };
-  }
-  if (p === "Quarter") {
-    const qStart = Math.floor(m / 3) * 3;
-    const start  = new Date(y, qStart, 1);
-    const end    = new Date(y, qStart + 3, 0);
-    return {
-      start: start.toISOString().slice(0, 10),
-      end:   end.toISOString().slice(0, 10),
-      label: `Q${Math.floor(qStart / 3) + 1} ${y}`,
-    };
-  }
-  if (p === "Semester") {
-    const half  = m < 6 ? 0 : 1;
-    const start = new Date(y, half * 6, 1);
-    const end   = new Date(y, half * 6 + 6, 0);
-    return {
-      start: start.toISOString().slice(0, 10),
-      end:   end.toISOString().slice(0, 10),
-      label: `H${half + 1} ${y}`,
-    };
-  }
-  // Year
+function getMonthDates(year: number, month: number): { start: string; end: string; label: string } {
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
   return {
-    start: `${y}-01-01`,
-    end:   `${y}-12-31`,
-    label: `Full Year ${y}`,
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+    label: `${MONTH_NAMES[month]} ${year}`,
   };
-}
-
-/** Dado um período de meta e o período do dashboard, retorna a meta proporcional.
- *  Ex: meta mensal = 100k com período = Week → 100k / 4.33 ≈ 23k
- *  Isso permite que a meta seja definida em qualquer granularidade e comparada a qualquer período.
- */
-function prorateMeta(goalPeriod: GoalPeriodKey, goalValue: number, dashPeriod: PeriodKey): number {
-  // Converte tudo para "meses" como unidade base
-  const toMonths: Record<string, number> = {
-    week: 12 / 52,     // ≈ 0.231
-    month: 1,
-    quarter: 3,
-    semester: 6,
-    year: 12,
-  };
-  const goalMonths = toMonths[goalPeriod];
-  const dashMonths = toMonths[dashPeriod.toLowerCase()];
-  if (!goalMonths || !dashMonths) return goalValue;
-  return (goalValue / goalMonths) * dashMonths;
-}
-
-type GoalPeriodKey = "week" | "month" | "quarter" | "semester" | "year";
-
-/** Dado um period_start e period_end em YYYY-MM-DD, identifica automaticamente o tipo de período */
-function classifyGoalPeriod(start: string, end: string): GoalPeriodKey {
-  const s = new Date(start);
-  const e = new Date(end);
-  const days = Math.round((e.getTime() - s.getTime()) / 86400000) + 1;
-  if (days <=  8) return "week";
-  if (days <=  35) return "month";
-  if (days <= 100) return "quarter";
-  if (days <= 190) return "semester";
-  return "year";
 }
 
 function fmt(n: number): string {
@@ -153,122 +82,98 @@ function fmt(n: number): string {
   return `$${n.toFixed(0)}`;
 }
 
+function fmtFull(n: number): string {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n);
+}
+
+// ── Default monthly goal for salespersons ──────────────────────────────────
+const DEFAULT_SP_MONTHLY_GOAL = 150_000;
+
 // ── Main Component ─────────────────────────────────────────────────────────
 
-// Todos os 5 períodos de meta
-type GoalState = { week: string; month: string; quarter: string; semester: string; year: string };
-const EMPTY_GOAL: GoalState = { week: "", month: "", quarter: "", semester: "", year: "" };
-
 export default function ReportsPage() {
-  const [period, setPeriod] = useState<PeriodKey>("Month");
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
+
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [hoveredSp, setHoveredSp] = useState<string | null>(null);
 
-  // ── Goals Modal ──────────────────────────────────────────────────────────
+  // ── Goals Modal (simplified: monthly only) ──────────────────────────────
   const [showGoalsModal, setShowGoalsModal] = useState(false);
-  const [goalsSaving,   setGoalsSaving]     = useState(false);
-  const [companyGoal,   setCompanyGoal]     = useState<GoalState>({ ...EMPTY_GOAL });
-  const [goalInputs,    setGoalInputs]      = useState<Record<string, GoalState>>({});
+  const [goalsSaving, setGoalsSaving] = useState(false);
+  const [companyMonthlyGoal, setCompanyMonthlyGoal] = useState("");
+  const [spGoalInputs, setSpGoalInputs] = useState<Record<string, string>>({});
 
-  // ─────────────────────────────────────────────────────────
-  // Abre o modal e carrega as metas salvas (5 períodos)
-  // ─────────────────────────────────────────────────────────
-  const openGoalsModal = async () => {
+  // ── Salesperson Jobs Detail (accordion) ─────────────────────────────────
+  const [expandedSp, setExpandedSp] = useState<string | null>(null);
+  const [spJobs, setSpJobs] = useState<Record<string, JobDetail[]>>({});
+  const [loadingJobs, setLoadingJobs] = useState<string | null>(null);
+  const [jobToAbandon, setJobToAbandon] = useState<{jobId: string, spId: string, title: string} | null>(null);
+
+  // ── Summary editing ─────────────────────────────────────────────────────
+  const [editingSummary, setEditingSummary] = useState(false);
+  const [summaryDraft, setSummaryDraft] = useState("");
+  const [savedSummary, setSavedSummary] = useState<string | null>(null);
+  const [savingSummary, setSavingSummary] = useState(false);
+
+  // ── Annual Report Data (Ruby & Matt) ────────────────────────────────────
+  const [annualData, setAnnualData] = useState<Record<string, number[]>>({});
+  const [annualSalespeople, setAnnualSalespeople] = useState<{ id: string; name: string; color: string }[]>([]);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Open Goals Modal — loads current monthly goals only
+  // ─────────────────────────────────────────────────────────────────────────
+  const openGoalsModal = async (): Promise<void> => {
     if (!data) return;
 
-    // Inicializa inputs individuais
-    const inputs: Record<string, GoalState> = {};
+    const inputs: Record<string, string> = {};
     data.salespeople.forEach((sp) => {
-      inputs[sp.id] = { ...EMPTY_GOAL };
+      inputs[sp.id] = sp.monthly_goal > 0 ? String(sp.monthly_goal) : String(DEFAULT_SP_MONTHLY_GOAL);
     });
 
-    // Busca TODAS as metas salvas (empresa + individuais)
-    const { data: allGoals } = await supabase
+    // Fetch current month company goal
+    const monthDates = getMonthDates(selectedYear, selectedMonth);
+    const { data: companyGoals } = await supabase
       .from("sales_goals")
-      .select("salesperson_id, is_company_goal, target_value, period_start, period_end")
-      .eq("goal_type", "revenue");
+      .select("target_value")
+      .eq("goal_type", "revenue")
+      .eq("is_company_goal", true)
+      .eq("period_start", monthDates.start)
+      .eq("period_end", monthDates.end)
+      .maybeSingle();
 
-    const newCompany: GoalState = { ...EMPTY_GOAL };
-
-    (allGoals || []).forEach((g: any) => {
-      const periodType = classifyGoalPeriod(g.period_start, g.period_end);
-      const val = String(g.target_value);
-
-      if (g.is_company_goal) {
-        newCompany[periodType] = val;
-      } else if (g.salesperson_id && inputs[g.salesperson_id]) {
-        inputs[g.salesperson_id][periodType] = val;
-      }
-    });
-
-    setCompanyGoal(newCompany);
-    setGoalInputs(inputs);
+    setCompanyMonthlyGoal(companyGoals?.target_value ? String(companyGoals.target_value) : "");
+    setSpGoalInputs(inputs);
     setShowGoalsModal(true);
   };
 
-  // ─────────────────────────────────────────────────────────
-  // Salva metas (empresa e individuais) para todos os períodos
-  // ─────────────────────────────────────────────────────────
-  const saveGoals = async () => {
+  // ─────────────────────────────────────────────────────────────────────────
+  // Save Goals (monthly only)
+  // ─────────────────────────────────────────────────────────────────────────
+  const saveGoals = async (): Promise<void> => {
     if (!data) return;
     setGoalsSaving(true);
     try {
-      const now = new Date();
-      const y   = now.getFullYear();
-      const m   = now.getMonth();
+      const monthDates = getMonthDates(selectedYear, selectedMonth);
 
-      // Calcula as datas dos 5 períodos uma única vez
-      const periodRanges: Record<GoalPeriodKey, { start: string; end: string }> = {
-        week: (() => {
-          const d    = now.getDay();
-          const diff = (d === 0 ? -6 : 1) - d;
-          const mon  = new Date(now); mon.setDate(now.getDate() + diff);
-          const sun  = new Date(mon); sun.setDate(mon.getDate() + 6);
-          return { start: mon.toISOString().slice(0, 10), end: sun.toISOString().slice(0, 10) };
-        })(),
-        month: {
-          start: `${y}-${String(m + 1).padStart(2, "0")}-01`,
-          end:   new Date(y, m + 1, 0).toISOString().slice(0, 10),
-        },
-        quarter: (() => {
-          const qs = Math.floor(m / 3) * 3;
-          return {
-            start: `${y}-${String(qs + 1).padStart(2, "0")}-01`,
-            end:   new Date(y, qs + 3, 0).toISOString().slice(0, 10),
-          };
-        })(),
-        semester: (() => {
-          const half = m < 6 ? 0 : 1;
-          return {
-            start: new Date(y, half * 6, 1).toISOString().slice(0, 10),
-            end:   new Date(y, half * 6 + 6, 0).toISOString().slice(0, 10),
-          };
-        })(),
-        year: { start: `${y}-01-01`, end: `${y}-12-31` },
-      };
-
-      /** Upsert genérico de uma meta — com tratamento de erro explícito */
       const upsertGoal = async (opts: {
         salesperson_id?: string;
         is_company_goal?: boolean;
-        period_start: string;
-        period_end: string;
         target_value: number;
         notes: string;
-      }) => {
-        // Constrói o filtro de busca encadeando corretamente (Supabase JS v2)
+      }): Promise<void> => {
         let q = supabase
           .from("sales_goals")
           .select("id")
           .eq("goal_type", "revenue")
-          .eq("period_start", opts.period_start)
-          .eq("period_end", opts.period_end)
+          .eq("period_start", monthDates.start)
+          .eq("period_end", monthDates.end)
           .eq("is_company_goal", !!opts.is_company_goal);
 
-        // IMPORTANTE: reatribuir q para que o filtro seja aplicado
         if (opts.salesperson_id) {
           q = q.eq("salesperson_id", opts.salesperson_id) as typeof q;
         } else {
@@ -289,8 +194,8 @@ export default function ReportsPage() {
             salesperson_id:  opts.salesperson_id ?? null,
             is_company_goal: !!opts.is_company_goal,
             goal_type:       "revenue",
-            period_start:    opts.period_start,
-            period_end:      opts.period_end,
+            period_start:    monthDates.start,
+            period_end:      monthDates.end,
             target_value:    opts.target_value,
             notes:           opts.notes,
           });
@@ -298,46 +203,32 @@ export default function ReportsPage() {
         }
       };
 
-      // Salva metas da empresa
-      const PERIOD_LABELS: Record<GoalPeriodKey, string> = {
-        week: "Weekly", month: "Monthly", quarter: "Quarterly",
-        semester: "Semiannual", year: "Yearly",
-      };
+      // Save company goal
+      const compVal = parseFloat(companyMonthlyGoal) || 0;
+      if (compVal > 0) {
+        await upsertGoal({
+          is_company_goal: true,
+          target_value: compVal,
+          notes: `Company Monthly goal — ${monthDates.label}`,
+        });
+      }
 
-      for (const [pk, range] of Object.entries(periodRanges) as [GoalPeriodKey, { start: string; end: string }][]) {
-        const val = parseFloat(companyGoal[pk]) || 0;
+      // Save individual goals
+      const activeSalespeople = data.salespeople.filter(sp => !sp.full_name.toLowerCase().includes("armando"));
+      for (const sp of activeSalespeople) {
+        const val = parseFloat(spGoalInputs[sp.id]) || 0;
         if (val > 0) {
           await upsertGoal({
-            is_company_goal: true,
-            period_start: range.start,
-            period_end:   range.end,
+            salesperson_id: sp.id,
+            is_company_goal: false,
             target_value: val,
-            notes: `Company ${PERIOD_LABELS[pk]} goal`,
+            notes: `Monthly goal — ${sp.full_name} — ${monthDates.label}`,
           });
         }
       }
 
-      // Salva metas individuais
-      for (const sp of data.salespeople) {
-        const input = goalInputs[sp.id];
-        if (!input) continue;
-        for (const [pk, range] of Object.entries(periodRanges) as [GoalPeriodKey, { start: string; end: string }][]) {
-          const val = parseFloat(input[pk]) || 0;
-          if (val > 0) {
-            await upsertGoal({
-              salesperson_id: sp.id,
-              is_company_goal: false,
-              period_start: range.start,
-              period_end:   range.end,
-              target_value: val,
-              notes: `${PERIOD_LABELS[pk]} goal — ${sp.full_name}`,
-            });
-          }
-        }
-      }
-
       setShowGoalsModal(false);
-      await fetchData(period); // await garante que o dashboard atualiza antes de liberar o user
+      await fetchData(selectedYear, selectedMonth);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("Error saving goals:", msg);
@@ -347,129 +238,222 @@ export default function ReportsPage() {
     }
   };
 
-  // ── Data Fetcher ────────────────────────────────────────────────────────
-  const fetchData = useCallback(async (p: PeriodKey) => {
+  // ─────────────────────────────────────────────────────────────────────────
+  // Load salesperson jobs (accordion expand)
+  // ─────────────────────────────────────────────────────────────────────────
+  const loadSpJobs = async (spId: string): Promise<void> => {
+    if (spJobs[spId]) {
+      setExpandedSp(expandedSp === spId ? null : spId);
+      return;
+    }
+
+    setLoadingJobs(spId);
+    setExpandedSp(spId);
+
+    const monthDates = getMonthDates(selectedYear, selectedMonth);
+    const { data: jobs, error: err } = await supabase
+      .from("jobs")
+      .select("id, title, contract_amount, contract_signed_at, city, job_number, created_at, status")
+      .eq("salesperson_id", spId)
+      .in("status", ["active", "on_hold", "completed", "pending_scheduling", "draft", "cancelled"]);
+
+    if (err) {
+      console.error("Error loading jobs:", err);
+      setLoadingJobs(null);
+      return;
+    }
+
+    const filtered = (jobs || []).filter((j) => {
+      const d = (j.contract_signed_at || j.created_at || "").slice(0, 10);
+      return d >= monthDates.start && d <= monthDates.end;
+    });
+
+    setSpJobs((prev) => ({ ...prev, [spId]: filtered as JobDetail[] }));
+    setLoadingJobs(null);
+  };
+
+  const handleAbandonJob = async () => {
+    if (!jobToAbandon) return;
+    const { jobId, spId } = jobToAbandon;
+    
+    try {
+      const { error } = await supabase.from("jobs").update({ status: "cancelled" }).eq("id", jobId);
+      if (error) throw error;
+      setSpJobs((prev) => ({
+         ...prev,
+         [spId]: (prev[spId] || []).map(j => j.id === jobId ? { ...j, status: "cancelled" } : j)
+      }));
+      fetchData(selectedYear, selectedMonth);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to abandon job.");
+    } finally {
+      setJobToAbandon(null);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Load/Save Summary
+  // ─────────────────────────────────────────────────────────────────────────
+  const loadSummary = useCallback(async (year: number, month: number): Promise<void> => {
+    const { data: row } = await supabase
+      .from("sales_summaries")
+      .select("summary_text")
+      .eq("period_year", year)
+      .eq("period_month", month + 1)
+      .maybeSingle();
+
+    setSavedSummary(row?.summary_text || null);
+  }, []);
+
+  const saveSummary = async (): Promise<void> => {
+    setSavingSummary(true);
+    try {
+      const { error: err } = await supabase
+        .from("sales_summaries")
+        .upsert(
+          {
+            period_year: selectedYear,
+            period_month: selectedMonth + 1,
+            summary_text: summaryDraft,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "period_year,period_month" }
+        );
+      if (err) throw err;
+      setSavedSummary(summaryDraft);
+      setEditingSummary(false);
+    } catch (e) {
+      console.error("Error saving summary:", e);
+    } finally {
+      setSavingSummary(false);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Load Annual Report (all salespersons, 12 months)
+  // ─────────────────────────────────────────────────────────────────────────
+  const loadAnnualReport = useCallback(async (year: number): Promise<void> => {
+    const { data: spData } = await supabase
+      .from("salespersons")
+      .select("id, full_name")
+      .eq("active", true);
+
+    if (!spData) return;
+
+    const { data: jobsData } = await supabase
+      .from("jobs")
+      .select("salesperson_id, contract_amount, contract_signed_at, created_at, status")
+      .in("status", ["active", "on_hold", "completed", "pending_scheduling", "draft", "cancelled"]);
+
+    const report: Record<string, number[]> = {};
+    const spList = spData
+      .filter((sp) => !sp.full_name.toLowerCase().includes("armando"))
+      .map((sp, idx) => ({
+        id: sp.id,
+        name: sp.full_name,
+        color: getSpColor(sp.full_name, idx),
+      }));
+
+    spList.forEach((sp) => {
+      report[sp.id] = Array(12).fill(0);
+    });
+
+    (jobsData || []).forEach((j) => {
+      if (!j.salesperson_id || !report[j.salesperson_id]) return;
+      if (j.status === "cancelled") return;
+      const dateStr = j.contract_signed_at || j.created_at;
+      if (!dateStr) return;
+      const d = new Date(dateStr);
+      if (d.getFullYear() !== year) return;
+      report[j.salesperson_id][d.getMonth()] += Number(j.contract_amount);
+    });
+
+    setAnnualData(report);
+    setAnnualSalespeople(spList);
+  }, []);
+
+  // ── Data Fetcher (monthly-centric) ─────────────────────────────────────
+  const fetchData = useCallback(async (year: number, month: number): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
-      const periodDates = getPeriodDates(p);
+      const periodDates = getMonthDates(year, month);
 
-      // Get salespersons
       const { data: spData, error: spErr } = await supabase
         .from("salespersons")
         .select("id, full_name")
         .eq("active", true);
       if (spErr) throw spErr;
+      if (!spData || spData.length === 0) { setData(null); setLoading(false); return; }
 
-      if (!spData || spData.length === 0) {
-        setData(null);
-        setLoading(false);
-        return;
-      }
-
-      // For month period: use snapshots (pre-aggregated, most accurate)
-      // For quarter/year: aggregate from jobs directly
-      let statsMap: Record<string, { jobs: number; revenue: number }> = {};
-
-      // Aggregate from jobs for ALL periods (real-time, webhook-synced)
+      // Aggregate from jobs
+      const statsMap: Record<string, { jobs: number; revenue: number }> = {};
       const { data: jobsData, error: jobsErr } = await supabase
         .from("jobs")
-        .select("salesperson_id, contract_amount, contract_signed_at, created_at")
-        .in("status", ["active", "on_hold", "completed", "pending_scheduling", "draft"])
-        .gt("contract_amount", 0);
+        .select("salesperson_id, contract_amount, contract_signed_at, created_at, status")
+        .in("status", ["active", "on_hold", "completed", "pending_scheduling", "draft", "cancelled"]);
       if (jobsErr) throw jobsErr;
 
-      // Filter by period dates — use contract_signed_at or fallback to created_at
       (jobsData || []).forEach((j) => {
         if (!j.salesperson_id) return;
+        if (j.status === "cancelled") return; // Ignore from totals
         const jobDate = j.contract_signed_at || j.created_at;
         if (!jobDate) return;
-        const d = jobDate.slice(0, 10); // YYYY-MM-DD
+        const d = jobDate.slice(0, 10);
         if (d < periodDates.start || d > periodDates.end) return;
-
         if (!statsMap[j.salesperson_id]) statsMap[j.salesperson_id] = { jobs: 0, revenue: 0 };
         statsMap[j.salesperson_id].jobs += 1;
         statsMap[j.salesperson_id].revenue += Number(j.contract_amount);
       });
 
-      // ── Busca TODAS as metas salvas ──────────────────────────────────────
+      // Fetch goals for this month
       const { data: allGoals } = await supabase
         .from("sales_goals")
         .select("salesperson_id, is_company_goal, target_value, period_start, period_end")
-        .eq("goal_type", "revenue");
+        .eq("goal_type", "revenue")
+        .eq("period_start", periodDates.start)
+        .eq("period_end", periodDates.end);
 
-      /**
-       * Prioridade para seleção de meta:
-       * 1. Meta do MESMO período que o dashboard (exact match) → usa diretamente
-       * 2. Qualquer outra meta → proratea para o período do dashboard
-       * Se existir company goal, ela é o totalGoal. Senão, soma das individuais.
-       */
-      const dashPeriodKey = p.toLowerCase() as GoalPeriodKey;
-
-      // Mapas: exact = meta do mesmo tipo | prorated = melhor prorata disponível
-      const indivExact:    Record<string, number> = {};
-      const indivProrated: Record<string, number> = {};
-      let   companyExact    = 0;
-      let   companyProrated = 0;
-
-      (allGoals || []).forEach((g: any) => {
-        const goalPeriod = classifyGoalPeriod(g.period_start, g.period_end);
-        const isExact    = goalPeriod === dashPeriodKey;
-        const prorated   = isExact
-          ? Number(g.target_value)  // sem prorata: já é o período certo
-          : prorateMeta(goalPeriod, Number(g.target_value), p);
-
-        if (g.is_company_goal) {
-          if (isExact) {
-            companyExact = Number(g.target_value);
-          } else {
-            // Mantém o maior prorata entre as metas disponíveis
-            companyProrated = Math.max(companyProrated, prorated);
-          }
-        } else if (g.salesperson_id) {
-          if (isExact) {
-            indivExact[g.salesperson_id] = Number(g.target_value);
-          } else {
-            indivProrated[g.salesperson_id] = Math.max(
-              indivProrated[g.salesperson_id] || 0,
-              prorated
-            );
-          }
-        }
-      });
-
-      // Resolve: exact tem prioridade sobre prorated
-      const companyGoalValue = companyExact > 0 ? companyExact : companyProrated;
+      let companyGoalValue = 0;
       const indivGoalMap: Record<string, number> = {};
-      [...Object.keys(indivExact), ...Object.keys(indivProrated)].forEach((id) => {
-        indivGoalMap[id] = indivExact[id] ?? indivProrated[id] ?? 0;
+
+      (allGoals || []).forEach((g: { salesperson_id: string | null; is_company_goal: boolean; target_value: number }) => {
+        if (g.is_company_goal) {
+          companyGoalValue = Number(g.target_value);
+        } else if (g.salesperson_id) {
+          indivGoalMap[g.salesperson_id] = Number(g.target_value);
+        }
       });
 
       // Build salesperson stats
       const salespeople: SalespersonStats[] = spData.map((sp, idx) => {
-        const stats    = statsMap[sp.id] || { jobs: 0, revenue: 0 };
-        const spGoal   = indivGoalMap[sp.id] || 0;
-        const goalPct  = spGoal > 0 ? Math.min((stats.revenue / spGoal) * 100, 999) : 0;
+        const stats = statsMap[sp.id] || { jobs: 0, revenue: 0 };
+        const spGoal = indivGoalMap[sp.id] || DEFAULT_SP_MONTHLY_GOAL;
+        const goalPct = spGoal > 0 ? Math.min((stats.revenue / spGoal) * 100, 999) : 0;
         return {
-          id:             sp.id,
-          full_name:      sp.full_name,
-          initials:       getInitials(sp.full_name),
-          color:          getSpColor(sp.full_name, idx),
+          id: sp.id,
+          full_name: sp.full_name,
+          initials: getInitials(sp.full_name),
+          color: getSpColor(sp.full_name, idx),
           jobs_sold_count: stats.jobs,
-          total_revenue:  stats.revenue,
-          monthly_goal:   spGoal,
-          goal_pct:       goalPct,
+          total_revenue: stats.revenue,
+          monthly_goal: spGoal,
+          goal_pct: goalPct,
         };
       });
 
-      // Sort by revenue desc
-      salespeople.sort((a, b) => b.total_revenue - a.total_revenue);
+      salespeople.sort((a, b) => {
+        if (b.total_revenue !== a.total_revenue) {
+          return b.total_revenue - a.total_revenue;
+        }
+        // In case of equal revenue (e.g., both $0), prioritize the one with more jobs
+        return b.jobs_sold_count - a.jobs_sold_count;
+      });
 
-      const totalSold   = salespeople.reduce((s, sp) => s + sp.total_revenue, 0);
-      const totalJobs   = salespeople.reduce((s, sp) => s + sp.jobs_sold_count, 0);
+      const totalSold = salespeople.reduce((s, sp) => s + sp.total_revenue, 0);
+      const totalJobs = salespeople.reduce((s, sp) => s + sp.jobs_sold_count, 0);
       const averageTicket = totalJobs > 0 ? totalSold / totalJobs : 0;
-
-      // Se há company goal definida, usa ela. Senão, soma das individuais.
       const totalGoal = companyGoalValue > 0
         ? companyGoalValue
         : salespeople.reduce((s, sp) => s + sp.monthly_goal, 0);
@@ -491,102 +475,85 @@ export default function ReportsPage() {
   }, []);
 
   useEffect(() => {
-    fetchData(period);
-  }, [period, fetchData]);
+    fetchData(selectedYear, selectedMonth);
+    loadSummary(selectedYear, selectedMonth);
+    loadAnnualReport(selectedYear);
+    // Reset expanded jobs when month changes
+    setSpJobs({});
+    setExpandedSp(null);
+  }, [selectedYear, selectedMonth, fetchData, loadSummary, loadAnnualReport]);
 
-  // ── Computed KPIs ───────────────────────────────────────────────────────
+  // ── Computed ─────────────────────────────────────────────────────────────
   const overallPct = data && data.totalGoal > 0 ? Math.min((data.totalSold / data.totalGoal) * 100, 100) : 0;
   const remaining = data ? Math.max(data.totalGoal - data.totalSold, 0) : 0;
 
-  // Dias restantes no período — dinâmico conforme o period selecionado
   const periodDaysLeft = (() => {
     const now = new Date();
-    if (period === "Week") {
-      const d = now.getDay();
-      return d === 0 ? 0 : 7 - d; // domingo = 0 dias restantes
-    }
-    if (period === "Month") {
-      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      return lastDay - now.getDate();
-    }
-    if (period === "Quarter") {
-      const m = now.getMonth();
-      const qEnd = new Date(now.getFullYear(), Math.ceil((m + 1) / 3) * 3, 0);
-      return Math.ceil((qEnd.getTime() - now.getTime()) / 86400000);
-    }
-    if (period === "Semester") {
-      const m = now.getMonth();
-      const semEnd = m < 6 ? new Date(now.getFullYear(), 6, 0) : new Date(now.getFullYear(), 12, 0);
-      return Math.ceil((semEnd.getTime() - now.getTime()) / 86400000);
-    }
-    // Year
-    const yearEnd = new Date(now.getFullYear(), 11, 31);
-    return Math.ceil((yearEnd.getTime() - now.getTime()) / 86400000);
+    if (now.getFullYear() !== selectedYear || now.getMonth() !== selectedMonth) return 0;
+    const lastDay = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+    return lastDay - now.getDate();
   })();
 
-  // Label do período para a mensagem
-  const periodLabel: Record<PeriodKey, string> = {
-    Week:     "Weekly",
-    Month:    "Monthly",
-    Quarter:  "Quarterly",
-    Semester: "Semiannual",
-    Year:     "Annual",
+  // ── Summary Text (auto-generated, or use saved) ─────────────────────────
+  const DEFAULT_SUMMARY_TEMPLATE = `📆 *Monthly Sales Update – Siding Depot*
+
+{{periodLabel}}
+
+✅ *Total Sold:* {{totalSold}}
+✅ *Jobs Closed:* {{totalJobs}}
+✅ *Avg Ticket:* {{avgTicket}}
+🎯 *Monthly Goal:* {{monthlyGoal}}
+📈 *Progress:* {{progressPct}}
+💰 *Remaining:* {{remaining}}
+
+🏆 *Top Performer:* {{topPerformer}}
+
+💪 Let's finish strong! {{daysLeft}} days left.
+
+– Siding Depot HQ`;
+
+  const templateVars: Record<string, string> = {
+    "{{periodLabel}}": data?.period.label || "",
+    "{{totalSold}}": fmt(data?.totalSold || 0),
+    "{{totalJobs}}": String(data?.totalJobs || 0),
+    "{{avgTicket}}": fmt(data?.averageTicket || 0),
+    "{{monthlyGoal}}": fmt(data?.totalGoal || 0),
+    "{{progressPct}}": data && data.totalGoal > 0 ? ((data.totalSold / data.totalGoal) * 100).toFixed(1) + "%" : "0.0%",
+    "{{remaining}}": remaining === 0 ? "Achieved!" : fmt(remaining),
+    "{{topPerformer}}": data?.salespeople.length && data.salespeople[0].total_revenue > 0 ? `${data.salespeople[0].full_name} (${fmt(data.salespeople[0].total_revenue)})` : "N/A",
+    "{{daysLeft}}": String(periodDaysLeft),
   };
-  const periodEmoji: Record<PeriodKey, string> = {
-    Week:     "📅",
-    Month:    "📆",
-    Quarter:  "🕑",
-    Semester: "📈",
-    Year:     "🌟",
-  };
-  const periodUnit: Record<PeriodKey, string> = {
-    Week:     "days",
-    Month:    "days",
-    Quarter:  "days",
-    Semester: "days",
-    Year:     "days",
-  };
 
-  // ── Summary Message — dinâmico por período ─────────────────────────────
-  const summaryText = data
-    ? `${periodEmoji[period]} *${periodLabel[period]} Sales Update – Siding Depot*
+  const rawTemplate = savedSummary || DEFAULT_SUMMARY_TEMPLATE;
+  const displaySummary = rawTemplate.replace(/\{\{(.*?)\}\}/g, (match) => {
+    return templateVars[match] !== undefined ? templateVars[match] : match;
+  });
 
-${data.period.label}
-
-✅ *Total Sold:* ${fmt(data.totalSold)}
-✅ *Jobs Closed:* ${data.totalJobs}
-✅ *Avg Ticket:* ${fmt(data.averageTicket)}
-${
-  data.totalGoal > 0
-    ? `🎯 *${periodLabel[period]} Goal:* ${fmt(data.totalGoal)}\n📈 *Progress:* ${((data.totalSold / data.totalGoal) * 100).toFixed(1)}%`
-    : ""
-}
-${
-  data.totalGoal > 0 && data.totalSold < data.totalGoal
-    ? `💰 *Remaining:* ${fmt(data.totalGoal - data.totalSold)}`
-    : ""
-}
-${
-  data.salespeople.length > 0
-    ? `\n🏆 *Top Performer:* ${data.salespeople[0].full_name} (${fmt(data.salespeople[0].total_revenue)})`
-    : ""
-}
-${
-  data.totalGoal > 0 && data.totalSold >= data.totalGoal
-    ? "\n🎉 ${periodLabel[period]} goal achieved! Amazing work team!"
-    : `\n💪 Let's finish strong! ${periodDaysLeft} ${periodUnit[period]} left.`
-}
-
-– Siding Depot HQ`
-    : "";
-
-
-  const handleCopy = () => {
-    if (!summaryText) return;
-    navigator.clipboard.writeText(summaryText).then(() => {
+  const handleCopy = (): void => {
+    if (!displaySummary) return;
+    navigator.clipboard.writeText(displaySummary).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     });
+  };
+
+  // ── Month navigation helpers ────────────────────────────────────────────
+  const goToPrevMonth = (): void => {
+    if (selectedMonth === 0) {
+      setSelectedYear(selectedYear - 1);
+      setSelectedMonth(11);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const goToNextMonth = (): void => {
+    if (selectedMonth === 11) {
+      setSelectedYear(selectedYear + 1);
+      setSelectedMonth(0);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
   };
 
   // -- Render
@@ -610,7 +577,7 @@ ${
             </p>
           </div>
 
-          {/* Period Filter + Actions */}
+          {/* Month Selector + Actions */}
           <div className="flex items-center gap-3">
             <button
               onClick={openGoalsModal}
@@ -619,23 +586,30 @@ ${
               <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">flag</span>
               Set Goals
             </button>
-            <div className="flex bg-[#0d0f0d] p-1 rounded-xl border border-white/5">
-              {(["Week", "Month", "Quarter", "Semester", "Year"] as PeriodKey[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPeriod(p)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    period === p
-                      ? "bg-[#242624] text-[#aeee2a] shadow-inner"
-                      : "text-[#ababa8] hover:text-[#faf9f5]"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+
+            {/* Month Picker / Navigator */}
+            <input
+              type="month"
+              value={`${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`}
+              onClick={(e) => {
+                try {
+                  if ("showPicker" in HTMLInputElement.prototype) {
+                    e.currentTarget.showPicker();
+                  }
+                } catch (err) {}
+              }}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                const [y, m] = e.target.value.split("-").map(Number);
+                setSelectedYear(y);
+                setSelectedMonth(m - 1);
+              }}
+              className="bg-[#121412] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors cursor-pointer [color-scheme:dark] relative"
+              style={{ height: "42px" }}
+            />
+
             <button
-              onClick={() => fetchData(period)}
+              onClick={() => fetchData(selectedYear, selectedMonth)}
               title="Refresh"
               className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#1e201e] border border-white/5 text-[#ababa8] hover:text-[#aeee2a] transition-all hover:border-[#aeee2a]/20"
             >
@@ -644,7 +618,7 @@ ${
           </div>
         </div>
 
-        {/* ── Error / Loading States ────────────────────────────────────── */}
+        {/* ── Error / Loading ──────────────────────────────────────────── */}
         {error && (
           <div className="rounded-xl p-4 bg-[#ff7351]/10 border border-[#ff7351]/20 text-[#ff7351] text-sm flex items-center gap-3">
             <span className="material-symbols-outlined" translate="no">error</span>
@@ -665,49 +639,24 @@ ${
           <>
             {/* ── KPI Cards ──────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Total Goal — label dinâmico conforme o período selecionado */}
+              <KpiCard icon="flag" label="Monthly Goal" value={fmt(data.totalGoal)} sub={data.period.label} color="#aeee2a" />
               <KpiCard
-                icon="flag"
-                label={`${period} Goal`}
-                value={fmt(data.totalGoal)}
-                sub={data.period.label}
-                color="#aeee2a"
-              />
-              {/* Sold So Far */}
-              <KpiCard
-                icon="attach_money"
-                label="Sold So Far"
-                value={fmt(data.totalSold)}
-                sub={`${overallPct.toFixed(1)}% of goal`}
-                color="#aeee2a"
+                icon="attach_money" label="Sold So Far" value={fmt(data.totalSold)}
+                sub={`${overallPct.toFixed(1)}% of goal`} color="#aeee2a"
                 trend={overallPct >= 75 ? { dir: "up", val: "On track" } : overallPct >= 50 ? { dir: "up", val: "Making progress" } : { dir: "down", val: "Needs attention" }}
               />
-              {/* Remaining */}
               <KpiCard
-                icon="trending_up"
-                label="Remaining"
-                value={fmt(remaining)}
-                sub={`${periodDaysLeft} days left in ${period.toLowerCase()}`}
+                icon="trending_up" label="Remaining" value={fmt(remaining)}
+                sub={`${periodDaysLeft} days left`}
                 color={remaining === 0 ? "#aeee2a" : "#ff7351"}
               />
-              {/* Total Jobs */}
-              <KpiCard
-                icon="work"
-                label="Total Jobs"
-                value={String(data.totalJobs)}
-                sub="Closed this period"
-                color="#aeee2a"
-              />
+              <KpiCard icon="work" label="Total Jobs" value={String(data.totalJobs)} sub="Closed this month" color="#aeee2a" />
             </div>
 
-            {/* Average Ticket full-width */}
+            {/* Average Ticket */}
             <div
               className="rounded-2xl p-4 flex items-center justify-between"
-              style={{
-                background: "rgba(36,38,36,0.4)",
-                border: "1px solid rgba(174,238,42,0.08)",
-                backdropFilter: "blur(20px)",
-              }}
+              style={{ background: "rgba(36,38,36,0.4)", border: "1px solid rgba(174,238,42,0.08)", backdropFilter: "blur(20px)" }}
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#e3eb5d]/10">
@@ -715,13 +664,10 @@ ${
                 </div>
                 <div>
                   <p className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">Average Ticket</p>
-                  <p className="text-[#ababa8] text-xs mt-0.5">Per job sold this period</p>
+                  <p className="text-[#ababa8] text-xs mt-0.5">Per job sold this month</p>
                 </div>
               </div>
-              <p
-                className="text-3xl font-black text-[#e3eb5d]"
-                style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-              >
+              <p className="text-3xl font-black text-[#e3eb5d]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                 {fmt(data.averageTicket)}
               </p>
             </div>
@@ -729,14 +675,10 @@ ${
             {/* ── Chart + Goal Progress ────────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-              {/* Salesperson Bar Chart */}
+              {/* Salesperson Bar Chart — with revenue shown */}
               <div
                 className="lg:col-span-2 rounded-2xl p-6"
-                style={{
-                  background: "rgba(36,38,36,0.4)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                }}
+                style={{ background: "rgba(36,38,36,0.4)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.05)" }}
               >
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
@@ -749,8 +691,7 @@ ${
 
                 {/* Horizontal Bars */}
                 <div className="space-y-4">
-                  {data.salespeople.map((sp, i) => {
-                    // Bar shows progress vs individual goal (not vs max revenue)
+                  {data.salespeople.map((sp) => {
                     const goalRef = sp.monthly_goal > 0 ? sp.monthly_goal : (data.salespeople[0]?.total_revenue || 1);
                     const barWidth = Math.min((sp.total_revenue / goalRef) * 100, 100);
                     const isHovered = hoveredSp === sp.id;
@@ -758,46 +699,44 @@ ${
                     return (
                       <div
                         key={sp.id}
-                        className="group cursor-pointer"
-                        onMouseEnter={() => setHoveredSp(sp.id)}
-                        onMouseLeave={() => setHoveredSp(null)}
+                        className="group flex flex-col"
                       >
+                        <div
+                          className="cursor-pointer"
+                          onMouseEnter={() => setHoveredSp(sp.id)}
+                          onMouseLeave={() => setHoveredSp(null)}
+                          onClick={() => loadSpJobs(sp.id)}
+                        >
                         <div className="flex items-center justify-between mb-1.5">
                           <div className="flex items-center gap-2">
-                            {/* Avatar */}
                             <div
                               className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-transform group-hover:scale-110"
-                              style={{
-                                background: `${sp.color}20`,
-                                border: `1.5px solid ${sp.color}60`,
-                                color: sp.color,
-                              }}
+                              style={{ background: `${sp.color}20`, border: `1.5px solid ${sp.color}60`, color: sp.color }}
                             >
                               {sp.initials}
                             </div>
                             <span className={`text-sm font-semibold transition-colors ${isHovered ? "text-[#faf9f5]" : "text-[#ababa8]"}`}>
                               {sp.full_name}
                             </span>
+                            <span className="material-symbols-outlined text-[14px] text-[#474846] transition-transform" translate="no">
+                              {expandedSp === sp.id ? "expand_less" : "expand_more"}
+                            </span>
                             <span
                               className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                              style={{
-                                background: `${sp.color}15`,
-                                color: sp.color,
-                              }}
+                              style={{ background: `${sp.color}15`, color: sp.color }}
                             >
                               {sp.jobs_sold_count} job{sp.jobs_sold_count !== 1 ? "s" : ""}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
+                            {/* Revenue value — always visible */}
                             <span
                               className="text-sm font-black"
                               style={{ color: sp.color, fontFamily: "Manrope, system-ui, sans-serif" }}
                             >
                               {fmt(sp.total_revenue)}
                             </span>
-                            <span
-                              className="text-[10px] text-[#ababa8] w-9 text-right"
-                            >
+                            <span className="text-[10px] text-[#ababa8] w-9 text-right">
                               {sp.goal_pct.toFixed(0)}%
                             </span>
                           </div>
@@ -805,14 +744,9 @@ ${
 
                         {/* Bar track */}
                         <div className="relative w-full h-2 bg-[#242624] rounded-full overflow-hidden">
-                          {/* Goal end marker (100% = goal achieved) */}
                           {sp.monthly_goal > 0 && (
-                            <div
-                              className="absolute top-0 bottom-0 w-px bg-white/20 z-10"
-                              style={{ left: "100%" }}
-                            />
+                            <div className="absolute top-0 bottom-0 w-px bg-white/20 z-10" style={{ left: "100%" }} />
                           )}
-                          {/* Revenue bar */}
                           <div
                             className="h-full rounded-full transition-all duration-700"
                             style={{
@@ -822,12 +756,82 @@ ${
                             }}
                           />
                         </div>
+                        </div>
 
                         {/* Tooltip on hover */}
                         {isHovered && sp.monthly_goal > 0 && (
                           <div className="mt-1.5 flex items-center gap-4 text-[10px] text-[#ababa8]">
                             <span>Goal: <span className="text-[#faf9f5] font-bold">{fmt(sp.monthly_goal)}</span></span>
                             <span>Remaining: <span style={{ color: sp.total_revenue >= sp.monthly_goal ? "#aeee2a" : "#ff7351" }} className="font-bold">{fmt(Math.max(sp.monthly_goal - sp.total_revenue, 0))}</span></span>
+                          </div>
+                        )}
+                        
+                        {/* Expanded jobs detail */}
+                        {expandedSp === sp.id && (
+                          <div className="mt-3 px-4 py-3 rounded-xl bg-[#0d0f0d]/50 border border-white/5">
+                            {loadingJobs === sp.id ? (
+                              <div className="flex items-center gap-2 py-2">
+                                <div className="w-3 h-3 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
+                                <span className="text-[11px] text-[#474846]">Loading jobs...</span>
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                <div className="grid grid-cols-[100px_1fr_100px_60px] gap-2 px-2 pb-1 text-[9px] text-[#ababa8] uppercase tracking-widest font-bold border-b border-white/5 mb-2">
+                                  <span>Data</span>
+                                  <span className="text-center">Job Title</span>
+                                  <span className="text-center">VALOR</span>
+                                  <span className="text-right">STATUS</span>
+                                </div>
+                                {(spJobs[sp.id]?.length || 0) === 0 ? (
+                                  <div className="grid grid-cols-[100px_1fr_100px_60px] gap-2 px-2 py-2 rounded-lg text-xs items-center">
+                                    <span className="text-[#474846] font-mono">--</span>
+                                    <span className="text-[#474846] font-semibold text-center">--</span>
+                                    <span className="text-[#474846] font-semibold text-center">--</span>
+                                    <span className="text-right text-[#474846] font-bold text-sm">--</span>
+                                  </div>
+                                ) : (
+                                  spJobs[sp.id].map((job) => {
+                                    const isCancelled = job.status === "cancelled";
+                                    return (
+                                      <div
+                                        key={job.id}
+                                        className={`grid grid-cols-[100px_1fr_100px_60px] gap-2 px-2 py-2 rounded-lg hover:bg-[#1e201e]/40 transition-colors text-xs items-center ${isCancelled ? "opacity-50" : ""}`}
+                                      >
+                                        <span className={`text-[#ababa8] font-mono ${isCancelled ? "line-through" : ""}`}>
+                                          {job.contract_signed_at ? new Date(job.contract_signed_at + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—"}
+                                        </span>
+                                        <span className={`text-[#faf9f5] font-semibold truncate text-center ${isCancelled ? "line-through" : ""}`}>
+                                          {job.title}
+                                        </span>
+                                        
+                                        <span className={`text-center font-bold text-sm ${isCancelled ? "line-through text-[#808080]" : ""}`} style={!isCancelled ? { color: sp.color } : {}}>
+                                          {fmtFull(Number(job.contract_amount))}
+                                        </span>
+
+                                        <div className="flex justify-end pr-2">
+                                          {isCancelled ? (
+                                             <span className="text-[9px] font-black text-[#ff7351] bg-[#ff7351]/10 px-1.5 py-0.5 rounded uppercase tracking-widest" title="Abandoned">
+                                                ABD
+                                             </span>
+                                          ) : (
+                                             <button 
+                                                title="Marcar como Abandonado"
+                                                onClick={(e) => {
+                                                   e.stopPropagation();
+                                                   setJobToAbandon({ jobId: job.id, spId: sp.id, title: job.title });
+                                                }}
+                                                className="w-6 h-6 rounded-md bg-[#242624] text-[#808080] hover:text-[#ff7351] hover:bg-[#ff7351]/10 flex items-center justify-center transition-all border border-[#474846]/20 hover:border-[#ff7351]/40 cursor-pointer"
+                                             >
+                                                <span className="material-symbols-outlined text-[13px]" translate="no">edit</span>
+                                             </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -847,11 +851,7 @@ ${
               {/* Goal Progress Circle */}
               <div
                 className="rounded-2xl p-6 flex flex-col gap-6"
-                style={{
-                  background: "rgba(36,38,36,0.4)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                }}
+                style={{ background: "rgba(36,38,36,0.4)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.05)" }}
               >
                 <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                   {data.period.label}
@@ -863,11 +863,9 @@ ${
                     <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                       <circle cx="50" cy="50" r="42" fill="none" stroke="#242624" strokeWidth="10" />
                       <circle
-                        cx="50" cy="50" r="42"
-                        fill="none"
+                        cx="50" cy="50" r="42" fill="none"
                         stroke={overallPct >= 100 ? "#22c55e" : "#aeee2a"}
-                        strokeWidth="10"
-                        strokeLinecap="round"
+                        strokeWidth="10" strokeLinecap="round"
                         strokeDasharray={`${2 * Math.PI * 42}`}
                         strokeDashoffset={`${2 * Math.PI * 42 * (1 - overallPct / 100)}`}
                         style={{ transition: "stroke-dashoffset 1.2s ease" }}
@@ -876,10 +874,7 @@ ${
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                       <span
                         className="text-3xl font-black"
-                        style={{
-                          color: overallPct >= 100 ? "#22c55e" : "#aeee2a",
-                          fontFamily: "Manrope, system-ui, sans-serif",
-                        }}
+                        style={{ color: overallPct >= 100 ? "#22c55e" : "#aeee2a", fontFamily: "Manrope, system-ui, sans-serif" }}
                       >
                         {overallPct.toFixed(1)}%
                       </span>
@@ -897,10 +892,7 @@ ${
                   <div className="w-full bg-[#242624] rounded-full h-1.5">
                     <div
                       className="h-1.5 rounded-full transition-all duration-700"
-                      style={{
-                        width: `${overallPct}%`,
-                        background: "linear-gradient(90deg, #aeee2a, #22c55e)",
-                      }}
+                      style={{ width: `${overallPct}%`, background: "linear-gradient(90deg, #aeee2a, #22c55e)" }}
                     />
                   </div>
                   <div className="flex justify-between text-sm">
@@ -921,16 +913,13 @@ ${
               </div>
             </div>
 
-            {/* ── Salesperson Table + Weekly Message ───────────────────── */}
+            {/* ── Leaderboard Table + Jobs Accordion ────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
               {/* Leaderboard Table */}
               <div
                 className="lg:col-span-2 rounded-2xl overflow-hidden"
-                style={{
-                  background: "#121412",
-                  border: "1px solid rgba(255,255,255,0.04)",
-                }}
+                style={{ background: "#121412", border: "1px solid rgba(255,255,255,0.04)" }}
               >
                 <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
                   <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
@@ -939,66 +928,55 @@ ${
                   <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">{data.period.label}</span>
                 </div>
 
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-[#1e201e]/50">
-                      {["#", "Salesperson", "Jobs", "Revenue", "vs Goal"].map((col, i) => (
-                        <th
-                          key={col}
-                          className={`px-5 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest ${i === 2 ? "text-center" : i >= 3 ? "text-right" : ""}`}
-                        >
-                          {col}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {data.salespeople.map((sp, i) => (
-                      <tr
-                        key={sp.id}
-                        className="hover:bg-[#1e201e]/40 transition-colors cursor-pointer"
-                        onMouseEnter={() => setHoveredSp(sp.id)}
-                        onMouseLeave={() => setHoveredSp(null)}
+                <div className="w-full text-left">
+                  <div className="flex bg-[#1e201e]/50 border-b border-white/5">
+                    {["#", "Salesperson", "Jobs", "Revenue", "vs Goal"].map((col, i) => (
+                      <div
+                        key={col}
+                        className={`px-5 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest flex items-center ${
+                          i === 0 ? "w-10" : 
+                          i === 2 ? "justify-center w-[120px]" : 
+                          i === 3 ? "justify-center w-[150px]" : 
+                          i === 4 ? "w-[200px] justify-center" : 
+                          "flex-1"
+                        }`}
                       >
-                        {/* Rank */}
-                        <td className="px-5 py-4 w-10">
+                        {col}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="divide-y divide-white/5">
+                    {data.salespeople
+                      .filter(sp => !sp.full_name.toLowerCase().includes("armando"))
+                      .map((sp, i) => (
+                      <div key={sp.id} className="w-full flex items-center hover:bg-[#1e201e]/40 transition-colors">
+                        <div className="px-5 py-4 w-10 shrink-0">
                           {i === 0 ? (
                             <span className="text-base">🏆</span>
                           ) : (
                             <span className="text-sm font-bold text-[#474846]">#{i + 1}</span>
                           )}
-                        </td>
-                        {/* Name */}
-                        <td className="px-5 py-4">
+                        </div>
+                        <div className="px-5 py-4 flex-1">
                           <div className="flex items-center gap-2.5">
                             <div
                               className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black"
-                              style={{
-                                background: `${sp.color}15`,
-                                border: `1.5px solid ${sp.color}40`,
-                                color: sp.color,
-                              }}
+                              style={{ background: `${sp.color}15`, border: `1.5px solid ${sp.color}40`, color: sp.color }}
                             >
                               {sp.initials}
                             </div>
                             <span className="text-sm font-semibold text-[#faf9f5]">{sp.full_name}</span>
                           </div>
-                        </td>
-                        {/* Jobs */}
-                        <td className="px-5 py-4 text-center text-sm text-[#faf9f5] font-bold">{sp.jobs_sold_count}</td>
-                        {/* Revenue */}
-                        <td className="px-5 py-4 text-right">
-                          <span
-                            className="text-sm font-black"
-                            style={{ color: sp.color, fontFamily: "Manrope, system-ui, sans-serif" }}
-                          >
+                        </div>
+                        <div className="px-5 py-4 flex justify-center text-sm text-[#faf9f5] font-bold w-[120px] shrink-0">{sp.jobs_sold_count}</div>
+                        <div className="px-5 py-4 flex justify-center w-[150px] shrink-0">
+                          <span className="text-sm font-black" style={{ color: sp.color, fontFamily: "Manrope, system-ui, sans-serif" }}>
                             {fmt(sp.total_revenue)}
                           </span>
-                        </td>
-                        {/* Goal % */}
-                        <td className="px-5 py-4">
-                          <div className="flex items-center justify-end gap-2">
-                            <div className="w-20 bg-[#242624] rounded-full h-1.5">
+                        </div>
+                        <div className="px-5 py-4 w-[200px] shrink-0 flex justify-center">
+                          <div className="flex items-center gap-2 w-full max-w-[120px]">
+                            <div className="flex-1 bg-[#242624] rounded-full h-1.5">
                               <div
                                 className="h-1.5 rounded-full transition-all duration-700"
                                 style={{
@@ -1009,78 +987,210 @@ ${
                             </div>
                             <span className="text-[10px] text-[#ababa8] w-8 text-right">{sp.goal_pct.toFixed(0)}%</span>
                           </div>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-
-                {data.salespeople.length === 0 && (
-                  <div className="py-10 text-center text-[#ababa8] text-sm">
-                    No sales data for this period.
                   </div>
+                </div>
+
+                {data.salespeople.filter(sp => !sp.full_name.toLowerCase().includes("armando")).length === 0 && (
+                  <div className="py-10 text-center text-[#ababa8] text-sm">No sales data for this period.</div>
                 )}
               </div>
 
-              {/* Weekly Summary Message */}
+              {/* Monthly Summary Message — editable */}
               <div
                 className="rounded-2xl p-6 flex flex-col gap-4"
-                style={{
-                  background: "rgba(36,38,36,0.4)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(174,238,42,0.08)",
-                }}
+                style={{ background: "rgba(36,38,36,0.4)", backdropFilter: "blur(20px)", border: "1px solid rgba(174,238,42,0.08)" }}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">
-                      campaign
-                    </span>
+                    <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">campaign</span>
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
-                      {periodLabel[period]} Summary
+                      Monthly Summary
                     </h3>
                     <p className="text-[10px] text-[#ababa8]">Ready-to-copy for WhatsApp / Email</p>
                   </div>
                 </div>
 
-                {/* Message box */}
-                <div
-                  className="flex-1 rounded-xl p-4 text-[11px] text-[#faf9f5]/80 leading-relaxed whitespace-pre-line font-mono"
-                  style={{
-                    background: "rgba(13,15,13,0.6)",
-                    border: "1px solid rgba(71,72,70,0.3)",
-                    minHeight: "220px",
-                  }}
-                >
-                  {summaryText}
-                </div>
+                {/* Message box — editable or read-only */}
+                {editingSummary ? (
+                  <div className="flex flex-col gap-3">
+                    <textarea
+                      value={summaryDraft}
+                      onChange={(e) => setSummaryDraft(e.target.value)}
+                      className="w-full rounded-xl p-4 text-[11px] text-[#faf9f5]/80 leading-relaxed font-mono resize-none outline-none focus:border-[#aeee2a]/40 transition-colors"
+                      style={{
+                        background: "rgba(13,15,13,0.6)",
+                        border: "1px solid rgba(174,238,42,0.2)",
+                        minHeight: "220px",
+                      }}
+                    />
+                    <div className="flex flex-col gap-2">
+                       <p className="text-[10px] text-[#ababa8] ml-1 font-semibold">
+                         <span className="text-[#aeee2a]">💡 How it works:</span> Modify the text, but keep the <span className="font-mono text-[#aeee2a] font-bold">{"{{brackets}}"}</span> intact if you want data (like Total Sold) to update automatically based on your real numbers.
+                       </p>
+                       <div className="flex flex-wrap gap-1.5 p-2 bg-[#121412] rounded-lg border border-[#474846]/20 shadow-inner">
+                          {Object.keys(templateVars).map(key => (
+                             <button
+                               title={`Insert ${key}`}
+                               key={key}
+                               onClick={() => setSummaryDraft(prev => prev + " " + key)}
+                               className="text-[9px] bg-[#242624] text-[#aeee2a] font-mono px-2 py-1 rounded-md hover:bg-[#aeee2a]/20 hover:text-white transition-colors"
+                             >
+                                {key}
+                             </button>
+                          ))}
+                       </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="flex-1 rounded-xl p-4 text-[11px] text-[#faf9f5]/80 leading-relaxed whitespace-pre-line font-mono"
+                    style={{ background: "rgba(13,15,13,0.6)", border: "1px solid rgba(71,72,70,0.3)", minHeight: "220px" }}
+                  >
+                    {displaySummary}
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex gap-2">
-                  <button
-                    onClick={handleCopy}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95"
-                    style={{
-                      background: copied ? "#1a2e00" : "#aeee2a",
-                      color: copied ? "#aeee2a" : "#3a5400",
-                      border: copied ? "1px solid #aeee2a40" : "none",
-                    }}
-                  >
-                    <span className="material-symbols-outlined text-sm" translate="no">
-                      {copied ? "check" : "content_copy"}
-                    </span>
-                    {copied ? "Copied!" : "Copy Message"}
-                  </button>
-                  <button
-                    onClick={() => fetchData(period)}
-                    title="Refresh data"
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#242624] text-[#ababa8] text-xs font-bold hover:text-[#faf9f5] transition-all hover:bg-[#2e302e]"
-                  >
-                    <span className="material-symbols-outlined text-sm" translate="no">refresh</span>
-                  </button>
+                  {editingSummary ? (
+                    <>
+                      <button
+                        onClick={() => setEditingSummary(false)}
+                        className="flex-1 py-2.5 rounded-xl bg-[#1e201e] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={saveSummary}
+                        disabled={savingSummary}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#aeee2a] text-[#3a5400] text-xs font-bold active:scale-95 transition-all disabled:opacity-50"
+                      >
+                        {savingSummary ? (
+                          <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-sm" translate="no">save</span>
+                            Save
+                          </>
+                        )}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleCopy}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                        style={{
+                          background: copied ? "#1a2e00" : "#aeee2a",
+                          color: copied ? "#aeee2a" : "#3a5400",
+                          border: copied ? "1px solid #aeee2a40" : "none",
+                        }}
+                      >
+                        <span className="material-symbols-outlined text-sm" translate="no">
+                          {copied ? "check" : "content_copy"}
+                        </span>
+                        {copied ? "Copied!" : "Copy Message"}
+                      </button>
+                      <button
+                        onClick={() => { setSummaryDraft(rawTemplate); setEditingSummary(true); }}
+                        title="Edit summary template"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#242624] text-[#ababa8] text-xs font-bold hover:text-[#faf9f5] transition-all hover:bg-[#2e302e]"
+                      >
+                        <span className="material-symbols-outlined text-sm" translate="no">edit_document</span>
+                      </button>
+                      <button
+                        onClick={() => fetchData(selectedYear, selectedMonth)}
+                        title="Refresh data"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#242624] text-[#ababa8] text-xs font-bold hover:text-[#faf9f5] transition-all hover:bg-[#2e302e]"
+                      >
+                        <span className="material-symbols-outlined text-sm" translate="no">refresh</span>
+                      </button>
+                    </>
+                  )}
                 </div>
+              </div>
+            </div>
+
+            {/* ── Annual Comparison Table ──────────────────────────────── */}
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ background: "#121412", border: "1px solid rgba(255,255,255,0.04)" }}
+            >
+              <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#a855f7]/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[#a855f7] text-lg" translate="no">analytics</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                      Annual Performance Report
+                    </h3>
+                    <p className="text-[10px] text-[#ababa8]">Month-by-month comparison — {selectedYear}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left min-w-[900px]">
+                  <thead>
+                    <tr className="bg-[#1e201e]/50">
+                      <th className="px-4 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest sticky left-0 bg-[#1e201e]/80 backdrop-blur-sm z-10">
+                        Salesperson
+                      </th>
+                      {MONTH_NAMES.map((m, idx) => (
+                        <th
+                          key={m}
+                          className={`px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-center ${
+                            idx === selectedMonth ? "text-[#aeee2a]" : "text-[#ababa8]"
+                          }`}
+                        >
+                          {m.slice(0, 3)}
+                        </th>
+                      ))}
+                      <th className="px-4 py-3 text-[10px] font-bold text-[#aeee2a] uppercase tracking-widest text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {annualSalespeople.map((sp) => {
+                      const months = annualData[sp.id] || Array(12).fill(0);
+                      const total = months.reduce((a, b) => a + b, 0);
+                      return (
+                        <tr key={sp.id} className="hover:bg-[#1e201e]/30 transition-colors">
+                          <td className="px-4 py-3 sticky left-0 bg-[#121412] z-10">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black"
+                                style={{ background: `${sp.color}20`, border: `1px solid ${sp.color}40`, color: sp.color }}
+                              >
+                                {getInitials(sp.name)}
+                              </div>
+                              <span className="text-xs font-semibold text-[#faf9f5]">{sp.name}</span>
+                            </div>
+                          </td>
+                          {months.map((val, idx) => (
+                            <td
+                              key={idx}
+                              className={`px-3 py-3 text-center text-[11px] font-bold ${
+                                idx === selectedMonth ? "bg-[#aeee2a]/5" : ""
+                              }`}
+                              style={{ color: val > 0 ? sp.color : "#474846" }}
+                            >
+                              {val > 0 ? fmt(val) : "—"}
+                            </td>
+                          ))}
+                          <td className="px-4 py-3 text-right text-xs font-black" style={{ color: sp.color }}>
+                            {total > 0 ? fmt(total) : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           </>
@@ -1099,12 +1209,12 @@ ${
 
       </div>
 
-      {/* ── Goals Modal ──────────────────────────────────────────────── */}
+      {/* ── Goals Modal (simplified: monthly only) ───────────────────── */}
       {showGoalsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowGoalsModal(false)} />
           <div
-            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl space-y-0"
+            className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl space-y-0"
             style={{
               background: "#121412",
               border: "1px solid rgba(174,238,42,0.15)",
@@ -1119,8 +1229,8 @@ ${
                   <span className="material-symbols-outlined text-[#aeee2a] text-xl" translate="no">flag</span>
                 </div>
                 <div>
-                  <h2 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Set Sales Goals</h2>
-                  <p className="text-[10px] text-[#ababa8] uppercase tracking-widest">Company & individual targets</p>
+                  <h2 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Set Monthly Goals</h2>
+                  <p className="text-[10px] text-[#ababa8] uppercase tracking-widest">{MONTH_NAMES[selectedMonth]} {selectedYear}</p>
                 </div>
               </div>
               <button
@@ -1132,7 +1242,7 @@ ${
             </div>
 
             <div className="p-6 space-y-6">
-              {/* ── Company Goal (5 períodos) ─────────────────────────── */}
+              {/* Company Goal — single monthly input */}
               <div
                 className="rounded-2xl p-5 space-y-4"
                 style={{ background: "rgba(174,238,42,0.04)", border: "1px solid rgba(174,238,42,0.12)" }}
@@ -1140,52 +1250,40 @@ ${
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#aeee2a] text-xl" translate="no">business</span>
                   <div>
-                    <p className="text-sm font-black text-[#aeee2a] uppercase tracking-widest">Company Total Goal</p>
-                    <p className="text-[10px] text-[#ababa8] mt-0.5">Define a meta por período — preencha apenas os que quiser usar</p>
+                    <p className="text-sm font-black text-[#aeee2a] uppercase tracking-widest">Company Monthly Goal</p>
+                    <p className="text-[10px] text-[#ababa8] mt-0.5">Total revenue target for the month</p>
                   </div>
                 </div>
 
-                {/* 5 inputs: Week / Month / Quarter / Semester / Year */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {([
-                    { key: "week",     label: "Weekly"     },
-                    { key: "month",    label: "Monthly"    },
-                    { key: "quarter",  label: "Quarterly"  },
-                    { key: "semester", label: "Semiannual" },
-                    { key: "year",     label: "Yearly"     },
-                  ] as { key: GoalPeriodKey; label: string }[]).map(({ key, label }) => (
-                    <div key={key} className="space-y-1">
-                      <label className="text-[9px] text-[#ababa8] uppercase tracking-widest font-bold">{label}</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aeee2a] text-xs font-bold">$</span>
-                        <input
-                          type="number"
-                          placeholder="0"
-                          value={companyGoal[key]}
-                          onChange={(e) => setCompanyGoal(prev => ({ ...prev, [key]: e.target.value }))}
-                          className="w-full bg-[#0d0f0d] border border-[#aeee2a]/20 rounded-lg py-2.5 pl-7 pr-3 text-sm text-[#aeee2a] font-black placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/60 transition-colors"
-                        />
-                      </div>
-                    </div>
-                  ))}
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aeee2a] text-xs font-bold">$</span>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={companyMonthlyGoal}
+                    onChange={(e) => setCompanyMonthlyGoal(e.target.value)}
+                    className="w-full bg-[#0d0f0d] border border-[#aeee2a]/20 rounded-lg py-2.5 pl-7 pr-3 text-sm text-[#aeee2a] font-black placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/60 transition-colors"
+                  />
                 </div>
 
-                {/* Sugestão: soma dos individuais */}
+                {/* Sum suggestion */}
                 {(() => {
-                  const autoMonth = data?.salespeople.reduce((sum, sp) => {
-                    return sum + (parseFloat(goalInputs[sp.id]?.month || "0") || 0);
-                  }, 0) || 0;
+                  const autoMonth = (data?.salespeople || [])
+                    .filter(sp => !sp.full_name.toLowerCase().includes("armando"))
+                    .reduce((sum, sp) => {
+                      return sum + (parseFloat(spGoalInputs[sp.id] || "0") || 0);
+                    }, 0);
                   if (autoMonth > 0) return (
                     <p className="text-[10px] text-[#ababa8]">
-                      📊 Soma das metas mensais individuais:{" "}
+                      📊 Sum of individual goals:{" "}
                       <span className="text-[#aeee2a] font-bold">${autoMonth.toLocaleString()}</span>
                       {" — "}
                       <button
                         type="button"
-                        onClick={() => setCompanyGoal(prev => ({ ...prev, month: String(autoMonth) }))}
+                        onClick={() => setCompanyMonthlyGoal(String(autoMonth))}
                         className="text-[#aeee2a] underline hover:opacity-70 transition-opacity"
                       >
-                        Aplicar como Monthly
+                        Apply
                       </button>
                     </p>
                   );
@@ -1200,63 +1298,42 @@ ${
                 <div className="flex-1 h-px bg-white/5" />
               </div>
 
-              {/* ── Individual Salesperson Rows ───────────────────────── */}
+              {/* Individual Salesperson Rows */}
               <div className="space-y-3">
-                {data?.salespeople.map((sp) => {
-                  const input = goalInputs[sp.id];
-                  if (!input) return null;
-
-                  return (
+                {(data?.salespeople || [])
+                  .filter((sp) => !sp.full_name.toLowerCase().includes("armando"))
+                  .map((sp) => (
+                  <div
+                    key={sp.id}
+                    className="rounded-xl p-4 flex items-center gap-3"
+                    style={{ background: "rgba(30,32,30,0.6)", border: "1px solid rgba(255,255,255,0.05)" }}
+                  >
                     <div
-                      key={sp.id}
-                      className="rounded-xl p-4 space-y-3"
-                      style={{ background: "rgba(30,32,30,0.6)", border: "1px solid rgba(255,255,255,0.05)" }}
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
+                      style={{ background: `${sp.color}20`, border: `1.5px solid ${sp.color}60`, color: sp.color }}
                     >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black"
-                          style={{ background: `${sp.color}20`, border: `1.5px solid ${sp.color}60`, color: sp.color }}
-                        >
-                          {sp.initials}
-                        </div>
-                        <span className="text-sm font-bold text-[#faf9f5]">{sp.full_name}</span>
-                        {sp.monthly_goal > 0 && (
-                          <span className="ml-auto text-[10px] text-[#ababa8]">Current: <span className="text-[#faf9f5] font-bold">${sp.monthly_goal.toLocaleString()}/mo</span></span>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {([
-                          { key: "week",     label: "Weekly"     },
-                          { key: "month",    label: "Monthly"    },
-                          { key: "quarter",  label: "Quarterly"  },
-                          { key: "semester", label: "Semiannual" },
-                          { key: "year",     label: "Yearly"     },
-                        ] as { key: GoalPeriodKey; label: string }[]).map(({ key, label }) => (
-                          <div key={key} className="space-y-1">
-                            <label className="text-[9px] text-[#ababa8] uppercase tracking-widest font-bold">{label}</label>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] text-xs">$</span>
-                              <input
-                                type="number"
-                                placeholder="0"
-                                value={input[key]}
-                                onChange={(e) =>
-                                  setGoalInputs((prev) => ({
-                                    ...prev,
-                                    [sp.id]: { ...prev[sp.id], [key]: e.target.value },
-                                  }))
-                                }
-                                className="w-full bg-[#0d0f0d] border border-white/10 rounded-lg py-2 pl-7 pr-3 text-sm text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/40 transition-colors"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      {sp.initials}
                     </div>
-                  );
-                })}
+                    <span className="text-sm font-bold text-[#faf9f5] flex-1">{sp.full_name}</span>
+                    <div className="relative w-32">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] text-xs">$</span>
+                      <input
+                        type="number"
+                        placeholder={String(DEFAULT_SP_MONTHLY_GOAL)}
+                        value={spGoalInputs[sp.id] || ""}
+                        onChange={(e) =>
+                          setSpGoalInputs((prev) => ({ ...prev, [sp.id]: e.target.value }))
+                        }
+                        className="w-full bg-[#0d0f0d] border border-white/10 rounded-lg py-2 pl-7 pr-3 text-sm text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/40 transition-colors"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              <p className="text-[10px] text-[#474846] text-center">
+                Default individual goal: <span className="text-[#ababa8] font-bold">${DEFAULT_SP_MONTHLY_GOAL.toLocaleString()}/mo</span> — editable above
+              </p>
 
               {/* Actions */}
               <div className="flex gap-3 pt-2">
@@ -1276,9 +1353,54 @@ ${
                   ) : (
                     <>
                       <span className="material-symbols-outlined text-sm" translate="no">save</span>
-                      Save All Goals
+                      Save Goals
                     </>
                   )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Abandon Job Confirmation Modal ────────────────────────────────────── */}
+      {jobToAbandon && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setJobToAbandon(null)}>
+          <div
+            className="w-full max-w-sm rounded-3xl bg-[#121412] border border-[#ff7351]/30 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-white/5 bg-[#ff7351]/10 flex items-center gap-3">
+              <span className="material-symbols-outlined text-[#ff7351] text-xl" translate="no">warning</span>
+              <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                Abandon Job
+              </h3>
+            </div>
+            {/* Body */}
+            <div className="p-6">
+              <p className="text-sm text-[#ababa8] mb-4 text-center">
+                Are you sure you want to mark <br/>
+                <strong className="text-[#faf9f5] mt-2 block">{jobToAbandon.title}</strong><br/>
+                as Abandoned?
+              </p>
+              <p className="text-[11px] text-[#ff7351] font-semibold bg-[#ff7351]/10 p-3 rounded-lg border border-[#ff7351]/20 text-center leading-relaxed">
+                This action will cross out the line and subtract its value from the total sold this month.
+              </p>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-6">
+                <button
+                  onClick={() => setJobToAbandon(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-[#1e201e] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAbandonJob}
+                  className="flex-1 py-2.5 rounded-xl bg-[#ff7351] text-white text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-[#e05b3d]"
+                >
+                  Confirm
                 </button>
               </div>
             </div>

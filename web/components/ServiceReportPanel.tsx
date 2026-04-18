@@ -23,12 +23,21 @@ export function ServiceReportPanel({ isOpen, service, onClose, onSuccess }: Serv
     try {
       const { data: userData } = await supabase.auth.getUser();
 
+      let resolvedDate = new Date();
+      if (service.reported_at) {
+        const reportedDate = new Date(service.reported_at);
+        if (resolvedDate.getTime() < reportedDate.getTime()) {
+           resolvedDate = new Date(reportedDate.getTime() + 1000); 
+        }
+      }
+      const safeResolvedAt = resolvedDate.toISOString();
+
       const { error: updateError } = await supabase
         .from("blockers")
         .update({
           status: "resolved",
           resolution_notes: resolutionNotes,
-          resolved_at: new Date().toISOString(),
+          resolved_at: safeResolvedAt,
           resolved_by_profile_id: userData.user?.id || service.resolved_by_profile_id,
         })
         .eq("id", service.id);
@@ -111,12 +120,38 @@ export function ServiceReportPanel({ isOpen, service, onClose, onSuccess }: Serv
             </div>
           </section>
 
-          {/* Media Section placeholder */}
+          {/* Attached Media */}
           <section className="space-y-4">
             <h4 className="text-sm font-bold text-[#faf9f5] border-b border-white/5 pb-2">Attached Media</h4>
-            <div className="p-4 rounded-xl border border-dashed border-[#474846] bg-[#181a18] text-center text-[#ababa8]">
-              <p className="text-xs">No media attached to this service call.</p>
-            </div>
+            {service.blocker_attachments && service.blocker_attachments.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {service.blocker_attachments.map((att: any, idx: number) => {
+                  const ext = att.url.split(".").pop()?.toLowerCase();
+                  const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext || "");
+                  return (
+                    <a
+                      key={idx}
+                      href={att.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 hover:border-[#aeee2a]/50 transition-colors group"
+                    >
+                      <span className="material-symbols-outlined text-[#aeee2a] text-xl group-hover:scale-110 transition-transform" translate="no">
+                        {isImage ? "image" : "attach_file"}
+                      </span>
+                      <span className="text-sm text-[#faf9f5] font-medium truncate flex-1">
+                        Attachment {idx + 1}
+                      </span>
+                      <span className="material-symbols-outlined text-[#ababa8] group-hover:text-[#faf9f5] text-sm" translate="no">open_in_new</span>
+                    </a>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl border border-dashed border-[#474846] bg-[#181a18] text-center text-[#ababa8]">
+                <p className="text-xs">No media attached to this service call.</p>
+              </div>
+            )}
           </section>
 
           {/* Resolution Form (only if Open) */}

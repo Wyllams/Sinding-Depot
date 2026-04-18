@@ -1,0 +1,215 @@
+{
+  "main": {
+    "id": "0e46768830f000b2",
+    "type": "split",
+    "children": [
+      {
+        "id": "80d099ad9e199c1b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "79a797aa0730d10c",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Visualização em gráfico"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "13649cc26c8d70c4",
+    "type": "split",
+    "children": [
+      {
+        "id": "e645f9d3fad9f444",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4ef0ea06c4d5829a",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de arquivos"
+            }
+          },
+          {
+            "id": "7631dc3fc5b9058c",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Procurar"
+            }
+          },
+          {
+            "id": "09d63feab9ae55a6",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "right": {
+    "id": "bcf8a329ece3590b",
+    "type": "split",
+    "children": [
+      {
+        "id": "1b4bd2f016a20cd3",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5c76b389e68d453c",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Links inversos"
+            }
+          },
+          {
+            "id": "d5d64e23b2524a49",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Links de saída"
+            }
+          },
+          {
+            "id": "9ccfd996b786e9e1",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "21b18114db7eee0d",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas as propriedades"
+            }
+          },
+          {
+            "id": "17ecfc54efe924f2",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Sumário"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir a troca rápida": false,
+      "graph:Abrir visualização em gráfico": false,
+      "canvas:Criar novo canvas": false,
+      "daily-notes:Abrir a nota de hoje": false,
+      "templates:Inserir modelo": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Criar nova base": false
+    }
+  },
+  "active": "79a797aa0730d10c",
+  "lastOpenFiles": [
+    "Siding Depot/Projects.md",
+    "Siding Depot/5. Operações e DevOps/Regras de IA (Prompts e Instruções).md",
+    "Siding Depot/5. Operações e DevOps/Roadmap e Dívidas Técnicas.md",
+    "Siding Depot/5. Operações e DevOps/Deploy e Variáveis de Ambiente.md",
+    "Siding Depot/5. Operações e DevOps",
+    "Siding Depot/4. Design System e UI/Componentes Core.md",
+    "Siding Depot/4. Design System e UI/Design System e Padrões.md",
+    "Siding Depot/4. Design System e UI",
+    "Siding Depot/3. Módulos do Front-end/Módulo - Cash Payments (Financeiro).md",
+    "Siding Depot/3. Módulos do Front-end/Módulo - Windows & Doors Tracker.md",
+    "Siding Depot/3. Módulos do Front-end/Módulo - Vendas e Metas (Goals).md",
+    "Siding Depot/3. Módulos do Front-end/Módulo - Projetos e Tracking.md",
+    "Siding Depot/3. Módulos do Front-end",
+    "Siding Depot/2. Arquitetura Técnica Base/Webhook e Integração ClickOne.md",
+    "Siding Depot/2. Arquitetura Técnica Base/Storage e Anexos.md",
+    "Siding Depot/2. Arquitetura Técnica Base/Visão Geral da Stack.md",
+    "Siding Depot/2. Arquitetura Técnica Base/Arquitetura do Banco de Dados.md",
+    "Siding Depot/2. Arquitetura Técnica Base",
+    "Siding Depot/1. Regras de Negócio e Domínio/Autenticação e Permissões (Roles).md",
+    "Siding Depot/1. Regras de Negócio e Domínio/Regras de Agendamento (Scheduling).md",
+    "Siding Depot/1. Regras de Negócio e Domínio/Glossário da Empresa.md",
+    "Siding Depot/1. Regras de Negócio e Domínio",
+    "Siding Depot/Siding Depot — Índice.md",
+    "Siding Depot/Acessos de Teste.md",
+    "Siding Depot/Arquitetura Técnica.md",
+    "Sem título.md",
+    "Siding Depot/Dashboard.md",
+    "Siding Depot",
+    "Bem-vindo.md",
+    "Siding Depot/🏗️ Siding Depot — Home.md",
+    "Siding Depot/Windows e Doors Tracker.md",
+    "Siding Depot/Webhook ClickOne.md"
+  ]
+}

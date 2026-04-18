@@ -20,7 +20,7 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
 
   const [formData, setFormData] = useState({
     job_id:    "",
-    type:      "other",
+    type:      "",
     crew_id:   "",
     reported_at: new Date().toISOString().split("T")[0],
     title:     "",
@@ -31,11 +31,24 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
   const [isLoading, setIsLoading] = useState(false);
   const [error,     setError]     = useState<string | null>(null);
 
+  const [activeFilter, setActiveFilter] = useState<string[]>(["XICARA", "WILMAR", "SULA", "LUIS", "OSVIN", "VICTOR", "LEANDRO", "JOSUE"]);
+
   useEffect(() => {
     if (isOpen) {
       fetchDependencies();
+      // Load custom filters if configured in the Manage Employees modal
+      const stored = localStorage.getItem("serviceCrewFilter");
+      if (stored) {
+        try {
+          let parsed = JSON.parse(stored) as string[];
+          parsed = parsed.filter(n => n !== "CHICARA" && n !== "VITOR");
+          setActiveFilter(parsed);
+          localStorage.setItem("serviceCrewFilter", JSON.stringify(parsed));
+        } catch(e) {}
+      }
+      
       // Reset form on open
-      setFormData({ job_id: "", type: "other", crew_id: "", reported_at: new Date().toISOString().split("T")[0], title: "", description: "" });
+      setFormData({ job_id: "", type: "", crew_id: "", reported_at: new Date().toISOString().split("T")[0], title: "", description: "" });
       setFiles([]);
       setError(null);
     }
@@ -182,26 +195,27 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                   className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] focus:outline-none focus:border-[#aeee2a] transition-colors"
                 >
-                  <option value="other">General Service (Other)</option>
-                  <option value="material">Material Wait</option>
-                  <option value="permit">Permit Issue</option>
-                  <option value="windows_pending">Windows Pending</option>
-                  <option value="doors_pending">Doors Pending</option>
-                  <option value="customer">Customer Unreachable / Decision</option>
+                  <option value="" disabled>--</option>
+                  <option value="siding">Siding</option>
+                  <option value="doors">Doors</option>
+                  <option value="windows">Windows</option>
+                  <option value="paint">Paint</option>
+                  <option value="gutters">Gutters</option>
+                  <option value="roofing">Roofing</option>
                 </select>
               </div>
 
               {/* Service Date */}
               <CustomDatePicker
-                label="Service Date *"
+                label="Service Request Date *"
                 value={formData.reported_at}
                 onChange={(val) => setFormData({ ...formData, reported_at: val })}
               />
 
-              {/* Assigned Crew / Partner */}
+              {/* Assigned Crew */}
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-[#ababa8] uppercase tracking-widest">
-                  Assigned Partner / Crew
+                  Assigned Crew
                 </label>
                 <div className="relative">
                   <select
@@ -210,9 +224,18 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                     className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] focus:outline-none focus:border-[#aeee2a] transition-colors appearance-none"
                   >
                     <option value="">Unassigned</option>
-                    {crews.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
+                    {(() => {
+                      const matched = crews.filter(c => activeFilter.some(prefix => c.name.toUpperCase().includes(prefix)) && !c.name.includes("02"));
+                      const displayCrews = [...matched];
+                      activeFilter.forEach(filterName => {
+                        if (!displayCrews.some(c => c.name.toUpperCase().includes(filterName))) {
+                          displayCrews.push({ id: filterName, name: filterName });
+                        }
+                      });
+                      return displayCrews.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ));
+                    })()}
                   </select>
                   <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none text-[18px]" translate="no">expand_more</span>
                 </div>

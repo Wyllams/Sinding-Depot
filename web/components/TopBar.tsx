@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSidebar } from "./SidebarContext";
+import { useUndo } from "./UndoContext";
 import { supabase } from "../lib/supabase";
 import { NotificationBell } from "./NotificationBell";
 
@@ -39,7 +40,11 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
   const { toggle } = useSidebar();
+  const { history, executeUndo, clearHistory, removeAction, isUndoing } = useUndo();
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [confirmUndo, setConfirmUndo] = useState<any>(null);
 
   // ── Fetch logged-in user profile ─────────────────────
   useEffect(() => {
@@ -94,6 +99,9 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
       }
+      if (historyRef.current && !historyRef.current.contains(event.target as Node)) {
+        setHistoryOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -105,7 +113,8 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
   const initials     = displayName.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-40 flex justify-between items-center px-4 sm:px-8 py-3 sm:py-4 bg-[#0d0f0d]/80 backdrop-blur-3xl border-b border-[#474846]/20">
+    <>
+      <header className="sticky top-0 z-40 flex justify-between items-center px-4 sm:px-8 py-3 sm:py-4 bg-[#0d0f0d]/80 backdrop-blur-3xl border-b border-[#474846]/20">
       {/* Left side */}
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         {/* Hamburger — only visible on mobile */}
@@ -145,6 +154,47 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
       {/* Right side */}
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         {rightSlot && <>{rightSlot}<div className="hidden sm:block w-px h-6 bg-[#474846]/50" /></>}
+
+        {/* History Action Button */}
+        <div className="relative mr-2 sm:mr-3" ref={historyRef}>
+          <button
+            onClick={() => setHistoryOpen(!historyOpen)}
+            className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all ${history.length > 0 ? "text-[#aeee2a] bg-[#aeee2a]/10 hover:bg-[#aeee2a]/20" : "text-[#ababa8] bg-transparent hover:bg-white/5"}`}
+            title="History"
+          >
+            <span className="material-symbols-outlined text-[18px] sm:text-[22px]" translate="no">history</span>
+            {history.length > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#aeee2a] rounded-full border-2 border-[#181a18]"></span>}
+          </button>
+
+          {historyOpen && (
+            <div className="absolute right-0 mt-3 w-64 sm:w-80 bg-[#181a18] rounded-xl shadow-2xl border border-white/5 overflow-hidden z-20 origin-top-right animate-in fade-in zoom-in-95 duration-200">
+              <div className="px-4 py-3 border-b border-white/5 flex justify-between items-center">
+                <span className="text-xs font-bold text-[#faf9f5]">Session History</span>
+                {history.length > 0 && (
+                  <button onClick={clearHistory} className="text-[10px] text-[#ff7351] hover:underline uppercase font-bold tracking-wider cursor-pointer">Clear</button>
+                )}
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {history.length === 0 ? (
+                  <div className="p-6 text-center text-[#ababa8] text-xs">No recent actions recorded.</div>
+                ) : (
+                  <div className="divide-y divide-white/5">
+                    {history.map((action) => (
+                      <button
+                        key={action.id}
+                        onClick={() => { setConfirmUndo(action); setHistoryOpen(false); }}
+                        className="w-full text-left px-4 py-3 hover:bg-[#242624] transition-colors flex flex-col gap-1 group cursor-pointer"
+                      >
+                        <span className="text-xs font-bold text-[#faf9f5] group-hover:text-[#aeee2a] transition-colors line-clamp-2">{action.message}</span>
+                        <span className="text-[10px] text-[#ababa8]">{action.date.toLocaleTimeString()}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Bell */}
         <NotificationBell />
@@ -202,5 +252,40 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
         </div>
       </div>
     </header>
+
+      {/* Confirm Undo Action Modal */}
+      {confirmUndo && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#181a18] border border-[#aeee2a]/30 rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-[#aeee2a]/10 mx-auto flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-[#aeee2a] text-2xl" translate="no">undo</span>
+            </div>
+            <h3 className="text-lg font-bold text-[#faf9f5] mb-2">Undo Action?</h3>
+            <p className="text-sm text-[#ababa8] mb-6">
+              Are you sure you want to undo:<br/>
+              <strong className="text-white mt-1 block">{confirmUndo.message}</strong>
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button 
+                onClick={() => setConfirmUndo(null)} 
+                className="px-5 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] font-bold hover:bg-[#242624] transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  await executeUndo(confirmUndo.id);
+                  setConfirmUndo(null);
+                }} 
+                disabled={isUndoing} 
+                className="flex-1 py-2.5 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {isUndoing ? <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" /> : "Yes, Undo"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -26,20 +26,20 @@ const GATE_CONFIG: Record<string, { color: string, icon: string, title: string, 
 type GateConfigKey = keyof typeof GATE_CONFIG;
 
 const SELLER_CONFIG = {
-  MATHEUS: { label: "Matheus (Matt)", color: "#22c55e", initial: "M" },
-  ARMANDO: { label: "Armando", color: "#ef4444", initial: "A" },
-  RUBY: { label: "Ruby", color: "#a855f7", initial: "R" },
+  MATHEUS: { label: "Matheus (Matt)", color: "#22c55e", initial: "M", dbName: "Matt" },
+  ARMANDO: { label: "Armando", color: "#ef4444", initial: "A", dbName: "Armando" },
+  RUBY: { label: "Ruby", color: "#a855f7", initial: "R", dbName: "Ruby" },
 };
 type SellerConfigKey = keyof typeof SELLER_CONFIG;
 
 const services = [
-  { id: "siding",   icon: "view_day",       label: "Siding", partners: ["Siding Depot", "Xicara", "Xicara 2", "Wilmar", "Wilmar 2", "Sula", "Luis"] },
-  { id: "gutters",  icon: "horizontal_rule", label: "Gutters", partners: ["Siding Depot", "Leandro"] },
-  { id: "painting", icon: "format_paint",   label: "Painting", partners: ["Siding Depot", "Osvin", "Osvin 2", "Victor", "Juan"] },
-  { id: "windows",  icon: "window",         label: "Windows",  partners: ["Siding Depot", "Sergio"] },
-  { id: "decks",    icon: "deck",           label: "Decks",    partners: ["Siding Depot"] },
-  { id: "roofing",  icon: "roofing",        label: "Roofing",  partners: ["Siding Depot", "Josue"] },
-  { id: "dumpster", icon: "delete",         label: "Dumpster", partners: ["Siding Depot"] },
+  { id: "siding",   icon: "view_day",       label: "Siding",   color: "#aeee2a", partners: ["SIDING DEPOT", "XICARA", "XICARA 02", "WILMAR", "WILMAR 02", "SULA", "LUIS"] },
+  { id: "gutters",  icon: "horizontal_rule", label: "Gutters",  color: "#c084fc", partners: ["SIDING DEPOT", "LEANDRO"] },
+  { id: "painting", icon: "format_paint",   label: "Painting", color: "#f5a623", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
+  { id: "windows",  icon: "window",         label: "Windows",  color: "#60b8f5", partners: ["SIDING DEPOT", "SERGIO"] },
+  { id: "decks",    icon: "deck",           label: "Decks",    color: "#eab308", partners: ["SIDING DEPOT"] },
+  { id: "roofing",  icon: "roofing",        label: "Roofing",  color: "#fb923c", partners: ["SIDING DEPOT", "JOSUE"] },
+  { id: "dumpster", icon: "delete",         label: "Dumpster", color: "#64748b", partners: ["SIDING DEPOT"] },
 ];
 
 const inputCls =
@@ -48,7 +48,7 @@ const inputCls =
 const labelCls = "text-xs uppercase tracking-wider text-[#ababa8] font-bold";
 
 // ---- Carrossel de Serviços ----
-type Service = { id: string; icon: string; label: string; partners?: string[] };
+type Service = { id: string; icon: string; label: string; color: string; partners?: string[] };
 
 function ServicesCarousel({
   services,
@@ -107,15 +107,17 @@ function ServicesCarousel({
               }}
               className={`relative flex-shrink-0 w-[calc(25%-12px)] min-w-[140px] px-2 py-5 rounded-xl cursor-pointer transition-all group ${
                 on
-                  ? "bg-[#121412] border-2 border-[#aeee2a] shadow-[0_0_15px_rgba(174,238,42,0.1)]"
+                  ? "bg-[#121412] border-2"
                   : "bg-[#121412] border border-[#474846]/15 hover:bg-[#1e201e]"
               }`}
+              style={on ? { borderColor: svc.color, boxShadow: `0 0 15px ${svc.color}1A` } : {}}
             >
               <div className="flex flex-col items-center text-center gap-2">
                 <span
                   className={`material-symbols-outlined text-3xl transition-colors ${
-                    on ? "text-[#aeee2a]" : "text-[#ababa8] group-hover:text-[#aeee2a]"
+                    !on ? "text-[#ababa8]" : ""
                   }`}
+                  style={on ? { color: svc.color } : {}}
                   translate="no"
                 >
                   {svc.icon}
@@ -127,24 +129,25 @@ function ServicesCarousel({
               {on && hasPartnersList && (
                 <div className="mt-3 flex justify-center w-full">
                    {partner ? (
-                       <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider bg-[#aeee2a]/20 border border-[#aeee2a] px-2.5 py-1 rounded-md">{partner}</span>
+                       <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider px-2.5 py-1 rounded-md border" style={{ backgroundColor: `${svc.color}33`, borderColor: svc.color }}>{partner}</span>
                    ) : (
-                       <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider border border-[#aeee2a]/50 bg-[#aeee2a]/10 hover:bg-[#aeee2a]/20 transition-colors px-2.5 py-1 rounded-full">Assign Partner</span>
+                       <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider border px-2.5 py-1 rounded-full transition-colors" style={{ backgroundColor: `${svc.color}1A`, borderColor: `${svc.color}80` }}>Assign Partner</span>
                    )}
                 </div>
               )}
               
-              {/* O checkmark superior caso on mas sem partners (Dumpster, Decks) */}
-              {on && !hasPartnersList && (
-                <div className="absolute top-2 right-2 text-[#aeee2a]">
-                  <span
-                    className="material-symbols-outlined"
-                    translate="no"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    check_circle
-                  </span>
-                </div>
+              {/* X para desmarcar o serviço quando ele já está selecionado */}
+              {on && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggle(svc.id);
+                  }}
+                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-[#1a1c1a] border border-[#ff7351]/50 text-[#ff7351] hover:bg-[#ff7351] hover:text-[#121412] transition-colors shadow-md z-10 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[14px]" translate="no">close</span>
+                </button>
               )}
             </div>
           );
@@ -329,12 +332,26 @@ function SectionHeader({ icon, title }: { icon: string; title: string }) {
 
 export default function NewProjectPage() {
   const router = useRouter();
-  const [selected, setSelected] = useState<string[]>(["siding"]);
+  const [selected, setSelected] = useState<string[]>([]);
   const [gateStatus, setGateStatus] = useState<GateConfigKey>("NOT_CONTACTED");
   const [spStatus, setSpStatus] = useState<SellerConfigKey>("MATHEUS");
   
   const [openPartnerModal, setOpenPartnerModal] = useState<Service | null>(null);
   const [assignedPartners, setAssignedPartners] = useState<Record<string, string>>({});
+
+  const handleServiceToggle = (id: string) => {
+    setSelected(prev => {
+       let next = [...prev];
+       if (next.includes(id)) {
+          next = next.filter(x => x !== id);
+       } else {
+          next.push(id);
+          if (id === "siding" && !next.includes("painting")) next.push("painting");
+          if (id === "gutters" && !next.includes("roofing")) next.push("roofing");
+       }
+       return next;
+    });
+  };
   
   // Form States
   const [clientName, setClientName] = useState("");
@@ -350,6 +367,7 @@ export default function NewProjectPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [sq, setSq] = useState("");
+  const [contractAmount, setContractAmount] = useState("");
   const [notes, setNotes] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -393,7 +411,7 @@ export default function NewProjectPage() {
       const { data: spMatch } = await supabase
          .from("salespersons")
          .select("id")
-         .ilike("full_name", `%${SELLER_CONFIG[spStatus].label.split(" ")[0]}%`)
+         .ilike("full_name", `%${SELLER_CONFIG[spStatus].dbName}%`)
          .maybeSingle();
       const spId = spMatch?.id || null;
 
@@ -412,13 +430,64 @@ export default function NewProjectPage() {
         postal_code: zipCode,
         requested_start_date: startDate || null,
         target_completion_date: endDate || null,
+        contract_amount: contractAmount ? parseFloat(contractAmount) : null,
         description: notes
       }).select("id").single();
       
       if (jobErr) throw jobErr;
 
-      // Seed Job Services
-      for (const svcId of selected) {
+      // Ensure painting is selected if siding is selected
+      let finalSelected = [...selected];
+      
+      if (finalSelected.includes("siding") && !finalSelected.includes("painting")) {
+         finalSelected.push("painting");
+      }
+      if (finalSelected.includes("gutters") && !finalSelected.includes("roofing")) {
+         finalSelected.push("roofing");
+      }
+
+      // Order services sequentially to calculate dates correctly
+      const order = ["siding", "windows", "decks", "dumpster", "painting", "gutters", "roofing"];
+      finalSelected.sort((a, b) => {
+         const idxA = order.indexOf(a);
+         const idxB = order.indexOf(b);
+         if (idxA === -1) return 1;
+         if (idxB === -1) return -1;
+         return idxA - idxB;
+      });
+
+      // Duration and Date Helpers
+      const parsedSq = sq ? parseFloat(sq) : 0;
+      const calcDuration = (serviceId: string) => {
+         if (serviceId === "siding") return Math.max(1, Math.ceil(parsedSq / 8));
+         if (serviceId === "painting") return Math.max(1, Math.ceil(parsedSq / 10));
+         return 1; // Default for gutters, roofing, windows, etc.
+      };
+
+      const dateHelpers = {
+         addWorkingDays: (startIso: string, duration: number) => {
+            const d = new Date(startIso + "T12:00:00");
+            let added = 0;
+            // duration 1 means start and end on the same day (added = 0)
+            while (added < duration - 1) {
+               d.setDate(d.getDate() + 1);
+               if (d.getDay() !== 0) added++; // Skip Sundays
+            }
+            return d;
+         },
+         nextWorkingDay: (dateObj: Date) => {
+            const d = new Date(dateObj);
+            d.setDate(d.getDate() + 1);
+            if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+            return d;
+         }
+      };
+
+      const prevEndpoints: Record<string, string> = {}; 
+      const { data: allCrews } = await supabase.from("crews").select("id, name, code");
+
+      // Seed Job Services & Assignments
+      for (const svcId of finalSelected) {
         const { data: stData } = await supabase.from("service_types").select("id").ilike("code", svcId).maybeSingle();
         let serviceTypeId = stData?.id;
         
@@ -432,16 +501,98 @@ export default function NewProjectPage() {
         }
 
         if (serviceTypeId) {
-            await supabase.from("job_services").insert({
+            const { data: newJs } = await supabase.from("job_services").insert({
               job_id: newJob.id,
               service_type_id: serviceTypeId,
               scope_of_work: "Standard exterior work",
               quantity: sq ? parseFloat(sq) : null,
               unit_of_measure: "SQ"
-            });
+            }).select("id").single();
+
+            if (newJs) {
+               let startAt: Date | null = null;
+               let endAt: Date | null = null;
+
+               // Compute dates if standard startDate was provided
+               if (startDate) {
+                  const duration = calcDuration(svcId);
+                  let startIso = startDate; // Default
+                  
+                  // Sequential Logic Reference
+                  if (svcId === "windows" && finalSelected.includes("siding")) {
+                     startIso = startDate; // Same as Siding default start
+                  } else if (svcId === "painting" && finalSelected.includes("siding") && prevEndpoints["siding"]) {
+                     startIso = dateHelpers.nextWorkingDay(new Date(prevEndpoints["siding"] + "T12:00:00")).toISOString().split("T")[0];
+                  } else if (svcId === "gutters" && finalSelected.includes("painting") && prevEndpoints["painting"]) {
+                     startIso = dateHelpers.nextWorkingDay(new Date(prevEndpoints["painting"] + "T12:00:00")).toISOString().split("T")[0];
+                  } else if (svcId === "roofing" && finalSelected.includes("gutters") && prevEndpoints["gutters"]) {
+                     startIso = dateHelpers.nextWorkingDay(new Date(prevEndpoints["gutters"] + "T12:00:00")).toISOString().split("T")[0];
+                  }
+
+                  startAt = new Date(startIso + "T12:00:00");
+                  const lastDayInclusive = dateHelpers.addWorkingDays(startIso, duration);
+                  
+                  prevEndpoints[svcId] = lastDayInclusive.toISOString().split("T")[0];
+                  
+                  // For DB/Gantt, endAt is the boundary (exclusive next calendar day)
+                  endAt = new Date(lastDayInclusive);
+                  endAt.setDate(endAt.getDate() + 1);
+               }
+
+               const partnerName = assignedPartners[svcId] || (svcId === "painting" ? assignedPartners["siding"] : null) || "Siding Depot";
+               const searchCode = partnerName.replace(/ /g, "_").toLowerCase();
+               const crew = (allCrews || []).find(c => 
+                   c.name?.toLowerCase() === partnerName.toLowerCase() || 
+                   c.code?.toLowerCase() === searchCode
+               );
+               
+               let specCode = "siding_installation";
+               if (svcId === "painting") specCode = "painting";
+               else if (svcId === "decks") specCode = "deck_building";
+               else if (svcId === "gutters") specCode = "gutters";
+               else if (svcId === "roofing") specCode = "roofing";
+               else if (svcId === "windows") specCode = "windows";
+               
+               const { data: spec } = await supabase.from("specialties").select("id").eq("code", specCode).maybeSingle();
+
+               await supabase.from("service_assignments").insert({
+                  job_service_id: newJs.id,
+                  crew_id: crew?.id || null,
+                  specialty_id: spec?.id || "26652a43-728d-43c1-935a-c39f1dea4d7d",
+                  status: startAt ? "scheduled" : "planned",
+                  scheduled_start_at: startAt ? startAt.toISOString() : null,
+                  scheduled_end_at: endAt ? endAt.toISOString() : null
+               });
+            }
         }
       }
       
+      // Update Job target completion date if it was auto-calculated and missing initially
+      if (!endDate && Object.values(prevEndpoints).length > 0) {
+        const endDates = Object.values(prevEndpoints).map(d => new Date(d + "T12:00:00").getTime());
+        const maxTime = Math.max(...endDates);
+        const maxDateStr = new Date(maxTime).toISOString().split("T")[0];
+        await supabase.from("jobs").update({ target_completion_date: maxDateStr }).eq("id", newJob.id);
+      }
+
+      // ── Automação 3.5: Criar window_order ao selecionar serviço de Windows ──
+      if (selected.includes("windows")) {
+        await supabase.from("window_orders").insert({
+          job_id: newJob.id,
+          customer_name: clientName,
+          status: "Measurement",
+          money_collected: "NO",
+          quantity: null,
+          quote: null,
+          deposit: null,
+          ordered_on: null,
+          expected_delivery: null,
+          supplier: "",
+          order_number: null,
+          notes: null,
+        });
+      }
+
       // If gateStatus specifies a blocker, insert blocker.
       if (gateStatus && gateStatus !== "READY" && gateStatus !== "NOT_CONTACTED") {
          let blocker_type = "other";
@@ -467,7 +618,17 @@ export default function NewProjectPage() {
   };
 
   const toggle = (id: string) =>
-    setSelected((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+    setSelected((prev) => {
+      let next = [...prev];
+      if (next.includes(id)) {
+        next = next.filter((s) => s !== id);
+      } else {
+        next.push(id);
+        if (id === "siding" && !next.includes("painting")) next.push("painting");
+        if (id === "gutters" && !next.includes("roofing")) next.push("roofing");
+      }
+      return next;
+    });
 
   return (
     <>
@@ -518,7 +679,19 @@ export default function NewProjectPage() {
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Phone Number</label>
-                  <input value={phone} onChange={(e)=>setPhone(e.target.value)} className={inputCls} placeholder="(555) 000-0000" type="tel" />
+                  <input 
+                    value={phone} 
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^\d]/g, "");
+                      if (val.length < 4) setPhone(val);
+                      else if (val.length < 7) setPhone(`(${val.slice(0, 3)}) ${val.slice(3)}`);
+                      else setPhone(`(${val.slice(0, 3)}) ${val.slice(3, 6)}-${val.slice(6, 10)}`);
+                    }} 
+                    className={inputCls} 
+                    placeholder="(555) 000-0000" 
+                    type="tel" 
+                    maxLength={14}
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Email</label>
@@ -554,21 +727,28 @@ export default function NewProjectPage() {
             <section>
               <SectionHeader icon="architecture" title="Job Details" />
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
-                <div className="space-y-2 xl:col-span-1">
+                <div className="space-y-2 xl:col-span-2">
                   <label className={labelCls}>Job Title *</label>
                   <input required value={jobTitle} onChange={(e)=>setJobTitle(e.target.value)} className={inputCls} placeholder="Exterior Renovation" type="text" />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>Contract Value</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#ababa8] font-bold text-[15px]">$</span>
+                    <input value={contractAmount} onChange={(e)=>setContractAmount(e.target.value)} className={`${inputCls} pl-8`} placeholder="0.00" type="number" step="0.01" />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Start Date</label>
                   <CustomDatePicker value={startDate} onChange={setStartDate} placeholder="dd/mm/yyyy" />
                 </div>
-                <div className="space-y-2 relative">
+                <div className="space-y-2">
                   <label className={labelCls}>End Date</label>
                   <CustomDatePicker value={endDate} onChange={setEndDate} placeholder="dd/mm/yyyy" />
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>SQ</label>
-                  <input value={sq} onChange={(e)=>setSq(e.target.value)} className={inputCls} placeholder="e.g. 24.5" type="text" />
+                  <input value={sq} onChange={(e)=>setSq(e.target.value)} className={inputCls} placeholder="e.g. 24.5" type="number" step="0.01" />
                 </div>
               </div>
             </section>
@@ -766,8 +946,8 @@ export default function NewProjectPage() {
             <div className="bg-[#181a18] border border-[#474846]/40 rounded-2xl shadow-2xl w-full max-w-lg p-8 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[#aeee2a]/10 flex items-center justify-center border border-[#aeee2a]/20">
-                      <span className="material-symbols-outlined text-[#aeee2a] text-[24px]" translate="no">
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center border" style={{ backgroundColor: `${openPartnerModal.color}1A`, borderColor: `${openPartnerModal.color}33` }}>
+                      <span className="material-symbols-outlined text-[24px]" style={{ color: openPartnerModal.color }} translate="no">
                         {openPartnerModal.icon}
                       </span>
                     </div>
@@ -794,24 +974,45 @@ export default function NewProjectPage() {
                         type="button"
                         onClick={() => {
                           setAssignedPartners((prev) => ({ ...prev, [openPartnerModal.id]: partner }));
+                          
+                          if (openPartnerModal.id === "siding") {
+                            const paintingService = services.find((s) => s.id === "painting");
+                            if (paintingService) {
+                              setSelected((prev) => (prev.includes("painting") ? prev : [...prev, "painting"]));
+                              setOpenPartnerModal(paintingService);
+                              return;
+                            }
+                          }
+                          
+                          if (openPartnerModal.id === "gutters") {
+                            const roofingService = services.find((s) => s.id === "roofing");
+                            if (roofingService) {
+                              setSelected((prev) => (prev.includes("roofing") ? prev : [...prev, "roofing"]));
+                              setOpenPartnerModal(roofingService);
+                              return;
+                            }
+                          }
+                          
                           setOpenPartnerModal(null);
                         }}
                         className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
                           isSelected 
-                            ? 'bg-[#aeee2a]/10 border-[#aeee2a] shadow-[0_0_15px_rgba(174,238,42,0.1)]' 
+                            ? '' 
                             : 'bg-[#181a18] border-[#474846]/40 hover:bg-[#242624] hover:border-[#747673]'
                         }`}
+                        style={isSelected ? { backgroundColor: `${openPartnerModal.color}1A`, borderColor: openPartnerModal.color, boxShadow: `0 0 15px ${openPartnerModal.color}1A` } : {}}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isSelected ? 'bg-[#aeee2a] text-[#3a5400]' : 'bg-[#242624] text-[#ababa8]'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isSelected ? '' : 'bg-[#242624] text-[#ababa8]'}`}
+                               style={isSelected ? { backgroundColor: openPartnerModal.color, color: '#000000' } : {}}>
                             {partner.charAt(0)}
                           </div>
-                          <span className={`text-sm font-bold tracking-wide uppercase ${isSelected ? 'text-[#aeee2a]' : 'text-[#faf9f5]'}`}>
+                          <span className={`text-sm font-bold tracking-wide uppercase ${isSelected ? '' : 'text-[#faf9f5]'}`} style={isSelected ? { color: openPartnerModal.color } : {}}>
                             {partner}
                           </span>
                         </div>
                         {isSelected && (
-                          <span className="material-symbols-outlined text-[#aeee2a]" translate="no">
+                          <span className="material-symbols-outlined" style={{ color: openPartnerModal.color }} translate="no">
                             check_circle
                           </span>
                         )}

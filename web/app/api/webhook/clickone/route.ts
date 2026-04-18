@@ -299,6 +299,28 @@ export async function POST(req: Request) {
       }
     }
 
+    // 4b. Automação 3.5 — Criar window_order se serviço for Windows ou Doors
+    const hasWindowService = svcNames.some((s: string) =>
+      s.toLowerCase().includes("window") || s.toLowerCase().includes("door")
+    );
+    if (hasWindowService) {
+      await supabaseAdmin.from("window_orders").insert({
+        job_id: newJob.id,
+        customer_name: clientName,
+        status: "Measurement",
+        money_collected: "NO",
+        quantity: null,
+        quote: null,
+        deposit: null,
+        ordered_on: null,
+        expected_delivery: null,
+        supplier: "",
+        order_number: null,
+        notes: null,
+      });
+      console.log(`🪟 Auto-created window_order for job ${jobNumber}`);
+    }
+
     // 5. Update Sales Snapshot for real-time Reports dashboard
     if (spId && numericValue > 0) {
       const now = new Date();

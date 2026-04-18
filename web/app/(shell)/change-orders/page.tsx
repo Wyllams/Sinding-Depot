@@ -86,8 +86,15 @@ export default function ChangeOrdersPage() {
 
       if (activeFilter === "APPROVED") query = query.eq("status", "approved");
       if (activeFilter === "PENDING")  query = query.in("status", ["draft", "pending_customer_approval"]);
-      if (filterStart) query = query.gte("created_at", filterStart);
-      if (filterEnd)   query = query.lte("created_at", filterEnd);
+      if (filterStart) {
+        query = query.gte("requested_at", filterStart);
+      }
+      if (filterEnd) {
+        // Avançamos 1 dia e usamos < (lt) para envolver TODO o fuso do último dia
+        const nextDay = new Date(`${filterEnd}T12:00:00Z`);
+        nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+        query = query.lt("requested_at", nextDay.toISOString().split("T")[0]);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -396,6 +403,8 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
   const [amount, setAmount]         = useState("");
   const [saving, setSaving]         = useState(false);
   const [files,  setFiles]          = useState<File[]>([]);
+  const [jobServices, setJobServices]= useState<any[]>([]);
+  const [serviceId, setServiceId]   = useState("");
   const fileInputRef                = useRef<HTMLInputElement>(null);
 
   // Load real projects for the select
@@ -416,6 +425,22 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
         );
       });
   }, []);
+
+  // Watch selected project to load related services
+  useEffect(() => {
+    setServiceId("");
+    if (!jobId) {
+      setJobServices([]);
+      return;
+    }
+    supabase
+      .from("job_services")
+      .select("id, service_type:service_types(name)")
+      .eq("job_id", jobId)
+      .then(({ data }) => {
+        setJobServices(data || []);
+      });
+  }, [jobId]);
 
   async function uploadFiles(coId: string) {
     for (const file of files) {
@@ -440,6 +465,7 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
     try {
       const { data: co, error } = await supabase.from("change_orders").insert({
         job_id: jobId || null,
+        job_service_id: serviceId || null,
         title: title.trim(),
         description: description.trim(),
         proposed_amount: amount ? parseFloat(amount) : null,
@@ -507,7 +533,7 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
                 <select
                   value={jobId}
                   onChange={(e) => setJobId(e.target.value)}
-                  className="w-full bg-[#242624] border-none rounded-xl py-3.5 px-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] appearance-none outline-none font-bold text-sm"
+                  className="w-full bg-[#242624] border border-[#474846]/20 hover:border-[#474846] focus:border-[#aeee2a] rounded-xl py-3.5 px-4 text-[#faf9f5] appearance-none outline-none font-bold text-[15px] transition-colors"
                 >
                   <option value="">Select a Project...</option>
                   {jobs.map((j) => (
@@ -528,7 +554,7 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
                 <input
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full bg-[#242624] border border-transparent hover:border-[#474846] rounded-xl py-3.5 pl-8 pr-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] outline-none placeholder:text-[#474846] font-bold text-[16px] transition-colors tracking-wide"
+                  className="w-full bg-[#242624] border border-[#474846]/20 hover:border-[#474846] focus:border-[#aeee2a] rounded-xl py-3.5 pl-8 pr-4 text-[#faf9f5] outline-none placeholder:text-[#474846] font-bold text-[15px] transition-colors tracking-wide"
                   placeholder="0.00"
                   type="number"
                   step="0.01"
@@ -538,14 +564,37 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
             </div>
 
             {/* Title */}
-            <div className="space-y-2 sm:col-span-2">
+            <div className="space-y-2">
               <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Change Title *</label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-[#242624] border border-transparent hover:border-[#474846] rounded-xl py-3.5 px-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] outline-none placeholder:text-[#ababa8] font-bold text-sm transition-colors"
-                placeholder="e.g. Front Door Replacement"
-              />
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full bg-[#242624] border border-[#474846]/20 hover:border-[#474846] focus:border-[#aeee2a] rounded-xl py-3.5 px-4 text-[#faf9f5] outline-none placeholder:text-[#ababa8] font-bold text-[15px] transition-colors"
+                  placeholder="e.g. Front Door Replacement"
+                />
+            </div>
+
+            {/* Service */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Service</label>
+              <div className="relative">
+                <select
+                  value={serviceId}
+                  onChange={(e) => setServiceId(e.target.value)}
+                  disabled={!jobId || jobServices.length === 0}
+                  className="w-full bg-[#242624] border border-[#474846]/20 hover:border-[#474846] focus:border-[#aeee2a] rounded-xl py-3.5 px-4 text-[#faf9f5] appearance-none outline-none font-bold text-[15px] transition-colors disabled:opacity-50"
+                >
+                  <option value="" className="text-[#ababa8]">
+                    {!jobId ? "Select Project First..." : "Select Service..."}
+                  </option>
+                  {jobServices.map((s) => (
+                    <option key={s.id} value={s.id} className="bg-[#121412]">
+                      {s.service_type?.name ?? "Unknown"}
+                    </option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8]" translate="no">expand_more</span>
+              </div>
             </div>
           </div>
 

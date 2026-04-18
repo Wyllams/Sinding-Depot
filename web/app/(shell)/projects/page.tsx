@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Fragment } from "react";
 import { TopBar } from "../../../components/TopBar";
 import CustomDatePicker from "../../../components/CustomDatePicker";
 import { supabase } from "../../../lib/supabase";
+import { useUndo } from "../../../components/UndoContext";
 
 // =============================================
 // Construction Jobs | Command Center
@@ -61,6 +62,7 @@ interface Job {
 }
 
 export default function ProjectsPage() {
+  const { setUndo } = useUndo();
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -183,9 +185,21 @@ export default function ProjectsPage() {
   async function handleDelete(id: string) {
     setDeletingId(id);
     try {
+      const { data: originalData } = await supabase.from("jobs").select("*").eq("id", id).single();
       const { error } = await supabase.from("jobs").delete().eq("id", id);
       if (error) throw error;
       setJobs((prev) => prev.filter((j) => j.id !== id));
+
+      if (originalData) {
+        setUndo(`Projeto ${originalData.job_number || "removido"}`, async () => {
+          const { error: undoErr } = await supabase.from("jobs").insert(originalData);
+          if (!undoErr) {
+            fetchJobs();
+          } else {
+            console.error("[ProjectsPage] Undo falhou ao restaurar o projeto:", undoErr);
+          }
+        });
+      }
     } catch (err) {
       console.error("[ProjectsPage] delete error:", err);
     } finally {
@@ -514,12 +528,11 @@ export default function ProjectsPage() {
                 <span className="material-symbols-outlined text-base" translate="no">chevron_left</span>
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1).map((p, idx, arr) => (
-                <>
+                <Fragment key={p}>
                   {idx > 0 && arr[idx - 1] !== p - 1 && (
-                    <span key={`ellipsis-${p}`} className="text-[#474846] px-1">…</span>
+                    <span className="text-[#474846] px-1">…</span>
                   )}
                   <button
-                    key={p}
                     onClick={() => setCurrentPage(p)}
                     className={`w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all ${
                       p === currentPage
@@ -529,7 +542,7 @@ export default function ProjectsPage() {
                   >
                     {p}
                   </button>
-                </>
+                </Fragment>
               ))}
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
@@ -553,7 +566,7 @@ export default function ProjectsPage() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Delete Project</h3>
-                <p className="text-sm text-[#ababa8] mt-0.5">This action cannot be undone.</p>
+                <p className="text-sm text-[#ababa8] mt-0.5">Are you absolutely sure?</p>
               </div>
             </div>
             <p className="text-[#faf9f5] text-sm mb-8">

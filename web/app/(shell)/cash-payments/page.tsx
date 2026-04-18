@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TopBar } from "../../../components/TopBar";
 import CustomDatePicker from "../../../components/CustomDatePicker";
+import { supabase } from "../../../lib/supabase";
 
 // =============================================
-// Cash Payments / Material EXTRA
+// Cash Payments
 // Rota: /cash-payments
 // =============================================
 
@@ -19,61 +20,218 @@ interface CashPayment {
   notes: string;
 }
 
-const DEFAULT_STORES = ["HD", "Master", "SW", "CRS", "PPG", "LANSING"];
+interface Store {
+  id: string;
+  name: string;
+  color: string;
+  active: boolean;
+}
 
-const DEFAULT_PARTNERS = ["Victor", "Sergio", "Osvin", "Josue", "XICARA"];
+// Constant removed as we will fetch from DB
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
 
 const MOCK_PAYMENTS: CashPayment[] = [
-  { id: "CP-001", date: "2026-04-06", jobName: "Eric Lefebvre", store: "HD", amount: 850, pickedBy: "Victor", notes: "Extra caulk and fasteners" },
-  { id: "CP-002", date: "2026-04-06", jobName: "Joe Castano", store: "Master", amount: 485, pickedBy: "Sergio", notes: "" },
-  { id: "CP-003", date: "2026-04-05", jobName: "Max Edei", store: "PPG", amount: 1200, pickedBy: "Osvin", notes: "Paint for accent trim" },
-  { id: "CP-004", date: "2026-04-04", jobName: "Eric Lefebvre", store: "LANSING", amount: 320, pickedBy: "Josue", notes: "" },
-  { id: "CP-005", date: "2026-04-03", jobName: "Brandon White", store: "CRS", amount: 760, pickedBy: "Victor", notes: "Corner beads and Z-flashing" },
+  { id: "CP-001", date: "2026-04-06", jobName: "Eric Lefebvre", store: "HD", amount: 850, pickedBy: "VICTOR", notes: "Extra caulk and fasteners" },
+  { id: "CP-002", date: "2026-04-06", jobName: "Joe Castano", store: "MASTER", amount: 485, pickedBy: "SERGIO", notes: "" },
+  { id: "CP-003", date: "2026-04-05", jobName: "Max Edei", store: "PPG", amount: 1200, pickedBy: "OSVIN", notes: "Paint for accent trim" },
+  { id: "CP-004", date: "2026-04-04", jobName: "Eric Lefebvre", store: "LANSING", amount: 320, pickedBy: "JOSUE", notes: "" },
+  { id: "CP-005", date: "2026-04-03", jobName: "Brandon White", store: "CRS", amount: 760, pickedBy: "VICTOR", notes: "Corner beads and Z-flashing" },
   { id: "CP-006", date: "2026-04-02", jobName: "Sarah Jenkins", store: "SW", amount: 195, pickedBy: "XICARA", notes: "Touch-up paint cans" },
 ];
 
-const fmt = (v: number) =>
+const fmt = (v: number): string =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
 
-const fmtDate = (d: string) =>
+const fmtDate = (d: string): string =>
   new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
 
 export default function CashPaymentsPage() {
+  const now = new Date();
+
   // ── State ────────────────────────────────────────
   const [payments, setPayments] = useState<CashPayment[]>(MOCK_PAYMENTS);
-  const [stores, setStores] = useState<string[]>(DEFAULT_STORES);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [storesLoading, setStoresLoading] = useState(true);
 
   // Filters
   const [filterStore, setFilterStore] = useState("ALL");
   const [filterPickedBy, setFilterPickedBy] = useState("ALL");
-  const [filterStart, setFilterStart] = useState("");
-  const [filterEnd, setFilterEnd] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [searchQuery, setSearchQuery] = useState("");
 
   // New Payment Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState({
     date: "",
     jobName: "",
-    store: DEFAULT_STORES[0],
+    store: "",
     amount: "",
-    pickedBy: DEFAULT_PARTNERS[0],
+    pickedBy: "",
     notes: "",
   });
 
-  // Add Store Popup
-  const [isStorePopupOpen, setIsStorePopupOpen] = useState(false);
+  // Manage Employees Modal
+  const [cashEmployees, setCashEmployees] = useState<{ id: string; name: string }[]>([]);
+  const [employeesLoading, setEmployeesLoading] = useState(true);
+  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
+  const [newEmployeeName, setNewEmployeeName] = useState("");
+
+  // Manage Stores Modal
+  const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
   const [newStoreName, setNewStoreName] = useState("");
+  const [newStoreColor, setNewStoreColor] = useState("#ffffff");
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [editStoreName, setEditStoreName] = useState("");
+  const [editStoreColor, setEditStoreColor] = useState("");
+
+  // Delete Confirm Modal
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // Edit Payment Modal
   const [editingPayment, setEditingPayment] = useState<CashPayment | null>(null);
   const [editForm, setEditForm] = useState<CashPayment | null>(null);
 
-  const openEdit = (p: CashPayment) => {
+  // ── Load stores from Supabase ────────────────────
+  useEffect(() => {
+    loadStores();
+    loadCashEmployees();
+  }, []);
+
+  const loadCashEmployees = async () => {
+    setEmployeesLoading(true);
+    const { data, error } = await supabase.from("cash_employees").select("id, name").eq("active", true).order("name");
+    if (data) {
+       setCashEmployees(data);
+       if (data.length > 0 && form.pickedBy === "") {
+         setForm((prev) => ({ ...prev, pickedBy: data[0].name }));
+       }
+    }
+    setEmployeesLoading(false);
+  };
+
+  const loadStores = async (): Promise<void> => {
+    setStoresLoading(true);
+    const { data, error } = await supabase
+      .from("stores")
+      .select("id, name, color, active")
+      .eq("active", true)
+      .order("name");
+
+    if (error) {
+      console.error("Error loading stores:", error);
+    } else if (data) {
+      setStores(data);
+      if (data.length > 0 && !form.store) {
+        setForm((prev) => ({ ...prev, store: data[0].name }));
+      }
+    }
+    setStoresLoading(false);
+  };
+
+  const getStoreColor = (storeName: string): string => {
+    const store = stores.find((s) => s.name === storeName);
+    return store?.color || "#e3eb5d";
+  };
+
+  // ── Store management ─────────────────────────────
+  const handleAddStore = async (): Promise<void> => {
+    const name = newStoreName.trim().toUpperCase();
+    if (!name) return;
+
+    const { error } = await supabase.from("stores").insert({ name, color: newStoreColor });
+    if (error) {
+      if (error.code === "23505") alert("Store already exists!");
+      else console.error("Error adding store:", error);
+      return;
+    }
+
+    setNewStoreName("");
+    setNewStoreColor("#ffffff");
+    await loadStores();
+  };
+
+  const handleUpdateStore = async (): Promise<void> => {
+    if (!editingStore) return;
+    const { error } = await supabase
+      .from("stores")
+      .update({ name: editStoreName.trim().toUpperCase(), color: editStoreColor })
+      .eq("id", editingStore.id);
+
+    if (error) {
+      console.error("Error updating store:", error);
+      return;
+    }
+
+    setEditingStore(null);
+    await loadStores();
+  };
+
+  const handleDeleteStore = (storeId: string): void => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Store",
+      message: "Are you sure you want to delete this store?",
+      onConfirm: async () => {
+        const { error } = await supabase.from("stores").update({ active: false }).eq("id", storeId);
+        if (error) {
+          console.error("Error deleting store:", error);
+          return;
+        }
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        await loadStores();
+      },
+    });
+  };
+
+  // ── Employee management ──────────────────────────
+  const handleAddEmployee = async () => {
+    const name = newEmployeeName.trim().toUpperCase();
+    if (!name) return;
+    const { error } = await supabase.from("cash_employees").insert({ name });
+    if (error) {
+       console.error("Error adding employee:", error);
+       if (error.code === "23505") alert("Employee already exists.");
+       return;
+    }
+    setNewEmployeeName("");
+    await loadCashEmployees();
+  };
+
+  const handleRemoveEmployee = (id: string, name: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Remove from Filter",
+      message: `Are you sure you want to remove ${name} from this filter?`,
+      onConfirm: async () => {
+        await supabase.from("cash_employees").update({ active: false }).eq("id", id);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        await loadCashEmployees();
+      },
+    });
+  };
+
+  // ── Payment handlers ─────────────────────────────
+  const openEdit = (p: CashPayment): void => {
     setEditingPayment(p);
     setEditForm({ ...p });
   };
 
-  const handleEditSave = (e: React.FormEvent) => {
+  const handleEditSave = (e: React.FormEvent): void => {
     e.preventDefault();
     if (!editForm) return;
     setPayments((prev) => prev.map((p) => (p.id === editForm.id ? { ...editForm } : p)));
@@ -81,27 +239,7 @@ export default function CashPaymentsPage() {
     setEditForm(null);
   };
 
-  // ── Derived ──────────────────────────────────────
-  const filtered = payments.filter((p) => {
-    if (filterStore !== "ALL" && p.store !== filterStore) return false;
-    if (filterPickedBy !== "ALL" && p.pickedBy !== filterPickedBy) return false;
-    if (filterStart && p.date < filterStart) return false;
-    if (filterEnd && p.date > filterEnd) return false;
-    return true;
-  });
-
-  const total = filtered.reduce((s, p) => s + p.amount, 0);
-
-  // ── Handlers ─────────────────────────────────────
-  const handleAddStore = () => {
-    const name = newStoreName.trim().toUpperCase();
-    if (!name || stores.includes(name)) return;
-    setStores((prev) => [...prev, name]);
-    setNewStoreName("");
-    setIsStorePopupOpen(false);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     const newPayment: CashPayment = {
       id: `CP-${String(payments.length + 1).padStart(3, "0")}`,
@@ -114,7 +252,43 @@ export default function CashPaymentsPage() {
     };
     setPayments((prev) => [newPayment, ...prev]);
     setIsModalOpen(false);
-    setForm({ date: "", jobName: "", store: stores[0], amount: "", pickedBy: DEFAULT_PARTNERS[0], notes: "" });
+    setForm({ date: "", jobName: "", store: stores[0]?.name || "", amount: "", pickedBy: cashEmployees[0]?.name || "", notes: "" });
+  };
+
+  // ── Derived (filtered + searched) ────────────────
+  const filtered = useMemo(() => {
+    return payments.filter((p) => {
+      // Store filter
+      if (filterStore !== "ALL" && p.store !== filterStore) return false;
+      // Employee filter
+      if (filterPickedBy !== "ALL" && p.pickedBy !== filterPickedBy) return false;
+      // Monthly filter
+      const pDate = new Date(p.date + "T12:00:00");
+      if (pDate.getMonth() !== selectedMonth || pDate.getFullYear() !== selectedYear) return false;
+      // Search
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matches =
+          p.jobName.toLowerCase().includes(q) ||
+          p.store.toLowerCase().includes(q) ||
+          p.pickedBy.toLowerCase().includes(q) ||
+          p.notes.toLowerCase().includes(q);
+        if (!matches) return false;
+      }
+      return true;
+    });
+  }, [payments, filterStore, filterPickedBy, selectedMonth, selectedYear, searchQuery]);
+
+  const total = filtered.reduce((s, p) => s + p.amount, 0);
+
+  // ── Month navigation ────────────────────────────
+  const goToPrevMonth = (): void => {
+    if (selectedMonth === 0) { setSelectedYear(selectedYear - 1); setSelectedMonth(11); }
+    else setSelectedMonth(selectedMonth - 1);
+  };
+  const goToNextMonth = (): void => {
+    if (selectedMonth === 11) { setSelectedYear(selectedYear + 1); setSelectedMonth(0); }
+    else setSelectedMonth(selectedMonth + 1);
   };
 
   // ── Render ───────────────────────────────────────
@@ -131,13 +305,13 @@ export default function CashPaymentsPage() {
               className="text-xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
-              Cash Payments & Material Extra
+              Cash Payments
             </h1>
             <p className="text-[#ababa8] text-sm mt-1">Track cash purchases and extra materials per job.</p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <button
-              onClick={() => setIsStorePopupOpen(true)}
+              onClick={() => setIsStoreModalOpen(true)}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#1e201e] rounded-xl text-sm font-bold text-[#faf9f5] border border-[#474846]/30 hover:border-[#aeee2a]/40 hover:text-[#aeee2a] hover:scale-[1.02] active:scale-95 transition-all"
             >
               <span className="material-symbols-outlined text-[18px]" translate="no">store</span>
@@ -153,13 +327,13 @@ export default function CashPaymentsPage() {
           </div>
         </div>
 
-        {/* KPI Summary Cards */}
+        {/* KPI Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: "Total Filtered", value: fmt(total), icon: "payments", color: "#aeee2a" },
             { label: "Records", value: String(filtered.length), icon: "receipt_long", color: "#aeee2a" },
             { label: "Stores Used", value: String(new Set(filtered.map((p) => p.store)).size), icon: "store", color: "#e3eb5d" },
-            { label: "Partners", value: String(new Set(filtered.map((p) => p.pickedBy)).size), icon: "groups", color: "#e3eb5d" },
+            { label: "Employees", value: String(new Set(filtered.map((p) => p.pickedBy)).size), icon: "groups", color: "#e3eb5d" },
           ].map((kpi) => (
             <div
               key={kpi.label}
@@ -177,8 +351,20 @@ export default function CashPaymentsPage() {
           ))}
         </div>
 
-        {/* Filters */}
+        {/* Filters Row */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
+          {/* Search */}
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] text-[18px]" translate="no">search</span>
+            <input
+              type="text"
+              placeholder="Search jobs, stores, notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-[#1e201e] text-[#faf9f5] text-sm rounded-xl pl-10 pr-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] w-64"
+            />
+          </div>
+
           {/* Store filter */}
           <select
             value={filterStore}
@@ -186,46 +372,65 @@ export default function CashPaymentsPage() {
             className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
           >
             <option value="ALL">All Stores</option>
-            {stores.map((s) => <option key={s} value={s}>{s}</option>)}
+            {stores.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
           </select>
 
-          {/* Picked By filter */}
-          <select
-            value={filterPickedBy}
-            onChange={(e) => setFilterPickedBy(e.target.value)}
-            className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-          >
-            <option value="ALL">All Partners</option>
-            {DEFAULT_PARTNERS.map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
-
-          {/* Date Range */}
-          <div className="flex items-center gap-2">
-            <CustomDatePicker
-              value={filterStart}
-              onChange={setFilterStart}
-              placeholder="Start date"
-              disableSundays={false}
-              className="w-44"
-            />
-            <span className="text-[#ababa8] text-[10px] font-black uppercase tracking-widest">→</span>
-            <CustomDatePicker
-              value={filterEnd}
-              onChange={setFilterEnd}
-              placeholder="End date"
-              disableSundays={false}
-              className="w-44"
-              alignRight={true}
-            />
+          {/* Employee filter */}
+          <div className="flex items-center gap-1">
+            <select
+              value={filterPickedBy}
+              onChange={(e) => setFilterPickedBy(e.target.value)}
+              className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
+            >
+              <option value="ALL">All Employees</option>
+              {cashEmployees.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
+            </select>
+            <button
+               onClick={() => setIsEmployeeModalOpen(true)}
+               className="w-10 h-10 flex items-center justify-center bg-[#1e201e] rounded-xl text-[#ababa8] hover:text-[#aeee2a] hover:border-[#aeee2a]/40 border border-[#474846]/20 transition-all"
+               title="Manage Employees Filter"
+            >
+               <span className="material-symbols-outlined text-[18px]" translate="no">edit</span>
+            </button>
           </div>
 
-          {(filterStore !== "ALL" || filterPickedBy !== "ALL" || filterStart || filterEnd) && (
+          {/* Monthly Picker */}
+          <div className="flex items-center gap-1 bg-[#1e201e] p-1 rounded-xl border border-[#474846]/20">
+            <button onClick={goToPrevMonth} className="w-7 h-7 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] transition-all">
+              <span className="material-symbols-outlined text-sm" translate="no">chevron_left</span>
+            </button>
+            <div className="flex items-center gap-1 px-2">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                className="bg-transparent text-[#faf9f5] text-xs font-bold cursor-pointer outline-none appearance-none"
+              >
+                {MONTH_NAMES.map((name, idx) => (
+                  <option key={idx} value={idx} className="bg-[#121412]">{name}</option>
+                ))}
+              </select>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="bg-transparent text-[#ababa8] text-xs font-bold cursor-pointer outline-none appearance-none"
+              >
+                {[2024, 2025, 2026, 2027].map((y) => (
+                  <option key={y} value={y} className="bg-[#121412]">{y}</option>
+                ))}
+              </select>
+            </div>
+            <button onClick={goToNextMonth} className="w-7 h-7 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] transition-all">
+              <span className="material-symbols-outlined text-sm" translate="no">chevron_right</span>
+            </button>
+          </div>
+
+          {(filterStore !== "ALL" || filterPickedBy !== "ALL" || searchQuery) && (
             <button
-              onClick={() => { setFilterStore("ALL"); setFilterPickedBy("ALL"); setFilterStart(""); setFilterEnd(""); }}
+              onClick={() => { setFilterStore("ALL"); setFilterPickedBy("ALL"); setSearchQuery(""); }}
               className="text-xs text-[#ababa8] hover:text-[#aeee2a] transition-colors flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-sm" translate="no">close</span>
-              Clear
+              Clear filters
             </button>
           )}
         </div>
@@ -239,7 +444,7 @@ export default function CashPaymentsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
-                  {["Date", "Job Name", "Store", "Amount", "Picked By", "Notes", ""].map((h) => (
+                  {["Date", "Job Name", "Store", "Amount", "Employee", "Notes", ""].map((h) => (
                     <th key={h} className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">{h}</th>
                   ))}
                 </tr>
@@ -249,7 +454,7 @@ export default function CashPaymentsPage() {
                   <tr>
                     <td colSpan={7} className="px-6 py-16 text-center text-[#ababa8] text-sm">
                       <span className="material-symbols-outlined text-4xl block mb-2 opacity-30" translate="no">payments</span>
-                      No records found
+                      No records found for {MONTH_NAMES[selectedMonth]} {selectedYear}
                     </td>
                   </tr>
                 ) : (
@@ -264,7 +469,14 @@ export default function CashPaymentsPage() {
                         <span className="text-sm font-bold text-[#faf9f5]">{p.jobName}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#242624] text-[#e3eb5d] border border-[#474846]/20">
+                        <span
+                          className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border"
+                          style={{
+                            backgroundColor: `${getStoreColor(p.store)}15`,
+                            color: getStoreColor(p.store),
+                            borderColor: `${getStoreColor(p.store)}30`,
+                          }}
+                        >
                           {p.store}
                         </span>
                       </td>
@@ -288,7 +500,6 @@ export default function CashPaymentsPage() {
                   ))
                 )}
               </tbody>
-              {/* Total Row */}
               {filtered.length > 0 && (
                 <tfoot>
                   <tr style={{ borderTop: "1px solid rgba(174,238,42,0.15)", background: "rgba(174,238,42,0.03)" }}>
@@ -318,121 +529,64 @@ export default function CashPaymentsPage() {
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}
         >
-          <div
-            className="w-full max-w-lg rounded-2xl p-8 relative"
-            style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)" }}
-          >
-            {/* Close */}
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors"
-            >
+          <div className="w-full max-w-lg rounded-2xl p-8 relative" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)" }}>
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors">
               <span className="material-symbols-outlined" translate="no">close</span>
             </button>
-
-            <h2
-              className="text-xl font-extrabold text-[#faf9f5] mb-6"
-              style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-            >
+            <h2 className="text-xl font-extrabold text-[#faf9f5] mb-6" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
               Add Cash Payment
             </h2>
-
             <form onSubmit={handleSubmit} className="space-y-4">
-
-              {/* Date + Job Name */}
               <div className="grid grid-cols-2 gap-4">
-                <CustomDatePicker
-                  label="Date"
-                  value={form.date}
-                  onChange={(val) => setForm({ ...form, date: val })}
-                  disableSundays={false}
-                  placeholder="Select date"
-                />
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Job Name</label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="e.g. Eric Lefebvre"
-                    value={form.jobName}
-                    onChange={(e) => setForm({ ...form, jobName: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+                  <CustomDatePicker
+                    label="Date"
+                    value={form.date}
+                    onChange={(iso) => setForm({ ...form, date: iso })}
+                    disableSundays={false}
                   />
                 </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Job Name</label>
+                  <input required type="text" placeholder="e.g. Eric Lefebvre" value={form.jobName}
+                    onChange={(e) => setForm({ ...form, jobName: e.target.value })}
+                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]" />
+                </div>
               </div>
-
-              {/* Store + Amount */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Store</label>
-                  <div className="flex gap-2">
-                    <select
-                      required
-                      value={form.store}
-                      onChange={(e) => setForm({ ...form, store: e.target.value })}
-                      className="flex-1 bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-                    >
-                      {stores.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => setIsStorePopupOpen(true)}
-                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#242624] text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#2c2e2c] transition-colors border border-[#474846]/20 shrink-0"
-                      title="Add new store"
-                    >
-                      <span className="material-symbols-outlined text-[18px]" translate="no">add</span>
-                    </button>
-                  </div>
+                  <select required value={form.store} onChange={(e) => setForm({ ...form, store: e.target.value })}
+                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
+                    {stores.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
+                  </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Amount</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-black text-sm">$</span>
-                    <input
-                      required
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={form.amount}
+                    <input required type="number" step="0.01" min="0" placeholder="0.00" value={form.amount}
                       onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
-                    />
+                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]" />
                   </div>
                 </div>
               </div>
-
-              {/* Picked By */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Picked By</label>
-                <select
-                  required
-                  value={form.pickedBy}
-                  onChange={(e) => setForm({ ...form, pickedBy: e.target.value })}
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-                >
-                  {DEFAULT_PARTNERS.map((p) => <option key={p} value={p}>{p}</option>)}
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Employee</label>
+                <select required value={form.pickedBy} onChange={(e) => setForm({ ...form, pickedBy: e.target.value })}
+                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
+                  {cashEmployees.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
                 </select>
               </div>
-
-              {/* Notes */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Notes <span className="normal-case text-[#474846] font-normal">(optional)</span></label>
-                <textarea
-                  rows={3}
-                  placeholder="Any additional notes..."
-                  value={form.notes}
+                <textarea rows={3} placeholder="Any additional notes..." value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] resize-none"
-                />
+                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] resize-none" />
               </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
+              <button type="submit"
                 className="w-full py-3 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] mt-2"
-                style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-              >
+                style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                 Save Payment
               </button>
             </form>
@@ -441,53 +595,119 @@ export default function CashPaymentsPage() {
       )}
 
       {/* ══════════════════════════════════════════════
-          ADD STORE POPUP
+          MANAGE STORES MODAL (enhanced with edit/delete/color)
       ══════════════════════════════════════════════ */}
-      {isStorePopupOpen && (
+      {isStoreModalOpen && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.5)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setIsStorePopupOpen(false); }}
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setIsStoreModalOpen(false); }}
         >
-          <div
-            className="w-full max-w-sm rounded-2xl p-6"
-            style={{ background: "#1e201e", border: "1px solid rgba(174,238,42,0.2)" }}
-          >
-            <h3
-              className="text-lg font-extrabold text-[#faf9f5] mb-4"
-              style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-            >
-              Add New Store
-            </h3>
-            <div className="flex gap-3">
-              <input
-                autoFocus
-                type="text"
-                placeholder="Store name (e.g. LOWES)"
-                value={newStoreName}
-                onChange={(e) => setNewStoreName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleAddStore(); }}
-                className="flex-1 bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
-              />
-              <button
-                onClick={handleAddStore}
-                className="px-5 py-2.5 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-sm"
-              >
-                Add
-              </button>
-            </div>
-            {stores.length > 0 && (
-              <div className="mt-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-2">Current Stores</p>
-                <div className="flex flex-wrap gap-2">
-                  {stores.map((s) => (
-                    <span key={s} className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-[#242624] text-[#e3eb5d] border border-[#474846]/20">
-                      {s}
-                    </span>
-                  ))}
+          <div className="w-full max-w-md rounded-2xl" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.2)" }}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">store</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Manage Stores</h3>
+                  <p className="text-[10px] text-[#ababa8] uppercase tracking-widest">Add, edit or remove stores</p>
                 </div>
               </div>
-            )}
+              <button onClick={() => setIsStoreModalOpen(false)} className="text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+                <span className="material-symbols-outlined" translate="no">close</span>
+              </button>
+            </div>
+
+            {/* Add new store */}
+            <div className="p-6 border-b border-white/5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Add New Store</p>
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Store name (e.g. LOWES)"
+                  value={newStoreName}
+                  onChange={(e) => setNewStoreName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleAddStore(); }}
+                  className="flex-1 bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+                />
+                <input
+                  type="color"
+                  value={newStoreColor}
+                  onChange={(e) => setNewStoreColor(e.target.value)}
+                  className="w-10 h-10 rounded-xl border border-[#474846]/20 cursor-pointer bg-transparent"
+                  title="Pick a color"
+                />
+                <button
+                  onClick={handleAddStore}
+                  className="px-5 py-2.5 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-sm"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Store list */}
+            <div className="p-6 max-h-[300px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Current Stores ({stores.length})</p>
+              {storesLoading ? (
+                <div className="flex items-center gap-2 py-4">
+                  <div className="w-4 h-4 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
+                  <span className="text-sm text-[#ababa8]">Loading...</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {stores.map((store) => (
+                    <div key={store.id}>
+                      {editingStore?.id === store.id ? (
+                        /* Edit mode */
+                        <div className="flex items-center gap-2 p-3 rounded-xl bg-[#0d0f0d] border border-[#aeee2a]/20">
+                          <input
+                            type="text"
+                            value={editStoreName}
+                            onChange={(e) => setEditStoreName(e.target.value)}
+                            className="flex-1 bg-transparent border border-[#474846]/20 text-[#faf9f5] rounded-lg px-3 py-1.5 text-sm outline-none focus:border-[#aeee2a]"
+                          />
+                          <input
+                            type="color"
+                            value={editStoreColor}
+                            onChange={(e) => setEditStoreColor(e.target.value)}
+                            className="w-8 h-8 rounded-lg border border-[#474846]/20 cursor-pointer bg-transparent"
+                          />
+                          <button onClick={handleUpdateStore} className="text-[#aeee2a] hover:text-[#faf9f5] transition-colors">
+                            <span className="material-symbols-outlined text-[18px]" translate="no">check</span>
+                          </button>
+                          <button onClick={() => setEditingStore(null)} className="text-[#ababa8] hover:text-[#ff7351] transition-colors">
+                            <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
+                          </button>
+                        </div>
+                      ) : (
+                        /* Display mode */
+                        <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#1e201e]/50 transition-colors group">
+                          <div className="w-5 h-5 rounded-full border-2 shrink-0" style={{ backgroundColor: store.color, borderColor: `${store.color}60` }} />
+                          <span className="text-sm font-bold text-[#faf9f5] flex-1">{store.name}</span>
+                          <span className="text-[10px] text-[#474846] font-mono">{store.color}</span>
+                          <button
+                            onClick={() => { setEditingStore(store); setEditStoreName(store.name); setEditStoreColor(store.color); }}
+                            className="opacity-0 group-hover:opacity-100 text-[#ababa8] hover:text-[#aeee2a] transition-all"
+                          >
+                            <span className="material-symbols-outlined text-[16px]" translate="no">edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStore(store.id)}
+                            className="opacity-0 group-hover:opacity-100 text-[#ababa8] hover:text-[#ff7351] transition-all"
+                          >
+                            <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -501,126 +721,204 @@ export default function CashPaymentsPage() {
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) { setEditingPayment(null); setEditForm(null); } }}
         >
-          <div
-            className="w-full max-w-lg rounded-2xl p-8 relative"
-            style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)" }}
-          >
-            {/* Close */}
-            <button
-              onClick={() => { setEditingPayment(null); setEditForm(null); }}
-              className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors"
-            >
+          <div className="w-full max-w-lg rounded-2xl p-8 relative" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)" }}>
+            <button onClick={() => { setEditingPayment(null); setEditForm(null); }} className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors">
               <span className="material-symbols-outlined" translate="no">close</span>
             </button>
-
             <div className="flex items-center gap-3 mb-6">
               <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">edit</span>
               </div>
               <div>
-                <h2 className="text-xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
-                  Edit Payment
-                </h2>
+                <h2 className="text-xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Edit Payment</h2>
                 <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest">{editForm.id}</p>
               </div>
             </div>
-
             <form onSubmit={handleEditSave} className="space-y-4">
-
-              {/* Date + Job Name */}
               <div className="grid grid-cols-2 gap-4">
-                <CustomDatePicker
-                  label="Date"
-                  value={editForm.date}
-                  onChange={(val) => setEditForm({ ...editForm, date: val })}
-                  disableSundays={false}
-                  placeholder="Select date"
-                />
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Job Name</label>
-                  <input
-                    required
-                    type="text"
-                    value={editForm.jobName}
-                    onChange={(e) => setEditForm({ ...editForm, jobName: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+                  <CustomDatePicker
+                    label="Date"
+                    value={editForm.date}
+                    onChange={(iso) => setEditForm({ ...editForm, date: iso })}
+                    disableSundays={false}
                   />
                 </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Job Name</label>
+                  <input required type="text" value={editForm.jobName}
+                    onChange={(e) => setEditForm({ ...editForm, jobName: e.target.value })}
+                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors" />
+                </div>
               </div>
-
-              {/* Store + Amount */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Store</label>
-                  <select
-                    required
-                    value={editForm.store}
-                    onChange={(e) => setEditForm({ ...editForm, store: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-                  >
-                    {stores.map((s) => <option key={s} value={s}>{s}</option>)}
+                  <select required value={editForm.store} onChange={(e) => setEditForm({ ...editForm, store: e.target.value })}
+                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
+                    {stores.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Amount</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-black text-sm">$</span>
-                    <input
-                      required
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={editForm.amount}
+                    <input required type="number" step="0.01" min="0" value={editForm.amount}
                       onChange={(e) => setEditForm({ ...editForm, amount: parseFloat(e.target.value) || 0 })}
-                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors"
-                    />
+                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors" />
                   </div>
                 </div>
               </div>
-
-              {/* Picked By */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Picked By</label>
-                <select
-                  required
-                  value={editForm.pickedBy}
-                  onChange={(e) => setEditForm({ ...editForm, pickedBy: e.target.value })}
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-                >
-                  {DEFAULT_PARTNERS.map((p) => <option key={p} value={p}>{p}</option>)}
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Employee</label>
+                <select required value={editForm.pickedBy} onChange={(e) => setEditForm({ ...editForm, pickedBy: e.target.value })}
+                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
+                  {cashEmployees.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
                 </select>
               </div>
-
-              {/* Notes */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Notes <span className="normal-case text-[#474846] font-normal">(optional)</span></label>
-                <textarea
-                  rows={3}
-                  placeholder="Any additional notes..."
-                  value={editForm.notes}
-                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] resize-none"
-                />
+                <textarea rows={3} value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] resize-none" />
               </div>
-
-              {/* Actions */}
               <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => { setEditingPayment(null); setEditForm(null); }}
-                  className="flex-1 py-3 bg-[#1e201e] text-[#faf9f5] font-bold rounded-xl border border-[#474846]/20 hover:bg-[#242624] transition-all"
-                >
+                <button type="button" onClick={() => { setEditingPayment(null); setEditForm(null); }}
+                  className="flex-1 py-3 bg-[#1e201e] text-[#faf9f5] font-bold rounded-xl border border-[#474846]/20 hover:bg-[#242624] transition-all">
                   Cancel
                 </button>
-                <button
-                  type="submit"
+                <button type="submit"
                   className="flex-1 py-3 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)]"
-                  style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-                >
+                  style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                   Save Changes
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          MANAGE EMPLOYEES MODAL
+      ══════════════════════════════════════════════ */}
+      {isEmployeeModalOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setIsEmployeeModalOpen(false); }}
+        >
+          <div className="w-full max-w-md rounded-2xl" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.2)" }}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">badge</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Manage Employees</h3>
+                  <p className="text-[10px] text-[#ababa8] uppercase tracking-widest">Add or Remove from Cash Filter</p>
+                </div>
+              </div>
+              <button onClick={() => setIsEmployeeModalOpen(false)} className="text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+                <span className="material-symbols-outlined" translate="no">close</span>
+              </button>
+            </div>
+
+            {/* Add new employee */}
+            <div className="p-6 border-b border-white/5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Add Custom Employee</p>
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Employee name (e.g. WILL)"
+                  value={newEmployeeName}
+                  onChange={(e) => setNewEmployeeName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleAddEmployee(); }}
+                  className="flex-1 bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+                />
+                <button
+                  onClick={handleAddEmployee}
+                  className="px-5 py-2.5 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-sm"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="p-6 max-h-[300px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Filter Employees ({cashEmployees.length})</p>
+              {employeesLoading ? (
+                <div className="flex items-center gap-2 py-4">
+                  <div className="w-4 h-4 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
+                  <span className="text-sm text-[#ababa8]">Loading...</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {cashEmployees.map((emp) => (
+                    <div key={emp.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-[#1e201e]/50 transition-colors group">
+                      <span className="text-sm font-bold text-[#faf9f5]">{emp.name}</span>
+                      <button
+                        onClick={() => handleRemoveEmployee(emp.id, emp.name)}
+                        className="opacity-0 group-hover:opacity-100 text-[#ababa8] hover:text-[#ff7351] transition-all"
+                        title="Remove from this filter"
+                      >
+                       <span className="material-symbols-outlined text-[16px]" translate="no">person_remove</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ══════════════════════════════════════════════
+          CONFIRM DELETE MODAL
+      ══════════════════════════════════════════════ */}
+      {confirmModal.isOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)" }}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl p-6 relative overflow-hidden"
+            style={{
+              background: "linear-gradient(180deg, #1e201e 0%, #121412 100%)",
+              border: "1px solid rgba(255,115,81,0.2)",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+            }}
+          >
+            {/* Top Glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-[#ff7351] rounded-b-full shadow-[0_0_20px_#ff7351]" />
+
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: "rgba(255,115,81,0.1)", border: "1px solid rgba(255,115,81,0.2)" }}>
+                <span className="material-symbols-outlined text-[32px] text-[#ff7351]" translate="no">warning</span>
+              </div>
+              <h3 className="text-xl font-extrabold text-[#faf9f5] mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                {confirmModal.title}
+              </h3>
+              <p className="text-sm text-[#ababa8] mb-8 px-2 leading-relaxed">
+                {confirmModal.message}
+              </p>
+
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+                  className="flex-1 py-3 px-4 rounded-xl text-sm font-bold text-[#faf9f5] bg-[#242624] border border-[#474846]/30 hover:bg-[#303330] hover:text-white transition-all outline-none"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmModal.onConfirm}
+                  className="flex-1 py-3 px-4 rounded-xl text-sm font-black text-white bg-[#ff7351] hover:bg-[#ff5a33] active:scale-[0.98] transition-all shadow-[0_4px_15px_rgba(255,115,81,0.3)] outline-none"
+                  style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

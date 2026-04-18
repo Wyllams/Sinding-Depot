@@ -19,6 +19,7 @@ interface Props {
   label?: string;
   className?: string;
   alignRight?: boolean;    // abrir dropdown alinhado à direita (evita overflow)
+  variant?: "default" | "ghost";
 }
 
 const MONTH_NAMES = [
@@ -39,10 +40,13 @@ const toIso = (d: Date) => {
 };
 
 /** "Apr 14, 2026" display string */
-const formatDisplay = (iso: string) =>
-  fromIso(iso).toLocaleDateString("en-US", {
+const formatDisplay = (iso: string) => {
+  if (!iso || iso === "0" || iso.toLowerCase() === "null") return "—";
+  const d = fromIso(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-US", {
     month: "short", day: "numeric", year: "numeric",
   });
+};
 
 /** All days to display in a month grid (including padding from prev/next month) */
 const getGridDays = (year: number, month: number): Date[] => {
@@ -72,6 +76,7 @@ export default function CustomDatePicker({
   label,
   className = "",
   alignRight = false,
+  variant = "default",
 }: Props) {
   const today = new Date();
   today.setHours(12, 0, 0, 0);
@@ -333,20 +338,29 @@ export default function CustomDatePicker({
         ref={triggerRef}
         type="button"
         onClick={toggleOpen}
-        className="w-full flex items-center justify-between gap-2 bg-[#121412] border border-[#474846]/20 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-[#aeee2a] transition-colors hover:border-[#474846]/50 cursor-pointer"
-        style={{ color: value ? "#faf9f5" : "#474846" }}
+        className={variant === "ghost"
+          ? `w-full block text-left font-bold cursor-pointer hover:text-[#aeee2a] transition-colors outline-none whitespace-nowrap ${!value ? "text-[#ababa8]" : "text-[#faf9f5]"}`
+          : `w-full flex items-center justify-between gap-2 bg-[#121412] border border-[#474846]/20 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-[#aeee2a] transition-colors hover:border-[#474846]/50 cursor-pointer`
+        }
+        style={variant === "ghost" ? {} : { color: value ? "#faf9f5" : "#474846" }}
       >
-        <span className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-[#aeee2a]" translate="no">calendar_month</span>
-          {value ? formatDisplay(value) : placeholder}
-        </span>
-        <span
-          className="material-symbols-outlined text-[18px] text-[#ababa8] transition-transform duration-200"
-          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-          translate="no"
-        >
-          expand_more
-        </span>
+        {variant === "ghost" ? (
+          value ? formatDisplay(value) : "—"
+        ) : (
+          <>
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px] text-[#aeee2a]" translate="no">calendar_month</span>
+              {value ? formatDisplay(value) : placeholder}
+            </span>
+            <span
+              className="material-symbols-outlined text-[18px] text-[#ababa8] transition-transform duration-200"
+              style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+              translate="no"
+            >
+              expand_more
+            </span>
+          </>
+        )}
       </button>
 
       {/* Calendar via Portal — escapes overflow:hidden containers */}
