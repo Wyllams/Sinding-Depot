@@ -514,12 +514,12 @@ export default function ProjectDetailPage() {
             </div>
 
             {/* Gate Status Inline */}
-            <div className="relative z-50 min-w-[200px]">
+            <div className="relative z-50 min-w-[160px] max-w-[180px]">
               <CustomDropdown
                 value={gateStatus}
                 onChange={(val) => handleGateChange(val)}
                 options={Object.entries(GATE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }))}
-                className="w-full bg-[#121412] border border-[#474846] rounded-xl pl-10 pr-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                className="w-full bg-[#121412] border border-[#474846] rounded-xl pl-8 pr-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
               />
               <div
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center pointer-events-none z-10"

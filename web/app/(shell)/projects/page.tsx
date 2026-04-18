@@ -445,24 +445,24 @@ export default function ProjectsPage() {
 
                       {/* Gating Status */}
                       <td className="px-6 py-4">
-                        <div className="relative group/gate w-[210px]">
+                        <div className="relative group/gate w-[160px]">
                           <div onClick={(e) => e.stopPropagation()}>
                             <CustomDropdown
                               value={gate}
                               onChange={(val) => handleGateChange(job.id, val)}
                               options={[
-                                { value: "NOT_CONTACTED", label: "🔴 NOT YET CONTACTED" },
-                                { value: "READY", label: "🟢 READY TO START" },
-                                { value: "WINDOWS", label: "🔵 WINDOWS" },
-                                { value: "DOORS", label: "🟠 DOORS" },
-                                { value: "FINANCING", label: "🟡 FINANCING" },
-                                { value: "MATERIALS", label: "🪨 MATERIALS" },
-                                { value: "HOA", label: "📄 HOA" },
-                                { value: "OTHER_REPAIRS", label: "🛠️ OTHER REPAIRS" },
-                                { value: "NO_ANSWER", label: "📴 NO ANSWER" },
-                                { value: "PERMIT", label: "📋 PERMIT" }
+                                { value: "NOT_CONTACTED", label: "NOT YET CONTACTED" },
+                                { value: "READY", label: "READY TO START" },
+                                { value: "WINDOWS", label: "WINDOWS" },
+                                { value: "DOORS", label: "DOORS" },
+                                { value: "FINANCING", label: "FINANCING" },
+                                { value: "MATERIALS", label: "MATERIALS" },
+                                { value: "HOA", label: "HOA" },
+                                { value: "OTHER_REPAIRS", label: "OTHER REPAIRS" },
+                                { value: "NO_ANSWER", label: "NO ANSWER" },
+                                { value: "PERMIT", label: "PERMIT" }
                               ]}
-                              className="w-full bg-[#0a0a0a] border border-[#474846] rounded-xl pl-9 pr-3 py-2 text-[9px] font-black uppercase tracking-widest text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                              className="w-full bg-[#0a0a0a] border border-[#474846] rounded-xl pl-9 pr-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
                             />
                           </div>
                           <div
