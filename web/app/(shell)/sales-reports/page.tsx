@@ -530,12 +530,36 @@ export default function ReportsPage() {
     return templateVars[match] !== undefined ? templateVars[match] : match;
   });
 
-  const handleCopy = (): void => {
+  const handleCopy = async (): Promise<void> => {
     if (!displaySummary) return;
-    navigator.clipboard.writeText(displaySummary).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    });
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(displaySummary);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } else {
+        // Fallback for non-secure contexts (e.g., HTTP over local network IP)
+        const textArea = document.createElement("textarea");
+        textArea.value = displaySummary;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2500);
+        } catch (err) {
+          console.error('Fallback copy failed', err);
+        }
+        textArea.remove();
+      }
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
   };
 
   // ── Month navigation helpers ────────────────────────────────────────────
