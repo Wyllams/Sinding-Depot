@@ -809,6 +809,7 @@ export default function NewProjectPage() {
                   </div>
                 </div>
               </div>
+            </div>
 
               {/* Sales Person (SP) */}
               <div className="flex flex-col">
@@ -836,7 +837,8 @@ export default function NewProjectPage() {
                   </div>
                 </div>
               </div>
-            </section>
+            </div>
+          </section>
 
             {/* Additional Information */}
             <section>
