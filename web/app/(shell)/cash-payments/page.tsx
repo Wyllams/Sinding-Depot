@@ -528,9 +528,11 @@ export default function CashPaymentsPage() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-16 text-center text-[#ababa8] text-sm">
-                      <span className="material-symbols-outlined text-4xl block mb-2 opacity-30" translate="no">payments</span>
-                      No records found for {MONTH_NAMES[selectedMonth]} {selectedYear}
+                    <td colSpan={7} className="px-6 py-16">
+                      <div className="flex items-center justify-center gap-3 text-[#ababa8] text-sm">
+                        <span className="material-symbols-outlined text-xl opacity-40 translate-y-[-1px]" translate="no">payments</span>
+                        <span>No records found for {MONTH_NAMES[selectedMonth]} {selectedYear}</span>
+                      </div>
                     </td>
                   </tr>
                 ) : (
