@@ -514,7 +514,7 @@ export default function ProjectDetailPage() {
             </div>
 
             {/* Gate Status Inline */}
-            <div className="relative z-50 min-w-[160px] max-w-[180px]">
+            <div className="relative z-50 min-w-[170px] max-w-[190px]">
               <CustomDropdown
                 value={gateStatus}
                 onChange={(val) => handleGateChange(val)}

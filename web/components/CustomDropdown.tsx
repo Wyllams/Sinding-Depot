@@ -124,8 +124,8 @@ export function CustomDropdown({
         className={className || "w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a] text-left"}
         style={style}
       >
-        <span className={`${inline ? "mx-auto" : "truncate pr-2"} font-bold text-[13px] md:text-sm`}>{selectedLabel}</span>
-        {!inline && <span className="material-symbols-outlined text-[16px] text-[#ababa8] pointer-events-none shrink-0" translate="no">expand_more</span>}
+        <span className={`${inline ? "mx-auto" : "truncate pr-2"}`}>{selectedLabel}</span>
+        {!inline && <span className="material-symbols-outlined text-[16px] text-inherit opacity-70 pointer-events-none shrink-0" translate="no">expand_more</span>}
       </button>
       
       {open && typeof window !== 'undefined' && createPortal(menuContent, document.body)}

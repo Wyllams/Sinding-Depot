@@ -445,7 +445,7 @@ export default function ProjectsPage() {
 
                       {/* Gating Status */}
                       <td className="px-6 py-4">
-                        <div className="relative group/gate w-[160px]">
+                        <div className="relative group/gate w-[180px]">
                           <div onClick={(e) => e.stopPropagation()}>
                             <CustomDropdown
                               value={gate}
