@@ -35,14 +35,7 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-const MOCK_PAYMENTS: CashPayment[] = [
-  { id: "CP-001", date: "2026-04-06", jobName: "Eric Lefebvre", store: "HD", amount: 850, pickedBy: "VICTOR", notes: "Extra caulk and fasteners" },
-  { id: "CP-002", date: "2026-04-06", jobName: "Joe Castano", store: "MASTER", amount: 485, pickedBy: "SERGIO", notes: "" },
-  { id: "CP-003", date: "2026-04-05", jobName: "Max Edei", store: "PPG", amount: 1200, pickedBy: "OSVIN", notes: "Paint for accent trim" },
-  { id: "CP-004", date: "2026-04-04", jobName: "Eric Lefebvre", store: "LANSING", amount: 320, pickedBy: "JOSUE", notes: "" },
-  { id: "CP-005", date: "2026-04-03", jobName: "Brandon White", store: "CRS", amount: 760, pickedBy: "VICTOR", notes: "Corner beads and Z-flashing" },
-  { id: "CP-006", date: "2026-04-02", jobName: "Sarah Jenkins", store: "SW", amount: 195, pickedBy: "XICARA", notes: "Touch-up paint cans" },
-];
+
 
 const fmt = (v: number): string =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
@@ -129,7 +122,8 @@ export default function CashPaymentsPage() {
   const now = new Date();
 
   // ── State ────────────────────────────────────────
-  const [payments, setPayments] = useState<CashPayment[]>(MOCK_PAYMENTS);
+  const [payments, setPayments] = useState<CashPayment[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [stores, setStores] = useState<Store[]>([]);
   const [storesLoading, setStoresLoading] = useState(true);
 
@@ -186,7 +180,31 @@ export default function CashPaymentsPage() {
   useEffect(() => {
     loadStores();
     loadCashEmployees();
+    loadPayments();
   }, []);
+
+  const loadPayments = async () => {
+    setPaymentsLoading(true);
+    const { data, error } = await supabase
+      .from("cash_payments")
+      .select("id, date, job_name, store, amount, picked_by, notes")
+      .order("date", { ascending: false });
+    
+    if (data) {
+      setPayments(data.map(d => ({
+        id: d.id,
+        date: d.date,
+        jobName: d.job_name,
+        store: d.store,
+        amount: Number(d.amount),
+        pickedBy: d.picked_by,
+        notes: d.notes || ""
+      })));
+    } else if (error) {
+       console.error("Error loading payments:", error);
+    }
+    setPaymentsLoading(false);
+  };
 
   const loadCashEmployees = async () => {
     setEmployeesLoading(true);
@@ -307,25 +325,61 @@ export default function CashPaymentsPage() {
     setEditForm({ ...p });
   };
 
-  const handleEditSave = (e: React.FormEvent): void => {
+  const handleEditSave = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!editForm) return;
+
+    const { error } = await supabase
+      .from('cash_payments')
+      .update({
+        date: editForm.date,
+        job_name: editForm.jobName,
+        store: editForm.store,
+        amount: editForm.amount,
+        picked_by: editForm.pickedBy,
+        notes: editForm.notes
+      })
+      .eq('id', editForm.id);
+
+    if (error) {
+      console.error("Error updating payment", error);
+      alert("Error updating payment");
+      return;
+    }
+
     setPayments((prev) => prev.map((p) => (p.id === editForm.id ? { ...editForm } : p)));
     setEditingPayment(null);
     setEditForm(null);
   };
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    const newPayment: CashPayment = {
-      id: `CP-${String(payments.length + 1).padStart(3, "0")}`,
+    
+    const { data, error } = await supabase.from('cash_payments').insert({
       date: form.date,
-      jobName: form.jobName,
+      job_name: form.jobName,
       store: form.store,
       amount: parseFloat(form.amount.replace(/[^0-9.]/g, "")) || 0,
-      pickedBy: form.pickedBy,
+      picked_by: form.pickedBy,
       notes: form.notes,
+    }).select().single();
+
+    if (error) {
+      console.error("Error inserting payment", error);
+      alert("Error inserting payment");
+      return;
+    }
+
+    const newPayment: CashPayment = {
+      id: data.id,
+      date: data.date,
+      jobName: data.job_name,
+      store: data.store,
+      amount: Number(data.amount),
+      pickedBy: data.picked_by,
+      notes: data.notes || ""
     };
+
     setPayments((prev) => [newPayment, ...prev]);
     setIsModalOpen(false);
     setForm({ date: "", jobName: "", store: stores[0]?.name || "", amount: "", pickedBy: cashEmployees[0]?.name || "", notes: "" });
@@ -574,9 +628,15 @@ export default function CashPaymentsPage() {
                               isOpen: true,
                               title: "Delete Payment",
                               message: `Are you sure you want to delete the payment for ${p.jobName}?`,
-                              onConfirm: () => {
-                                setPayments(prev => prev.filter(item => item.id !== p.id));
-                                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                              onConfirm: async () => {
+                                const { error } = await supabase.from('cash_payments').delete().eq('id', p.id);
+                                if (!error) {
+                                  setPayments(prev => prev.filter(item => item.id !== p.id));
+                                  setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                } else {
+                                  console.error("Error deleting payment", error);
+                                  alert("Error deleting payment");
+                                }
                               }
                             });
                           }}
