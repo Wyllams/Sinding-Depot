@@ -580,7 +580,7 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* ── Tabs ── */}
-        <div className="flex bg-[#121412] p-1 rounded-xl w-fit mb-8">
+        <div className="flex bg-[#121412] p-1 rounded-xl w-fit max-w-full overflow-x-auto gap-0.5 mb-8">
           {[
             { key: "overview",   label: "Overview",    icon: "dashboard" },
             { key: "crews",      label: "Crews",       icon: "groups" },
@@ -643,7 +643,7 @@ export default function ProjectDetailPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div className="bg-[#1e201e] rounded-xl p-3 relative flex flex-col justify-center">
                     <p className="text-[#ababa8] font-bold mb-1.5 tracking-widest uppercase text-[9px] pointer-events-none">Salesperson</p>
                     <select

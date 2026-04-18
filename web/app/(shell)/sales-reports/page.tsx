@@ -768,7 +768,8 @@ export default function ReportsPage() {
                         
                         {/* Expanded jobs detail */}
                         {expandedSp === sp.id && (
-                          <div className="mt-3 px-4 py-3 rounded-xl bg-[#0d0f0d]/50 border border-white/5">
+                          <div className="mt-3 px-4 py-3 rounded-xl bg-[#0d0f0d]/50 border border-white/5 overflow-x-auto">
+                            <div className="min-w-[450px]">
                             {loadingJobs === sp.id ? (
                               <div className="flex items-center gap-2 py-2">
                                 <div className="w-3 h-3 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
@@ -832,6 +833,7 @@ export default function ReportsPage() {
                                 )}
                               </div>
                             )}
+                            </div>
                           </div>
                         )}
                       </div>

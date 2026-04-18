@@ -423,7 +423,7 @@ export default function WindowsTrackerPage() {
         {!loading && (
           <div className="rounded-2xl overflow-hidden border" style={{ background: "rgba(18,20,18,0.8)", borderColor: "rgba(71,72,70,0.2)" }}>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
+              <table className="w-full text-left border-collapse text-sm min-w-[1000px]">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
                     {[

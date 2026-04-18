@@ -853,11 +853,11 @@ export default function SchedulePage() {
         </div>
 
         {/* ── Gantt Grid ── */}
-        <div className="rounded-2xl overflow-hidden flex flex-col flex-1" style={{ background: "#121412", border: "1px solid rgba(71,72,70,0.2)" }}>
-
-          {/* Day headers — STICKY (6.2) */}
-          <div className="grid sticky top-0 z-20" style={{ gridTemplateColumns: "200px repeat(7, 1fr)", background: "#1e201e", borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
-            <div className="px-5 py-4 text-[#ababa8] text-[10px] font-bold uppercase tracking-widest border-r border-white/5">
+        <div className="rounded-2xl overflow-hidden overflow-x-auto flex flex-col flex-1" style={{ background: "#121412", border: "1px solid rgba(71,72,70,0.2)" }}>
+          <div className="min-w-[800px] flex flex-col flex-1 min-h-0">
+            {/* Day headers — STICKY (6.2) */}
+            <div className="grid sticky top-0 z-20" style={{ gridTemplateColumns: "200px repeat(7, 1fr)", background: "#1e201e", borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
+              <div className="px-5 py-4 text-[#ababa8] text-[10px] font-bold uppercase tracking-widest border-r border-white/5">
               Partner / Service
             </div>
             {DAY_LABELS.map((label, i) => {
@@ -1024,6 +1024,7 @@ export default function SchedulePage() {
                 })}
               </div>
             ))}
+          </div>
           </div>
         </div>
 

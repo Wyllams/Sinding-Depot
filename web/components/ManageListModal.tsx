@@ -54,7 +54,7 @@ export function ManageListModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-2xl" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.2)" }}>
+      <div className="w-full max-w-md rounded-2xl flex flex-col max-h-[90vh] overflow-hidden" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.2)" }}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#474846]/20">
           <div className="flex items-center gap-3">

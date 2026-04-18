@@ -267,26 +267,26 @@ export default function ProjectsPage() {
         <div className="glass-card rounded-2xl px-6 py-5 mb-8 flex flex-wrap items-end gap-6">
 
           {/* Search */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold">Search</label>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] text-[18px]" translate="no">search</span>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="bg-[#242624] pl-9 pr-3 py-2 rounded-lg text-sm text-[#faf9f5] outline-none border-none w-48"
+                className="bg-[#242624] pl-9 pr-3 py-2 rounded-lg text-sm text-[#faf9f5] outline-none border-none w-full sm:w-48"
                 placeholder="Client, job #..."
               />
             </div>
           </div>
 
           {/* Status */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] transition-colors outline-none border-none appearance-none w-36"
+              className="bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] transition-colors outline-none border-none appearance-none w-full sm:w-36"
             >
               <option value="">All Statuses</option>
               <option value="active">Confirmed (Ready to Start)</option>
@@ -299,12 +299,12 @@ export default function ProjectsPage() {
           </div>
 
           {/* Services */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold">Services</label>
             <select
               value={serviceFilter}
               onChange={(e) => setServiceFilter(e.target.value)}
-              className="bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] transition-colors outline-none border-none appearance-none w-36"
+              className="bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] transition-colors outline-none border-none appearance-none w-full sm:w-36"
             >
               <option value="">All Services</option>
               <option value="siding">Siding</option>
@@ -318,13 +318,17 @@ export default function ProjectsPage() {
           </div>
 
           {/* Date Range */}
-          <div className="flex items-end gap-3 ml-auto">
-            <CustomDatePicker value={dateFrom} onChange={setDateFrom} placeholder="Start" disableSundays={false} className="w-36" />
-            <div className="flex flex-col items-center gap-1.5 pb-1">
-              <span className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold whitespace-nowrap">Date Range</span>
-              <span className="text-[#474846] text-sm font-black">→</span>
+          <div className="flex flex-1 sm:flex-none items-end justify-between sm:justify-start gap-3 mt-2 sm:mt-0 sm:ml-auto w-full sm:w-auto">
+            <div className="flex-1 sm:flex-none">
+              <CustomDatePicker value={dateFrom} onChange={setDateFrom} placeholder="Start" disableSundays={false} className="w-full sm:w-36" />
             </div>
-            <CustomDatePicker value={dateTo} onChange={setDateTo} placeholder="End" disableSundays={false} className="w-36" alignRight />
+            <div className="flex flex-col items-center gap-1.5 pb-2">
+              <span className="text-[#ababa8] text-sm font-black hidden sm:block">→</span>
+              <span className="text-[#ababa8] text-[10px] font-black sm:hidden tracking-widest uppercase">To</span>
+            </div>
+            <div className="flex-1 sm:flex-none">
+              <CustomDatePicker value={dateTo} onChange={setDateTo} placeholder="End" disableSundays={false} className="w-full sm:w-36" alignRight />
+            </div>
           </div>
         </div>
 

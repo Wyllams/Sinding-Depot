@@ -441,7 +441,7 @@ export default function CashPaymentsPage() {
           style={{ background: "rgba(18,20,18,0.8)", borderColor: "rgba(71,72,70,0.2)" }}
         >
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
                   {["Date", "Job Name", "Store", "Amount", "Employee", "Notes", ""].map((h) => (
