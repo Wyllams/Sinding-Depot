@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { TopBar } from "../../../components/TopBar";
 import CustomDatePicker from "../../../components/CustomDatePicker";
 import { supabase } from "../../../lib/supabase";
@@ -48,6 +49,81 @@ const fmt = (v: number): string =>
 
 const fmtDate = (d: string): string =>
   new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+const ActionMenu = ({ p, onEdit, onDelete }: { p: CashPayment, onEdit: () => void, onDelete: () => void }) => {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (triggerRef.current && !triggerRef.current.contains(e.target as Node) &&
+          (!menuRef.current || !menuRef.current.contains(e.target as Node))) {
+        setOpen(false);
+      }
+    };
+    const handleScroll = (e: Event) => {
+      if (menuRef.current && menuRef.current.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    if (open) {
+      document.addEventListener("mousedown", handleClick);
+      window.addEventListener("scroll", handleScroll, true);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [open]);
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setCoords({ top: rect.bottom + 4, left: rect.right - 128 });
+    }
+    setOpen(!open);
+  };
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        onClick={handleToggle}
+        title="Quick Actions"
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#faf9f5] hover:bg-[#242624] transition-all ml-auto relative z-10"
+      >
+        <span className="material-symbols-outlined text-[16px]" translate="no">edit</span>
+      </button>
+
+      {open && typeof window !== "undefined" && createPortal(
+        <div 
+          ref={menuRef}
+          className="fixed z-[99999] w-32 bg-[#181a18] border border-[#aeee2a]/20 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] text-left overflow-hidden" 
+          style={{ top: coords.top, left: coords.left }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => { setOpen(false); onEdit(); }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-[#faf9f5] hover:bg-[#242624] transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px] text-[#aeee2a]" translate="no">edit</span>
+            Edit
+          </button>
+          <button
+            onClick={() => { setOpen(false); onDelete(); }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-[#ff7351] hover:bg-[#ff7351]/10 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
+            Delete
+          </button>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+};
 
 export default function CashPaymentsPage() {
   const now = new Date();
@@ -488,13 +564,21 @@ export default function CashPaymentsPage() {
                       <td className="px-6 py-4 text-sm font-medium text-[#faf9f5]">{p.pickedBy}</td>
                       <td className="px-6 py-4 text-sm text-[#ababa8] max-w-[200px] truncate">{p.notes || "—"}</td>
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => openEdit(p)}
-                          title="Edit record"
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-[#474846] hover:text-[#aeee2a] hover:bg-[#aeee2a]/10 transition-all"
-                        >
-                          <span className="material-symbols-outlined text-[18px]" translate="no">edit</span>
-                        </button>
+                        <ActionMenu 
+                          p={p} 
+                          onEdit={() => openEdit(p)}
+                          onDelete={() => {
+                            setConfirmModal({
+                              isOpen: true,
+                              title: "Delete Payment",
+                              message: `Are you sure you want to delete the payment for ${p.jobName}?`,
+                              onConfirm: () => {
+                                setPayments(prev => prev.filter(item => item.id !== p.id));
+                                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                              }
+                            });
+                          }}
+                        />
                       </td>
                     </tr>
                   ))
