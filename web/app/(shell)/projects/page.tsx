@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, Fragment } from "react";
 import { TopBar } from "../../../components/TopBar";
 import CustomDatePicker from "../../../components/CustomDatePicker";
+import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
 import { useUndo } from "../../../components/UndoContext";
 
@@ -283,38 +284,40 @@ export default function ProjectsPage() {
           {/* Status */}
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold">Status</label>
-            <select
+            <CustomDropdown
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] transition-colors outline-none border-none appearance-none w-full sm:w-36"
-            >
-              <option value="">All Statuses</option>
-              <option value="active">Confirmed (Ready to Start)</option>
-              <option value="draft">Tentative (Not Yet Contacted)</option>
-              <option value="pending_scheduling">Pending</option>
-              <option value="on_hold">Pending (On Hold)</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+              onChange={(val) => setStatusFilter(val)}
+              options={[
+                { value: "active", label: "Confirmed (Ready to Start)" },
+                { value: "draft", label: "Tentative (Not Yet Contacted)" },
+                { value: "pending_scheduling", label: "Pending" },
+                { value: "on_hold", label: "Pending (On Hold)" },
+                { value: "completed", label: "Completed" },
+                { value: "cancelled", label: "Cancelled" }
+              ]}
+              placeholder="All Statuses"
+              className="w-full sm:w-36 bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] hover:border-[#aeee2a]/50 transition-colors flex justify-between items-center"
+            />
           </div>
 
           {/* Services */}
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold">Services</label>
-            <select
+            <CustomDropdown
               value={serviceFilter}
-              onChange={(e) => setServiceFilter(e.target.value)}
-              className="bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] transition-colors outline-none border-none appearance-none w-full sm:w-36"
-            >
-              <option value="">All Services</option>
-              <option value="siding">Siding</option>
-              <option value="gutters">Gutters</option>
-              <option value="painting">Painting</option>
-              <option value="windows">Windows</option>
-              <option value="decks">Decks</option>
-              <option value="roofing">Roofing</option>
-              <option value="dumpster">Dumpster</option>
-            </select>
+              onChange={(val) => setServiceFilter(val)}
+              options={[
+                { value: "siding", label: "Siding" },
+                { value: "gutters", label: "Gutters" },
+                { value: "painting", label: "Painting" },
+                { value: "windows", label: "Windows" },
+                { value: "decks", label: "Decks" },
+                { value: "roofing", label: "Roofing" },
+                { value: "dumpster", label: "Dumpster" }
+              ]}
+              placeholder="All Services"
+              className="w-full sm:w-36 bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] hover:border-[#aeee2a]/50 transition-colors flex justify-between items-center"
+            />
           </div>
 
           {/* Date Range */}
@@ -443,25 +446,27 @@ export default function ProjectsPage() {
                       {/* Gating Status */}
                       <td className="px-6 py-4">
                         <div className="relative group/gate w-[210px]">
-                          <select
-                            onClick={(e) => e.stopPropagation()}
-                            value={gate}
-                            onChange={(e) => handleGateChange(job.id, e.target.value)}
-                            className="w-full appearance-none bg-[#0a0a0a] border border-[#474846] rounded-xl pl-10 pr-8 py-2 text-[9px] font-black uppercase tracking-widest text-[#faf9f5] shadow-inner focus:outline-none focus:border-[#aeee2a] cursor-pointer transition-colors"
-                          >
-                            <option value="NOT_CONTACTED">🔴 NOT YET CONTACTED</option>
-                            <option value="READY">🟢 READY TO START</option>
-                            <option value="WINDOWS">🔵 WINDOWS</option>
-                            <option value="DOORS">🟠 DOORS</option>
-                            <option value="FINANCING">🟡 FINANCING</option>
-                            <option value="MATERIALS">🪨 MATERIALS</option>
-                            <option value="HOA">📄 HOA</option>
-                            <option value="OTHER_REPAIRS">🛠️ OTHER REPAIRS</option>
-                            <option value="NO_ANSWER">📴 NO ANSWER</option>
-                            <option value="PERMIT">📋 PERMIT</option>
-                          </select>
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <CustomDropdown
+                              value={gate}
+                              onChange={(val) => handleGateChange(job.id, val)}
+                              options={[
+                                { value: "NOT_CONTACTED", label: "🔴 NOT YET CONTACTED" },
+                                { value: "READY", label: "🟢 READY TO START" },
+                                { value: "WINDOWS", label: "🔵 WINDOWS" },
+                                { value: "DOORS", label: "🟠 DOORS" },
+                                { value: "FINANCING", label: "🟡 FINANCING" },
+                                { value: "MATERIALS", label: "🪨 MATERIALS" },
+                                { value: "HOA", label: "📄 HOA" },
+                                { value: "OTHER_REPAIRS", label: "🛠️ OTHER REPAIRS" },
+                                { value: "NO_ANSWER", label: "📴 NO ANSWER" },
+                                { value: "PERMIT", label: "📋 PERMIT" }
+                              ]}
+                              className="w-full bg-[#0a0a0a] border border-[#474846] rounded-xl pl-9 pr-3 py-2 text-[9px] font-black uppercase tracking-widest text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                            />
+                          </div>
                           <div
-                            className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg flex items-center justify-center shrink-0 pointer-events-none"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg flex items-center justify-center shrink-0 pointer-events-none z-10"
                             style={{
                               backgroundColor: `${gateConf.color}25`,
                               border: `1px solid ${gateConf.color}40`,
@@ -474,9 +479,6 @@ export default function ProjectsPage() {
                             >
                               {gateConf.icon}
                             </span>
-                          </div>
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8]">
-                            <span className="material-symbols-outlined text-[16px]" translate="no">expand_more</span>
                           </div>
                         </div>
                       </td>

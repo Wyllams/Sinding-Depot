@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { TopBar } from "../../../../components/TopBar";
 import CustomDatePicker from "../../../../components/CustomDatePicker";
+import { CustomDropdown } from "../../../../components/CustomDropdown";
 import { supabase } from "../../../../lib/supabase";
 
 // ─── Discipline visuals (reused from /crews) ──────────────────────
@@ -513,25 +514,21 @@ export default function ProjectDetailPage() {
             </div>
 
             {/* Gate Status Inline */}
-            <div className="relative">
-              <select
+            <div className="relative z-50 min-w-[200px]">
+              <CustomDropdown
                 value={gateStatus}
-                onChange={(e) => handleGateChange(e.target.value)}
-                className="appearance-none bg-[#121412] border border-[#474846] rounded-xl pl-10 pr-8 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#faf9f5] focus:outline-none focus:border-[#aeee2a] cursor-pointer"
-              >
-                {Object.entries(GATE_CONFIG).map(([k, v]) => (
-                  <option key={k} value={k}>{v.title}</option>
-                ))}
-              </select>
+                onChange={(val) => handleGateChange(val)}
+                options={Object.entries(GATE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }))}
+                className="w-full bg-[#121412] border border-[#474846] rounded-xl pl-10 pr-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+              />
               <div
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center pointer-events-none"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center pointer-events-none z-10"
                 style={{ backgroundColor: `${gateConf.color}20` }}
               >
                 <span className="material-symbols-outlined text-[13px] pointer-events-none" style={{ color: gateConf.color }} translate="no">
                   {gateConf.icon}
                 </span>
               </div>
-              <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8] text-[16px]" translate="no">expand_more</span>
             </div>
           </div>
         </div>
@@ -646,16 +643,16 @@ export default function ProjectDetailPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div className="bg-[#1e201e] rounded-xl p-3 relative flex flex-col justify-center">
                     <p className="text-[#ababa8] font-bold mb-1.5 tracking-widest uppercase text-[9px] pointer-events-none">Salesperson</p>
-                    <select
-                      value={job.salesperson_id || ""} // needs the real salesperson ID but maybe we only have obj
-                      onChange={(e) => handleAutoSave("jobs", job.id, "salesperson_id", e.target.value)}
-                      className="w-full text-[#faf9f5] font-bold bg-transparent appearance-none outline-none cursor-pointer hover:text-[#aeee2a] -ml-1 pl-1 transition-colors"
-                    >
-                      <option value="" className="bg-[#121412] text-[#faf9f5]">No Salesperson</option>
-                      {allSalespersons.map(s => (
-                        <option key={s.id} value={s.id} className="bg-[#121412] text-[#faf9f5]">{s.full_name}</option>
-                      ))}
-                    </select>
+                    <div className="relative z-40 -ml-1">
+                      <CustomDropdown
+                        value={job.salesperson_id || ""}
+                        onChange={(val) => handleAutoSave("jobs", job.id, "salesperson_id", val)}
+                        options={allSalespersons.map(s => ({ value: s.id, label: s.full_name }))}
+                        placeholder="No Salesperson"
+                        inline
+                        className="w-full text-[#faf9f5] font-bold bg-transparent outline-none cursor-pointer hover:text-[#aeee2a] transition-colors flex items-center"
+                      />
+                    </div>
                   </div>
                   <div className="bg-[#1e201e] rounded-xl p-3">
                     <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px]">Location</p>
@@ -731,25 +728,13 @@ export default function ProjectDetailPage() {
 
                 {editingServices && (
                   <div className="mt-4 pt-4 border-t border-[#474846]/20 flex gap-2">
-                    <div className="relative flex-1">
-                      <select
+                      <CustomDropdown
                         value={addingServiceId}
-                        onChange={(e) => setAddingServiceId(e.target.value)}
-                        className="w-full bg-[#1e201e] border border-[#474846]/20 hover:border-[#474846] focus:border-[#aeee2a] rounded-xl py-2 pl-3 pr-8 text-[#faf9f5] appearance-none outline-none font-bold text-xs transition-colors"
-                      >
-                        <option value="">Add a service...</option>
-                        {allServiceTypes.map(st => (
-                          <option 
-                            key={st.id} 
-                            value={st.id} 
-                            disabled={job.services.some((s: any) => s.service_type?.name === st.name)}
-                          >
-                            {st.name}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8] text-[16px]" translate="no">expand_more</span>
-                    </div>
+                        onChange={(val) => setAddingServiceId(val)}
+                        options={allServiceTypes.filter(st => !job.services.some((s: any) => s.service_type?.name === st.name)).map(st => ({ value: st.id, label: st.name }))}
+                        placeholder="Add a service..."
+                        className="w-full bg-[#1e201e] border border-[#474846]/20 hover:border-[#aeee2a]/50 rounded-xl py-2 px-3 text-[#faf9f5] font-bold text-xs transition-colors flex justify-between items-center"
+                      />
                     <button
                       onClick={handleAddService}
                       disabled={!addingServiceId}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import CustomDatePicker from "../../../components/CustomDatePicker";
+import { CustomDropdown } from "../../../components/CustomDropdown";
 import { TopBar } from "../../../components/TopBar";
 import { supabase } from "../../../lib/supabase";
 
@@ -529,20 +530,14 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
             {/* Project */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Project</label>
-              <div className="relative">
-                <select
+              <div className="relative z-50">
+                <CustomDropdown
                   value={jobId}
-                  onChange={(e) => setJobId(e.target.value)}
-                  className="w-full bg-[#242624] border border-[#474846]/20 hover:border-[#474846] focus:border-[#aeee2a] rounded-xl py-3.5 px-4 text-[#faf9f5] appearance-none outline-none font-bold text-[15px] transition-colors"
-                >
-                  <option value="">Select a Project...</option>
-                  {jobs.map((j) => (
-                    <option key={j.id} value={j.id}>
-                      #{j.job_number} — {j.customer_name}
-                    </option>
-                  ))}
-                </select>
-                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8]" translate="no">expand_more</span>
+                  onChange={(val) => setJobId(val)}
+                  options={jobs.map(j => ({ value: j.id, label: `#${j.job_number} — ${j.customer_name}` }))}
+                  placeholder="Select a Project..."
+                  className="w-full bg-[#242624] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-3.5 text-[15px] font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                />
               </div>
             </div>
 
@@ -577,23 +572,14 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
             {/* Service */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Service</label>
-              <div className="relative">
-                <select
+              <div className={`relative z-40 ${!jobId || jobServices.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
+                <CustomDropdown
                   value={serviceId}
-                  onChange={(e) => setServiceId(e.target.value)}
-                  disabled={!jobId || jobServices.length === 0}
-                  className="w-full bg-[#242624] border border-[#474846]/20 hover:border-[#474846] focus:border-[#aeee2a] rounded-xl py-3.5 px-4 text-[#faf9f5] appearance-none outline-none font-bold text-[15px] transition-colors disabled:opacity-50"
-                >
-                  <option value="" className="text-[#ababa8]">
-                    {!jobId ? "Select Project First..." : "Select Service..."}
-                  </option>
-                  {jobServices.map((s) => (
-                    <option key={s.id} value={s.id} className="bg-[#121412]">
-                      {s.service_type?.name ?? "Unknown"}
-                    </option>
-                  ))}
-                </select>
-                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8]" translate="no">expand_more</span>
+                  onChange={(val) => setServiceId(val)}
+                  options={jobServices.map(s => ({ value: s.id, label: s.service_type?.name ?? "Unknown" }))}
+                  placeholder={!jobId ? "Select Project First..." : "Select Service..."}
+                  className="w-full bg-[#242624] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-3.5 text-[15px] font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                />
               </div>
             </div>
           </div>

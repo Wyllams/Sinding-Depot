@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import CustomDatePicker from "./CustomDatePicker";
+import { CustomDropdown } from "./CustomDropdown";
 
 interface Job { id: string; job_number: string; title: string; }
 interface Crew { id: string; name: string; }
@@ -171,17 +172,15 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                 <label className="text-[11px] font-bold text-[#ababa8] uppercase tracking-widest">
                   Project <span className="text-[#aeee2a]">*</span>
                 </label>
-                <select
-                  required
+                <CustomDropdown
                   value={formData.job_id}
-                  onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
-                  className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] focus:outline-none focus:border-[#aeee2a] transition-colors"
-                >
-                  <option value="">Select Project</option>
-                  {jobs.map((job) => (
-                    <option key={job.id} value={job.id}>{job.job_number} - {job.title}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setFormData({ ...formData, job_id: val })}
+                  options={[
+                    { value: "", label: "Select Project" },
+                    ...jobs.map((job) => ({ value: job.id, label: `${job.job_number} - ${job.title}` }))
+                  ]}
+                  className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                />
               </div>
 
               {/* Service Type */}
@@ -189,20 +188,20 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                 <label className="text-[11px] font-bold text-[#ababa8] uppercase tracking-widest">
                   Discipline / Type <span className="text-[#aeee2a]">*</span>
                 </label>
-                <select
-                  required
+                <CustomDropdown
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] focus:outline-none focus:border-[#aeee2a] transition-colors"
-                >
-                  <option value="" disabled>--</option>
-                  <option value="siding">Siding</option>
-                  <option value="doors">Doors</option>
-                  <option value="windows">Windows</option>
-                  <option value="paint">Paint</option>
-                  <option value="gutters">Gutters</option>
-                  <option value="roofing">Roofing</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, type: val })}
+                  options={[
+                    { value: "", label: "--" },
+                    { value: "siding", label: "Siding" },
+                    { value: "doors", label: "Doors" },
+                    { value: "windows", label: "Windows" },
+                    { value: "paint", label: "Paint" },
+                    { value: "gutters", label: "Gutters" },
+                    { value: "roofing", label: "Roofing" }
+                  ]}
+                  className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                />
               </div>
 
               {/* Service Date */}
@@ -217,27 +216,28 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                 <label className="text-[11px] font-bold text-[#ababa8] uppercase tracking-widest">
                   Assigned Crew
                 </label>
-                <div className="relative">
-                  <select
+                <div className="relative z-[70]">
+                  <CustomDropdown
                     value={formData.crew_id}
-                    onChange={(e) => setFormData({ ...formData, crew_id: e.target.value })}
-                    className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] focus:outline-none focus:border-[#aeee2a] transition-colors appearance-none"
-                  >
-                    <option value="">Unassigned</option>
-                    {(() => {
-                      const matched = crews.filter(c => activeFilter.some(prefix => c.name.toUpperCase().includes(prefix)) && !c.name.includes("02"));
-                      const displayCrews = [...matched];
-                      activeFilter.forEach(filterName => {
-                        if (!displayCrews.some(c => c.name.toUpperCase().includes(filterName))) {
-                          displayCrews.push({ id: filterName, name: filterName });
-                        }
-                      });
-                      return displayCrews.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ));
-                    })()}
-                  </select>
-                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none text-[18px]" translate="no">expand_more</span>
+                    onChange={(val) => setFormData({ ...formData, crew_id: val })}
+                    options={[
+                      { value: "", label: "Unassigned" },
+                      ...(() => {
+                        const matched = crews.filter((c) =>
+                          activeFilter.some((prefix) => c.name.toUpperCase().includes(prefix)) &&
+                          !c.name.includes("02")
+                        );
+                        const displayCrews = [...matched];
+                        activeFilter.forEach((filterName) => {
+                          if (!displayCrews.some((c) => c.name.toUpperCase().includes(filterName))) {
+                            displayCrews.push({ id: filterName, name: filterName });
+                          }
+                        });
+                        return displayCrews.map((c) => ({ value: c.id, label: c.name }));
+                      })()
+                    ]}
+                    className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                  />
                 </div>
               </div>
             </div>

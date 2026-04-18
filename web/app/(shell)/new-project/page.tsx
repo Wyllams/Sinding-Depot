@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar } from "../../../components/TopBar";
+import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
 
 // =============================================
@@ -775,22 +776,23 @@ export default function NewProjectPage() {
                   <div className="space-y-4">
                     <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8] ml-1">Initial Project Gate</label>
                     <div className="relative group w-full">
-                      <select 
+                      <CustomDropdown 
                         value={gateStatus}
-                        onChange={(e) => setGateStatus(e.target.value as GateConfigKey)}
-                        className="w-full appearance-none bg-[#0a0a0a] border border-[#474846] rounded-xl pl-12 pr-8 py-3.5 text-xs font-black uppercase tracking-widest text-[#faf9f5] shadow-inner focus:outline-none focus:border-[#aeee2a] cursor-pointer transition-colors custom-select-arrow"
-                      >
-                        <option value="NOT_CONTACTED" className="bg-[#ba1212] text-white">🔴 NOT YET CONTACTED</option>
-                        <option value="READY" className="bg-[#1f8742] text-white">🟢 READY TO START</option>
-                        <option value="WINDOWS" className="bg-[#165eb3] text-white">🔵 WINDOWS</option>
-                        <option value="DOORS" className="bg-[#f09a1a] text-black">🟠 DOORS</option>
-                        <option value="FINANCING" className="bg-[#ebd27a] text-black">🟡 FINANCING</option>
-                        <option value="MATERIALS" className="bg-[#306870] text-white">🪨 MATERIALS</option>
-                        <option value="HOA" className="bg-[#9acbf0] text-black">📄 HOA</option>
-                        <option value="OTHER_REPAIRS" className="bg-[#d1a3f0] text-black">🛠️ OTHER REPAIRS</option>
-                        <option value="NO_ANSWER" className="bg-[#f2a074] text-black">📴 NO ANSWER</option>
-                        <option value="PERMIT" className="bg-[#747673] text-white">📋 PERMIT</option>
-                      </select>
+                        onChange={(val) => setGateStatus(val as GateConfigKey)}
+                        options={[
+                          { value: "NOT_CONTACTED", label: "🔴 NOT YET CONTACTED" },
+                          { value: "READY", label: "🟢 READY TO START" },
+                          { value: "WINDOWS", label: "🔵 WINDOWS" },
+                          { value: "DOORS", label: "🟠 DOORS" },
+                          { value: "FINANCING", label: "🟡 FINANCING" },
+                          { value: "MATERIALS", label: "🪨 MATERIALS" },
+                          { value: "HOA", label: "📄 HOA" },
+                          { value: "OTHER_REPAIRS", label: "🛠️ OTHER REPAIRS" },
+                          { value: "NO_ANSWER", label: "📴 NO ANSWER" },
+                          { value: "PERMIT", label: "📋 PERMIT" }
+                        ]}
+                        className="w-full bg-[#0a0a0a] border border-[#474846] rounded-xl pl-12 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-[#faf9f5] shadow-inner transition-colors flex justify-between items-center hover:border-[#aeee2a]/50"
+                      />
                       
                       {/* Icone Visual Overlay */}
                       <div 
@@ -804,12 +806,6 @@ export default function NewProjectPage() {
                            {GATE_CONFIG[gateStatus].icon}
                          </span>
                       </div>
-
-                      {/* Dropdown Icon */}
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8] group-hover:text-[#faf9f5] transition-colors">
-                        <span className="material-symbols-outlined text-[20px]" translate="no">expand_more</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -821,15 +817,12 @@ export default function NewProjectPage() {
                   <div className="space-y-4">
                     <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8] ml-1">Assigned Seller</label>
                      <div className="relative group w-full">
-                      <select 
+                      <CustomDropdown 
                         value={spStatus}
-                        onChange={(e) => setSpStatus(e.target.value as SellerConfigKey)}
-                        className="w-full appearance-none bg-[#0a0a0a] border border-[#474846] rounded-xl pl-16 pr-8 py-3.5 text-xs font-black uppercase tracking-widest text-[#faf9f5] shadow-inner focus:outline-none focus:border-[#aeee2a] cursor-pointer transition-colors custom-select-arrow"
-                      >
-                        {Object.entries(SELLER_CONFIG).map(([key, config]) => (
-                          <option key={key} value={key}>{config.label}</option>
-                        ))}
-                      </select>
+                        onChange={(val) => setSpStatus(val as SellerConfigKey)}
+                        options={Object.entries(SELLER_CONFIG).map(([key, config]) => ({ value: key, label: config.label }))}
+                        className="w-full bg-[#0a0a0a] border border-[#474846] rounded-xl pl-16 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-[#faf9f5] shadow-inner transition-colors flex justify-between items-center hover:border-[#aeee2a]/50"
+                      />
                       
                       {/* Avatar / Inicial Overlay */}
                       <div 
@@ -840,12 +833,6 @@ export default function NewProjectPage() {
                           {SELLER_CONFIG[spStatus]?.initial || spStatus}
                         </span>
                       </div>
-
-                      {/* Dropdown Icon */}
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8] group-hover:text-[#faf9f5] transition-colors">
-                        <span className="material-symbols-outlined text-[20px]" translate="no">expand_more</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>

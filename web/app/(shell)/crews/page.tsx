@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { TopBar } from "../../../components/TopBar";
 import CustomDatePicker from "../../../components/CustomDatePicker";
+import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
 import { useUndo } from "../../../components/UndoContext";
 
@@ -1005,20 +1006,14 @@ export default function CrewsPage() {
                   {/* Job Select */}
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2">Select Project</label>
-                    <div className="relative">
-                      <select
+                    <div className="relative z-50">
+                      <CustomDropdown
                         value={assignJobId}
-                        onChange={(e) => setAssignJobId(e.target.value)}
-                        className="w-full bg-[#181a18] border border-[#474846]/30 rounded-xl px-4 py-3 text-sm text-[#faf9f5] focus:outline-none focus:border-[#aeee2a]/50 transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="">— Choose a project —</option>
-                        {openJobs.map((j) => (
-                          <option key={j.id} value={j.id}>
-                            #{j.job_number} · {j.customer_name} {j.city ? `— ${j.city}` : ""}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#ababa8] text-[18px]" translate="no">expand_more</span>
+                        onChange={(val) => setAssignJobId(val)}
+                        options={openJobs.map((j) => ({ value: j.id, label: `#${j.job_number} · ${j.customer_name} ${j.city ? `— ${j.city}` : ""}` }))}
+                        placeholder="— Choose a project —"
+                        className="w-full bg-[#181a18] border border-[#474846]/30 rounded-xl px-4 py-3 text-sm text-[#faf9f5] font-bold flex justify-between items-center transition-all hover:border-[#aeee2a]/50"
+                      />
                     </div>
                   </div>
 
@@ -1085,15 +1080,15 @@ export default function CrewsPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 block">Service Discipline *</label>
-                <select
-                  value={addModalCat ?? "siding"}
-                  onChange={(e) => setAddModalCat(e.target.value)}
-                  className="w-full bg-[#181a18] border border-[#474846]/30 rounded-xl px-4 py-3 text-[#faf9f5] focus:outline-none focus:border-[#aeee2a]/50 text-sm cursor-pointer"
-                >
-                  {Object.entries(DISCIPLINE_CONFIG).map(([key, cfg]) => (
-                    <option key={key} value={key}>{cfg.label}</option>
-                  ))}
-                </select>
+                <div className="w-full relative z-40">
+                  <CustomDropdown
+                    value={addModalCat ?? "siding"}
+                    onChange={(val) => setAddModalCat(val)}
+                    options={Object.entries(DISCIPLINE_CONFIG).map(([key, cfg]) => ({ value: key, label: cfg.label }))}
+                    placeholder="Select Discipline"
+                    className="w-full bg-[#181a18] border border-[#474846]/30 rounded-xl px-4 py-3 text-[#faf9f5] font-bold text-sm flex justify-between items-center hover:border-[#aeee2a]/50 transition-colors"
+                  />
+                </div>
               </div>
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 block">Crew Name *</label>

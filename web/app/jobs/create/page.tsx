@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowLeft, User, MapPin, Hammer, PaintRoller, Grip, Home, Calendar, FileText } from "lucide-react";
 import Link from "next/link";
 import CustomDatePicker from "../../../components/CustomDatePicker";
+import { CustomDropdown } from "@/components/CustomDropdown";
 
 export default function CreateJob() {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -142,11 +143,18 @@ export default function CreateJob() {
               </div>
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Project Manager</label>
-                <select className="w-full bg-[#121214] border border-[#27272a] text-[14px] text-zinc-400 rounded-xl px-4 py-3 outline-none focus:border-[#b2d234] transition-colors appearance-none">
-                  <option value="">Select Manager...</option>
-                  <option value="mark">Mark S.</option>
-                  <option value="sarah">Sarah J.</option>
-                </select>
+                <div className="relative z-[80]">
+                  <CustomDropdown
+                    value=""
+                    onChange={() => {}}
+                    options={[
+                      { value: "", label: "Select Manager..." },
+                      { value: "mark", label: "Mark S." },
+                      { value: "sarah", label: "Sarah J." }
+                    ]}
+                    className="w-full bg-[#121214] border border-[#27272a] text-[14px] text-zinc-400 rounded-xl px-4 py-3 outline-none hover:border-[#b2d234] transition-colors flex justify-between items-center"
+                  />
+                </div>
               </div>
             </div>
           </section>

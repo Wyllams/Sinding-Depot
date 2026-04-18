@@ -3,6 +3,7 @@
 import { TopBar } from "../../../components/TopBar";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../../lib/supabase";
+import { CustomDropdown } from "../../../components/CustomDropdown";
 import { NewServiceCallModal } from "../../../components/NewServiceCallModal";
 import { ServiceReportPanel } from "../../../components/ServiceReportPanel";
 import { useUndo } from "../../../components/UndoContext";
@@ -449,10 +450,12 @@ export default function ServicesPage() {
 
                         {/* Status — colored dropdown */}
                         <td className="px-5 py-4 text-center">
-                          <select
+                          <CustomDropdown
                             value={issue.status}
-                            onChange={(e) => updateField(issue.id, "status", e.target.value)}
-                            className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-tight border outline-none cursor-pointer appearance-none mx-auto block"
+                            onChange={(val) => updateField(issue.id, "status", val)}
+                            options={STATUS_OPTIONS.map((s) => ({ value: s, label: STATUS_CONFIG[s].label }))}
+                            inline={true}
+                            className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-tight border outline-none cursor-pointer mx-auto block w-fit"
                             style={{
                               backgroundColor: `${statusColor}15`,
                               color: statusColor,
@@ -460,28 +463,20 @@ export default function ServicesPage() {
                               minWidth: "90px",
                               textAlign: "center"
                             }}
-                          >
-                            {STATUS_OPTIONS.map((s) => (
-                              <option key={s} value={s} className="bg-[#121412] text-[#faf9f5]">
-                                {STATUS_CONFIG[s].label}
-                              </option>
-                            ))}
-                          </select>
+                          />
                         </td>
 
                         {/* Assigned To — crew dropdown */}
                         <td className="px-5 py-4 text-center">
-                          <select
+                          <CustomDropdown
                             value={issue.crew_id || ""}
-                            onChange={(e) => updateField(issue.id, "crew_id", e.target.value || null)}
-                            className="bg-[#1e201e] border border-[#474846]/20 text-[#faf9f5] rounded-lg px-2 py-1 text-xs font-bold outline-none focus:border-[#aeee2a]/40 transition-colors appearance-none cursor-pointer mx-auto block"
+                            onChange={(val) => updateField(issue.id, "crew_id", val || null)}
+                            options={displayCrews.map((c) => ({ value: c.id, label: c.name }))}
+                            placeholder="Unassigned"
+                            inline={true}
+                            className="bg-[#1e201e] border border-[#474846]/20 text-[#faf9f5] rounded-lg px-2 py-1 text-xs font-bold outline-none hover:border-[#aeee2a]/40 transition-colors cursor-pointer mx-auto block w-fit"
                             style={{ minWidth: "110px", textAlign: "center" }}
-                          >
-                            <option value="" className="bg-[#121412]">Unassigned</option>
-                            {displayCrews.map((c) => (
-                              <option key={c.id} value={c.id} className="bg-[#121412]">{c.name}</option>
-                            ))}
-                          </select>
+                          />
                         </td>
 
                         {/* Type */}
@@ -607,29 +602,32 @@ export default function ServicesPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 z-50 relative">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Status</label>
-                  <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                    {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>)}
-                  </select>
+                  <CustomDropdown
+                    value={editForm.status}
+                    onChange={(val) => setEditForm({ ...editForm, status: val })}
+                    options={STATUS_OPTIONS.map((s) => ({ value: s, label: STATUS_CONFIG[s].label }))}
+                  />
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 z-50 relative">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Discipline</label>
-                  <select value={editForm.type} onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                    {DISCIPLINES.map((d) => <option key={d} value={d.toLowerCase()}>{d}</option>)}
-                  </select>
+                  <CustomDropdown
+                    value={editForm.type}
+                    onChange={(val) => setEditForm({ ...editForm, type: val })}
+                    options={DISCIPLINES.map((d) => ({ value: d.toLowerCase(), label: d }))}
+                  />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 z-40 relative">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Assigned Crew</label>
-                <select value={editForm.crew_id} onChange={(e) => setEditForm({ ...editForm, crew_id: e.target.value })}
-                  className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                  <option value="">Unassigned</option>
-                  {crews.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                <CustomDropdown
+                  value={editForm.crew_id}
+                  onChange={(val) => setEditForm({ ...editForm, crew_id: val })}
+                  options={crews.map((c) => ({ value: c.id, label: c.name }))}
+                  placeholder="Unassigned"
+                />
               </div>
 
               <div className="flex gap-3 pt-2">

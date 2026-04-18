@@ -337,57 +337,62 @@ export default function WindowsTrackerPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
-          <select
-            value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-            className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-          >
-            <option value="ALL">All Statuses</option>
-            {ALL_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <select
-            value={filterMoney} onChange={(e) => setFilterMoney(e.target.value)}
-            className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-          >
-            <option value="ALL">Money Collected: All</option>
-            <option value="YES">Yes</option>
-            <option value="NO">No</option>
-            <option value="FINANCING">Financing</option>
-          </select>
-          <select
-            value={filterMode} onChange={(e) => setFilterMode(e.target.value as any)}
-            className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-          >
-            <option value="ALL">Date: All Time</option>
-            <option value="MONTH">By Month</option>
-            <option value="YEAR">By Year</option>
-          </select>
+          <div className="relative z-[80]">
+            <CustomDropdown
+              value={filterStatus} onChange={(val) => setFilterStatus(val)}
+              options={[{ value: "ALL", label: "All Statuses" }, ...ALL_STATUSES.map(s => ({ value: s, label: s }))]}
+              className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none hover:border-[#aeee2a] transition-colors flex justify-between items-center min-w-[150px]"
+            />
+          </div>
+          <div className="relative z-[80]">
+            <CustomDropdown
+              value={filterMoney} onChange={(val) => setFilterMoney(val)}
+              options={[
+                { value: "ALL", label: "Money Collected: All" },
+                { value: "YES", label: "Yes" },
+                { value: "NO", label: "No" },
+                { value: "FINANCING", label: "Financing" }
+              ]}
+              className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none hover:border-[#aeee2a] transition-colors flex justify-between items-center min-w-[200px]"
+            />
+          </div>
+          <div className="relative z-[80]">
+            <CustomDropdown
+              value={filterMode} onChange={(val) => setFilterMode(val as any)}
+              options={[
+                { value: "ALL", label: "Date: All Time" },
+                { value: "MONTH", label: "By Month" },
+                { value: "YEAR", label: "By Year" }
+              ]}
+              className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none hover:border-[#aeee2a] transition-colors flex justify-between items-center min-w-[160px]"
+            />
+          </div>
 
-          {filterMode === "MONTH" && (
-            <select
-              value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}
-              className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-            >
-              {Array.from({ length: 12 }).map((_, i) => {
-                const d = new Date();
-                d.setMonth(d.getMonth() - i);
-                const val = `MONTH-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                const label = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-                return <option key={val} value={val}>{label}</option>;
-              })}
-            </select>
-          )}
+            <div className="relative z-[80]">
+              <CustomDropdown
+                value={filterMonth} onChange={(val) => setFilterMonth(val)}
+                options={Array.from({ length: 12 }).map((_, i) => {
+                  const d = new Date();
+                  d.setMonth(d.getMonth() - i);
+                  return {
+                    value: `MONTH-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+                    label: d.toLocaleString('en-US', { month: 'long', year: 'numeric' })
+                  };
+                })}
+                className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none hover:border-[#aeee2a] transition-colors flex justify-between items-center min-w-[160px]"
+              />
+            </div>
 
-          {filterMode === "YEAR" && (
-            <select
-              value={filterYear} onChange={(e) => setFilterYear(e.target.value)}
-              className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-            >
-              {[0, 1, 2].map((offset) => {
-                const y = new Date().getFullYear() - offset;
-                return <option key={`y-${y}`} value={`YEAR-${y}`}>{y}</option>;
-              })}
-            </select>
-          )}
+            <div className="relative z-[80]">
+              <CustomDropdown
+                value={filterYear} onChange={(val) => setFilterYear(val)}
+                options={[0, 1, 2].map((offset) => {
+                  const y = new Date().getFullYear() - offset;
+                  return { value: `YEAR-${y}`, label: String(y) };
+                })}
+                className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none hover:border-[#aeee2a] transition-colors flex justify-between items-center min-w-[110px]"
+              />
+            </div>
 
           {(filterStatus !== "ALL" || filterMoney !== "ALL" || filterMode !== "ALL" || searchQuery) && (
             <button
@@ -493,21 +498,20 @@ export default function WindowsTrackerPage() {
 
                         {/* Money Collected — inline colored dropdown */}
                         <td className="px-4 py-3.5">
-                          <select
+                          <CustomDropdown
                             value={o.money_collected}
-                            onChange={(e) => updateField(o.id, "money_collected", e.target.value)}
-                            className="px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border outline-none cursor-pointer appearance-none text-center"
+                            onChange={(val) => updateField(o.id, "money_collected", val)}
+                            options={ALL_MONEY}
+                            inline={true}
+                            className="px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border outline-none cursor-pointer mx-auto block w-fit"
                             style={{
                               backgroundColor: `${MONEY_COLORS[o.money_collected]}15`,
                               color: MONEY_COLORS[o.money_collected],
                               borderColor: `${MONEY_COLORS[o.money_collected]}30`,
                               minWidth: "85px",
+                              textAlign: "center"
                             }}
-                          >
-                            {ALL_MONEY.map((m) => (
-                              <option key={m} value={m} className="bg-[#121412] text-[#faf9f5]">{m}</option>
-                            ))}
-                          </select>
+                          />
                         </td>
 
                         <td className="px-4 py-3.5 whitespace-nowrap">
@@ -548,21 +552,20 @@ export default function WindowsTrackerPage() {
 
                         {/* Status — inline colored dropdown */}
                         <td className="px-4 py-3.5">
-                          <select
+                          <CustomDropdown
                             value={o.status}
-                            onChange={(e) => updateField(o.id, "status", e.target.value)}
-                            className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border outline-none cursor-pointer appearance-none text-center"
+                            onChange={(val) => updateField(o.id, "status", val)}
+                            options={ALL_STATUSES}
+                            inline={true}
+                            className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border outline-none cursor-pointer mx-auto block w-fit"
                             style={{
                               backgroundColor: `${STATUS_COLORS[o.status]}15`,
                               color: STATUS_COLORS[o.status],
                               borderColor: `${STATUS_COLORS[o.status]}30`,
                               minWidth: "100px",
+                              textAlign: "center"
                             }}
-                          >
-                            {ALL_STATUSES.map((s) => (
-                              <option key={s} value={s} className="bg-[#121412] text-[#faf9f5]">{s}</option>
-                            ))}
-                          </select>
+                          />
                         </td>
 
                         <td className="px-4 py-3.5 text-[#ababa8] max-w-[160px] truncate text-xs">{o.notes || "—"}</td>
@@ -768,19 +771,21 @@ export default function WindowsTrackerPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Status</label>
-                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as OrderStatus })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                    {ALL_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <CustomDropdown
+                    value={form.status}
+                    onChange={(val) => setForm({ ...form, status: val as OrderStatus })}
+                    options={ALL_STATUSES}
+                  />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
                     Money Collected &nbsp;<span className="text-red-400">⚠ Required</span>
                   </label>
-                  <select value={form.money_collected} onChange={(e) => setForm({ ...form, money_collected: e.target.value as MoneyCollected })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                    {ALL_MONEY.map((m) => <option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <CustomDropdown
+                    value={form.money_collected}
+                    onChange={(val) => setForm({ ...form, money_collected: val as MoneyCollected })}
+                    options={ALL_MONEY}
+                  />
                 </div>
               </div>
 
@@ -890,10 +895,11 @@ export default function WindowsTrackerPage() {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Status</label>
-                  <select value={editForm.status || "Measurement"} onChange={(e) => setEditForm({ ...editForm, status: e.target.value as OrderStatus })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                    {ALL_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <CustomDropdown
+                    value={editForm.status || "Measurement"}
+                    onChange={(val) => setEditForm({ ...editForm, status: val as OrderStatus })}
+                    options={ALL_STATUSES}
+                  />
                 </div>
               </div>
 
@@ -917,10 +923,11 @@ export default function WindowsTrackerPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Money Collected</label>
-                <select value={editForm.money_collected || "NO"} onChange={(e) => setEditForm({ ...editForm, money_collected: e.target.value as MoneyCollected })}
-                  className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                  {ALL_MONEY.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
+                <CustomDropdown
+                  value={editForm.money_collected || "NO"}
+                  onChange={(val) => setEditForm({ ...editForm, money_collected: val as MoneyCollected })}
+                  options={ALL_MONEY}
+                />
               </div>
 
               <div className="flex flex-col gap-1.5">

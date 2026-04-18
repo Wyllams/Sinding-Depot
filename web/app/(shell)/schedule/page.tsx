@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { TopBar } from "../../../components/TopBar";
 import CustomDatePicker from "../../../components/CustomDatePicker";
+import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
 
 // =============================================
@@ -840,15 +841,18 @@ export default function SchedulePage() {
               style={{ height: "42px" }}
             />
 
-            <select
-              value={filterSvc}
-              onChange={e => setFilterSvc(e.target.value as ServiceId | "ALL")}
-              style={{ height: "42px" }}
-              className="bg-[#121412] text-[#faf9f5] text-sm font-bold rounded-xl px-4 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-            >
-              <option value="ALL">All Services</option>
-              {SERVICE_CATEGORIES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
+            <div className="relative">
+              <CustomDropdown
+                value={filterSvc}
+                onChange={(val) => setFilterSvc(val as ServiceId | "ALL")}
+                options={[
+                  { value: "ALL", label: "All Services" },
+                  ...SERVICE_CATEGORIES.map(s => ({ value: s.id, label: s.label }))
+                ]}
+                className="bg-[#121412] text-[#faf9f5] text-sm font-bold rounded-xl px-4 border border-[#474846]/20 outline-none hover:border-[#aeee2a]/50 flex items-center justify-between"
+                style={{ height: "42px", minWidth: "160px" }}
+              />
+            </div>
           </div>
         </div>
 
@@ -1114,17 +1118,17 @@ export default function SchedulePage() {
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
                     Status
                   </label>
-                  <div className="relative">
-                    <select
+                  <div className="relative z-[60]">
+                    <CustomDropdown
                       value={editStatus}
-                      onChange={e => setEditStatus(e.target.value as "active" | "draft" | "on_hold")}
-                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-                    >
-                      <option value="active">Confirmed</option>
-                      <option value="draft">Tentative</option>
-                      <option value="on_hold">Pending</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none text-[18px]" translate="no">expand_more</span>
+                      onChange={(val) => setEditStatus(val as "active" | "draft" | "on_hold")}
+                      options={[
+                        { value: "active", label: "Confirmed" },
+                        { value: "draft", label: "Tentative" },
+                        { value: "on_hold", label: "Pending" }
+                      ]}
+                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                    />
                   </div>
                 </div>
 
@@ -1150,13 +1154,14 @@ export default function SchedulePage() {
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
                     Duration (days)
                   </label>
-                  <select
-                    value={editDur}
-                    onChange={e => setEditDur(Number(e.target.value))}
-                    className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-                  >
-                    {[1, 2, 3, 4, 5, 6].map(d => <option key={d} value={d}>{d} day{d > 1 ? "s" : ""}</option>)}
-                  </select>
+                  <div className="relative z-50">
+                    <CustomDropdown
+                      value={editDur.toString()}
+                      onChange={(val) => setEditDur(Number(val))}
+                      options={[1, 2, 3, 4, 5, 6].map(d => ({ value: d.toString(), label: `${d} day${d > 1 ? "s" : ""}` }))}
+                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1210,31 +1215,23 @@ export default function SchedulePage() {
                           <span className="text-[#ababa8]">Assign Crew</span>
                           <span className="text-[#aeee2a]">— {svcOpt.serviceName}</span>
                         </label>
-                        <div className="relative">
-                          <select
+                        <div className="relative z-40">
+                          <CustomDropdown
                             value={selectedCrewIds[svcOpt.jobServiceId] || ""}
-                            onChange={e => setSelectedCrewIds(prev => ({
+                            onChange={(val) => setSelectedCrewIds(prev => ({
                               ...prev,
-                              [svcOpt.jobServiceId]: e.target.value,
+                              [svcOpt.jobServiceId]: val,
                             }))}
-                            className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-                          >
-                            <option value="">Select partner / team...</option>
-                            {Object.entries(grouped).map(([partnerName, teams]) =>
-                              teams.length === 1 ? (
-                                <option key={teams[0].id} value={teams[0].id}>
-                                  {partnerName}
-                                </option>
-                              ) : (
-                                <optgroup key={partnerName} label={`── ${partnerName} ──`}>
-                                  {teams.map(t => (
-                                    <option key={t.id} value={t.id}>{t.name}</option>
-                                  ))}
-                                </optgroup>
-                              )
-                            )}
-                          </select>
-                          <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#ababa8] pointer-events-none text-[18px]" translate="no">expand_more</span>
+                            options={svcOpt.crews.map(c => {
+                              const partnerTeams = grouped[c.partnerName];
+                              return {
+                                value: c.id,
+                                label: partnerTeams.length === 1 ? c.partnerName : `${c.partnerName} — ${c.name}`
+                              };
+                            })}
+                            placeholder="Select partner / team..."
+                            className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                          />
                         </div>
                       </div>
                     );

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import { TopBar } from "../../../components/TopBar";
+import { CustomDropdown } from "../../../components/CustomDropdown";
 import CustomDatePicker from "../../../components/CustomDatePicker";
 import { supabase } from "../../../lib/supabase";
 
@@ -496,25 +496,27 @@ export default function CashPaymentsPage() {
           </div>
 
           {/* Store filter */}
-          <select
-            value={filterStore}
-            onChange={(e) => setFilterStore(e.target.value)}
-            className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-          >
-            <option value="ALL">All Stores</option>
-            {stores.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
-          </select>
+          <div className="w-40 relative z-40">
+            <CustomDropdown
+              value={filterStore}
+              onChange={(val) => setFilterStore(val)}
+              options={[{ value: "ALL", label: "All Stores" }, ...stores.map(s => ({ value: s.name, label: s.name }))]}
+              placeholder="All Stores"
+              className="w-full bg-[#1e201e] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+            />
+          </div>
 
           {/* Employee filter */}
-          <div className="flex items-center gap-1">
-            <select
-              value={filterPickedBy}
-              onChange={(e) => setFilterPickedBy(e.target.value)}
-              className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer"
-            >
-              <option value="ALL">All Employees</option>
-              {cashEmployees.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
-            </select>
+          <div className="flex items-center gap-1 z-30">
+            <div className="w-44">
+              <CustomDropdown
+                value={filterPickedBy}
+                onChange={(val) => setFilterPickedBy(val)}
+                options={[{ value: "ALL", label: "All Employees" }, ...cashEmployees.map((p) => ({ value: p.name, label: p.name }))]}
+                placeholder="All Employees"
+                className="w-full bg-[#1e201e] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+              />
+            </div>
             <button
                onClick={() => setIsEmployeeModalOpen(true)}
                className="w-10 h-10 flex items-center justify-center bg-[#1e201e] rounded-xl text-[#ababa8] hover:text-[#aeee2a] hover:border-[#aeee2a]/40 border border-[#474846]/20 transition-all"
@@ -529,25 +531,25 @@ export default function CashPaymentsPage() {
             <button onClick={goToPrevMonth} className="w-7 h-7 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] transition-all">
               <span className="material-symbols-outlined text-sm" translate="no">chevron_left</span>
             </button>
-            <div className="flex items-center gap-1 px-2">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="bg-transparent text-[#faf9f5] text-xs font-bold cursor-pointer outline-none appearance-none"
-              >
-                {MONTH_NAMES.map((name, idx) => (
-                  <option key={idx} value={idx} className="bg-[#121412]">{name}</option>
-                ))}
-              </select>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="bg-transparent text-[#ababa8] text-xs font-bold cursor-pointer outline-none appearance-none"
-              >
-                {[2024, 2025, 2026, 2027].map((y) => (
-                  <option key={y} value={y} className="bg-[#121412]">{y}</option>
-                ))}
-              </select>
+            <div className="flex items-center gap-1 px-2 z-20">
+              <div className="w-24">
+                <CustomDropdown
+                  value={selectedMonth.toString()}
+                  onChange={(val) => setSelectedMonth(Number(val))}
+                  options={MONTH_NAMES.map((name, idx) => ({ value: idx.toString(), label: name }))}
+                  inline={true}
+                  className="w-full bg-transparent text-[#faf9f5] text-[13px] font-bold outline-none flex justify-center items-center hover:text-[#aeee2a] transition-colors gap-1"
+                />
+              </div>
+              <div className="w-16">
+                <CustomDropdown
+                  value={selectedYear.toString()}
+                  onChange={(val) => setSelectedYear(Number(val))}
+                  options={[2024, 2025, 2026, 2027].map(y => ({ value: y.toString(), label: y.toString() }))}
+                  inline={true}
+                  className="w-full bg-transparent text-[#ababa8] text-[13px] font-bold outline-none flex justify-center items-center hover:text-[#aeee2a] transition-colors gap-1"
+                />
+              </div>
             </div>
             <button onClick={goToNextMonth} className="w-7 h-7 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] transition-all">
               <span className="material-symbols-outlined text-sm" translate="no">chevron_right</span>
@@ -700,12 +702,15 @@ export default function CashPaymentsPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 z-40">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Store</label>
-                  <select required value={form.store} onChange={(e) => setForm({ ...form, store: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                    {stores.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
-                  </select>
+                  <CustomDropdown
+                    value={form.store}
+                    onChange={(val) => setForm({ ...form, store: val })}
+                    options={stores.map(s => ({ value: s.name, label: s.name }))}
+                    placeholder="Select Store..."
+                    className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                  />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Amount</label>
@@ -717,12 +722,15 @@ export default function CashPaymentsPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 z-30">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Employee</label>
-                <select required value={form.pickedBy} onChange={(e) => setForm({ ...form, pickedBy: e.target.value })}
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                  {cashEmployees.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
-                </select>
+                <CustomDropdown
+                  value={form.pickedBy}
+                  onChange={(val) => setForm({ ...form, pickedBy: val })}
+                  options={cashEmployees.map(p => ({ value: p.name, label: p.name }))}
+                  placeholder="Select Employee..."
+                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Notes <span className="normal-case text-[#474846] font-normal">(optional)</span></label>
@@ -898,12 +906,15 @@ export default function CashPaymentsPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 z-40">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Store</label>
-                  <select required value={editForm.store} onChange={(e) => setEditForm({ ...editForm, store: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                    {stores.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
-                  </select>
+                  <CustomDropdown
+                    value={editForm.store}
+                    onChange={(val) => setEditForm({ ...editForm, store: val })}
+                    options={stores.map(s => ({ value: s.name, label: s.name }))}
+                    placeholder="Select Store..."
+                    className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                  />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Amount</label>
@@ -915,12 +926,15 @@ export default function CashPaymentsPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 z-30">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Employee</label>
-                <select required value={editForm.pickedBy} onChange={(e) => setEditForm({ ...editForm, pickedBy: e.target.value })}
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors appearance-none cursor-pointer">
-                  {cashEmployees.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
-                </select>
+                <CustomDropdown
+                  value={editForm.pickedBy}
+                  onChange={(val) => setEditForm({ ...editForm, pickedBy: val })}
+                  options={cashEmployees.map(p => ({ value: p.name, label: p.name }))}
+                  placeholder="Select Employee..."
+                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Notes <span className="normal-case text-[#474846] font-normal">(optional)</span></label>

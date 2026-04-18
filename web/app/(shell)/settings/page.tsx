@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { TopBar } from "@/components/TopBar";
+import { CustomDropdown } from "@/components/CustomDropdown";
 import { supabase } from "@/lib/supabase";
 
 // ─── Types ────────────────────────────────────────────
@@ -346,13 +347,18 @@ export default function SettingsPage() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 relative z-50">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Timezone</label>
-                  <select className="w-full bg-[#181a18] border-none rounded-xl py-3 px-4 text-[#faf9f5] font-medium appearance-none focus:ring-1 focus:ring-[#aeee2a] outline-none transition-all">
-                    <option>GMT-6:00 Central Time (Dallas)</option>
-                    <option>GMT-8:00 Pacific Time</option>
-                    <option>GMT-5:00 Eastern Time</option>
-                  </select>
+                  <CustomDropdown
+                    value="GMT-6:00 Central Time (Dallas)" // Mock value for static showcase
+                    onChange={() => {}}
+                    options={[
+                      "GMT-6:00 Central Time (Dallas)",
+                      "GMT-8:00 Pacific Time",
+                      "GMT-5:00 Eastern Time"
+                    ]}
+                    className="w-full bg-[#181a18] border-none rounded-xl py-3 px-4 text-[#faf9f5] font-medium hover:ring-1 hover:ring-[#aeee2a] outline-none transition-all flex justify-between items-center"
+                  />
                 </div>
               </div>
             </div>
@@ -428,17 +434,18 @@ export default function SettingsPage() {
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
-                              <select
+                              <CustomDropdown
                                 value={user.role || ""}
-                                onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                                disabled={updatingId === user.id}
-                                className={`bg-[#242624] border border-transparent rounded-lg py-1.5 px-3 text-xs font-semibold focus:ring-1 focus:ring-[#aeee2a] outline-none transition-all cursor-pointer ${updatingId === user.id ? "opacity-50" : ""}`}
-                              >
-                                <option value="admin">Admin</option>
-                                <option value="salesperson">Salesperson</option>
-                                <option value="partner">Partner / Crew</option>
-                                <option value="customer">Customer</option>
-                              </select>
+                                onChange={(val) => handleRoleChange(user.id, val)}
+                                options={[
+                                  { value: "admin", label: "Admin" },
+                                  { value: "salesperson", label: "Salesperson" },
+                                  { value: "partner", label: "Partner / Crew" },
+                                  { value: "customer", label: "Customer" }
+                                ]}
+                                inline={true}
+                                className={`bg-[#242624] border border-transparent rounded-lg py-1.5 px-3 text-xs font-semibold hover:ring-1 hover:ring-[#aeee2a] outline-none transition-all cursor-pointer ${updatingId === user.id ? "opacity-50 pointer-events-none" : ""}`}
+                              />
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${getRoleBadgeColor(user.role)}`}>
                                 {user.role}
                               </span>
@@ -489,14 +496,19 @@ export default function SettingsPage() {
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Email Address</label>
                 <input type="email" placeholder="john@example.com" className="w-full bg-[#181a18] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#aeee2a] transition-colors" />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative z-40">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Role</label>
-                <select className="w-full bg-[#181a18] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#aeee2a] transition-colors">
-                  <option value="admin">Admin</option>
-                  <option value="salesperson">Salesperson</option>
-                  <option value="partner">Partner / Crew</option>
-                  <option value="customer">Customer</option>
-                </select>
+                <CustomDropdown
+                  value="admin" // Mock
+                  onChange={() => {}}
+                  options={[
+                    { value: "admin", label: "Admin" },
+                    { value: "salesperson", label: "Salesperson" },
+                    { value: "partner", label: "Partner / Crew" },
+                    { value: "customer", label: "Customer" }
+                  ]}
+                  className="w-full bg-[#181a18] border border-white/5 rounded-xl px-4 py-3 text-sm text-white hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                />
               </div>
             </div>
 

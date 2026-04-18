@@ -3,6 +3,7 @@
 import { ArrowLeft, CheckCircle2, Circle, FileText, AlertTriangle, Users, Calendar, MoreHorizontal, ChevronRight, MessageSquare, Download } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
+import { CustomDropdown } from "@/components/CustomDropdown";
 
 // For Next.js 15, params are treated as Promises
 export default function JobDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -52,10 +53,17 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
         <div className="lg:col-span-8 bg-zinc-900/30 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-[14px] font-bold text-white uppercase tracking-wider">Project Timeline</h2>
-            <select className="bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300 rounded-md px-2 py-1 outline-none focus:border-[var(--color-siding-green)]">
-              <option>All Updates</option>
-              <option>Blockers Only</option>
-            </select>
+            <div className="w-[150px] relative z-[90]">
+              <CustomDropdown
+                value="All Updates"
+                onChange={() => {}}
+                options={[
+                  { value: "All Updates", label: "All Updates" },
+                  { value: "Blockers Only", label: "Blockers Only" }
+                ]}
+                className="bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300 rounded-md px-2 py-1 outline-none hover:border-[var(--color-siding-green)] w-full flex justify-between items-center"
+              />
+            </div>
           </div>
           
           <div className="relative">
@@ -134,22 +142,24 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
             <div className="space-y-3">
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5 ml-1">Current Gate (Waiting On)</label>
-                <div className="relative group">
-                  <select className="w-full appearance-none bg-[#050505] border border-zinc-800 rounded-xl px-4 py-3 text-[12px] font-black tracking-wider text-white shadow-inner focus:outline-none focus:border-[var(--color-siding-green)]/50 cursor-pointer transition-colors custom-select-arrow hover:border-zinc-700">
-                    <option value="NOT_CONTACTED" className="bg-[#ba1212] text-white">🔴 NOT YET CONTACTED</option>
-                    <option value="READY" className="bg-[#1f8742] text-white">🟢 READY TO START</option>
-                    <option value="WINDOWS" className="bg-[#165eb3] text-white">🔵 WINDOWS</option>
-                    <option value="DOORS" className="bg-[#f09a1a] text-black">🟠 DOORS</option>
-                    <option value="FINANCING" className="bg-[#f7df94] text-black">🟡 FINANCING</option>
-                    <option value="MATERIALS" className="bg-[#306870] text-white">🪨 MATERIALS</option>
-                    <option value="HOA" className="bg-[#b3d9f2] text-black">📄 HOA</option>
-                    <option value="OTHER_REPAIRS" className="bg-[#e4ccf5] text-black">🛠️ OTHER REPAIRS</option>
-                    <option value="NO_ANSWER" className="bg-[#fab896] text-black">📴 NO ANSWER</option>
-                    <option value="PERMIT" className="bg-[#4d4e4f] text-white">📋 PERMIT</option>
-                  </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500 group-hover:text-white transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">expand_more</span>
-                  </div>
+                <div className="relative group z-[80]">
+                  <CustomDropdown
+                    value="NOT_CONTACTED"
+                    onChange={() => {}}
+                    options={[
+                      { value: "NOT_CONTACTED", label: "🔴 NOT YET CONTACTED" },
+                      { value: "READY", label: "🟢 READY TO START" },
+                      { value: "WINDOWS", label: "🔵 WINDOWS" },
+                      { value: "DOORS", label: "🟠 DOORS" },
+                      { value: "FINANCING", label: "🟡 FINANCING" },
+                      { value: "MATERIALS", label: "🪨 MATERIALS" },
+                      { value: "HOA", label: "📄 HOA" },
+                      { value: "OTHER_REPAIRS", label: "🛠️ OTHER REPAIRS" },
+                      { value: "NO_ANSWER", label: "📴 NO ANSWER" },
+                      { value: "PERMIT", label: "📋 PERMIT" }
+                    ]}
+                    className="w-full bg-[#050505] border border-zinc-800 rounded-xl px-4 py-3 text-[12px] font-black tracking-wider text-white shadow-inner focus:outline-none hover:border-[var(--color-siding-green)]/50 cursor-pointer transition-colors custom-select-arrow"
+                  />
                 </div>
               </div>
 
