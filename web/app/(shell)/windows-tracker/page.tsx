@@ -640,7 +640,7 @@ export default function WindowsTrackerPage() {
       ══════════════════════════════════════════════ */}
       {deletePrompt && (
         <div
-          className="fixed inset-0 z-[120] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[150] flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
         >
           <div
@@ -677,7 +677,7 @@ export default function WindowsTrackerPage() {
       ══════════════════════════════════════════════ */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[150] flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}
         >
@@ -820,7 +820,7 @@ export default function WindowsTrackerPage() {
       ══════════════════════════════════════════════ */}
       {editOrder && editForm && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[150] flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) { setEditOrder(null); setEditForm(null); } }}
         >
