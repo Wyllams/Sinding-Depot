@@ -27,6 +27,7 @@ interface JobDetail {
   title: string;
   contract_amount: number;
   contract_signed_at: string | null;
+  created_at: string;
   city: string;
   job_number: string;
   status: string;
@@ -799,7 +800,12 @@ export default function ReportsPage() {
                                         className={`grid grid-cols-[100px_1fr_100px_60px] gap-2 px-2 py-2 rounded-lg hover:bg-[#1e201e]/40 transition-colors text-xs items-center ${isCancelled ? "opacity-50" : ""}`}
                                       >
                                         <span className={`text-[#ababa8] font-mono ${isCancelled ? "line-through" : ""}`}>
-                                          {job.contract_signed_at ? new Date(job.contract_signed_at + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—"}
+                                          {(() => {
+                                            const dStr = job.contract_signed_at || job.created_at;
+                                            if (!dStr) return "—";
+                                            const normalized = dStr.length === 10 ? `${dStr}T12:00:00` : dStr;
+                                            return new Date(normalized).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+                                          })()}
                                         </span>
                                         <span className={`text-[#faf9f5] font-semibold truncate text-center ${isCancelled ? "line-through" : ""}`}>
                                           {job.title}
