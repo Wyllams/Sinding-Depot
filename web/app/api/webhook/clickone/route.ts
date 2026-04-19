@@ -107,8 +107,12 @@ export async function POST(req: Request) {
       return val;
     };
 
+    // ClickOne puts "Dados Personalizados" inside `customData` object!
+    const cd = payload.customData ?? {};
+
     // ── Address from headers (Street_Address, City, State, Postal_Code) then body ──
     const directStreet =
+      cd.Street_Address || cd.street_address ||
       h("Street_Address") || h("street_address") || h("Street-Address") ||
       payload["Street_Address"] || payload["Street Address"] || payload.street_address ||
       payload["Endereço"] || payload.street ||
@@ -116,20 +120,23 @@ export async function POST(req: Request) {
       null;
 
     const directCity =
+      cd.City || cd.city ||
       h("City") || h("city") ||
       payload["City"] || payload.city ||
       payload["Cidade"] ||
       null;
 
     const directState =
+      cd.State || cd.state ||
       h("State") || h("state") ||
       payload["State"] || payload.state ||
       payload["Estado"] ||
       null;
 
     const directZip =
+      cd.Postal_Code || cd.postal_code ||
       h("Postal_Code") || h("postal_code") || h("Postal-Code") ||
-      payload["Postal_Code"] || payload["Postal Code"] || payload["ZIP Code"] || payload["Zip Code"] ||
+      payload["Postal_Code"] || payload["Postal Code"] || payload["ZIP Code"] ||
       payload.zip_code || payload.zip || payload.postal_code ||
       payload["CEP"] ||
       null;
@@ -197,22 +204,24 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── Salesperson: ClickOne sends as `owner`, or `Vendedor` in headers ──
+    // ── Salesperson: customData.Vendedor, headers, or payload.owner ──
     const salespersonName =
-      h("Vendedor") || h("vendedor") ||                       // Header: "Ruby Davenport"
-      payload.owner ||                                        // "Ruby Davenport"
+      cd.Vendedor || cd.vendedor ||
+      h("Vendedor") || h("vendedor") ||
+      payload.owner ||
       payload["Vendedor"] || payload["vendedor"] ||
       payload["Proprietário"] || payload["Proprietario"] ||
-      payload["Nome do Responsavel"] || payload["Nome do Responsável"] ||
       payload.salesperson || payload.Salesperson ||
       null;
 
     // ── Valor: ClickOne sends as `Job Value`, `lead_value`, or `Valor` header ──
+    // ── Valor: customData.Valor, headers, or payload fields ──
     const serviceValue =
-      h("Valor") || h("valor") ||                             // Header: "4850"
-      payload["Job Value"] || payload.lead_value ||           // "4850" or 4850
-      payload["Valor da oportunidade"] || payload["Valor"] ||
-      payload["Preço final"] || payload.value || payload.Value ||
+      cd.Valor || cd.valor ||
+      h("Valor") || h("valor") ||
+      payload["Job Value"] || payload.lead_value ||
+      payload["Valor"] ||
+      payload.value || payload.Value ||
       "0";
 
     // ── Serviço: ClickOne sends as `Services` ──
@@ -230,9 +239,9 @@ export async function POST(req: Request) {
       return String(val);
     };
     const rawSQ =
+      cd.Squares || cd.squares || cd.SQ || cd.sq ||
       p("Squares") || p("squares") || p("Squares?") ||
       p("SQ") || p("sq") ||
-      p("Square Footage") || p("square_footage") ||
       h("Squares") || h("squares") || h("SQ") ||
       null;
     const squareFootage = rawSQ ? parseFloat(String(rawSQ).replace(/[^0-9.]/g, '')) : null;
