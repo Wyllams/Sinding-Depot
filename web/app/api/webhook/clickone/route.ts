@@ -81,31 +81,57 @@ export async function POST(req: Request) {
       status: 'processing',
     });
 
-    // 1. Extract values dynamically based on ClickOne's default payload or custom pairs
-    const clientName = payload.full_name || payload.client_name || [payload.first_name, payload.last_name].filter(Boolean).join(" ") || "Unknown Client";
-    const emailAddress = payload.email || null;
-    const phoneNumber = payload.phone || null;
+    // 1. Extract values — ClickOne field names (PT-BR and EN variants)
+    const clientName =
+      payload["Nome do contato principal"] ||
+      payload.full_name || payload.client_name ||
+      payload["Nome do contato"] || payload["Contact Name"] ||
+      [payload.first_name, payload.last_name].filter(Boolean).join(" ") ||
+      "Unknown Client";
+
+    const emailAddress =
+      payload["E-mail principal"] || payload.email ||
+      payload["Email principal"] || payload["E-mail"] ||
+      null;
+
+    const phoneNumber =
+      payload["Telefone principal"] || payload.phone ||
+      payload["Telefone"] || payload["Phone"] ||
+      null;
     
-    // ── Address: prefer individual fields, fallback to full address parsing ──
-    const rawAddress = payload.location?.fullAddress || payload.full_address || payload["Billing Address - Full Address"] || payload.address || "";
-    
-    // Individual address fields from ClickOne (priority over parsed)
-    const directStreet = payload.street_address || payload["Street Address"] || payload.street || null;
-    const directCity = payload.city || payload.City || payload["City"] || null;
-    const directState = payload.state || payload.State || payload["State"] || null;
-    const directZip = payload.zip_code || payload.zip || payload["ZIP Code"] || payload["Zip Code"] || payload.postal_code || null;
+    // ── Address: individual fields from ClickOne (exact names from CRM) ──
+    const directStreet =
+      payload["Street Address"] || payload.street_address ||
+      payload["Endereço"] || payload.street || null;
+
+    const directCity =
+      payload["City"] || payload.city || payload.City ||
+      payload["Cidade"] || null;
+
+    const directState =
+      payload["State"] || payload.state || payload.State ||
+      payload["Estado"] || null;
+
+    const directZip =
+      payload["Postal Code"] || payload["ZIP Code"] || payload["Zip Code"] ||
+      payload.zip_code || payload.zip || payload.postal_code ||
+      payload["CEP"] || null;
+
+    // Fallback: full address string
+    const rawAddress =
+      payload.location?.fullAddress || payload.full_address ||
+      payload["Billing Address - Full Address"] || payload.address || "";
 
     // Use direct fields if available, otherwise parse from full address
     let finalAddress = directStreet || "Pendente";
     let city = directCity || "Unknown";
-    let state = directState || "GA"; // Default to GA per Siding Depot's area
+    let state = directState || "GA";
     let zip = directZip || "00000";
 
     // Fallback: parse full address string if individual fields weren't provided
     if (!directStreet && rawAddress) {
       const parts = rawAddress.split(',').map((p: string) => p.trim());
       if (parts.length >= 3) {
-        // "123 Main St, Atlanta, GA 30301" → street=parts[0], city=parts[1], state+zip=parts[2]
         finalAddress = parts[0];
         city = directCity || parts[parts.length - 2];
         const stateZip = parts[parts.length - 1].split(' ');
@@ -123,16 +149,39 @@ export async function POST(req: Request) {
       }
     }
 
-    // Parse custom fields mapped directly from Lead form
-    const salespersonName = payload["Nome do Responsavel"] || payload.salesperson || null;
-    const serviceValue = payload["Preço final"] || payload.value || "0";
-    const rawServices = payload["Serviço"] || payload["Tipo de Serviço"] || payload.service || "Siding";
+    // ── Salesperson / Proprietário ──
+    const salespersonName =
+      payload["Proprietário"] || payload["Proprietario"] ||
+      payload["Nome do Responsavel"] || payload["Nome do Responsável"] ||
+      payload.salesperson || payload.Salesperson ||
+      payload["Owner"] || payload.owner ||
+      null;
 
-    // SQ (Square Footage)
-    const rawSQ = payload["SQ"] || payload.sq || payload["Square Footage"] || payload.square_footage || payload.squares || null;
+    // ── Valor ──
+    const serviceValue =
+      payload["Valor da oportunidade"] || payload["Valor"] ||
+      payload["Preço final"] || payload["Preco final"] ||
+      payload.value || payload.Value ||
+      payload["Contract Value"] || payload["Amount"] ||
+      "0";
+
+    // ── Serviço ──
+    const rawServices =
+      payload["Service"] || payload["Serviço"] || payload["Servico"] ||
+      payload["Tipo de Serviço"] || payload["Tipo de Servico"] ||
+      payload.service || payload.services ||
+      "Siding";
+
+    // ── SQ (Squares) ──
+    const rawSQ =
+      payload["Squares"] || payload["squares"] || payload["SQ"] || payload.sq ||
+      payload["Square Footage"] || payload.square_footage ||
+      null;
     const squareFootage = rawSQ ? parseFloat(String(rawSQ).replace(/[^0-9.]/g, '')) : null;
 
+    console.log(`👤 Client: ${clientName} | 📧 ${emailAddress}`);
     console.log(`📍 Address: ${finalAddress}, ${city}, ${state} ${zip}`);
+    console.log(`👔 Salesperson: ${salespersonName} | 🔧 Service: ${rawServices}`);
     console.log(`📐 SQ: ${squareFootage ?? 'N/A'} | 💰 Value: ${serviceValue}`);
 
     if (!clientName || clientName === "Unknown Client") {
