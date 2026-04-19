@@ -14,6 +14,15 @@ export async function PATCH(
   const { id } = await params;
 
   try {
+    // Valida que a service role key está configurada
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('[Users] SUPABASE_SERVICE_ROLE_KEY not configured');
+      return NextResponse.json(
+        { error: 'Server misconfiguration — SUPABASE_SERVICE_ROLE_KEY not set' },
+        { status: 500 }
+      );
+    }
+
     // Verifica se quem faz a request é admin
     const cookieStore = await cookies();
     const supabaseAuth = createServerClient(
@@ -32,10 +41,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verifica se é admin
+    // Verifica se é admin — usa service_role para bypass RLS
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
     const { data: actor } = await supabase
@@ -67,14 +76,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    const { error, status, statusText } = await supabase
       .from('profiles')
       .update(updates)
       .eq('id', id);
 
     if (error) {
-      console.error('[Users] Update failed:', error);
-      return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
+      console.error('[Users] Update failed:', { error, status, statusText });
+      return NextResponse.json(
+        { error: `Failed to update profile: ${error.message} (${error.code})` },
+        { status: 500 }
+      );
     }
 
     // Se está desativando, também bane o user no Supabase Auth
@@ -82,14 +94,16 @@ export async function PATCH(
     if ('is_active' in updates) {
       if (!updates.is_active) {
         // Ban user — invalida todas as sessões
-        await supabase.auth.admin.updateUserById(id, {
+        const { error: banErr } = await supabase.auth.admin.updateUserById(id, {
           ban_duration: '876600h', // ~100 anos (efetivamente permanente)
         });
+        if (banErr) console.error('[Users] Ban failed:', banErr);
       } else {
         // Unban user — reativa
-        await supabase.auth.admin.updateUserById(id, {
+        const { error: unbanErr } = await supabase.auth.admin.updateUserById(id, {
           ban_duration: 'none',
         });
+        if (unbanErr) console.error('[Users] Unban failed:', unbanErr);
       }
     }
 
