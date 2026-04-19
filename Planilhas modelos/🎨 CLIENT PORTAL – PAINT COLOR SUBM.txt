@@ -1,0 +1,290 @@
+#🎨 CLIENT PORTAL – PAINT COLOR SUBMISSION FORM
+
+⸻
+
+🟦 SECTION 1: Project Info
+
+* Project Address (auto)
+* Client Name (auto)
+
+⸻
+
+🟦 SECTION 2: Paint Brand
+
+* Dropdown (Required)
+    * Sherwin-Williams
+    * Other (text input)
+
+⸻
+
+🟦 SECTION 3: Main Body (Siding)
+
+Siding Color
+
+* SW Code (Required)
+
+Apply To
+
+* ☐ Entire siding
+* ☐ Other (text)
+
+⸻
+
+🟨 SECTION 4: Trim & Roofline
+
+Toggle
+
+* ☐ Use one color for all trim
+
+⸻
+
+Window Trim
+
+* SW Code
+* ☐ Same as siding
+
+⸻
+
+Door Trim
+
+* SW Code
+* ☐ Same as window trim
+
+⸻
+
+Corner Boards
+
+* SW Code
+* ☐ Same as siding
+
+⸻
+
+Soffit
+
+* SW Code
+* ☐ Same as siding
+
+⸻
+
+Fascia
+
+* SW Code
+* ☐ Same as soffit
+
+⸻
+
+🟥 SECTION 5: Doors
+
+Front Door
+
+* SW Code
+* ☐ Same as trim
+
+⸻
+
++ Add Door
+
+* Location (Dropdown)
+    * Front
+    * Back
+    * Left Side
+    * Right Side
+    * Garage Entry
+    * Basement
+    * Deck
+    * Other (text)
+* SW Code
+* ☐ Same as trim
+
+⸻
+
+🌧️ SECTION 6: Gutters & Drainage
+
+Gutters
+
+* ☐ Not painted
+* ☐ Same as trim
+* ☐ Custom SW Code
+
+⸻
+
+Downspouts
+
+* ☐ Same as gutters
+* ☐ Custom SW Code
+
+⸻
+
+🟪 SECTION 7: Accents
+
+Shutters
+
+* SW Code
+* ☐ Same as trim
+
+⸻
+
+Garage Door
+
+* SW Code
+* ☐ Same as trim
+
+⸻
+
+Columns / Posts
+
+* SW Code
+* ☐ Same as trim
+
+⸻
+
+Porch Ceiling
+
+* SW Code
+* ☐ Same as siding
+
+⸻
+
+Railings
+
+* SW Code
+* ☐ Same as trim
+
+⸻
+
+Deck
+
+* ☐ Not painted
+* ☐ SW Code
+
+⸻
+
+🟫 SECTION 8: Brick / Stucco / Foundation
+
+Surface Types (Multi-select)
+
+* ☐ Brick
+* ☐ Stucco
+* ☐ Foundation
+
+⸻
+
+Action
+
+* ☐ Do not paint
+* ☐ Paint
+
+⸻
+
+If “Paint”:
+
+Toggle
+
+* ☐ Use one color for all selected surfaces
+
+⸻
+
+Single Color
+
+* SW Code (Required)
+
+⸻
+
+OR Individual Colors:
+
+Brick
+
+* SW Code
+* Apply To:
+    * ☐ Entire house
+    * ☐ Front only
+    * ☐ Chimney
+    * ☐ Accent
+    * ☐ Other (text)
+
+Stucco
+
+* SW Code
+* Apply To:
+    * ☐ Entire
+    * ☐ Accent
+    * ☐ Other (text)
+
+Foundation
+
+* SW Code
+* ☐ Same as siding
+
+⸻
+
+Finish
+
+* Flat (default)
+* Satin
+
+⸻
+
+⚙️ SECTION 9: Custom Areas
+
++ Add Custom Area
+
+* Area Name (text)
+* SW Code
+* Notes (optional)
+
+⸻
+
+📸 SECTION 10: Uploads
+
+* Upload Image / Screenshot (optional)
+
+⸻
+
+✅ SECTION 11: Confirmation
+
+* ☐ I confirm all paint selections are correct and final
+
+⸻
+
+🔍 FINAL REVIEW (AUTO-GENERATED)
+
+* Display all selected areas + SW Codes in list format
+
+⸻
+
+🚀 SUBMIT BUTTON
+
+* Submit Paint Selections
+
+
+
+
+
+
+
+#Tudo que fo selecionado vai ser mandado pra equipe de pintura pra ver nesse formato tu já separado e detalhado,E também depois que ele enviar dentro do portal do cliente os dados finais vão estar nesse formato e pode ser editados:
+
+
+Siding: SW____
+Soffit: SW____
+Fascia: SW____
+Window Trim: SW____
+Door Trim: SW____
+Front Door: SW____
+Back Door: SW____
+Garage Door: SW___
+Shutters: SW____
+Gutters: SW____
+Downspouts: SW___
+
+
+
+#Também vai mandar uma notificação pra o vendedor e Office (admin) 
+
+{Cliente nome } Enviou a cores de tinta
+
+
+
+#Só que a gente tem que ter alguma restrição aonde ele não pode editar menos que 24hrs antes da pintura começar. Se ele Precisar por alguma razão ele precisa pedir permissão à oficina para liberar ele
+
+Se ele tentar o sistema pode mostrar uma mensagem de erro e uma opção (botão) pra pedir permissão à oficina

@@ -77,28 +77,40 @@ export async function POST(req: Request) {
     const emailAddress = payload.email || null;
     const phoneNumber = payload.phone || null;
     
-    // Check multiple possible address paths
+    // ── Address: prefer individual fields, fallback to full address parsing ──
     const rawAddress = payload.location?.fullAddress || payload.full_address || payload["Billing Address - Full Address"] || payload.address || "";
     
-    // Parse Address
-    let finalAddress = rawAddress || "Pendente";
-    let city = "Unknown";
-    let state = "GA"; // Enforced default to GA per Siding Depot's area
-    let zip = "00000";
+    // Individual address fields from ClickOne (priority over parsed)
+    const directStreet = payload.street_address || payload["Street Address"] || payload.street || null;
+    const directCity = payload.city || payload.City || payload["City"] || null;
+    const directState = payload.state || payload.State || payload["State"] || null;
+    const directZip = payload.zip_code || payload.zip || payload["ZIP Code"] || payload["Zip Code"] || payload.postal_code || null;
 
-    if (rawAddress) {
+    // Use direct fields if available, otherwise parse from full address
+    let finalAddress = directStreet || "Pendente";
+    let city = directCity || "Unknown";
+    let state = directState || "GA"; // Default to GA per Siding Depot's area
+    let zip = directZip || "00000";
+
+    // Fallback: parse full address string if individual fields weren't provided
+    if (!directStreet && rawAddress) {
       const parts = rawAddress.split(',').map((p: string) => p.trim());
-      if (parts.length >= 2) {
-        city = parts[parts.length - 2];
+      if (parts.length >= 3) {
+        // "123 Main St, Atlanta, GA 30301" → street=parts[0], city=parts[1], state+zip=parts[2]
+        finalAddress = parts[0];
+        city = directCity || parts[parts.length - 2];
         const stateZip = parts[parts.length - 1].split(' ');
         if (stateZip.length >= 2) {
-            state = stateZip[0] || "GA";
-            zip = stateZip[1] || zip;
+          state = directState || stateZip[0] || "GA";
+          zip = directZip || stateZip[1] || "00000";
         } else if (stateZip.length === 1 && stateZip[0].length === 2) {
-            state = stateZip[0];
+          state = directState || stateZip[0];
         }
+      } else if (parts.length === 2) {
+        finalAddress = parts[0];
+        city = directCity || parts[1];
       } else {
-        city = rawAddress; // generic fallback
+        finalAddress = rawAddress;
       }
     }
 
@@ -106,6 +118,13 @@ export async function POST(req: Request) {
     const salespersonName = payload["Nome do Responsavel"] || payload.salesperson || null;
     const serviceValue = payload["Preço final"] || payload.value || "0";
     const rawServices = payload["Serviço"] || payload["Tipo de Serviço"] || payload.service || "Siding";
+
+    // SQ (Square Footage)
+    const rawSQ = payload["SQ"] || payload.sq || payload["Square Footage"] || payload.square_footage || payload.squares || null;
+    const squareFootage = rawSQ ? parseFloat(String(rawSQ).replace(/[^0-9.]/g, '')) : null;
+
+    console.log(`📍 Address: ${finalAddress}, ${city}, ${state} ${zip}`);
+    console.log(`📐 SQ: ${squareFootage ?? 'N/A'} | 💰 Value: ${serviceValue}`);
 
     if (!clientName || clientName === "Unknown Client") {
       console.warn("ClickOne Webhook missing client name, proceeding with generic name");
@@ -306,7 +325,9 @@ export async function POST(req: Request) {
          await supabaseAdmin.from("job_services").insert({
             job_id: newJob.id,
             service_type_id: svcMatch.id,
-            scope_of_work: 'To be determined from initial inspection'
+            scope_of_work: 'To be determined from initial inspection',
+            quantity: squareFootage,
+            unit_of_measure: squareFootage ? 'SQ' : null,
          });
       }
     }
