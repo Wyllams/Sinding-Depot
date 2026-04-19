@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 
 // NOTE: Client is created inside the handler (not at module level)
 // so that env vars are available at request-time, not build-time.
@@ -369,12 +370,14 @@ export async function POST(req: Request) {
 
           console.log(`🔑 Customer portal created: ${finalUsername} / ${portalEmail}`);
 
-          // Send welcome email with credentials via Edge Function
-          const resendApiKey = process.env.RESEND_API_KEY;
-          if (resendApiKey && emailAddress) {
+          // Send welcome email with credentials via Gmail SMTP
+          const gmailUser = process.env.GMAIL_USER;
+          const gmailPass = process.env.GMAIL_APP_PASSWORD;
+          if (gmailUser && gmailPass && emailAddress) {
             try {
               await sendCustomerWelcomeEmail({
-                apiKey: resendApiKey,
+                gmailUser,
+                gmailPass,
                 toEmail: emailAddress,
                 customerName: clientName,
                 username: finalUsername,
@@ -385,10 +388,9 @@ export async function POST(req: Request) {
             } catch (emailErr: unknown) {
               const msg = emailErr instanceof Error ? emailErr.message : String(emailErr);
               console.error(`⚠️ Failed to send welcome email: ${msg}`);
-              // Don't throw — email failure shouldn't block job creation
             }
           } else {
-            console.warn("⚠️ Skipping welcome email: RESEND_API_KEY or customer email not available.");
+            console.warn("⚠️ Skipping welcome email: GMAIL_USER/GMAIL_APP_PASSWORD or customer email not available.");
           }
         }
         } // end else (no existing profile_id)
@@ -562,7 +564,8 @@ export async function POST(req: Request) {
 
 // ─── Email Helper ────────────────────────────────────────────
 interface WelcomeEmailParams {
-  apiKey: string;
+  gmailUser: string;
+  gmailPass: string;
   toEmail: string;
   customerName: string;
   username: string;
@@ -571,8 +574,16 @@ interface WelcomeEmailParams {
 }
 
 async function sendCustomerWelcomeEmail(params: WelcomeEmailParams): Promise<void> {
-  const { apiKey, toEmail, customerName, username, password, siteUrl } = params;
+  const { gmailUser, gmailPass, toEmail, customerName, username, password, siteUrl } = params;
   const loginUrl = `${siteUrl}/login?role=customer`;
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: gmailUser,
+      pass: gmailPass,
+    },
+  });
 
   const htmlBody = `
 <!DOCTYPE html>
@@ -659,22 +670,10 @@ async function sendCustomerWelcomeEmail(params: WelcomeEmailParams): Promise<voi
 </body>
 </html>`;
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM || 'Siding Depot <onboarding@resend.dev>',
-      to: [toEmail],
-      subject: `Your Siding Depot Customer Portal Access — ${username}`,
-      html: htmlBody,
-    }),
+  await transporter.sendMail({
+    from: `"Siding Depot" <${gmailUser}>`,
+    to: toEmail,
+    subject: `Your Siding Depot Customer Portal Access — ${username}`,
+    html: htmlBody,
   });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Resend API error (${response.status}): ${errorBody}`);
-  }
 }
