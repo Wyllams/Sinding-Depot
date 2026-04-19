@@ -97,11 +97,9 @@ label[for] {
 /* ─── iOS PWA Safe Area ─────────────────────────── */
 /* When running as standalone PWA on iPhone (notch/Dynamic Island),
    the status bar overlaps content. This adds padding for it. */
-@supports (padding-top: env(safe-area-inset-top)) {
-  .safe-area-top {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
