@@ -32,6 +32,7 @@ interface JobDetail {
   job_number: string;
   status: string;
   services: string[];
+  customer_name: string;
 }
 
 interface DashboardData {
@@ -255,7 +256,7 @@ export default function ReportsPage() {
     const monthDates = getMonthDates(selectedYear, selectedMonth);
     const { data: jobs, error: err } = await supabase
       .from("jobs")
-      .select("id, title, contract_amount, contract_signed_at, city, job_number, created_at, status, job_services:job_services(service_type:service_types(name))")
+      .select("id, title, contract_amount, contract_signed_at, city, job_number, created_at, status, customer:customers(full_name), job_services:job_services(service_type:service_types(name))")
       .eq("salesperson_id", spId)
       .in("status", ["active", "on_hold", "completed", "pending_scheduling", "draft", "cancelled"]);
 
@@ -273,6 +274,7 @@ export default function ReportsPage() {
     const mapped: JobDetail[] = filtered.map((j: any) => ({
       ...j,
       services: (j.job_services || []).map((s: any) => s.service_type?.name).filter(Boolean),
+      customer_name: j.customer?.full_name || "—",
     }));
 
     setSpJobs((prev) => ({ ...prev, [spId]: mapped }));
@@ -844,7 +846,7 @@ export default function ReportsPage() {
                               <div className="space-y-1">
                                 <div className="grid grid-cols-[90px_1fr_120px_90px_50px] gap-2 px-2 pb-1 text-[9px] text-[#ababa8] uppercase tracking-widest font-bold border-b border-white/5 mb-2">
                                   <span>Data</span>
-                                  <span className="text-center">Job Title</span>
+                                  <span className="text-center">Client</span>
                                   <span className="text-center">Service</span>
                                   <span className="text-center">Valor</span>
                                   <span className="text-right">Status</span>
@@ -874,7 +876,7 @@ export default function ReportsPage() {
                                           })()}
                                         </span>
                                         <span className={`text-[#faf9f5] font-semibold truncate text-center ${isCancelled ? "line-through" : ""}`}>
-                                          {job.title}
+                                          {job.customer_name}
                                         </span>
                                         <div className="flex flex-wrap gap-1 justify-center">
                                           {(job.services?.length ? job.services : ["—"]).map((svc, i) => (
