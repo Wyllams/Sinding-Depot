@@ -99,11 +99,19 @@ export async function middleware(request: NextRequest) {
   if (isAuthenticated && !isPublicRoute) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, is_active')
       .eq('id', session!.user.id)
       .single();
 
     const role = profile?.role || 'admin';
+    const isActive = profile?.is_active ?? true;
+
+    // Bloqueia usuários inativos — faz sign out e redireciona
+    if (!isActive) {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL('/login?error=account_disabled', request.url));
+    }
+
     const allowedRoutes = ROLE_ALLOWED_ROUTES[role] || [];
 
     // Admin tem acesso irrestrito

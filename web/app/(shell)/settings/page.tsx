@@ -14,6 +14,7 @@ interface Profile {
   role: string;
   phone: string | null;
   avatar_url: string | null;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -41,6 +42,10 @@ export default function SettingsPage() {
   const [loading, setLoading]             = useState(true);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [updatingId, setUpdatingId]       = useState<string | null>(null);
+
+  // ── Delete confirmation modal ──────────────────
+  const [deleteTarget, setDeleteTarget]   = useState<Profile | null>(null);
+  const [deleting, setDeleting]           = useState(false);
 
   // ── My Profile ───────────────────────────────────
   const [myProfile, setMyProfile]         = useState<Profile | null>(null);
@@ -173,6 +178,58 @@ export default function SettingsPage() {
       alert("Error updating role");
     }
     setUpdatingId(null);
+  };
+
+  // ── Toggle Active (deactivate / reactivate user) ──
+  const handleToggleActive = async (user: Profile) => {
+    if (user.id === myProfile?.id) return; // Protege contra auto-inativação
+    const newStatus = !user.is_active;
+    setUpdatingId(user.id);
+
+    try {
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: newStatus }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update');
+      }
+
+      setProfiles(prev => prev.map(p => p.id === user.id ? { ...p, is_active: newStatus } : p));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      alert(`Error: ${msg}`);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // ── Delete user ────────────────────────────────────
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+
+    try {
+      const res = await fetch(`/api/users/${deleteTarget.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete');
+      }
+
+      setProfiles(prev => prev.filter(p => p.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      alert(`Error: ${msg}`);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   // ── My Profile initials ────────────────────────────
@@ -451,12 +508,38 @@ export default function SettingsPage() {
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right">
-                            <label className="relative inline-flex items-center cursor-pointer">
-                              <input type="checkbox" className="sr-only peer" defaultChecked />
-                              <div className="w-10 h-5 bg-[#242624] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#aeee2a] shadow-[0_0_15px_-3px_rgba(174,238,42,0.4)]"></div>
-                            </label>
-                            <p className="text-[9px] text-[#ababa8] mt-1 pr-1 font-medium">Active</p>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              {/* Toggle Active */}
+                              <div className="flex flex-col items-center">
+                                <button
+                                  onClick={() => handleToggleActive(user)}
+                                  disabled={updatingId === user.id || user.id === myProfile?.id}
+                                  className={`relative inline-flex h-5 w-10 shrink-0 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
+                                    user.is_active ? 'bg-[#aeee2a] shadow-[0_0_15px_-3px_rgba(174,238,42,0.4)]' : 'bg-[#3a3a3a]'
+                                  }`}
+                                  title={user.id === myProfile?.id ? 'Cannot deactivate yourself' : (user.is_active ? 'Deactivate user' : 'Activate user')}
+                                >
+                                  <span
+                                    className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-lg transform transition-transform duration-200 ${user.is_active ? 'translate-x-5' : 'translate-x-0.5'} mt-0.5`}
+                                  />
+                                </button>
+                                <p className={`text-[9px] mt-1 font-medium ${user.is_active ? 'text-[#aeee2a]' : 'text-[#ff7351]'}`}>
+                                  {user.is_active ? 'Active' : 'Inactive'}
+                                </p>
+                              </div>
+
+                              {/* Delete button */}
+                              {user.id !== myProfile?.id && (
+                                <button
+                                  onClick={() => setDeleteTarget(user)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#ff7351]/10 text-[#474846] hover:text-[#ff7351] transition-all opacity-0 group-hover:opacity-100"
+                                  title="Delete user"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -521,6 +604,69 @@ export default function SettingsPage() {
                 className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#aeee2a] text-[#1a2e00] hover:scale-105 transition-transform"
               >
                 Send Invitation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Confirm Delete Modal ──────────────────── */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#121412] w-full max-w-md rounded-2xl border border-[#ff7351]/20 shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-white/5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#ff7351]/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[#ff7351] text-xl" translate="no">warning</span>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-[#faf9f5]">Delete User</h2>
+                  <p className="text-[#ababa8] text-xs mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+
+              <div className="bg-[#181a18] rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-3">
+                  {deleteTarget.avatar_url ? (
+                    <img src={deleteTarget.avatar_url} alt={deleteTarget.full_name} className="w-10 h-10 rounded-full object-cover border border-white/10" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-[#242624] flex items-center justify-center border border-white/5 text-[#faf9f5] font-bold text-xs uppercase">
+                      {deleteTarget.full_name?.substring(0, 2) || "U"}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold text-[#faf9f5]">{deleteTarget.full_name}</p>
+                    <p className="text-[11px] text-[#ababa8]">{deleteTarget.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 bg-[#ff7351]/5 border border-[#ff7351]/15 rounded-xl p-3">
+                <p className="text-xs text-[#ff7351] leading-relaxed">
+                  <strong>Warning:</strong> This will permanently delete this user account, remove their login access, and clean up all associated data (notifications, push subscriptions, etc.).
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#181a18] border-t border-white/5 flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold text-[#faf9f5] hover:bg-[#242624] transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#ff7351] text-white hover:bg-[#e5623f] transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {deleting ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <span className="material-symbols-outlined text-sm" translate="no">delete_forever</span>
+                )}
+                {deleting ? 'Deleting...' : 'Delete Permanently'}
               </button>
             </div>
           </div>
