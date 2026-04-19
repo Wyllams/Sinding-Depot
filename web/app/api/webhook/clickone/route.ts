@@ -222,11 +222,18 @@ export async function POST(req: Request) {
       payload["Tipo de Serviço"] || payload.service ||
       "Siding";
 
-    // ── SQ: ClickOne sends as `Squares?` (with question mark!) ──
+    // ── SQ: ClickOne sends as `Squares?` (default), `Squares` (custom data) ──
+    // Helper to filter empty strings from payload values
+    const p = (key: string): string | null => {
+      const val = payload[key];
+      if (val === undefined || val === null || val === '' || val === 'undefined') return null;
+      return String(val);
+    };
     const rawSQ =
-      payload["Squares?"] || payload["Squares"] ||            // note the "?" in the field name
-      payload["squares"] || payload["SQ"] || payload.sq ||
-      payload["Square Footage"] || payload.square_footage ||
+      p("Squares") || p("squares") || p("Squares?") ||
+      p("SQ") || p("sq") ||
+      p("Square Footage") || p("square_footage") ||
+      h("Squares") || h("squares") || h("SQ") ||
       null;
     const squareFootage = rawSQ ? parseFloat(String(rawSQ).replace(/[^0-9.]/g, '')) : null;
 
