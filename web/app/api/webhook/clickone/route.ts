@@ -399,7 +399,7 @@ export async function POST(req: Request) {
         state: state,
         postal_code: zip,
         contract_amount: numericValue || 0,
-        description: `Webhook Source: ClickOne\nAssigned Salesperson: ${salespersonName || 'Unassigned'}\nInitial Service: ${rawServices}`
+        description: `Webhook Source: ClickOne`
       })
       .select("id")
       .single();
