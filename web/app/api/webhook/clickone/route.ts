@@ -70,7 +70,16 @@ export async function POST(req: Request) {
   try {
     const payload = await req.json();
 
-    console.log("📥 Received ClickOne Webhook:", payload);
+    console.log("📥 Received ClickOne Webhook:", JSON.stringify(payload, null, 2));
+    console.log("📋 Payload keys:", Object.keys(payload));
+
+    // Save raw payload to webhook_logs for debugging field names
+    await supabaseAdmin.from("webhook_logs").insert({
+      source: 'clickone',
+      raw_payload: payload,
+      parsed_data: { keys: Object.keys(payload) },
+      status: 'processing',
+    });
 
     // 1. Extract values dynamically based on ClickOne's default payload or custom pairs
     const clientName = payload.full_name || payload.client_name || [payload.first_name, payload.last_name].filter(Boolean).join(" ") || "Unknown Client";
