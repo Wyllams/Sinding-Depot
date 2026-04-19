@@ -5,6 +5,7 @@ tags:
   - credenciais
   - acesso
 created: 2026-04-18
+updated: 2026-04-19
 ---
 
 # 🔑 Credenciais do Customer Portal
@@ -64,7 +65,7 @@ auth.uid() → profiles (role='customer') → customers.profile_id → jobs.cust
 ## Padrão de Geração Automática de Credenciais
 
 | Campo | Formato | Exemplo |
-|-------|---------|---------|
+|-------|---------|---------
 | **Username** | `FirstName_LastName` | `Wyllams_Bione` |
 | **Password** | `FirstNameX*Year` | `WyllamsB*2026` |
 | **Portal Email** | `username@customer.sidingdepot.app` | `wyllams_bione@customer.sidingdepot.app` |
@@ -91,9 +92,25 @@ Rota server-side que recebe `customerId` + `fullName` + `email` + `phone` e:
 3. Cria auth user via `auth.admin.createUser`
 4. Cria profile com `role = customer`
 5. Atualiza `customers` com `profile_id`, `username`, `portal_email`
-6. Envia email de boas-vindas com credenciais via Resend
+6. Envia email de boas-vindas com credenciais via Gmail SMTP
 
 > Falha na criação do portal **não bloqueia** a criação do projeto (try/catch isolado).
+
+---
+
+## Envio de Email de Boas-Vindas
+
+| Configuração | Valor |
+|-------------|-------|
+| **Método** | Gmail SMTP via `nodemailer` |
+| **Variáveis** | `GMAIL_USER` + `GMAIL_APP_PASSWORD` |
+| **From** | `"Siding Depot" <GMAIL_USER>` |
+| **Mensagem** | *"Your project with Siding Depot has been successfully closed."* |
+| **Conteúdo** | Username, Password, botão "Access Your Portal →" |
+
+> [!IMPORTANT]
+> **Mudança em 2026-04-19:** Migrado de Resend API para Gmail SMTP (nodemailer).
+> O Resend exigia domínio verificado para enviar para emails externos. O Gmail SMTP funciona imediatamente com App Password.
 
 ---
 

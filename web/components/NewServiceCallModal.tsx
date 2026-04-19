@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
+import { compressImage } from "../lib/compressImage";
 import CustomDatePicker from "./CustomDatePicker";
 import { CustomDropdown } from "./CustomDropdown";
 
@@ -74,7 +75,8 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
 
   const uploadFiles = async (blockerId: string): Promise<string[]> => {
     const urls: string[] = [];
-    for (const file of files) {
+    for (const rawFile of files) {
+      const file = await compressImage(rawFile);
       const ext  = file.name.split(".").pop();
       const path = `service-calls/${blockerId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error: upErr } = await supabase.storage.from("attachments").upload(path, file);

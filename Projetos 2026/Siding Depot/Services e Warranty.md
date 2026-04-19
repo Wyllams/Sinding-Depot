@@ -5,6 +5,7 @@ tags:
   - siding-depot
   - chamados
 created: 2026-04-17
+updated: 2026-04-19
 ---
 
 # 🛠️ Services e Warranty — Chamados de Serviço
@@ -20,7 +21,7 @@ created: 2026-04-17
 | Feature | Detalhes |
 |---------|----------|
 | **Criação de Chamado** | Modal com título, descrição, tipo, disciplina |
-| **Disciplinas** | Siding, Doors, Windows, Paint, Gutters, Roofing |
+| **Disciplinas** | Siding, Doors, Windows, Paint, Gutters, Roofing, Decks |
 | **Status Pipeline** | `open` → `inspected` → `repairing` → `resolved` |
 | **Inline Status Change** | Dropdown colorido na tabela |
 | **Crew Assignment** | Atribuição de crew responsável → [[Crews e Partners]] |
@@ -29,6 +30,23 @@ created: 2026-04-17
 | **Undo System** | Sistema global de desfazer ações |
 | **Signal System** | Flag de alerta especial com acknowledge |
 | **Delete** | Soft delete com confirmação |
+
+---
+
+## Tipos de Serviço Disponíveis (`service_types`)
+
+| Nome | Código |
+|------|--------|
+| Siding | `siding` |
+| Painting | `painting` |
+| Windows | `windows` |
+| Doors | `doors` |
+| Roofing | `roofing` |
+| Gutters | `gutters` |
+| Decks | `decks` |
+
+> [!NOTE]
+> **Doors** adicionado em 2026-04-19 para suportar serviços de portas vindos da ClickOne.
 
 ---
 
@@ -56,6 +74,7 @@ graph LR
 
 | Tabela | Função |
 |--------|--------|
+| `service_types` | Tipos de serviço disponíveis (código + nome) |
 | `service_calls` | Chamados de warranty/serviço |
 | `blocker_attachments` | Mídia anexada |
 
@@ -65,3 +84,4 @@ graph LR
 - [[Projects]]
 - [[Crews e Partners]]
 - [[Notificações em Tempo Real]]
+- [[Webhook ClickOne]]

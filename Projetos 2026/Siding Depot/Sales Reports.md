@@ -6,6 +6,7 @@ tags:
   - metas
   - vendas
 created: 2026-04-17
+updated: 2026-04-19
 ---
 
 # 📈 Sales Reports — Relatórios de Vendas
@@ -26,6 +27,29 @@ created: 2026-04-17
 | **Annual Grid** | Visão 12 meses lado a lado |
 | **Leaderboard** | Ranking competitivo entre vendedores |
 | **Goal Setting** | Definição de metas por período |
+
+---
+
+## Performance by Salesperson (Accordion)
+
+Ao expandir o card de um vendedor, exibe a tabela de jobs com as seguintes colunas:
+
+| Coluna | Fonte | Descrição |
+|--------|-------|-----------|
+| **Data** | `contract_signed_at` ou `created_at` | Data do contrato (formato pt-BR) |
+| **Client** | `customers.full_name` (join) | Nome do cliente associado ao job |
+| **Service** | `job_services → service_types.name` | Badges verdes com cada serviço |
+| **Valor** | `jobs.contract_amount` | Valor do contrato (cor do vendedor) |
+| **Status** | `jobs.status` | Ícone de status (cancelled = riscado + opacidade) |
+
+> [!NOTE]
+> O grid usa `grid-cols-[90px_1fr_120px_90px_50px]` para layout equilibrado das 5 colunas.
+
+### Campos do Vendedor no Card
+
+| Campo | Layout |
+|-------|--------|
+| **Salesperson** + **Contract Value** + **SQ** | 3 campos lado a lado (33% cada) |
 
 ---
 
@@ -53,6 +77,8 @@ created: 2026-04-17
 | `sales_goals` | Metas por período e vendedor |
 | `sales_snapshots` | Snapshots mensais de performance (atualizado via [[Webhook ClickOne]]) |
 | `jobs` | Contratos fechados com `contract_signed_at`, `contract_amount`, `salesperson_id` |
+| `customers` | Nome do cliente (join via `customer_id`) |
+| `job_services` → `service_types` | Serviços do job (join para badges) |
 
 ---
 

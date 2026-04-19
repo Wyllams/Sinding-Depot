@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { compressImage } from "@/lib/compressImage";
 
 interface FieldChangeOrderModalProps {
   jobId: string;
@@ -25,7 +26,8 @@ export function FieldChangeOrderModal({
 
   // ---------- Upload attachments ----------
   async function uploadFiles(coId: string): Promise<void> {
-    for (const file of files) {
+    for (const rawFile of files) {
+      const file = await compressImage(rawFile);
       const ext = file.name.split(".").pop();
       const path = `change-orders/${coId}/${Date.now()}-${Math.random()
         .toString(36)

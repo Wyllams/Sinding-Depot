@@ -187,6 +187,55 @@ export default function ProjectsPage() {
     setDeletingId(id);
     try {
       const { data: originalData } = await supabase.from("jobs").select("*").eq("id", id).single();
+
+      // ── Storage cleanup: delete all files associated with this project ──
+      try {
+        // 1. Delete service call (blocker) attachments from storage
+        const { data: blockers } = await supabase.from("blockers").select("id").eq("job_id", id);
+        if (blockers && blockers.length > 0) {
+          for (const blocker of blockers) {
+            const folder = `service-calls/${blocker.id}`;
+            const { data: files } = await supabase.storage.from("attachments").list(folder);
+            if (files && files.length > 0) {
+              const paths = files.map((f) => `${folder}/${f.name}`);
+              await supabase.storage.from("attachments").remove(paths);
+            }
+          }
+        }
+
+        // 2. Delete change order attachments from storage
+        const { data: changeOrders } = await supabase.from("change_orders").select("id").eq("job_id", id);
+        if (changeOrders && changeOrders.length > 0) {
+          for (const co of changeOrders) {
+            const folder = `change-orders/${co.id}`;
+            const { data: files } = await supabase.storage.from("attachments").list(folder);
+            if (files && files.length > 0) {
+              const paths = files.map((f) => `${folder}/${f.name}`);
+              await supabase.storage.from("attachments").remove(paths);
+            }
+          }
+        }
+
+        // 3. Delete document files from storage
+        const { data: documents } = await supabase.from("documents").select("url").eq("job_id", id);
+        if (documents && documents.length > 0) {
+          const storagePaths = documents
+            .map((d) => {
+              try {
+                const url = new URL(d.url);
+                const match = url.pathname.match(/\/object\/public\/(.+)/);
+                return match ? match[1].replace(/^attachments\//, "") : null;
+              } catch { return null; }
+            })
+            .filter(Boolean) as string[];
+          if (storagePaths.length > 0) {
+            await supabase.storage.from("attachments").remove(storagePaths);
+          }
+        }
+      } catch (storageErr) {
+        console.warn("[ProjectsPage] Storage cleanup warning (non-blocking):", storageErr);
+      }
+
       const { error } = await supabase.from("jobs").delete().eq("id", id);
       if (error) throw error;
       setJobs((prev) => prev.filter((j) => j.id !== id));

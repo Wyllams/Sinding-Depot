@@ -7,6 +7,7 @@ import { CustomDropdown } from "../../../components/CustomDropdown";
 import { NewServiceCallModal } from "../../../components/NewServiceCallModal";
 import { ServiceReportPanel } from "../../../components/ServiceReportPanel";
 import { useUndo } from "../../../components/UndoContext";
+import { compressImage } from "../../../lib/compressImage";
 import { ManageListModal } from "../../../components/ManageListModal";
 
 // =============================================
@@ -249,7 +250,8 @@ export default function ServicesPage() {
       // 3. Upload new files
       if (editNewFiles.length > 0) {
         const urls: string[] = [];
-        for (const file of editNewFiles) {
+        for (const rawFile of editNewFiles) {
+          const file = await compressImage(rawFile);
           const ext = file.name.split(".").pop();
           const path = `service-calls/${editService.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
           const { error: upErr } = await supabase.storage.from("attachments").upload(path, file);

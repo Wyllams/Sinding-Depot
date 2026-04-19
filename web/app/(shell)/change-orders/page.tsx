@@ -5,6 +5,7 @@ import CustomDatePicker from "../../../components/CustomDatePicker";
 import { CustomDropdown } from "../../../components/CustomDropdown";
 import { TopBar } from "../../../components/TopBar";
 import { supabase } from "../../../lib/supabase";
+import { compressImage } from "../../../lib/compressImage";
 
 // =============================================
 // Change Orders & Approvals
@@ -483,7 +484,8 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
   }, [jobId]);
 
   async function uploadFiles(coId: string) {
-    for (const file of files) {
+    for (const rawFile of files) {
+      const file = await compressImage(rawFile);
       const ext  = file.name.split(".").pop();
       const path = `change-orders/${coId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error: upErr } = await supabase.storage.from("attachments").upload(path, file);
