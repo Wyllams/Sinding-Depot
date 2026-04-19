@@ -401,13 +401,27 @@ export async function POST(req: Request) {
     }
 
     // 2. Resolve Salesperson Mapping
-    let spId = null;
+    // ClickOne names → System names alias map
+    const SP_ALIASES: Record<string, string> = {
+      'matheus': 'Matt',
+      'matheus araujo': 'Matt',
+      'matt': 'Matt',
+      'armando': 'Armando',
+      'armando magalhaes': 'Armando',
+      'armando magalhães': 'Armando',
+      'ruby': 'Ruby',
+      'ruby davenport': 'Ruby',
+    };
+
+    let spId: string | null = null;
     if (salespersonName) {
-      const spFirstName = String(salespersonName).split(" ")[0];
+      const normalizedName = String(salespersonName).trim().toLowerCase();
+      const mappedName = SP_ALIASES[normalizedName] || SP_ALIASES[normalizedName.split(' ')[0]] || String(salespersonName).split(' ')[0];
+      
       const { data: spMatch } = await supabaseAdmin
          .from("salespersons")
          .select("id")
-         .ilike("full_name", `%${spFirstName}%`)
+         .ilike("full_name", `%${mappedName}%`)
          .maybeSingle();
          
       spId = spMatch?.id || null;
