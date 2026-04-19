@@ -461,13 +461,14 @@ export default function SettingsPage() {
                       <tr className="border-b border-[#474846]/10">
                         <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">User Details</th>
                         <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Assigned Role</th>
-                        <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-[#ababa8] text-right">Access Status</th>
+                        <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-[#ababa8] text-center">Access Status</th>
+                        <th className="px-4 py-5 text-[10px] font-bold uppercase tracking-widest text-[#ababa8] text-center w-16"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#474846]/5">
                       {loading ? (
                         <tr>
-                          <td colSpan={3} className="px-6 py-12 text-center text-[#ababa8]">
+                          <td colSpan={4} className="px-6 py-12 text-center text-[#ababa8]">
                             <div className="animate-spin w-8 h-8 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full mx-auto mb-4" />
                             Loading users...
                           </td>
@@ -509,37 +510,36 @@ export default function SettingsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="relative flex items-center justify-end">
-                              {/* Toggle Active */}
-                              <div className="flex flex-col items-center min-w-[44px]">
-                                <button
-                                  onClick={() => handleToggleActive(user)}
-                                  disabled={updatingId === user.id || user.id === myProfile?.id}
-                                  className={`relative inline-flex h-5 w-10 shrink-0 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-                                    user.is_active ? 'bg-[#aeee2a] shadow-[0_0_15px_-3px_rgba(174,238,42,0.4)]' : 'bg-[#3a3a3a]'
-                                  }`}
-                                  title={user.id === myProfile?.id ? 'Cannot deactivate yourself' : (user.is_active ? 'Deactivate user' : 'Activate user')}
-                                >
-                                  <span
-                                    className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-lg transform transition-transform duration-200 ${user.is_active ? 'translate-x-5' : 'translate-x-0.5'} mt-0.5`}
-                                  />
-                                </button>
-                                <p className={`text-[9px] mt-1 font-medium ${user.is_active ? 'text-[#aeee2a]' : 'text-[#ff7351]'}`}>
-                                  {user.is_active ? 'Active' : 'Inactive'}
-                                </p>
-                              </div>
-
-                              {/* Delete button — positioned absolutely so it doesn't shift the toggle */}
-                              {user.id !== myProfile?.id && (
-                                <button
-                                  onClick={() => setDeleteTarget(user)}
-                                  className="absolute -right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#ff7351]/10 text-[#474846] hover:text-[#ff7351] transition-all opacity-0 group-hover:opacity-100"
-                                  title="Delete user"
-                                >
-                                  <span className="material-symbols-outlined text-[14px]" translate="no">delete</span>
-                                </button>
-                              )}
+                            <div className="flex flex-col items-center">
+                              <button
+                                onClick={() => handleToggleActive(user)}
+                                disabled={updatingId === user.id || user.id === myProfile?.id}
+                                className={`relative inline-flex h-5 w-10 shrink-0 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
+                                  user.is_active ? 'bg-[#aeee2a] shadow-[0_0_15px_-3px_rgba(174,238,42,0.4)]' : 'bg-[#3a3a3a]'
+                                }`}
+                                title={user.id === myProfile?.id ? 'Cannot deactivate yourself' : (user.is_active ? 'Deactivate user' : 'Activate user')}
+                              >
+                                <span
+                                  className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-lg transform transition-transform duration-200 ${user.is_active ? 'translate-x-5' : 'translate-x-0.5'} mt-0.5`}
+                                />
+                              </button>
+                              <p className={`text-[9px] mt-1 font-medium ${user.is_active ? 'text-[#aeee2a]' : 'text-[#ff7351]'}`}>
+                                {user.is_active ? 'Active' : 'Inactive'}
+                              </p>
                             </div>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            {user.id !== myProfile?.id ? (
+                              <button
+                                onClick={() => setDeleteTarget(user)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#ff7351]/10 text-[#474846] hover:text-[#ff7351] transition-all mx-auto"
+                                title="Delete user"
+                              >
+                                <span className="material-symbols-outlined text-[18px]" translate="no">delete</span>
+                              </button>
+                            ) : (
+                              <span className="text-[9px] text-[#474846]">—</span>
+                            )}
                           </td>
                         </tr>
                       ))}
