@@ -127,7 +127,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclui arquivos estáticos e rotas internas do Next.js
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)',
+    // Exclui arquivos estáticos, SW, manifest e rotas internas do Next.js
+    '/((?!api|_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.json|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)',
   ],
 };
