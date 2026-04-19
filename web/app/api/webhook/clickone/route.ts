@@ -91,34 +91,33 @@ export async function POST(req: Request) {
     const emailAddress = payload.email || payload["E-mail principal"] || null;
     const phoneNumber = payload.phone || payload["Telefone principal"] || null;
     
-    // ── Address: ClickOne sends contact address inside `location` object ──
-    const loc = payload.location || {};
-    
-    // Priority: top-level fields > location object > full_address parsing
+    // ── Address: `location` = Siding Depot sub-account, NOT customer address! ──
+    // Customer address must come from contact-level fields added to the webhook
     const directStreet =
       payload["Street Address"] || payload.street_address ||
       payload["Endereço"] || payload.street ||
-      loc.address ||                                          // "3036 Roswell Rd"
+      payload["address1"] || payload["address"] ||
       null;
 
     const directCity =
       payload["City"] || payload.city ||
       payload["Cidade"] ||
-      loc.city ||                                             // "Marietta"
       null;
 
     const directState =
       payload["State"] || payload.state ||
       payload["Estado"] ||
-      loc.state ||                                            // "Georgia"
       null;
 
     const directZip =
       payload["Postal Code"] || payload["Postal code"] || payload["ZIP Code"] || payload["Zip Code"] ||
       payload.zip_code || payload.zip || payload.postal_code ||
       payload["CEP"] ||
-      loc.postalCode ||                                       // "30062"
       null;
+
+    // Log what we found for debugging
+    console.log("🔍 Address fields found:", { directStreet, directCity, directState, directZip });
+    console.log("🔍 All payload keys:", Object.keys(payload).sort().join(", "));
 
     // Normalize state: "Georgia" → "GA", "Florida" → "FL", etc.
     const stateMap: Record<string, string> = {
