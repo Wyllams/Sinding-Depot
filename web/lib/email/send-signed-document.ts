@@ -1,7 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 interface SendSignedDocumentEmailParams {
   to: string;
   customerName: string;
@@ -24,6 +22,7 @@ export async function sendSignedDocumentEmail({
   }
 
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const fromEmail = process.env.RESEND_FROM || "Siding Depot <onboarding@resend.dev>";
 
     const { error } = await resend.emails.send({
