@@ -821,34 +821,36 @@ export default function ProjectDetailPage() {
                         className="w-full text-[#faf9f5] font-bold font-mono bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
                       />
                     </div>
-                    <div className="bg-[#1e201e] rounded-xl p-3 relative border border-transparent hover:border-[#474846]/30 transition-colors">
-                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Salesperson</p>
-                      <div className="relative -ml-1">
-                        <CustomDropdown
-                          value={job.salesperson_id || ""}
-                          onChange={(val) => handleAutoSave("jobs", job.id, "salesperson_id", val)}
-                          options={allSalespersons.map(s => ({ value: s.id, label: s.full_name }))}
-                          placeholder="No Salesperson"
-                          inline
-                          className="w-full text-[#faf9f5] font-bold bg-transparent outline-none cursor-pointer hover:text-[#aeee2a] transition-colors flex items-center"
-                        />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-[#1e201e] rounded-xl p-3 relative border border-transparent hover:border-[#474846]/30 transition-colors">
+                        <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Salesperson</p>
+                        <div className="relative -ml-1">
+                          <CustomDropdown
+                            value={job.salesperson_id || ""}
+                            onChange={(val) => handleAutoSave("jobs", job.id, "salesperson_id", val)}
+                            options={allSalespersons.map(s => ({ value: s.id, label: s.full_name }))}
+                            placeholder="No Salesperson"
+                            inline
+                            className="w-full text-[#faf9f5] font-bold bg-transparent outline-none cursor-pointer hover:text-[#aeee2a] transition-colors flex items-center"
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
-                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Contract Value</p>
-                      <div className="flex items-center gap-1">
-                        <span className="text-[#aeee2a] font-black text-sm">$</span>
-                        <input 
-                          type="text" 
-                          defaultValue={job.contract_amount != null ? job.contract_amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ""} 
-                          onBlur={(e) => {
-                            const raw = e.target.value.replace(/[^0-9.]/g, '');
-                            const num = parseFloat(raw);
-                            handleAutoSave("jobs", job.id, "contract_amount", isNaN(num) ? 0 : num);
-                          }}
-                          placeholder="0.00"
-                          className="w-full text-[#faf9f5] font-black bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 transition-colors"
-                        />
+                      <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
+                        <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Contract Value</p>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[#aeee2a] font-black text-sm">$</span>
+                          <input 
+                            type="text" 
+                            defaultValue={job.contract_amount != null ? job.contract_amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ""} 
+                            onBlur={(e) => {
+                              const raw = e.target.value.replace(/[^0-9.]/g, '');
+                              const num = parseFloat(raw);
+                              handleAutoSave("jobs", job.id, "contract_amount", isNaN(num) ? 0 : num);
+                            }}
+                            placeholder="0.00"
+                            className="w-full text-[#faf9f5] font-black bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 transition-colors"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
