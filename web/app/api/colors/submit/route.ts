@@ -122,7 +122,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       brand: s.brand,
       color_name: s.color_name,
       color_code: s.color_code,
-      status: 'submitted',
+      status: 'pending',
     }));
 
     const { error: insertErr } = await supabase.from('job_color_selections').insert(inserts);

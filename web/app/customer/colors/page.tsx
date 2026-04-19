@@ -188,7 +188,7 @@ export default function CustomerColors() {
         if (existing && existing.length > 0) {
           setSavedColors(existing);
           populateFormFromSaved(existing);
-          const allSubmitted = existing.every((c) => c.status === "submitted" || c.status === "approved");
+          const allSubmitted = existing.every((c) => c.status === "pending" || c.status === "approved");
           if (allSubmitted) setSuccess(true);
         }
       } catch (err) {
@@ -357,7 +357,7 @@ export default function CustomerColors() {
         return;
       }
 
-      setSavedColors(selections.map((s) => ({ ...s, status: "submitted" })));
+      setSavedColors(selections.map((s) => ({ ...s, status: "pending" })));
       setSuccess(true);
     } catch (err) {
       console.error("[CustomerColors] submit error:", err);
