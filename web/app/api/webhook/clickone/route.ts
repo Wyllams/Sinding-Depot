@@ -174,8 +174,6 @@ export async function POST(req: Request) {
       }
     }
 
-    console.log(`⚠️ location.name: ${loc.name} | isCompanyLocation: ${isCompanyLocation}`);
-
     // ── Salesperson: ClickOne sends as `owner` ──
     const salespersonName =
       payload.owner ||                                        // "Ruby Davenport"
