@@ -91,41 +91,33 @@ export async function POST(req: Request) {
     const emailAddress = payload.email || payload["E-mail principal"] || null;
     const phoneNumber = payload.phone || payload["Telefone principal"] || null;
     
-    // ── Address: DO NOT use `location` — it's the COMPANY office, not the customer! ──
-    // ClickOne `location` = Siding Depot LLC office (3036 Roswell Rd, Marietta)
-    // Customer address comes from contact-level custom fields
+    // ── Address: ClickOne sends contact address inside `location` object ──
     const loc = payload.location || {};
-    const isCompanyLocation = loc.name?.toLowerCase()?.includes('siding depot');
     
-    // Contact-level address fields (these are what we need)
+    // Priority: top-level fields > location object > full_address parsing
     const directStreet =
       payload["Street Address"] || payload.street_address ||
       payload["Endereço"] || payload.street ||
-      payload.contact?.address || payload.contact?.street ||
-      // Only use location.address if it's NOT the company office
-      (!isCompanyLocation ? loc.address : null) ||
+      loc.address ||                                          // "3036 Roswell Rd"
       null;
 
     const directCity =
       payload["City"] || payload.city ||
       payload["Cidade"] ||
-      payload.contact?.city ||
-      (!isCompanyLocation ? loc.city : null) ||
+      loc.city ||                                             // "Marietta"
       null;
 
     const directState =
       payload["State"] || payload.state ||
       payload["Estado"] ||
-      payload.contact?.state ||
-      (!isCompanyLocation ? loc.state : null) ||
+      loc.state ||                                            // "Georgia"
       null;
 
     const directZip =
       payload["Postal Code"] || payload["Postal code"] || payload["ZIP Code"] || payload["Zip Code"] ||
       payload.zip_code || payload.zip || payload.postal_code ||
       payload["CEP"] ||
-      payload.contact?.postalCode || payload.contact?.postal_code ||
-      (!isCompanyLocation ? loc.postalCode : null) ||
+      loc.postalCode ||                                       // "30062"
       null;
 
     // Normalize state: "Georgia" → "GA", "Florida" → "FL", etc.
