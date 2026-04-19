@@ -91,29 +91,42 @@ export async function POST(req: Request) {
     const emailAddress = payload.email || payload["E-mail principal"] || null;
     const phoneNumber = payload.phone || payload["Telefone principal"] || null;
     
-    // ── Address: ClickOne nests address fields inside `location` object ──
+    // ── Address: DO NOT use `location` — it's the COMPANY office, not the customer! ──
+    // ClickOne `location` = Siding Depot LLC office (3036 Roswell Rd, Marietta)
+    // Customer address comes from contact-level custom fields
     const loc = payload.location || {};
+    const isCompanyLocation = loc.name?.toLowerCase()?.includes('siding depot');
     
+    // Contact-level address fields (these are what we need)
     const directStreet =
-      loc.address ||                                          // location.address = "3036 Roswell Rd"
       payload["Street Address"] || payload.street_address ||
-      payload["Endereço"] || null;
+      payload["Endereço"] || payload.street ||
+      payload.contact?.address || payload.contact?.street ||
+      // Only use location.address if it's NOT the company office
+      (!isCompanyLocation ? loc.address : null) ||
+      null;
 
     const directCity =
-      loc.city ||                                             // location.city = "Marietta"
       payload["City"] || payload.city ||
-      payload["Cidade"] || null;
+      payload["Cidade"] ||
+      payload.contact?.city ||
+      (!isCompanyLocation ? loc.city : null) ||
+      null;
 
     const directState =
-      loc.state ||                                            // location.state = "Georgia"
       payload["State"] || payload.state ||
-      payload["Estado"] || null;
+      payload["Estado"] ||
+      payload.contact?.state ||
+      (!isCompanyLocation ? loc.state : null) ||
+      null;
 
     const directZip =
-      loc.postalCode ||                                       // location.postalCode = "30062"
-      payload["Postal Code"] || payload["ZIP Code"] || payload["Zip Code"] ||
+      payload["Postal Code"] || payload["Postal code"] || payload["ZIP Code"] || payload["Zip Code"] ||
       payload.zip_code || payload.zip || payload.postal_code ||
-      payload["CEP"] || null;
+      payload["CEP"] ||
+      payload.contact?.postalCode || payload.contact?.postal_code ||
+      (!isCompanyLocation ? loc.postalCode : null) ||
+      null;
 
     // Normalize state: "Georgia" → "GA", "Florida" → "FL", etc.
     const stateMap: Record<string, string> = {
@@ -133,13 +146,15 @@ export async function POST(req: Request) {
       'hawaii': 'HI', 'alaska': 'AK', 'rhode island': 'RI',
       'south dakota': 'SD', 'north dakota': 'ND', 'vermont': 'VT',
       'wyoming': 'WY', 'oklahoma': 'OK',
+      // BR states
+      'pernambuco': 'PE', 'são paulo': 'SP', 'sao paulo': 'SP',
+      'rio de janeiro': 'RJ', 'minas gerais': 'MG', 'bahia': 'BA',
+      'paraná': 'PR', 'parana': 'PR', 'ceará': 'CE', 'ceara': 'CE',
     };
 
     const normalizeState = (s: string | null): string => {
       if (!s) return "GA";
-      // Already abbreviated (e.g. "GA", "FL")
       if (s.length <= 3) return s.toUpperCase();
-      // Full name → abbreviation
       return stateMap[s.toLowerCase()] || s.toUpperCase().slice(0, 2);
     };
 
@@ -148,8 +163,8 @@ export async function POST(req: Request) {
     let state = normalizeState(directState);
     let zip = directZip || "00000";
 
-    // Fallback: parse full address string if location object wasn't provided
-    const rawAddress = loc.fullAddress || payload.full_address || payload.address || "";
+    // Fallback: parse full_address string (NOT location.fullAddress which is company)
+    const rawAddress = payload.full_address || payload.address || "";
     if (!directStreet && rawAddress) {
       const parts = rawAddress.split(',').map((p: string) => p.trim());
       if (parts.length >= 3) {
@@ -167,6 +182,8 @@ export async function POST(req: Request) {
         finalAddress = rawAddress;
       }
     }
+
+    console.log(`⚠️ location.name: ${loc.name} | isCompanyLocation: ${isCompanyLocation}`);
 
     // ── Salesperson: ClickOne sends as `owner` ──
     const salespersonName =
