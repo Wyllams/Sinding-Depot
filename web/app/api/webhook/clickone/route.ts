@@ -207,8 +207,9 @@ export async function POST(req: Request) {
       payload.salesperson || payload.Salesperson ||
       null;
 
-    // ── Valor: ClickOne sends as `Job Value` or `lead_value` ──
+    // ── Valor: ClickOne sends as `Job Value`, `lead_value`, or `Valor` header ──
     const serviceValue =
+      h("Valor") || h("valor") ||                             // Header: "4850"
       payload["Job Value"] || payload.lead_value ||           // "4850" or 4850
       payload["Valor da oportunidade"] || payload["Valor"] ||
       payload["Preço final"] || payload.value || payload.Value ||
