@@ -81,65 +81,84 @@ export async function POST(req: Request) {
       status: 'processing',
     });
 
-    // 1. Extract values — ClickOne field names (PT-BR and EN variants)
+    // 1. Extract values — based on ACTUAL ClickOne payload structure
     const clientName =
+      payload.full_name || payload.opportunity_name || payload.client_name ||
       payload["Nome do contato principal"] ||
-      payload.full_name || payload.client_name ||
-      payload["Nome do contato"] || payload["Contact Name"] ||
       [payload.first_name, payload.last_name].filter(Boolean).join(" ") ||
       "Unknown Client";
 
-    const emailAddress =
-      payload["E-mail principal"] || payload.email ||
-      payload["Email principal"] || payload["E-mail"] ||
-      null;
-
-    const phoneNumber =
-      payload["Telefone principal"] || payload.phone ||
-      payload["Telefone"] || payload["Phone"] ||
-      null;
+    const emailAddress = payload.email || payload["E-mail principal"] || null;
+    const phoneNumber = payload.phone || payload["Telefone principal"] || null;
     
-    // ── Address: individual fields from ClickOne (exact names from CRM) ──
+    // ── Address: ClickOne nests address fields inside `location` object ──
+    const loc = payload.location || {};
+    
     const directStreet =
+      loc.address ||                                          // location.address = "3036 Roswell Rd"
       payload["Street Address"] || payload.street_address ||
-      payload["Endereço"] || payload.street || null;
+      payload["Endereço"] || null;
 
     const directCity =
-      payload["City"] || payload.city || payload.City ||
+      loc.city ||                                             // location.city = "Marietta"
+      payload["City"] || payload.city ||
       payload["Cidade"] || null;
 
     const directState =
-      payload["State"] || payload.state || payload.State ||
+      loc.state ||                                            // location.state = "Georgia"
+      payload["State"] || payload.state ||
       payload["Estado"] || null;
 
     const directZip =
+      loc.postalCode ||                                       // location.postalCode = "30062"
       payload["Postal Code"] || payload["ZIP Code"] || payload["Zip Code"] ||
       payload.zip_code || payload.zip || payload.postal_code ||
       payload["CEP"] || null;
 
-    // Fallback: full address string
-    const rawAddress =
-      payload.location?.fullAddress || payload.full_address ||
-      payload["Billing Address - Full Address"] || payload.address || "";
+    // Normalize state: "Georgia" → "GA", "Florida" → "FL", etc.
+    const stateMap: Record<string, string> = {
+      'georgia': 'GA', 'florida': 'FL', 'alabama': 'AL', 'tennessee': 'TN',
+      'south carolina': 'SC', 'north carolina': 'NC', 'virginia': 'VA',
+      'texas': 'TX', 'california': 'CA', 'new york': 'NY', 'ohio': 'OH',
+      'michigan': 'MI', 'illinois': 'IL', 'pennsylvania': 'PA',
+      'massachusetts': 'MA', 'maryland': 'MD', 'colorado': 'CO',
+      'arizona': 'AZ', 'washington': 'WA', 'oregon': 'OR',
+      'minnesota': 'MN', 'indiana': 'IN', 'missouri': 'MO',
+      'wisconsin': 'WI', 'louisiana': 'LA', 'connecticut': 'CT',
+      'mississippi': 'MS', 'arkansas': 'AR', 'kentucky': 'KY',
+      'iowa': 'IA', 'kansas': 'KS', 'nevada': 'NV', 'utah': 'UT',
+      'nebraska': 'NE', 'new jersey': 'NJ', 'new mexico': 'NM',
+      'west virginia': 'WV', 'idaho': 'ID', 'maine': 'ME',
+      'new hampshire': 'NH', 'montana': 'MT', 'delaware': 'DE',
+      'hawaii': 'HI', 'alaska': 'AK', 'rhode island': 'RI',
+      'south dakota': 'SD', 'north dakota': 'ND', 'vermont': 'VT',
+      'wyoming': 'WY', 'oklahoma': 'OK',
+    };
 
-    // Use direct fields if available, otherwise parse from full address
+    const normalizeState = (s: string | null): string => {
+      if (!s) return "GA";
+      // Already abbreviated (e.g. "GA", "FL")
+      if (s.length <= 3) return s.toUpperCase();
+      // Full name → abbreviation
+      return stateMap[s.toLowerCase()] || s.toUpperCase().slice(0, 2);
+    };
+
     let finalAddress = directStreet || "Pendente";
     let city = directCity || "Unknown";
-    let state = directState || "GA";
+    let state = normalizeState(directState);
     let zip = directZip || "00000";
 
-    // Fallback: parse full address string if individual fields weren't provided
+    // Fallback: parse full address string if location object wasn't provided
+    const rawAddress = loc.fullAddress || payload.full_address || payload.address || "";
     if (!directStreet && rawAddress) {
       const parts = rawAddress.split(',').map((p: string) => p.trim());
       if (parts.length >= 3) {
         finalAddress = parts[0];
         city = directCity || parts[parts.length - 2];
-        const stateZip = parts[parts.length - 1].split(' ');
-        if (stateZip.length >= 2) {
-          state = directState || stateZip[0] || "GA";
-          zip = directZip || stateZip[1] || "00000";
-        } else if (stateZip.length === 1 && stateZip[0].length === 2) {
-          state = directState || stateZip[0];
+        const stateZipStr = parts[parts.length - 1].split(' ');
+        if (stateZipStr.length >= 2) {
+          state = normalizeState(directState || stateZipStr[0]);
+          zip = directZip || stateZipStr[stateZipStr.length - 1] || "00000";
         }
       } else if (parts.length === 2) {
         finalAddress = parts[0];
@@ -149,32 +168,32 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── Salesperson / Proprietário ──
+    // ── Salesperson: ClickOne sends as `owner` ──
     const salespersonName =
+      payload.owner ||                                        // "Ruby Davenport"
       payload["Proprietário"] || payload["Proprietario"] ||
       payload["Nome do Responsavel"] || payload["Nome do Responsável"] ||
       payload.salesperson || payload.Salesperson ||
-      payload["Owner"] || payload.owner ||
       null;
 
-    // ── Valor ──
+    // ── Valor: ClickOne sends as `Job Value` or `lead_value` ──
     const serviceValue =
+      payload["Job Value"] || payload.lead_value ||           // "4850" or 4850
       payload["Valor da oportunidade"] || payload["Valor"] ||
-      payload["Preço final"] || payload["Preco final"] ||
-      payload.value || payload.Value ||
-      payload["Contract Value"] || payload["Amount"] ||
+      payload["Preço final"] || payload.value || payload.Value ||
       "0";
 
-    // ── Serviço ──
+    // ── Serviço: ClickOne sends as `Services` ──
     const rawServices =
-      payload["Service"] || payload["Serviço"] || payload["Servico"] ||
-      payload["Tipo de Serviço"] || payload["Tipo de Servico"] ||
-      payload.service || payload.services ||
+      payload["Services"] || payload["Service"] ||            // "Gutters"
+      payload["Serviço"] || payload["Servico"] ||
+      payload["Tipo de Serviço"] || payload.service ||
       "Siding";
 
-    // ── SQ (Squares) ──
+    // ── SQ: ClickOne sends as `Squares?` (with question mark!) ──
     const rawSQ =
-      payload["Squares"] || payload["squares"] || payload["SQ"] || payload.sq ||
+      payload["Squares?"] || payload["Squares"] ||            // note the "?" in the field name
+      payload["squares"] || payload["SQ"] || payload.sq ||
       payload["Square Footage"] || payload.square_footage ||
       null;
     const squareFootage = rawSQ ? parseFloat(String(rawSQ).replace(/[^0-9.]/g, '')) : null;
