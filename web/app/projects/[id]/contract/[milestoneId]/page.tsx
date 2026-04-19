@@ -2,17 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import DynamicContractForm, {
   ContractFormData,
   MilestonePaymentMethod,
 } from "@/components/DynamicContractForm";
-
-// ─── Supabase client (public/anon) ────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // ─── Types from DB ────────────────────────────────────────────
 
