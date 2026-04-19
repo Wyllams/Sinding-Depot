@@ -73,11 +73,17 @@ export async function POST(req: Request) {
     console.log("📥 Received ClickOne Webhook:", JSON.stringify(payload, null, 2));
     console.log("📋 Payload keys:", Object.keys(payload));
 
-    // Save raw payload to webhook_logs for debugging field names
+    // Capture ALL headers for debugging
+    const allHeaders: Record<string, string> = {};
+    req.headers.forEach((value, key) => {
+      allHeaders[key] = value;
+    });
+
+    // Save raw payload + headers to webhook_logs for debugging
     await supabaseAdmin.from("webhook_logs").insert({
       source: 'clickone',
       raw_payload: payload,
-      parsed_data: { keys: Object.keys(payload) },
+      parsed_data: { keys: Object.keys(payload), headers: allHeaders },
       status: 'processing',
     });
 
@@ -93,8 +99,13 @@ export async function POST(req: Request) {
     
     // ── ClickOne sends custom fields as HEADERS (Cabeçalhos), not body! ──
     // Read from both headers AND body for maximum compatibility
-    const headers = req.headers;
-    const h = (name: string): string | null => headers.get(name) || null;
+    const hdrs = req.headers;
+    // Filter out literal 'undefined', 'null', empty strings from headers
+    const h = (name: string): string | null => {
+      const val = hdrs.get(name);
+      if (!val || val === 'undefined' || val === 'null' || val.trim() === '') return null;
+      return val;
+    };
 
     // ── Address from headers (Street_Address, City, State, Postal_Code) then body ──
     const directStreet =
