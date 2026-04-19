@@ -96,6 +96,159 @@ function fmt(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+// ─── Paint Colors Card (Admin) ────────────────────────────────────
+function PaintColorsCard({ jobId }: { jobId: string }) {
+  const [colors, setColors] = useState<{ surface_area: string; color_code: string; brand: string; status: string }[]>([]);
+  const [loadingColors, setLoadingColors] = useState(true);
+  const [paintDate, setPaintDate] = useState<string | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [overriding, setOverriding] = useState(false);
+  const [overrideActive, setOverrideActive] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // Fetch submitted colors
+        const { data: colorData } = await supabase
+          .from("job_color_selections")
+          .select("surface_area, color_code, brand, status")
+          .eq("job_id", jobId);
+        setColors(colorData || []);
+
+        // Fetch paint schedule 
+        const { data: paintSvc } = await supabase
+          .from("job_services")
+          .select("id, service_type:service_types!inner(name)")
+          .eq("job_id", jobId)
+          .eq("service_type.name", "Painting")
+          .maybeSingle();
+
+        if (paintSvc) {
+          const { data: assignment } = await supabase
+            .from("service_assignments")
+            .select("scheduled_start_at")
+            .eq("job_service_id", paintSvc.id)
+            .maybeSingle();
+
+          if (assignment?.scheduled_start_at) {
+            setPaintDate(assignment.scheduled_start_at);
+            const lockTime = new Date(new Date(assignment.scheduled_start_at).getTime() - 24 * 60 * 60 * 1000);
+            setIsLocked(new Date() >= lockTime);
+          }
+        }
+
+        // Check override
+        const { data: jobData } = await supabase
+          .from("jobs")
+          .select("color_edit_override_until")
+          .eq("id", jobId)
+          .single();
+        if (jobData?.color_edit_override_until && new Date(jobData.color_edit_override_until) > new Date()) {
+          setOverrideActive(true);
+        }
+      } catch (err) {
+        console.error("[PaintColors]", err);
+      } finally {
+        setLoadingColors(false);
+      }
+    })();
+  }, [jobId]);
+
+  async function handleOverride(): Promise<void> {
+    setOverriding(true);
+    try {
+      const res = await fetch("/api/colors/override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId, durationMinutes: 120 }),
+      });
+      if (res.ok) setOverrideActive(true);
+    } catch (err) {
+      console.error("[Override]", err);
+    } finally {
+      setOverriding(false);
+    }
+  }
+
+  const visibleColors = colors.filter((c) => c.color_code !== "NOT_PAINTED");
+
+  return (
+    <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] flex items-center gap-2">
+          <span className="material-symbols-outlined text-[14px] text-[#f5a623]" translate="no">format_paint</span>
+          Paint Colors
+        </h3>
+        {isLocked && (
+          <div className="flex items-center gap-2">
+            {overrideActive ? (
+              <span className="text-[10px] font-bold text-[#aeee2a] bg-[#aeee2a]/10 px-2 py-1 rounded-full">✓ Edit Allowed</span>
+            ) : (
+              <button
+                onClick={handleOverride}
+                disabled={overriding}
+                className="text-[10px] font-bold text-[#f5a623] bg-[#f5a623]/10 hover:bg-[#f5a623]/20 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 flex items-center gap-1"
+              >
+                {overriding ? (
+                  <div className="w-3 h-3 border border-[#f5a623]/30 border-t-[#f5a623] rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[12px]" translate="no">lock_open</span>
+                    Allow Edit (2h)
+                  </>
+                )}
+              </button>
+            )}
+            <span className="text-[10px] font-bold text-[#ff7351] bg-[#ff7351]/10 px-2 py-1 rounded-full flex items-center gap-1">
+              <span className="material-symbols-outlined text-[10px]" translate="no">lock</span>
+              Locked
+            </span>
+          </div>
+        )}
+      </div>
+
+      {loadingColors ? (
+        <div className="flex justify-center py-4">
+          <div className="w-5 h-5 border-2 border-[#474846] border-t-[#aeee2a] rounded-full animate-spin" />
+        </div>
+      ) : visibleColors.length === 0 ? (
+        <div className="text-center py-6">
+          <p className="text-xs text-[#474846]">No colors submitted yet</p>
+          {paintDate && (
+            <p className="text-[10px] text-[#ababa8] mt-1">
+              Paint scheduled: {new Date(paintDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-0">
+          {visibleColors.map((c) => (
+            <div key={c.surface_area} className="flex items-center justify-between py-2.5 border-b border-[#474846]/15 last:border-0">
+              <span className="text-xs text-[#ababa8] capitalize">{c.surface_area.replace(/_/g, " ")}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-[#faf9f5] font-mono">{c.color_code}</span>
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                  c.status === "approved" ? "bg-[#aeee2a]/20 text-[#aeee2a]" : "bg-[#f5a623]/20 text-[#f5a623]"
+                }`}>
+                  {c.status}
+                </span>
+              </div>
+            </div>
+          ))}
+          {paintDate && (
+            <div className="pt-3 mt-2 border-t border-[#474846]/30">
+              <p className="text-[10px] text-[#ababa8] flex items-center gap-1">
+                <span className="material-symbols-outlined text-[12px]" translate="no">event</span>
+                Paint: {new Date(paintDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -836,6 +989,10 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
               </div>
+
+              {/* ── Paint Colors Card ── */}
+              <PaintColorsCard jobId={job.id} />
+
           </div>
         )}
 
