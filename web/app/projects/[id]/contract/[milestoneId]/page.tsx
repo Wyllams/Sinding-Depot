@@ -242,6 +242,13 @@ export default function ContractPage() {
         </div>
       </header>
 
+      {/* Already signed banner */}
+      {!signed && (milestone.status === "signed" || milestone.status === "paid") && (
+        <div style={successBannerStyle}>
+          ✅ Document signed on {new Date(milestone.signed_at!).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+        </div>
+      )}
+
       {/* Success banner */}
       {signed && (
         <div style={successBannerStyle}>
@@ -254,7 +261,7 @@ export default function ContractPage() {
         <DynamicContractForm
           data={formData}
           onSign={handleSign}
-          readOnly={signed}
+          readOnly={signed || milestone.status === "signed" || milestone.status === "paid"}
         />
       </main>
 

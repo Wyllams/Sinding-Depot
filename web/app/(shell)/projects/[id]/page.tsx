@@ -1145,6 +1145,16 @@ export default function ProjectDetailPage() {
                               </button>
                             )}
 
+                            {isSigned && (
+                              <button
+                                onClick={() => window.open(signingUrl, "_blank")}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#818cf8]/10 text-[#818cf8] text-[10px] font-black uppercase rounded-lg hover:bg-[#818cf8]/20 transition-colors cursor-pointer border border-[#818cf8]/20"
+                              >
+                                <span className="material-symbols-outlined text-[14px]" translate="no">visibility</span>
+                                View
+                              </button>
+                            )}
+
                             {(isPending || isSigned) && (
                               <button
                                 onClick={() => {
