@@ -1,55 +1,88 @@
-import { FieldTopBar } from "@/components/field/FieldTopBar";
+"use client";
+
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function FieldHome() {
-  // Em uma conta real, isso viria do Supabase auth()
-  const crewName = "Wyllams Team";
+  const [profile, setProfile] = useState<{ full_name: string } | null>(null);
+  const [jobCount, setJobCount] = useState(0);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
+      if (data) setProfile(data);
+
+      // Count pending jobs (simplified — a real query would filter by assigned crew)
+      const { count } = await supabase
+        .from("job_services")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["scheduled", "in_progress"]);
+
+      setJobCount(count ?? 0);
+    };
+    load();
+  }, []);
+
+  const crewName = profile?.full_name ?? "Crew Partner";
 
   return (
-    <>
-      <FieldTopBar title="Dashboard" />
-      
-      <div className="p-6">
-        {/* Greetings */}
-        <div className="mb-8">
-          <h2 className="text-[#ababa8] text-sm uppercase tracking-widest font-bold mb-1">Welcome back</h2>
-          <h1 className="text-[#faf9f5] font-headline text-3xl font-bold tracking-tight">{crewName}</h1>
-          <p className="text-[#aeee2a] font-medium mt-1">You have 2 active jobs today.</p>
-        </div>
+    <div className="p-5 space-y-8 bg-[#050505] min-h-[100dvh]">
+      {/* Greeting */}
+      <section className="pt-2">
+        <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-[0.15em] mb-1">
+          Welcome Back
+        </p>
+        <h1 className="text-[32px] font-black font-headline text-white leading-none tracking-tight mb-2">
+          {crewName}
+        </h1>
+        <p className="text-[14px] text-[var(--color-siding-green)] font-medium">
+          You have {jobCount} active job{jobCount !== 1 ? "s" : ""} in the field.
+        </p>
+      </section>
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <Link href="/field/jobs" className="bg-[#1e201e] border border-white/5 p-4 rounded-3xl flex flex-col items-start active:scale-95 transition-transform cursor-pointer">
-             <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center mb-3">
-                <span className="material-symbols-outlined text-[#aeee2a]" translate="no">engineering</span>
-             </div>
-             <span className="text-2xl font-black text-[#faf9f5] font-headline">2</span>
-             <span className="text-[#ababa8] text-xs font-bold uppercase tracking-wider mt-1">My Jobs</span>
-          </Link>
-          
-          <div className="bg-[#1e201e] border border-white/5 p-4 rounded-3xl flex flex-col items-start">
-             <div className="w-10 h-10 rounded-full bg-[#ff7351]/10 flex items-center justify-center mb-3">
-                <span className="material-symbols-outlined text-[#ff7351]" translate="no">warning</span>
-             </div>
-             <span className="text-2xl font-black text-[#faf9f5] font-headline">0</span>
-             <span className="text-[#ababa8] text-xs font-bold uppercase tracking-wider mt-1">Issues</span>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 gap-4">
+        <Link href="/field/jobs" className="bg-[#151515] rounded-3xl p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform">
+          <div className="w-10 h-10 rounded-full bg-[var(--color-siding-green)]/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-[var(--color-siding-green)]" translate="no">handyman</span>
           </div>
-        </div>
+          <div>
+            <p className="text-3xl font-black font-headline text-white tracking-tighter">{jobCount}</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">My Jobs</p>
+          </div>
+        </Link>
 
-        {/* Action Widgets */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-br from-[#1a2e00] to-[#121412] border border-[#aeee2a]/20 p-5 rounded-3xl relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-4 opacity-10">
-               <span className="material-symbols-outlined text-8xl" translate="no">wb_sunny</span>
-             </div>
-             <div className="relative z-10">
-                <h3 className="text-[#aeee2a] font-bold text-sm tracking-widest uppercase mb-1">Weather Check</h3>
-                <p className="text-[#faf9f5] font-headline text-xl font-bold">Clear Sky, 72°F</p>
-                <p className="text-[#ababa8] text-xs mt-2">Perfect conditions for exterior siding installation today.</p>
-             </div>
+        <Link href="/field/alerts" className="bg-[#151515] rounded-3xl p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform">
+          <div className="w-10 h-10 rounded-full bg-[#ff7351]/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-[#ff7351]" translate="no">warning</span>
           </div>
-        </div>
+          <div>
+            <p className="text-3xl font-black font-headline text-white tracking-tighter">0</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Issues</p>
+          </div>
+        </Link>
       </div>
-    </>
+
+      {/* Weather Widget */}
+      <div className="bg-[#151515] border border-[var(--color-siding-green)]/20 rounded-3xl p-5 relative overflow-hidden">
+        <div className="absolute top-5 right-5 opacity-10">
+          <span className="material-symbols-outlined text-6xl text-[var(--color-siding-green)]" translate="no">wb_sunny</span>
+        </div>
+        <h2 className="text-[11px] font-bold text-[var(--color-siding-green)] uppercase tracking-widest mb-1">Weather Check</h2>
+        <p className="text-xl font-bold font-headline text-white mb-2">Clear Sky, 72°F</p>
+        <p className="text-xs text-zinc-400 font-medium leading-relaxed pr-8">
+          Perfect conditions for exterior siding installation today.
+        </p>
+      </div>
+    </div>
   );
 }

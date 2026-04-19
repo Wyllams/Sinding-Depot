@@ -261,9 +261,87 @@ export default function LoginPage() {
         <LoginFormContent />
       </Suspense>
 
+      {/* Quick Access Buttons */}
+      <Suspense fallback={null}>
+        <QuickAccessButtons />
+      </Suspense>
+
       <p className="text-center mt-8 text-[11px] font-bold text-[#474846]">
         Secure access for Siding Depot personnel only.
       </p>
     </div>
   );
 }
+
+// ─── Quick Access Buttons (Dev Mode) ──────────────────
+function QuickAccessButtons() {
+  const router = useRouter();
+  const [loadingRole, setLoadingRole] = useState<string | null>(null);
+
+  const quickAccess = [
+    { role: "admin",       label: "Admin",      icon: "shield_person",  email: "admin@sidingdepot.com",        password: "Password123!", color: "#aeee2a", redirect: "/" },
+    { role: "salesperson", label: "Vendedor",    icon: "sell",           email: "salesperson@sidingdepot.com",  password: "Password123!", color: "#60a5fa", redirect: "/sales" },
+    { role: "partner",     label: "Parceiro",    icon: "engineering",    email: "crew@sidingdepot.com",         password: "Password123!", color: "#f59e0b", redirect: "/field" },
+    { role: "customer",    label: "Cliente",     icon: "person",         email: "wyllams_bione@customer.sidingdepot.app", password: "WyllamsB*2026", color: "#a78bfa", redirect: "/customer" },
+  ];
+
+  const handleQuickLogin = async (item: typeof quickAccess[0]) => {
+    if (!item.email) {
+      alert("Customer account not configured yet.");
+      return;
+    }
+
+    setLoadingRole(item.role);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: item.email,
+        password: item.password,
+      });
+      if (error) throw error;
+      router.push(item.redirect);
+      router.refresh();
+    } catch (err: any) {
+      alert("Login failed: " + err.message);
+    } finally {
+      setLoadingRole(null);
+    }
+  };
+
+  return (
+    <div className="mt-8 pt-6 border-t border-[#242624]">
+      <p className="text-[10px] font-black uppercase tracking-widest text-[#474846] text-center mb-4">
+        Quick Access
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        {quickAccess.map((item) => (
+          <button
+            key={item.role}
+            onClick={() => handleQuickLogin(item)}
+            disabled={loadingRole !== null}
+            className="relative bg-[#0a0a0a] border border-[#242624] rounded-2xl p-4 flex flex-col items-center gap-2 hover:border-opacity-60 active:scale-95 transition-all disabled:opacity-50 group"
+            style={{ borderColor: `${item.color}30` }}
+          >
+            {loadingRole === item.role ? (
+              <div className="w-5 h-5 border-2 border-zinc-700 rounded-full animate-spin" style={{ borderTopColor: item.color }} />
+            ) : (
+              <span
+                className="material-symbols-outlined text-[24px] group-hover:scale-110 transition-transform"
+                translate="no"
+                style={{ color: item.color }}
+              >
+                {item.icon}
+              </span>
+            )}
+            <span className="text-[11px] font-bold text-white uppercase tracking-wider">
+              {item.label}
+            </span>
+            {!item.email && (
+              <span className="absolute top-2 right-2 text-[8px] font-bold text-zinc-600 bg-zinc-900 px-1.5 py-0.5 rounded-full">SOON</span>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+

@@ -284,7 +284,7 @@ export default function WindowsTrackerPage() {
 
   return (
     <>
-      <TopBar title="Windows Tracker" />
+      <TopBar />
 
       <main className="px-4 sm:px-6 lg:px-8 pb-20 pt-8 min-h-screen">
 
@@ -476,8 +476,10 @@ export default function WindowsTrackerPage() {
                   {filtered.length === 0 ? (
                     <tr>
                       <td colSpan={12} className="px-6 py-16 text-center text-[#ababa8] text-sm">
-                        <span className="material-symbols-outlined text-4xl block mb-2 opacity-30" translate="no">window</span>
-                        {orders.length === 0 ? "No orders yet. Create one to get started." : "No orders match current filters."}
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <span className="material-symbols-outlined text-4xl opacity-30" translate="no">window</span>
+                          <span>{orders.length === 0 ? "No orders yet. Create one to get started." : "No orders match current filters."}</span>
+                        </div>
                       </td>
                     </tr>
                   ) : (

@@ -7,6 +7,7 @@ tags:
   - crm
   - automação
 created: 2026-04-17
+updated: 2026-04-19
 ---
 
 # 🔗 Webhook ClickOne — Integração CRM
@@ -67,7 +68,8 @@ sequenceDiagram
 | **Portal Email** | `username@customer.sidingdepot.app` | `nick_magalhaes@customer.sidingdepot.app` |
 
 → Credenciais enviadas via **Welcome Email** (Resend API)
-→ Veja: [[Customer Portal]]
+→ **Proteção contra duplicação:** Verifica `customers.profile_id` antes de criar — se já existir, pula a criação.
+→ Veja: [[Customer Portal]] | [[Credenciais Customer Portal]]
 
 ---
 
@@ -91,6 +93,7 @@ sequenceDiagram
 - Se auth user falhar → job continua (non-blocking)
 - Se email falhar → job continua (non-blocking)
 - Se job falhar → retorna HTTP 500 com mensagem de erro
+- Se customer já tem `profile_id` → pula criação de portal (proteção contra duplicação)
 
 ---
 

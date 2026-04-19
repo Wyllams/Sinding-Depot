@@ -152,6 +152,17 @@ export async function POST(req: Request) {
 
     if (supabaseServiceKey && clientName && clientName !== "Unknown Client") {
       try {
+        // ── Guard: skip if customer already has portal access ──
+        const { data: custCheck } = await supabaseAdmin
+          .from("customers")
+          .select("profile_id")
+          .eq("id", customerId)
+          .single();
+
+        if (custCheck?.profile_id) {
+          console.log(`🔑 Customer already has portal access — skipping creation.`);
+        } else {
+
         // Generate base username
         let baseUsername = generateUsername(clientName);
         let finalUsername = baseUsername;
@@ -236,6 +247,7 @@ export async function POST(req: Request) {
             console.warn("⚠️ Skipping welcome email: RESEND_API_KEY or customer email not available.");
           }
         }
+        } // end else (no existing profile_id)
       } catch (portalErr: unknown) {
         const msg = portalErr instanceof Error ? portalErr.message : String(portalErr);
         console.error("⚠️ Customer portal creation error (non-blocking):", msg);
@@ -493,7 +505,7 @@ async function sendCustomerWelcomeEmail(params: WelcomeEmailParams): Promise<voi
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Siding Depot <portal@sidingdepot.app>',
+      from: process.env.RESEND_FROM || 'Siding Depot <onboarding@resend.dev>',
       to: [toEmail],
       subject: `Your Siding Depot Customer Portal Access — ${username}`,
       html: htmlBody,

@@ -4,6 +4,7 @@ tags:
   - siding-depot
   - formulário
 created: 2026-04-17
+updated: 2026-04-19
 ---
 
 # ➕ New Project — Criação de Projeto
@@ -53,6 +54,9 @@ created: 2026-04-17
 | **Window Order** | Se Windows/Doors selecionado → cria `window_order` automático → [[Windows e Doors Tracker]] |
 | **Notificação** | Insere na tabela `notifications` → [[Notificações em Tempo Real]] |
 | **Siding + Paint** | Se Siding selecionado → adiciona Painting automaticamente |
+| **Customer Portal** | Cria auth user + profile + credenciais via `POST /api/customers/create-portal` → [[Customer Portal]] |
+| **Welcome Email** | Envia email com user/senha via Resend API → [[Credenciais Customer Portal]] |
+| **Payment Milestones** | Gera Job Start Certificate + COC por serviço → [[Documentos e Contratos Digitais]] |
 
 ---
 
@@ -60,4 +64,7 @@ created: 2026-04-17
 - [[Projects]]
 - [[Crews e Partners]]
 - [[Windows e Doors Tracker]]
+- [[Customer Portal]]
+- [[Credenciais Customer Portal]]
 - [[Banco de Dados]]
+- [[Documentos e Contratos Digitais]]

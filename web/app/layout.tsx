@@ -9,13 +9,19 @@ export const metadata: Metadata = {
   title: "Siding Depot Command Center",
   description: "Siding Depot Operations & Management Platform",
   other: { google: "notranslate" },
+  formatDetection: {
+    telephone: false,
+    date: false,
+    email: false,
+    address: false,
+  },
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="dark" translate="no">
+    <html lang="en" className="dark" translate="no" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -26,6 +32,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${inter.variable} ${manrope.variable} bg-[#0d0f0d] text-[#faf9f5] min-h-screen`}
+        suppressHydrationWarning
         style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
       >
         {children}

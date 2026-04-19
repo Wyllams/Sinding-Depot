@@ -1,7 +1,7 @@
 "use client";
 
 import { TopBar } from "../../../components/TopBar";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../../../lib/supabase";
 import { CustomDropdown } from "../../../components/CustomDropdown";
 import { NewServiceCallModal } from "../../../components/NewServiceCallModal";
@@ -112,8 +112,16 @@ export default function ServicesPage() {
     title: string; description: string; status: string; type: string; crew_id: string;
   } | null>(null);
   const [editSaving, setEditSaving] = useState(false);
+  const [editExistingPhotos, setEditExistingPhotos] = useState<{ id: string; url: string }[]>([]);
+  const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
+  const [editPhotosToDelete, setEditPhotosToDelete] = useState<string[]>([]);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Lightbox for full-screen image/video preview
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxType, setLightboxType] = useState<"image" | "video" | "other">("image");
 
   // ── Delete modal ──────────────────────────────
   const handleDelete = async (id: string) => {
@@ -190,7 +198,7 @@ export default function ServicesPage() {
   };
 
   // ── Edit modal ─────────────────────────────────
-  const openEdit = (s: ServiceCall): void => {
+  const openEdit = async (s: ServiceCall): Promise<void> => {
     setEditService(s);
     setEditForm({
       title: s.title,
@@ -199,6 +207,15 @@ export default function ServicesPage() {
       type: s.type,
       crew_id: s.crew_id || "",
     });
+    setEditNewFiles([]);
+    setEditPhotosToDelete([]);
+
+    // Load existing attachments from DB
+    const { data } = await supabase
+      .from("blocker_attachments")
+      .select("id, url")
+      .eq("blocker_id", s.id);
+    setEditExistingPhotos((data || []) as { id: string; url: string }[]);
   };
 
   const handleEditSave = async (e: React.FormEvent): Promise<void> => {
@@ -206,25 +223,58 @@ export default function ServicesPage() {
     if (!editService || !editForm) return;
     setEditSaving(true);
 
-    const { error } = await supabase
-      .from("blockers")
-      .update({
-        title: editForm.title,
-        description: editForm.description,
-        status: editForm.status,
-        type: editForm.type,
-        crew_id: editForm.crew_id || null,
-      })
-      .eq("id", editService.id);
+    try {
+      // 1. Update the blocker fields
+      const { error } = await supabase
+        .from("blockers")
+        .update({
+          title: editForm.title,
+          description: editForm.description,
+          status: editForm.status,
+          type: editForm.type,
+          crew_id: editForm.crew_id || null,
+        })
+        .eq("id", editService.id);
 
-    if (error) {
-      console.error("Error updating service:", error);
-    } else {
+      if (error) throw error;
+
+      // 2. Delete removed photos
+      if (editPhotosToDelete.length > 0) {
+        await supabase
+          .from("blocker_attachments")
+          .delete()
+          .in("id", editPhotosToDelete);
+      }
+
+      // 3. Upload new files
+      if (editNewFiles.length > 0) {
+        const urls: string[] = [];
+        for (const file of editNewFiles) {
+          const ext = file.name.split(".").pop();
+          const path = `service-calls/${editService.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+          const { error: upErr } = await supabase.storage.from("attachments").upload(path, file);
+          if (upErr) { console.error("Upload error:", upErr); continue; }
+          const { data: urlData } = supabase.storage.from("attachments").getPublicUrl(path);
+          urls.push(urlData.publicUrl);
+        }
+        if (urls.length > 0) {
+          await supabase.from("blocker_attachments").insert(
+            urls.map(url => ({ blocker_id: editService.id, url, uploaded_at: new Date().toISOString() }))
+          );
+        }
+      }
+
       setEditService(null);
       setEditForm(null);
+      setEditExistingPhotos([]);
+      setEditNewFiles([]);
+      setEditPhotosToDelete([]);
       await fetchData();
+    } catch (err: any) {
+      console.error("Error updating service:", err);
+    } finally {
+      setEditSaving(false);
     }
-    setEditSaving(false);
   };
 
   // ── Filtered list ──────────────────────────────
@@ -268,7 +318,7 @@ export default function ServicesPage() {
 
   return (
     <>
-      <TopBar title="Services" />
+      <TopBar />
 
       <NewServiceCallModal
         isOpen={isModalOpen}
@@ -418,8 +468,10 @@ export default function ServicesPage() {
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="px-6 py-16 text-center text-[#ababa8] text-sm">
-                      <span className="material-symbols-outlined text-4xl block mb-2 opacity-30" translate="no">construction</span>
-                      No service calls found.
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <span className="material-symbols-outlined text-4xl opacity-30" translate="no">construction</span>
+                        <span>No service calls found.</span>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -566,26 +618,30 @@ export default function ServicesPage() {
           onClick={(e) => { if (e.target === e.currentTarget) { setEditService(null); setEditForm(null); } }}
         >
           <div
-            className="w-full max-w-lg rounded-2xl p-8 relative"
+            className="w-full max-w-lg rounded-2xl relative flex flex-col max-h-[90vh]"
             style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)" }}
           >
-            <button
-              onClick={() => { setEditService(null); setEditForm(null); }}
-              className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors"
-            >
-              <span className="material-symbols-outlined" translate="no">close</span>
-            </button>
-
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">edit</span>
+            {/* Header — sticky */}
+            <div className="flex items-center justify-between p-6 pb-0 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">edit</span>
+                </div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Edit Service Call</h2>
+                  <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest">{formatId(editService.id)}</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Edit Service Call</h2>
-                <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest">{formatId(editService.id)}</p>
-              </div>
+              <button
+                onClick={() => { setEditService(null); setEditForm(null); }}
+                className="text-[#ababa8] hover:text-[#faf9f5] transition-colors"
+              >
+                <span className="material-symbols-outlined" translate="no">close</span>
+              </button>
             </div>
 
+            {/* Body — scrollable */}
+            <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4" style={{ scrollbarWidth: "none" }}>
             <form onSubmit={handleEditSave} className="space-y-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Title</label>
@@ -630,6 +686,95 @@ export default function ServicesPage() {
                 />
               </div>
 
+              {/* ── Photos & Attachments ─────────────── */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
+                  Photos & Attachments
+                </label>
+
+                {/* Existing photos grid */}
+                {editExistingPhotos.filter(p => !editPhotosToDelete.includes(p.id)).length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {editExistingPhotos
+                      .filter(p => !editPhotosToDelete.includes(p.id))
+                      .map((photo) => {
+                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(photo.url);
+                        const isVideo = /\.(mp4|mov|webm|avi|mkv|m4v)/i.test(photo.url);
+                        return (
+                          <div key={photo.id} className="relative group rounded-xl overflow-hidden border border-[#474846]/20 bg-[#121412] aspect-square">
+                            {/* Clickable area to open lightbox */}
+                            <button
+                              type="button"
+                              className="w-full h-full cursor-pointer"
+                              onClick={() => {
+                                setLightboxUrl(photo.url);
+                                setLightboxType(isImage ? "image" : isVideo ? "video" : "other");
+                              }}
+                            >
+                              {isImage ? (
+                                <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                              ) : isVideo ? (
+                                <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-[#0d0f0d]">
+                                  <span className="material-symbols-outlined text-3xl text-[#60b8f5]" translate="no">play_circle</span>
+                                  <span className="text-[9px] text-[#ababa8] truncate w-full text-center px-1">Video</span>
+                                </div>
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                                  <span className="material-symbols-outlined text-2xl text-[#ababa8]" translate="no">attach_file</span>
+                                  <span className="text-[9px] text-[#ababa8] truncate w-full text-center px-1">
+                                    {photo.url.split("/").pop()?.split("?")[0] || "File"}
+                                  </span>
+                                </div>
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditPhotosToDelete(prev => [...prev, photo.id])}
+                              className="absolute top-1 right-1 w-6 h-6 bg-black/70 hover:bg-[#ff7351] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-[14px] text-white" translate="no">close</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+
+                {/* New files to upload */}
+                {editNewFiles.length > 0 && (
+                  <div className="space-y-2">
+                    {editNewFiles.map((file, idx) => (
+                      <div key={idx} className="flex items-center gap-3 bg-[#181a18] border border-[#aeee2a]/20 rounded-xl px-4 py-2.5">
+                        <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">
+                          {file.type.startsWith("image/") ? "image" : file.type.startsWith("video/") ? "videocam" : "attach_file"}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-[#faf9f5] font-medium truncate">{file.name}</p>
+                          <p className="text-[10px] text-[#aeee2a]">New • {file.size < 1024 * 1024 ? `${(file.size / 1024).toFixed(0)} KB` : `${(file.size / (1024 * 1024)).toFixed(1)} MB`}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEditNewFiles(prev => prev.filter((_, i) => i !== idx))}
+                          className="text-[#ababa8] hover:text-[#ff7351] transition-colors flex-shrink-0"
+                        >
+                          <span className="material-symbols-outlined text-lg" translate="no">close</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload button */}
+                <button
+                  type="button"
+                  onClick={() => editFileInputRef.current?.click()}
+                  className="w-full p-4 rounded-xl border-2 border-dashed border-[#474846] bg-[#0d0f0d] hover:border-[#aeee2a]/50 transition-all flex items-center justify-center gap-2 text-[#ababa8] hover:text-[#faf9f5] group"
+                >
+                  <span className="material-symbols-outlined text-xl group-hover:text-[#aeee2a] transition-colors" translate="no">add_photo_alternate</span>
+                  <span className="text-sm font-semibold">Add Photos & Videos</span>
+                </button>
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => { setEditService(null); setEditForm(null); }}
                   className="flex-1 py-3 bg-[#1e201e] text-[#faf9f5] font-bold rounded-xl border border-[#474846]/20 hover:bg-[#242624] transition-all">
@@ -638,10 +783,26 @@ export default function ServicesPage() {
                 <button type="submit" disabled={editSaving}
                   className="flex-1 py-3 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
-                  {editSaving ? <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" /> : "Save Changes"}
+                  {editSaving ? <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" /> : editNewFiles.length > 0 ? `Save & Upload ${editNewFiles.length} file${editNewFiles.length > 1 ? "s" : ""}` : "Save Changes"}
                 </button>
               </div>
             </form>
+            {/* File input MUST be outside the form to avoid interference */}
+            <input
+              ref={editFileInputRef}
+              type="file"
+              multiple
+              accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx"
+              onChange={(e) => {
+                const selectedFiles = Array.from(e.target.files || []);
+                if (selectedFiles.length > 0) {
+                  setEditNewFiles(prev => [...prev, ...selectedFiles]);
+                }
+                e.target.value = "";
+              }}
+              className="hidden"
+            />
+            </div>{/* end scrollable body */}
           </div>
         </div>
       )}
@@ -701,6 +862,62 @@ export default function ServicesPage() {
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ══════════════════════════════════════════════
+          LIGHTBOX — Full-screen Image / Video Preview
+      ══════════════════════════════════════════════ */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(12px)" }}
+          onClick={() => { setLightboxUrl(null); setLightboxType("image"); }}
+        >
+          {/* Close button */}
+          <button
+            className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+            onClick={() => { setLightboxUrl(null); setLightboxType("image"); }}
+          >
+            <span className="material-symbols-outlined text-xl text-white" translate="no">close</span>
+          </button>
+
+          {/* Content */}
+          <div
+            className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {lightboxType === "image" && (
+              <img
+                src={lightboxUrl}
+                alt=""
+                className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                style={{ width: "auto", height: "auto" }}
+              />
+            )}
+            {lightboxType === "video" && (
+              <video
+                src={lightboxUrl}
+                controls
+                autoPlay
+                className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl"
+                style={{ width: "auto", height: "auto" }}
+              />
+            )}
+            {lightboxType === "other" && (
+              <div className="bg-[#181a18] rounded-2xl p-8 flex flex-col items-center gap-4 border border-[#474846]/30">
+                <span className="material-symbols-outlined text-5xl text-[#ababa8]" translate="no">attach_file</span>
+                <p className="text-[#faf9f5] font-bold text-sm">File Preview</p>
+                <a
+                  href={lightboxUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-2 bg-[#aeee2a] text-[#3a5400] font-bold rounded-xl text-sm hover:opacity-90 transition-opacity"
+                >
+                  Open File
+                </a>
+              </div>
+            )}
           </div>
         </div>
       )}

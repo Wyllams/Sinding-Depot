@@ -6,6 +6,28 @@ import { createServerClient } from '@supabase/ssr';
 const AUTH_ROUTES = ['/login', '/forgot-password', '/reset-password'];
 const PUBLIC_CONTRACT_REGEX = /^\/projects\/[^/]+\/contract(\/[^/]+)?/;
 
+// ─── Controle de Acesso por Role ────────────────────────────────
+// Define quais rotas cada role pode acessar.
+// Rotas não listadas aqui são consideradas restritas a admin.
+const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
+  admin:       ['*'],                                    // Admin acessa TUDO
+  salesperson: ['/sales', '/api'],                       // Vendedor só acessa /sales
+  partner:     ['/field', '/api'],                       // Parceiro só acessa /field
+  crew:        ['/field', '/api'],                       // Alias para partner
+  customer:    ['/customer', '/api'],                    // Cliente só acessa /customer
+  client:      ['/customer', '/api'],                    // Alias para customer
+};
+
+// ─── Rota padrão por role (redirect após login) ─────────────────
+const ROLE_HOME: Record<string, string> = {
+  admin:       '/',
+  salesperson: '/sales',
+  partner:     '/field',
+  crew:        '/field',
+  customer:    '/customer',
+  client:      '/customer',
+};
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -45,7 +67,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // ─── Verifica sessão (não usa getUser() para não vazar token) ──
+  // ─── Verifica sessão ──────────────────────────────────────────
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -53,14 +75,51 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = !!session;
 
   // ─── Regras de redirecionamento ───────────────────────────────
+
   // 1. Usuário não autenticado tentando acessar rota protegida
   if (!isAuthenticated && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // 2. Usuário autenticado tentando acessar página de auth
+  // 2. Usuário autenticado tentando acessar página de auth → redireciona para home do role
   if (isAuthenticated && isAuthRoute) {
-    return NextResponse.redirect(new URL('/', request.url));
+    // Busca o role do usuário para redirecionar para o home correto
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session!.user.id)
+      .single();
+
+    const role = profile?.role || 'admin';
+    const home = ROLE_HOME[role] || '/';
+    return NextResponse.redirect(new URL(home, request.url));
+  }
+
+  // 3. Controle de acesso por Role — BLOQUEIA acesso indevido a rotas restritas
+  if (isAuthenticated && !isPublicRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session!.user.id)
+      .single();
+
+    const role = profile?.role || 'admin';
+    const allowedRoutes = ROLE_ALLOWED_ROUTES[role] || [];
+
+    // Admin tem acesso irrestrito
+    if (allowedRoutes.includes('*')) {
+      return response;
+    }
+
+    // Verifica se a rota atual está dentro das rotas permitidas para esse role
+    const isAllowed = allowedRoutes.some((route) => pathname.startsWith(route));
+
+    if (!isAllowed) {
+      // Redireciona para a home do role — NUNCA para uma rota que não é dele
+      const home = ROLE_HOME[role] || '/';
+      console.warn(`[Middleware] BLOCKED: role="${role}" tried to access "${pathname}" → redirected to "${home}"`);
+      return NextResponse.redirect(new URL(home, request.url));
+    }
   }
 
   return response;

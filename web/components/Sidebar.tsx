@@ -14,7 +14,6 @@ const navItems = [
   { href: "/services", icon: "warning", label: "Services" },
   { href: "/schedule", icon: "calendar_today", label: "Job Schedule" },
   { href: "/sales-reports", icon: "assessment", label: "Sales" },
-  { href: "/settings", icon: "settings", label: "Settings" },
 ];
 
 export function Sidebar() {
@@ -22,13 +21,13 @@ export function Sidebar() {
   const { isOpen, close } = useSidebar();
 
   const sidebarContent = (
-    <aside className="bg-[#121412] h-full w-64 flex flex-col py-6 z-50 overflow-y-auto shrink-0">
-      {/* Logo + close button row */}
-      <div className="w-full flex items-center justify-center mb-6 mt-2 relative px-4">
+    <aside className="bg-[#121412] h-full w-64 flex flex-col z-50 overflow-y-auto shrink-0">
+      {/* Logo — aligned with TopBar header height */}
+      <div className="w-full flex items-center justify-center px-4 shrink-0 border-b border-[#474846]/20" style={{ height: "56px" }}>
         <img
           src="/logo-new.png"
           alt="Siding Depot Logo"
-          className="w-[110px] h-auto object-contain"
+          className="w-[80px] h-auto object-contain"
           style={{ filter: "drop-shadow(0px 0px 8px rgba(174, 238, 42, 0.6)) drop-shadow(0px 0px 15px rgba(174, 238, 42, 0.3))" }}
         />
         {/* Close button — only inside mobile drawer */}
@@ -44,7 +43,7 @@ export function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-1 px-4">
+      <nav className="flex-1 space-y-1 px-4 pt-4 pb-6">
         {navItems.map((item) => {
           const isActive =
             item.href !== "#" &&
@@ -78,6 +77,22 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Settings — pinned to bottom */}
+      <div className="px-4 pb-4 pt-2 border-t border-[#474846]/20 shrink-0">
+        <Link
+          href="/settings"
+          onClick={close}
+          className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${
+            pathname === "/settings" || pathname.startsWith("/settings/")
+              ? "text-[#aeee2a] font-bold border-r-4 border-[#aeee2a] bg-[#242624]"
+              : "text-zinc-500 hover:text-zinc-200 hover:bg-[#242624]"
+          }`}
+        >
+          <span className="material-symbols-outlined" translate="no">settings</span>
+          <span>Settings</span>
+        </Link>
+      </div>
     </aside>
   );
 

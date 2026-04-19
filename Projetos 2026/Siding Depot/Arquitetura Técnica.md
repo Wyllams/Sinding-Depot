@@ -89,6 +89,7 @@ graph TD
 |------|--------|
 | `POST /api/webhook/clickone` | [[Webhook ClickOne]] |
 | `POST /api/documents/sign` | [[Documentos e Contratos Digitais]] |
+| `POST /api/customers/create-portal` | Criação de acesso ao [[Customer Portal]] |
 | `POST /api/logout` | Logout |
 
 ---

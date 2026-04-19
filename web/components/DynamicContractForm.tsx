@@ -43,6 +43,12 @@ export interface ContractFormData {
   existingSignatureDataUrl?: string;
 }
 
+const CONSENT_TEXT =
+  "By signing below, I acknowledge that I have reviewed this document in its entirety. " +
+  "I understand that my electronic signature is legally binding and has the same legal effect " +
+  "as a handwritten signature under federal (ESIGN Act) and Georgia (UETA) law. " +
+  "I consent to conduct this transaction electronically.";
+
 export interface DynamicContractFormProps {
   data: ContractFormData;
   /** Called when customer submits signature */
@@ -52,6 +58,10 @@ export interface DynamicContractFormProps {
     customerNotes?: string;
     signatureDataUrl: string;
     paymentMethod: MilestonePaymentMethod;
+    consentAcceptedAt: string;
+    consentText: string;
+    userAgent: string;
+    geolocation?: { lat: number; lng: number; accuracy_meters?: number } | null;
   }) => Promise<void>;
   /** Read-only mode (e.g. already signed) */
   readOnly?: boolean;
@@ -182,10 +192,31 @@ export default function DynamicContractForm({
   const [paymentMethod, setPaymentMethod] = useState<MilestonePaymentMethod>("check");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [consentAcceptedAt, setConsentAcceptedAt] = useState<string | null>(null);
+  const [geo, setGeo] = useState<{ lat: number; lng: number; accuracy_meters?: number } | null>(null);
+
+  // Capture geolocation on mount (optional — user can deny)
+  useEffect(() => {
+    if (effectiveReadOnly) return;
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setGeo({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy_meters: Math.round(pos.coords.accuracy),
+          });
+        },
+        () => { /* denied or unavailable — geo stays null, signature still valid */ }
+      );
+    }
+  }, [effectiveReadOnly]);
 
   const canSubmit =
     !effectiveReadOnly &&
     signatureDataUrl.length > 0 &&
+    consentAccepted &&
     (!isJobStart || initials.trim().length > 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -200,6 +231,10 @@ export default function DynamicContractForm({
         customerNotes: !isJobStart ? customerNotes : undefined,
         signatureDataUrl,
         paymentMethod,
+        consentAcceptedAt: consentAcceptedAt || new Date().toISOString(),
+        consentText: CONSENT_TEXT,
+        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "unknown",
+        geolocation: geo,
       });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao salvar assinatura.");
@@ -377,6 +412,25 @@ export default function DynamicContractForm({
               aria-label="Customer initials for marketing authorization"
             />
           </div>
+        </div>
+      )}
+
+      {/* ── LEGAL CONSENT (required before signing) ────────── */}
+      {!effectiveReadOnly && (
+        <div className={styles.consentBlock}>
+          <label className={styles.consentLabel}>
+            <input
+              type="checkbox"
+              checked={consentAccepted}
+              onChange={(e) => {
+                setConsentAccepted(e.target.checked);
+                if (e.target.checked) setConsentAcceptedAt(new Date().toISOString());
+              }}
+              className={styles.consentCheckbox}
+              aria-label="Legal consent for electronic signature"
+            />
+            <span className={styles.consentText}>{CONSENT_TEXT}</span>
+          </label>
         </div>
       )}
 

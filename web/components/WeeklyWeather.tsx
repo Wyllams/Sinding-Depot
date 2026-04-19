@@ -27,11 +27,11 @@ export function WeeklyWeather() {
   const [weekPage, setWeekPage] = useState(0);
   const [todayStr, setTodayStr] = useState<string>("");
 
-  // Coordinate is set to Austin by default, but overwritten by localStorage if exists
+  // Default to Marietta, GA (Siding Depot HQ), overwritten by localStorage if exists
   const [location, setLocation] = useState<{ name: string; lat: number; lon: number }>({
-    name: "Austin, Texas",
-    lat: 30.26715,
-    lon: -97.74306,
+    name: "Marietta, Georgia",
+    lat: 33.9526,
+    lon: -84.5499,
   });
 
   const [weather, setWeather] = useState<WeatherDaily | null>(null);

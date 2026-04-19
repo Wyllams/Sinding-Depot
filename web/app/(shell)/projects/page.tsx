@@ -234,7 +234,7 @@ export default function ProjectsPage() {
 
   return (
     <>
-      <TopBar title="Command Center" />
+      <TopBar />
 
       <main className="px-4 sm:px-6 lg:px-8 pb-12 pt-6 min-h-screen bg-[#0d0f0d]">
 
@@ -337,7 +337,7 @@ export default function ProjectsPage() {
 
         {/* ── Data Table ── */}
         <div className="bg-[#121412] rounded-3xl overflow-hidden overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[1100px] text-left border-collapse">
             <thead>
               <tr className="bg-[#1e201e]/50">
                 {["SP", "Client", "Job #", "Services", "Gating / Operational Status", "Job Start Status", ""].map((col) => (
@@ -485,7 +485,7 @@ export default function ProjectsPage() {
 
                       {/* Status badge */}
                       <td className="px-6 py-5">
-                        <span className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-full ${statusConf.style}`}>
+                        <span className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-full whitespace-nowrap ${statusConf.style}`}>
                           {statusConf.label}
                         </span>
                       </td>

@@ -46,7 +46,15 @@ created: 2026-04-17
 
 **Rota:** `/projects/[id]`
 
-### Layout em duas colunas
+### Tabs
+
+| Tab | Conteúdo |
+|-----|----------|
+| **Overview** | Dados do cliente, serviços, crews, blockers, COs |
+| **Crews** | Crews atribuídos com disciplina e datas |
+| **Documents** | Signing Documents + Project Vault (fotos, vídeos, docs) |
+
+### Tab Overview
 
 #### Coluna Esquerda — Overview
 - **Header Hero** com nome do cliente como H1 gigante
@@ -61,6 +69,26 @@ created: 2026-04-17
 - **Blockers**: Listagem de blockers abertos/resolvidos
 - **Change Orders**: Listagem de COs aprovados/pendentes → [[Change Orders]]
 
+### Tab Documents (Signing Documents)
+
+Seção **Signing Documents** com ícone roxo mostrando todos os milestones do projeto:
+
+| Status | Badge | Ação disponível |
+|--------|-------|-----------------|
+| `draft` | Cinza | Botão **"Send to Client"** → muda para `pending_signature` |
+| `pending_signature` | Amarelo "Awaiting Signature" | Botão **"Copy Link"** |
+| `signed` | Verde "Signed" + data | Botão **"Copy Link"** |
+| `paid` | Roxo "Paid" | — |
+
+**Milestones são carregados automaticamente** quando o admin clica na tab Documents (`useEffect` com `fetchMilestones`).
+
+Abaixo dos signing documents, há o **Project Vault**:
+- **Contracts & Docs** — Upload de PDFs, contratos, permits
+- **Site Photos** — Fotos before/during/after
+- **Video Reports** — Walkthroughs e inspeções
+
+→ Detalhes completos em [[Documentos e Contratos Digitais]]
+
 ---
 
 ## Capabilities do Detalhe
@@ -73,6 +101,8 @@ created: 2026-04-17
 | **Multi-Crew Support** | Card "Assign Another Crew" permite múltiplos crews ao mesmo serviço |
 | **Gate Status** | Dropdown visual para mudar o status de bloqueio |
 | **Status Badge** | Badge colorido dinâmico com o status atual do pipeline |
+| **Send to Client** | Botão na tab Documents para enviar milestone ao [[Customer Portal]] |
+| **Copy Link** | Copia URL de assinatura para enviar via WhatsApp/SMS ao cliente |
 
 ### Padrão Auto-Save
 
@@ -90,3 +120,5 @@ created: 2026-04-17
 - [[Change Orders]]
 - [[Job Schedule]]
 - [[Banco de Dados]]
+- [[Documentos e Contratos Digitais]]
+- [[Customer Portal]]

@@ -425,7 +425,7 @@ export default function CashPaymentsPage() {
   // ── Render ───────────────────────────────────────
   return (
     <>
-      <TopBar title="Cash Payments" />
+      <TopBar />
 
       <main className="px-4 sm:px-6 lg:px-8 pb-20 pt-8 min-h-screen">
 
@@ -585,9 +585,9 @@ export default function CashPaymentsPage() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-16">
-                      <div className="flex items-center justify-center gap-3 text-[#ababa8] text-sm">
-                        <span className="material-symbols-outlined text-xl opacity-40 translate-y-[-1px]" translate="no">payments</span>
+                    <td colSpan={7} className="px-6 py-16 text-center text-[#ababa8] text-sm">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <span className="material-symbols-outlined text-4xl opacity-30" translate="no">payments</span>
                         <span>No records found for {MONTH_NAMES[selectedMonth]} {selectedYear}</span>
                       </div>
                     </td>

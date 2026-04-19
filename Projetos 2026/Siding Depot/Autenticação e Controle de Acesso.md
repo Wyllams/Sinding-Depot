@@ -5,6 +5,7 @@ tags:
   - siding-depot
   - segurança
 created: 2026-04-17
+updated: 2026-04-19
 ---
 
 # 🔐 Autenticação e Controle de Acesso
@@ -18,7 +19,7 @@ created: 2026-04-17
 | Tipo de Usuário | Método |
 |-----------------|--------|
 | **Staff (Admin, Sales)** | Email + Password (Supabase Auth) |
-| **Customer** | Username + Password gerado automaticamente pelo [[Webhook ClickOne]] |
+| **Customer** | Username + Password gerado automaticamente (via [[Webhook ClickOne]] ou [[New Project]]) |
 
 ---
 
@@ -62,10 +63,28 @@ Quando um lead chega via [[Webhook ClickOne]], o sistema auto-gera:
 
 O email de boas-vindas é enviado automaticamente via **Resend API**.
 
+### Onde o portal é criado
+
+| Origem | Como |
+|--------|------|
+| **Webhook ClickOne** | Inline no handler (`app/api/webhook/clickone/route.ts`) |
+| **New Project (admin)** | Via `POST /api/customers/create-portal` |
+
+> Ambos os caminhos verificam `profile_id` antes de criar, evitando duplicação.
+
+### Configuração Resend
+
+| Env Var | Descrição |
+|---------|----------|
+| `RESEND_API_KEY` | API Key do Resend para envio de emails |
+| `RESEND_FROM` | (Opcional) Sender verificado. Default: `onboarding@resend.dev` |
+
 ---
 
 ## Relacionados
 - [[Settings]]
 - [[Webhook ClickOne]]
+- [[New Project]]
 - [[Customer Portal]]
+- [[Credenciais Customer Portal]]
 - [[Banco de Dados]]

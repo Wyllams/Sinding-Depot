@@ -29,6 +29,7 @@ interface ChangeOrder {
     customer: any;
   } | null;
   job_service: any;
+  requested_by: { full_name: string; role: string } | null;
 }
 
 // Status display config
@@ -65,6 +66,25 @@ export default function ChangeOrdersPage() {
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<ChangeOrder | null>(null);
+  const [userRole, setUserRole] = useState<string>("");
+
+  // Fetch logged-in user role from profiles
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        if (data?.role) setUserRole(data.role);
+      } catch (err) {
+        console.error("[ChangeOrders] fetch user role error:", err);
+      }
+    })();
+  }, []);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -73,7 +93,7 @@ export default function ChangeOrdersPage() {
         .from("change_orders")
         .select(`
           id, title, description, status,
-          proposed_amount, approved_amount,
+          proposed_amount, approved_amount, rejection_reason,
           requested_at, created_at,
           job:jobs (
             id, job_number,
@@ -81,7 +101,8 @@ export default function ChangeOrdersPage() {
           ),
           job_service:job_services (
             service_type:service_types (name)
-          )
+          ),
+          requested_by:profiles!requested_by_profile_id (full_name, role)
         `)
         .order("created_at", { ascending: false });
 
@@ -129,7 +150,6 @@ export default function ChangeOrdersPage() {
   return (
     <>
       <TopBar
-        title="Change Orders & Approvals"
         leftSlot={
           <div className="relative group">
             <span
@@ -294,6 +314,12 @@ export default function ChangeOrdersPage() {
                           {order.description}
                         </p>
                       )}
+                      {order.status === "rejected" && (order as any).rejection_reason && (
+                        <div className="bg-[#ff7351]/10 border border-[#ff7351]/20 rounded-xl px-3 py-2.5 mb-4">
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-[#ff7351]/70 mb-1">Customer Rejection Reason</p>
+                          <p className="text-xs text-[#faf9f5]/80 leading-relaxed line-clamp-2">{(order as any).rejection_reason}</p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-end justify-between mt-2">
@@ -310,6 +336,14 @@ export default function ChangeOrdersPage() {
                         >
                           {fmt$(amount)}
                         </p>
+                        {order.requested_by?.full_name && (
+                          <p className="text-[10px] text-[#ababa8] mt-3 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[11px]" translate="no">person</span>
+                            {order.requested_by.full_name}
+                            <span className="text-[#aeee2a]/60">•</span>
+                            <span className="capitalize text-[#aeee2a]/80">{order.requested_by.role}</span>
+                          </p>
+                        )}
                       </div>
 
                       {/* Action button based on status */}
@@ -367,8 +401,13 @@ export default function ChangeOrdersPage() {
       {selectedOrder && (
         <ChangeOrderDrawer
           order={selectedOrder}
+          userRole={userRole}
           onClose={() => setSelectedOrder(null)}
           onUpdated={() => {
+            setSelectedOrder(null);
+            fetchOrders();
+          }}
+          onDeleted={() => {
             setSelectedOrder(null);
             fetchOrders();
           }}
@@ -464,6 +503,9 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
     if (!title.trim()) return;
     setSaving(true);
     try {
+      // Get current user for requested_by_profile_id
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { data: co, error } = await supabase.from("change_orders").insert({
         job_id: jobId || null,
         job_service_id: serviceId || null,
@@ -471,6 +513,7 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
         description: description.trim(),
         proposed_amount: amount ? parseFloat(amount) : null,
         status: "draft",
+        requested_by_profile_id: user?.id ?? null,
       }).select("id").single();
       if (error) throw error;
       if (co && files.length > 0) await uploadFiles(co.id);
@@ -659,15 +702,37 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
 // ─── Drawer: Change Order Detail ───────────────────────────────────
 function ChangeOrderDrawer({
   order,
+  userRole,
   onClose,
   onUpdated,
+  onDeleted,
 }: {
   order: ChangeOrder;
+  userRole: string;
   onClose: () => void;
   onUpdated: () => void;
+  onDeleted: () => void;
 }) {
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // Attachments
+  const [attachments, setAttachments] = useState<{ id: string; url: string; file_name: string; mime_type: string | null }[]>([]);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxType, setLightboxType] = useState<"image" | "video" | "other">("image");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("change_order_attachments")
+        .select("id, url, file_name, mime_type")
+        .eq("change_order_id", order.id);
+      setAttachments((data || []) as { id: string; url: string; file_name: string; mime_type: string | null }[]);
+    })();
+  }, [order.id]);
+
+  const isAdmin = userRole === "admin";
   const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.draft;
 
   async function handleAction(action: "send" | "approve" | "reject") {
@@ -697,6 +762,36 @@ function ChangeOrderDrawer({
     }
   }
 
+  async function executeDelete() {
+    setDeleting(true);
+    try {
+      // Delete related attachments first (if any)
+      const { error: attErr } = await supabase
+        .from("change_order_attachments")
+        .delete()
+        .eq("change_order_id", order.id);
+
+      if (attErr) {
+        console.warn("[ChangeOrderDrawer] attachment delete warning:", attErr);
+      }
+
+      const { error } = await supabase
+        .from("change_orders")
+        .delete()
+        .eq("id", order.id);
+
+      if (error) throw error;
+
+      setConfirmDelete(false);
+      onDeleted();
+    } catch (err: any) {
+      console.error("[ChangeOrderDrawer] delete error:", err);
+      alert(`Failed to delete change order: ${err?.message || "Unknown error"}`);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
@@ -718,6 +813,15 @@ function ChangeOrderDrawer({
             </h2>
             {order.job?.customer?.full_name && (
               <p className="text-xs text-[#ababa8] mt-0.5">{order.job.customer.full_name}</p>
+            )}
+            {order.requested_by?.full_name && (
+              <p className="text-[10px] text-[#747673] mt-1 flex items-center gap-1">
+                <span className="material-symbols-outlined text-[11px]" translate="no">person</span>
+                Created by {order.requested_by.full_name}
+                <span className="px-1.5 py-0.5 bg-[#aeee2a]/10 text-[#aeee2a] rounded text-[8px] font-bold uppercase">
+                  {order.requested_by.role}
+                </span>
+              </p>
             )}
           </div>
           <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#242624] hover:bg-[#474846]/60 flex items-center justify-center transition-colors text-[#ababa8] shrink-0">
@@ -799,6 +903,66 @@ function ChangeOrderDrawer({
             </div>
           )}
 
+          {/* Customer rejection reason */}
+          {order.status === "rejected" && (order as any).rejection_reason && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ff7351] mb-2">Customer Rejection Reason</p>
+              <p className="text-sm text-[#faf9f5] leading-relaxed bg-[#ff7351]/10 rounded-xl p-4 border border-[#ff7351]/20">
+                {(order as any).rejection_reason}
+              </p>
+            </div>
+          )}
+
+          {/* Attachments — Photos & Videos */}
+          {attachments.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Photos & Attachments</p>
+              <div className="grid grid-cols-3 gap-2">
+                {attachments.map((att) => {
+                  const isImage = att.mime_type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(att.url);
+                  const isVideo = att.mime_type?.startsWith("video/") || /\.(mp4|mov|webm|avi|mkv|m4v)/i.test(att.url);
+                  return (
+                    <button
+                      key={att.id}
+                      type="button"
+                      className="relative group rounded-xl overflow-hidden border border-[#474846]/20 bg-[#121412] aspect-square cursor-pointer hover:border-[#aeee2a]/30 transition-colors"
+                      onClick={() => {
+                        if (isImage || isVideo) {
+                          setLightboxUrl(att.url);
+                          setLightboxType(isImage ? "image" : "video");
+                        } else {
+                          window.open(att.url, "_blank");
+                        }
+                      }}
+                    >
+                      {isImage ? (
+                        <img src={att.url} alt={att.file_name || ""} className="w-full h-full object-cover" />
+                      ) : isVideo ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-[#0d0f0d]">
+                          <span className="material-symbols-outlined text-3xl text-[#60b8f5]" translate="no">play_circle</span>
+                          <span className="text-[9px] text-[#ababa8]">Video</span>
+                        </div>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                          <span className="material-symbols-outlined text-2xl text-[#ababa8]" translate="no">attach_file</span>
+                          <span className="text-[9px] text-[#ababa8] truncate w-full text-center px-1">
+                            {att.file_name || "File"}
+                          </span>
+                        </div>
+                      )}
+                      {/* Zoom overlay on hover */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                        <span className="material-symbols-outlined text-white text-xl opacity-0 group-hover:opacity-100 transition-opacity" translate="no">
+                          {isVideo ? "play_arrow" : "zoom_in"}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#242624] rounded-xl p-3 border border-[#474846]/20">
@@ -826,7 +990,7 @@ function ChangeOrderDrawer({
               {loading ? "Sending..." : "Send to Client for Approval"}
             </button>
           )}
-          {order.status === "pending_customer_approval" && (
+          {order.status === "pending_customer_approval" && (userRole === "admin" || userRole === "customer" || userRole === "client") && (
             <div className="flex gap-3">
               <button
                 onClick={() => handleAction("reject")}
@@ -845,11 +1009,147 @@ function ChangeOrderDrawer({
               </button>
             </div>
           )}
+
+          {/* Admin-only Delete */}
+          {isAdmin && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+              disabled={deleting}
+              className="w-full py-3 rounded-xl bg-[#ba1212]/10 text-[#ff7351] border border-[#ba1212]/20 font-bold text-sm hover:bg-[#ba1212]/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[16px]" translate="no">delete_forever</span>
+              {deleting ? "Deleting..." : "Delete Change Order"}
+            </button>
+          )}
+
           <button onClick={onClose} className="w-full py-2.5 rounded-xl border border-[#474846] text-[#ababa8] font-bold text-sm hover:bg-[#242624] transition-colors">
             Close
           </button>
         </div>
       </div>
+
+      {/* ══════════════════════════════════════════════════
+          CONFIRM DELETE POPUP
+      ══════════════════════════════════════════════════ */}
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+        >
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-md bg-[#181a18] border border-[#ba1212]/30 rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            style={{ animation: "fadeInScale 0.2s ease-out" }}
+          >
+            {/* Icon + Title */}
+            <div className="flex flex-col items-center pt-8 pb-4 px-6">
+              <div className="w-16 h-16 rounded-full bg-[#ba1212]/10 border border-[#ba1212]/20 flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-3xl text-[#ff7351]" translate="no">
+                  delete_forever
+                </span>
+              </div>
+              <h3
+                className="text-lg font-extrabold text-[#faf9f5] text-center"
+                style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
+              >
+                Delete Change Order?
+              </h3>
+              <p className="text-sm text-[#ababa8] text-center mt-2 leading-relaxed">
+                You are about to permanently delete
+                <span className="text-[#ff7351] font-bold"> &ldquo;{order.title}&rdquo;</span>.
+                <br />
+                This action <span className="text-[#ff7351] font-bold">cannot be undone</span>.
+              </p>
+            </div>
+
+            {/* Order summary */}
+            <div className="mx-6 mb-5 bg-[#242624] rounded-xl p-4 border border-[#474846]/20">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#ababa8]">Amount</span>
+                <span className="text-[#faf9f5] font-bold">{fmt$(order.proposed_amount)}</span>
+              </div>
+              {order.job?.job_number && (
+                <div className="flex justify-between items-center text-xs mt-1.5">
+                  <span className="text-[#ababa8]">Project</span>
+                  <span className="text-[#faf9f5] font-bold">#{order.job.job_number}</span>
+                </div>
+              )}
+              {order.job?.customer?.full_name && (
+                <div className="flex justify-between items-center text-xs mt-1.5">
+                  <span className="text-[#ababa8]">Customer</span>
+                  <span className="text-[#faf9f5] font-bold">{order.job.customer.full_name}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="flex-1 py-3 rounded-xl border border-[#474846] text-[#faf9f5] font-bold text-sm hover:bg-[#242624] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeDelete}
+                disabled={deleting}
+                className="flex-1 py-3 rounded-xl bg-[#ba1212] text-white font-black text-sm hover:bg-[#a01010] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#ba1212]/30"
+              >
+                <span className="material-symbols-outlined text-[16px]" translate="no">delete_forever</span>
+                {deleting ? "Deleting..." : "Yes, Delete"}
+              </button>
+            </div>
+          </div>
+
+          <style jsx>{`
+            @keyframes fadeInScale {
+              from { opacity: 0; transform: scale(0.95); }
+              to   { opacity: 1; transform: scale(1); }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          LIGHTBOX — Full-screen Image / Video Preview
+      ══════════════════════════════════════════════════ */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(12px)" }}
+          onClick={() => { setLightboxUrl(null); setLightboxType("image"); }}
+        >
+          <button
+            className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+            onClick={() => { setLightboxUrl(null); setLightboxType("image"); }}
+          >
+            <span className="material-symbols-outlined text-xl text-white" translate="no">close</span>
+          </button>
+          <div
+            className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {lightboxType === "image" && (
+              <img
+                src={lightboxUrl}
+                alt=""
+                className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                style={{ width: "auto", height: "auto" }}
+              />
+            )}
+            {lightboxType === "video" && (
+              <video
+                src={lightboxUrl}
+                controls
+                autoPlay
+                className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl"
+                style={{ width: "auto", height: "auto" }}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

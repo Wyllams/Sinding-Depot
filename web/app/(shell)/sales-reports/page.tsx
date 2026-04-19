@@ -584,7 +584,7 @@ export default function ReportsPage() {
   // -- Render
   return (
     <>
-      <TopBar title="Sales" />
+      <TopBar />
 
       <div className="p-4 sm:p-6 lg:p-8 space-y-8 min-h-screen pb-16">
 
@@ -1026,7 +1026,10 @@ export default function ReportsPage() {
                 </div>
 
                 {data.salespeople.filter(sp => !sp.full_name.toLowerCase().includes("armando")).length === 0 && (
-                  <div className="py-10 text-center text-[#ababa8] text-sm">No sales data for this period.</div>
+                  <div className="flex flex-col items-center justify-center py-10 gap-3 text-[#ababa8] text-sm">
+                    <span className="material-symbols-outlined text-4xl opacity-30" translate="no">leaderboard</span>
+                    <span>No sales data for this period.</span>
+                  </div>
                 )}
               </div>
 

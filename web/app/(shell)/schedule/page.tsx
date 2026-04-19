@@ -757,7 +757,6 @@ export default function SchedulePage() {
   return (
     <div className="flex flex-col h-full absolute inset-0">
       <TopBar
-        title="Job Schedule"
         rightSlot={
           undoStack.length > 0 ? (
             <button
@@ -1060,223 +1059,230 @@ export default function SchedulePage() {
           style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
           onClick={e => { if (e.target === e.currentTarget) setEditJob(null); }}
         >
-          <div className="w-full max-w-md rounded-2xl p-8 relative" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)" }}>
-            <button onClick={() => setEditJob(null)} className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors cursor-pointer">
-              <span className="material-symbols-outlined" translate="no">close</span>
-            </button>
+          <div className="w-full max-w-2xl rounded-2xl relative flex flex-col max-h-[90vh]" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)" }}>
+            
+            {/* Fixed Header */}
+            <div className="px-8 pt-8 pb-4 shrink-0">
+              <button onClick={() => setEditJob(null)} className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors cursor-pointer z-10">
+                <span className="material-symbols-outlined" translate="no">close</span>
+              </button>
 
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">event</span>
-              </div>
-              <div>
-                <h2 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
-                  Reschedule Job
-                </h2>
-                <div className="flex items-center gap-3">
-                  <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest">
-                    {editJob.clientName} · {editJob.partnerName}
-                  </p>
-                  {editJob.jobStartStatus && (
-                    <span
-                      className="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-md border"
-                      style={{
-                        backgroundColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.1)" : editJob.jobStartStatus === "draft" ? "rgba(227, 235, 93, 0.1)" : "rgba(255, 115, 81, 0.1)",
-                        color: editJob.jobStartStatus === "active" ? "#22c55e" : editJob.jobStartStatus === "draft" ? "#e3eb5d" : "#ff7351",
-                        borderColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.2)" : editJob.jobStartStatus === "draft" ? "rgba(227, 235, 93, 0.2)" : "rgba(255, 115, 81, 0.2)"
-                      }}
-                    >
-                      {editJob.jobStartStatus === "active" ? "CONFIRMED" : editJob.jobStartStatus === "draft" ? "TENTATIVE" : "PENDING"}
-                    </span>
-                  )}
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">event</span>
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                    Reschedule Job
+                  </h2>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest">
+                      {editJob.clientName} · {editJob.partnerName}
+                    </p>
+                    {editJob.jobStartStatus && (
+                      <span
+                        className="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-md border"
+                        style={{
+                          backgroundColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.1)" : editJob.jobStartStatus === "draft" ? "rgba(227, 235, 93, 0.1)" : "rgba(255, 115, 81, 0.1)",
+                          color: editJob.jobStartStatus === "active" ? "#22c55e" : editJob.jobStartStatus === "draft" ? "#e3eb5d" : "#ff7351",
+                          borderColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.2)" : editJob.jobStartStatus === "draft" ? "rgba(227, 235, 93, 0.2)" : "rgba(255, 115, 81, 0.2)"
+                        }}
+                      >
+                        {editJob.jobStartStatus === "active" ? "CONFIRMED" : editJob.jobStartStatus === "draft" ? "TENTATIVE" : "PENDING"}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-4">
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto flex-1 px-8 pb-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#242624 transparent" }}>
+              <div className="space-y-4">
               
-              <div className="grid grid-cols-2 gap-4">
-                {/* Date picker */}
-                <div className="col-span-2">
-                  <CustomDatePicker
-                    label="Start Date"
-                    value={editDate}
-                    onChange={val => setEditDate(val)}
-                    disableSundays={true}
-                    placeholder="Pick a date"
-                  />
-                  {editDate && (
-                    <p className="text-[10px] text-[#ababa8] mt-1.5 ml-1">
-                      {fromIso(editDate).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-                    </p>
-                  )}
-                </div>
-
-                {/* Status Dropdown */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
-                    Status
-                  </label>
-                  <div className="relative z-[60]">
-                    <CustomDropdown
-                      value={editStatus}
-                      onChange={(val) => setEditStatus(val as "active" | "draft" | "on_hold")}
-                      options={[
-                        { value: "active", label: "Confirmed" },
-                        { value: "draft", label: "Tentative" },
-                        { value: "on_hold", label: "Pending" }
-                      ]}
-                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Date picker */}
+                  <div className="col-span-2">
+                    <CustomDatePicker
+                      label="Start Date"
+                      value={editDate}
+                      onChange={val => setEditDate(val)}
+                      disableSundays={true}
+                      placeholder="Pick a date"
                     />
+                    {editDate && (
+                      <p className="text-[10px] text-[#ababa8] mt-1.5 ml-1">
+                        {fromIso(editDate).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Status Dropdown */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
+                      Status
+                    </label>
+                    <div className="relative z-[60]">
+                      <CustomDropdown
+                        value={editStatus}
+                        onChange={(val) => setEditStatus(val as "active" | "draft" | "on_hold")}
+                        options={[
+                          { value: "active", label: "Confirmed" },
+                          { value: "draft", label: "Tentative" },
+                          { value: "on_hold", label: "Pending" }
+                        ]}
+                        className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                      />
+                    </div>
+                  </div>
+
+                  {/* SQ Input */}
+                  {editJob?.serviceType === "siding" && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
+                        SQ (Square Footage)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="e.g. 50"
+                        value={editSq}
+                        onChange={e => setEditSq(e.target.value)}
+                        className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors"
+                      />
+                    </div>
+                  )}
+
+                  {/* Duration */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
+                      Duration (days)
+                    </label>
+                    <div className="relative z-50">
+                      <CustomDropdown
+                        value={editDur.toString()}
+                        onChange={(val) => setEditDur(Number(val))}
+                        options={[1, 2, 3, 4, 5, 6].map(d => ({ value: d.toString(), label: `${d} day${d > 1 ? "s" : ""}` }))}
+                        className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* SQ Input */}
-                {editJob?.serviceType === "siding" && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
-                      SQ (Square Footage)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder="e.g. 50"
-                      value={editSq}
-                      onChange={e => setEditSq(e.target.value)}
-                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors"
-                    />
+                {/* Cascade preview */}
+                {editDate && editDate !== editJob.startDate && (() => {
+                  const affected = getAffected(editJob, editDate);
+                  return affected.length > 0 ? (
+                    <div className="p-3 bg-[#60b8f5]/10 rounded-xl border border-[#60b8f5]/20 flex gap-3">
+                      <span className="material-symbols-outlined text-[#60b8f5] text-[16px] mt-0.5" translate="no">info</span>
+                      <div>
+                        <p className="text-xs text-[#60b8f5] font-bold">This will shift {affected.length} other job{affected.length > 1 ? "s" : ""}:</p>
+                        <ul className="mt-1 text-[10px] text-[#faf9f5] font-bold">
+                          {affected.slice(0, 2).map(a => <li key={a.id} className="truncate">• {a.clientName} (new: {fmtDate(fromIso(a.startDate))})</li>)}
+                          {affected.length > 2 && <li className="text-[#ababa8] mt-0.5">...and {affected.length - 2} more</li>}
+                        </ul>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                <div className="w-full h-px bg-white/10 my-4" />
+
+                {/* Per-Service Crew Selectors */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">
+                    {editJob?.status === "in_progress" ? "swap_horiz" : "event_available"}
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-[#aeee2a]">
+                    Change Partner / Team
+                  </span>
+                </div>
+                
+                {serviceCrewOptions.length === 0 ? (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121412] border border-white/5">
+                    <div className="w-3 h-3 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
+                    <span className="text-[11px] text-[#474846] font-bold">Loading available crews...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {serviceCrewOptions.map((svcOpt) => {
+                      const grouped = svcOpt.crews.reduce<Record<string, typeof svcOpt.crews>>((acc, c) => {
+                        const partner = c.partnerName;
+                        if (!acc[partner]) acc[partner] = [];
+                        acc[partner].push(c);
+                        return acc;
+                      }, {});
+
+                      return (
+                        <div key={svcOpt.jobServiceId} className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                            <span className="text-[#ababa8]">Assign Crew</span>
+                            <span className="text-[#aeee2a]">— {svcOpt.serviceName}</span>
+                          </label>
+                          <div className="relative z-40">
+                            <CustomDropdown
+                              value={selectedCrewIds[svcOpt.jobServiceId] || ""}
+                              onChange={(val) => setSelectedCrewIds(prev => ({
+                                ...prev,
+                                [svcOpt.jobServiceId]: val,
+                              }))}
+                              options={svcOpt.crews.map(c => {
+                                const partnerTeams = grouped[c.partnerName];
+                                return {
+                                  value: c.id,
+                                  label: partnerTeams.length === 1 ? c.partnerName : `${c.partnerName} — ${c.name}`
+                                };
+                              })}
+                              placeholder="Select partner / team..."
+                              className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
-                {/* Duration */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
-                    Duration (days)
-                  </label>
-                  <div className="relative z-50">
-                    <CustomDropdown
-                      value={editDur.toString()}
-                      onChange={(val) => setEditDur(Number(val))}
-                      options={[1, 2, 3, 4, 5, 6].map(d => ({ value: d.toString(), label: `${d} day${d > 1 ? "s" : ""}` }))}
-                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Cascade preview */}
-              {editDate && editDate !== editJob.startDate && (() => {
-                const affected = getAffected(editJob, editDate);
-                return affected.length > 0 ? (
-                  <div className="p-3 bg-[#60b8f5]/10 rounded-xl border border-[#60b8f5]/20 flex gap-3">
-                    <span className="material-symbols-outlined text-[#60b8f5] text-[16px] mt-0.5" translate="no">info</span>
-                    <div>
-                      <p className="text-xs text-[#60b8f5] font-bold">This will shift {affected.length} other job{affected.length > 1 ? "s" : ""}:</p>
-                      <ul className="mt-1 text-[10px] text-[#faf9f5] font-bold">
-                        {affected.slice(0, 2).map(a => <li key={a.id} className="truncate">• {a.clientName} (new: {fmtDate(fromIso(a.startDate))})</li>)}
-                        {affected.length > 2 && <li className="text-[#ababa8] mt-0.5">...and {affected.length - 2} more</li>}
-                      </ul>
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 bg-[#121412] rounded-xl border border-white/5 overflow-hidden mt-4">
+                  <div className="p-4 border-r border-b border-white/5">
+                    <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Salesperson</span>
+                    <div className="text-sm font-bold text-[#faf9f5] flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">person</span>
+                      {editJob.salesperson || "Not assigned"}
                     </div>
                   </div>
-                ) : null;
-              })()}
 
-              <div className="w-full h-px bg-white/10 my-4" />
-
-              {/* Per-Service Crew Selectors */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">
-                  {editJob?.status === "in_progress" ? "swap_horiz" : "event_available"}
-                </span>
-                <span className="text-xs font-bold uppercase tracking-widest text-[#aeee2a]">
-                  Change Partner / Team
-                </span>
-              </div>
-              
-              {serviceCrewOptions.length === 0 ? (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121412] border border-white/5">
-                  <div className="w-3 h-3 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
-                  <span className="text-[11px] text-[#474846] font-bold">Loading available crews...</span>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {serviceCrewOptions.map((svcOpt) => {
-                    const grouped = svcOpt.crews.reduce<Record<string, typeof svcOpt.crews>>((acc, c) => {
-                      const partner = c.partnerName;
-                      if (!acc[partner]) acc[partner] = [];
-                      acc[partner].push(c);
-                      return acc;
-                    }, {});
-
-                    return (
-                      <div key={svcOpt.jobServiceId} className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                          <span className="text-[#ababa8]">Assign Crew</span>
-                          <span className="text-[#aeee2a]">— {svcOpt.serviceName}</span>
-                        </label>
-                        <div className="relative z-40">
-                          <CustomDropdown
-                            value={selectedCrewIds[svcOpt.jobServiceId] || ""}
-                            onChange={(val) => setSelectedCrewIds(prev => ({
-                              ...prev,
-                              [svcOpt.jobServiceId]: val,
-                            }))}
-                            options={svcOpt.crews.map(c => {
-                              const partnerTeams = grouped[c.partnerName];
-                              return {
-                                value: c.id,
-                                label: partnerTeams.length === 1 ? c.partnerName : `${c.partnerName} — ${c.name}`
-                              };
-                            })}
-                            placeholder="Select partner / team..."
-                            className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Info Grid */}
-              <div className="grid grid-cols-2 bg-[#121412] rounded-xl border border-white/5 overflow-hidden mt-4">
-                <div className="p-4 border-r border-b border-white/5">
-                  <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Salesperson</span>
-                  <div className="text-sm font-bold text-[#faf9f5] flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">person</span>
-                    {editJob.salesperson || "Not assigned"}
+                  <div className="p-4 border-b border-white/5">
+                    <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Contract Value</span>
+                    <div className="text-sm font-bold text-[#faf9f5] flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">payments</span>
+                      {editJob.contract_amount ? `$${editJob.contract_amount.toLocaleString()}` : "Not set"}
+                    </div>
                   </div>
-                </div>
 
-                <div className="p-4 border-b border-white/5">
-                  <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Contract Value</span>
-                  <div className="text-sm font-bold text-[#faf9f5] flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">payments</span>
-                    {editJob.contract_amount ? `$${editJob.contract_amount.toLocaleString()}` : "Not set"}
+                  <div className="p-4 border-r border-white/5">
+                    <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Contact</span>
+                    <div className="text-xs font-semibold text-[#faf9f5] flex flex-col gap-1">
+                      <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[12px] opacity-70" translate="no">call</span> {editJob.phone || "---"}</span>
+                      <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[12px] opacity-70" translate="no">mail</span> {editJob.email || "---"}</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="p-4 border-r border-white/5">
-                  <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Contact</span>
-                  <div className="text-xs font-semibold text-[#faf9f5] flex flex-col gap-1">
-                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[12px] opacity-70" translate="no">call</span> {editJob.phone || "---"}</span>
-                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[12px] opacity-70" translate="no">mail</span> {editJob.email || "---"}</span>
-                  </div>
-                </div>
-
-                <div className="p-4 border-white/5 flex flex-col justify-start">
-                  <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Project Address</span>
-                  <div className="text-[11px] font-semibold text-[#faf9f5] flex flex-col gap-0.5 mt-1">
-                    <span className="text-xs">{editJob.street || "---"}</span>
-                    <span className="text-[#ababa8]">{editJob.city || "---"}, {editJob.state || "---"} {editJob.zip || "---"}</span>
+                  <div className="p-4 border-white/5 flex flex-col justify-start">
+                    <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Project Address</span>
+                    <div className="text-[11px] font-semibold text-[#faf9f5] flex flex-col gap-0.5 mt-1">
+                      <span className="text-xs">{editJob.street || "---"}</span>
+                      <span className="text-[#ababa8]">{editJob.city || "---"}, {editJob.state || "---"} {editJob.zip || "---"}</span>
+                    </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-
-              {/* Actions */}
-              <div className="flex gap-3 justify-end mt-6">
+            {/* Fixed Footer */}
+            <div className="px-8 pt-4 pb-6 shrink-0 border-t border-white/5">
+              <div className="flex gap-3 justify-end">
                 <button
                   type="button"
                   onClick={() => setEditJob(null)}

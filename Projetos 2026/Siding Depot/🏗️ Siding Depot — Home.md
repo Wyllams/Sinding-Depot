@@ -71,6 +71,7 @@ created: 2026-04-17
 | [[Customer Portal]] | Portal read-only para clientes |
 | [[Field App]] | App de campo para crews |
 | [[Documentos e Contratos Digitais]] | Assinatura digital de certificados |
+| [[Assinatura Digital e Compliance]] | ESIGN Act, Georgia UETA, auditoria jurídica |
 
 ---
 
@@ -88,20 +89,61 @@ created: 2026-04-17
 ## 🔄 Ciclo de Vida do Projeto
 
 ```
-Lead → Venda → Scheduling → Execução → Pagamento → Warranty
+Lead → Venda → Scheduling → Execução → Assinatura → Pagamento → Warranty
 ```
 
 ```mermaid
 graph LR
     A["🔔 Lead<br/>ClickOne Webhook"] --> B["📋 New Project<br/>Formulário Multi-Step"]
-    B --> C["📅 Schedule<br/>Gantt Semanal"]
+    B --> B2["✍️ Milestones gerados<br/>Job Start + COCs"]
+    B2 --> C["📅 Schedule<br/>Gantt Semanal"]
     C --> D["🔨 Execução<br/>Crews em Campo"]
-    D --> E["💰 Pagamento<br/>Cash / Check / Card"]
-    E --> F["🛡️ Warranty<br/>Service Calls"]
+    D --> E["✍️ Assinatura Digital<br/>ESIGN Act Compliance"]
+    E --> F["💰 Pagamento<br/>Cash / Check / Card"]
+    F --> G["🛡️ Warranty<br/>Service Calls"]
 ```
+
+---
+
+## 📝 Changelog
+
+### 2026-04-18 — Assinatura Digital e Documentos
+
+| Feature | Descrição | Arquivos |
+|---------|-----------|----------|
+| **Auto-geração de milestones** | Job Start + 1 COC por serviço criados automaticamente | `new-project/page.tsx` |
+| **Audit trail (ESIGN Act)** | IP, User-Agent, Geolocation, SHA-256 hash, consent | `/api/documents/sign/route.ts` |
+| **Consent legal obrigatório** | Checkbox ESIGN Act + Georgia UETA no formulário | `DynamicContractForm.tsx` |
+| **Admin Send to Client** | Botão na tab Documents para mudar `draft → pending_signature` | `projects/[id]/page.tsx` |
+| **Admin Copy Link** | Copia URL de assinatura para enviar ao cliente | `projects/[id]/page.tsx` |
+| **Notificação de assinatura** | Admin recebe notificação quando cliente assina | `/api/documents/sign/route.ts` |
+| **Geração de PDF** | PDF profissional com audit trail via React-PDF | `lib/pdf/signed-document.tsx` |
+| **Email com PDF** | Envio automático de cópia assinada via Resend | `lib/email/send-signed-document.ts` |
+| **RLS Policies** | Customer SELECT + UPDATE, Admin ALL, Staff SELECT | Supabase DB |
+| **Página de assinatura (Customer)** | `/customer/documents/[milestoneId]` | `customer/documents/[milestoneId]/page.tsx` |
+
+→ Detalhes legais: [[Assinatura Digital e Compliance]]
+→ Detalhes técnicos: [[Documentos e Contratos Digitais]]
+→ Notificações: [[Notificações em Tempo Real]]
+
+### 2026-04-19 — Customer Portal via New Project + Email Fix
+
+| Feature | Descrição | Arquivos |
+|---------|-----------|----------|
+| **Portal via New Project** | Criação automática de auth user + profile ao criar projeto manual | `new-project/page.tsx` |
+| **API Create Portal** | Nova rota server-side para criação de credenciais | `api/customers/create-portal/route.ts` |
+| **Proteção contra duplicação** | Webhook e API verificam `profile_id` antes de criar | `webhook/clickone/route.ts`, `create-portal/route.ts` |
+| **Resend sender fix** | Corrigido remetente de email para `onboarding@resend.dev` (free tier) | Todos os arquivos com Resend |
+| **RESEND_FROM env var** | Override opcional para domínio verificado | `.env.local` |
+| **Weather default** | Cidade padrão do clima alterada para Marietta, GA | `WeeklyWeather.tsx` |
+
+→ Credenciais: [[Credenciais Customer Portal]]
+→ Portal: [[Customer Portal]]
+→ Auth: [[Autenticação e Controle de Acesso]]
 
 ---
 
 > [!NOTE]
 > Esta documentação reflete o estado do sistema em **Abril 2026**.
 > Código-fonte: `c:\Users\wylla\.gemini\Siding Depot\web\`
+

@@ -111,6 +111,9 @@ export default function ProjectDetailPage() {
   const [availableCrews, setAvailableCrews] = useState<AvailableCrew[]>([]);
   const [loadingCrews, setLoadingCrews] = useState(false);
   const [expandedCrewGroups, setExpandedCrewGroups] = useState<Record<string, boolean>>({});
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [loadingMilestones, setLoadingMilestones] = useState(false);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
   // States para gerenciar a edição global
   const [allSalespersons, setAllSalespersons] = useState<{ id: string; full_name: string }[]>([]);
@@ -306,6 +309,24 @@ export default function ProjectDetailPage() {
     }
   }, [jobId]);
 
+  // ── Fetch milestones for the Documents tab ──
+  const fetchMilestones = useCallback(async () => {
+    if (!jobId) return;
+    setLoadingMilestones(true);
+    try {
+      const { data } = await supabase
+        .from("project_payment_milestones")
+        .select("id, title, document_type, status, amount, sort_order, signed_at, signature_data_url, job_service_id")
+        .eq("job_id", jobId)
+        .order("sort_order", { ascending: true });
+      setMilestones(data || []);
+    } catch (err) {
+      console.error("[Milestones] fetch error:", err);
+    } finally {
+      setLoadingMilestones(false);
+    }
+  }, [jobId]);
+
   async function loadSalespersons() {
     // Busca na tabela users (ou salespersons dependendo do banco real)
     // De acordo com DB schema Siding Depot: A view 'salespersons' retorna full_name. Mas para o SELECT edit precisamos ID.
@@ -317,6 +338,11 @@ export default function ProjectDetailPage() {
     fetchJob(); 
     loadSalespersons();
   }, [fetchJob]);
+
+  // Load milestones when switching to documents tab
+  useEffect(() => {
+    if (activeTab === "documents") fetchMilestones();
+  }, [activeTab, fetchMilestones]);
 
   async function handleGateChange(gate: string) {
     setGateStatus(gate);
@@ -433,7 +459,7 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <>
-        <TopBar title="Loading..." />
+        <TopBar />
         <main className="flex items-center justify-center min-h-[60vh]">
           <div className="flex flex-col items-center gap-4 text-[#ababa8]">
             <span className="material-symbols-outlined text-5xl animate-spin" translate="no">progress_activity</span>
@@ -447,7 +473,7 @@ export default function ProjectDetailPage() {
   if (notFound || !job) {
     return (
       <>
-        <TopBar title="Not Found" />
+        <TopBar />
         <main className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <div className="w-16 h-16 rounded-full bg-[#1e201e] flex items-center justify-center">
             <span className="material-symbols-outlined text-2xl text-[#ff7351]" translate="no">error</span>
@@ -474,10 +500,7 @@ export default function ProjectDetailPage() {
 
   return (
     <>
-      <TopBar
-        title={job.customer?.full_name ?? job.title}
-        subtitle={`#${job.job_number}`}
-      />
+      <TopBar />
 
       <main className="px-4 sm:px-6 lg:px-8 pb-16 pt-6 min-h-screen">
 
@@ -514,7 +537,7 @@ export default function ProjectDetailPage() {
             </div>
 
             {/* Gate Status Inline */}
-            <div className="relative z-50 w-[210px] min-w-[210px]">
+            <div className="relative z-10 w-[210px] min-w-[210px]">
               <CustomDropdown
                 value={gateStatus}
                 onChange={(val) => handleGateChange(val)}
@@ -602,91 +625,106 @@ export default function ProjectDetailPage() {
             TAB 1: OVERVIEW
         ══════════════════════════════════════════════════ */}
         {activeTab === "overview" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="flex flex-col gap-6">
 
-            {/* Left: Client + Services + Notes */}
-            <div className="lg:col-span-5 space-y-6">
+            {/* Client Info, Services, Notes, Change Orders (Full Width) */}
 
               {/* Client Card */}
               <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-5">Client Info</h3>
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="w-12 h-12 rounded-full bg-[#aeee2a]/15 border border-[#aeee2a]/20 flex items-center justify-center shrink-0">
-                    <span className="text-lg font-black text-[#aeee2a]">
-                      {job.customer?.full_name?.charAt(0).toUpperCase() ?? "?"}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <input 
-                      type="text" 
-                      defaultValue={job.customer?.full_name ?? ""} 
-                      onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "full_name", e.target.value)}
-                      placeholder="Customer Name"
-                      className="w-full font-black text-[#faf9f5] text-sm bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 -ml-1 pl-1 transition-colors"
-                    />
-                    <input 
-                      type="email" 
-                      defaultValue={job.customer?.email ?? ""} 
-                      onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "email", e.target.value)}
-                      placeholder="customer@email.com"
-                      className="w-full text-xs text-[#ababa8] bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 -ml-1 pl-1 transition-colors mt-0.5"
-                    />
-                    <input 
-                      type="tel" 
-                      defaultValue={job.customer?.phone ?? ""} 
-                      onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "phone", e.target.value)}
-                      placeholder="+1 (000) 000-0000"
-                      className="w-full text-xs text-[#ababa8] font-mono bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 -ml-1 pl-1 transition-colors mt-0.5"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="bg-[#1e201e] rounded-xl p-3 relative flex flex-col justify-center">
-                    <p className="text-[#ababa8] font-bold mb-1.5 tracking-widest uppercase text-[9px] pointer-events-none">Salesperson</p>
-                    <div className="relative z-40 -ml-1">
-                      <CustomDropdown
-                        value={job.salesperson_id || ""}
-                        onChange={(val) => handleAutoSave("jobs", job.id, "salesperson_id", val)}
-                        options={allSalespersons.map(s => ({ value: s.id, label: s.full_name }))}
-                        placeholder="No Salesperson"
-                        inline
-                        className="w-full text-[#faf9f5] font-bold bg-transparent outline-none cursor-pointer hover:text-[#aeee2a] transition-colors flex items-center"
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-5">Client Info & Location</h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+                  {/* LEFT: 4 Independent Inputs */}
+                  <div className="flex flex-col gap-3">
+                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
+                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Customer Name</p>
+                      <input 
+                        type="text" 
+                        defaultValue={job.customer?.full_name ?? ""} 
+                        onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "full_name", e.target.value)}
+                        placeholder="Customer Name"
+                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
                       />
                     </div>
+                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
+                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Email</p>
+                      <input 
+                        type="email" 
+                        defaultValue={job.customer?.email ?? ""} 
+                        onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "email", e.target.value)}
+                        placeholder="customer@email.com"
+                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
+                      />
+                    </div>
+                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
+                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Phone</p>
+                      <input 
+                        type="tel" 
+                        defaultValue={job.customer?.phone ?? ""} 
+                        onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "phone", e.target.value)}
+                        placeholder="+1 (000) 000-0000"
+                        className="w-full text-[#faf9f5] font-bold font-mono bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
+                      />
+                    </div>
+                    <div className="bg-[#1e201e] rounded-xl p-3 relative border border-transparent hover:border-[#474846]/30 transition-colors">
+                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Salesperson</p>
+                      <div className="relative -ml-1">
+                        <CustomDropdown
+                          value={job.salesperson_id || ""}
+                          onChange={(val) => handleAutoSave("jobs", job.id, "salesperson_id", val)}
+                          options={allSalespersons.map(s => ({ value: s.id, label: s.full_name }))}
+                          placeholder="No Salesperson"
+                          inline
+                          className="w-full text-[#faf9f5] font-bold bg-transparent outline-none cursor-pointer hover:text-[#aeee2a] transition-colors flex items-center"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-[#1e201e] rounded-xl p-3">
-                    <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px]">Location</p>
-                    <div className="flex flex-col gap-1 -ml-1">
+
+                  {/* RIGHT: 4 Independent Inputs */}
+                  <div className="flex flex-col gap-3">
+                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
+                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Street Address</p>
                       <input 
                         type="text" 
                         defaultValue={job.address ?? ""} 
                         onBlur={(e) => handleAutoSave("jobs", job.id, "service_address_line_1", e.target.value)}
                         placeholder="Address"
-                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 transition-colors"
+                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
                       />
+                    </div>
+                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
+                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">City</p>
                       <input 
                         type="text" 
                         defaultValue={job.city ?? ""} 
                         onBlur={(e) => handleAutoSave("jobs", job.id, "city", e.target.value)}
                         placeholder="City"
-                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 transition-colors"
+                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
                       />
+                    </div>
+                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
+                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">State</p>
                       <input 
                         type="text" 
                         defaultValue={job.state ?? ""} 
                         onBlur={(e) => handleAutoSave("jobs", job.id, "state", e.target.value)}
                         placeholder="State (e.g. GA)"
-                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 transition-colors"
+                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
                       />
+                    </div>
+                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
+                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">ZIP Code</p>
                       <input 
                         type="text" 
                         defaultValue={job.zip_code ?? ""} 
                         onBlur={(e) => handleAutoSave("jobs", job.id, "postal_code", e.target.value)}
                         placeholder="ZIP Code"
-                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 transition-colors"
+                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
                       />
                     </div>
                   </div>
+
                 </div>
               </div>
 
@@ -756,67 +794,6 @@ export default function ProjectDetailPage() {
                   className="w-full min-h-[100px] text-sm text-[#faf9f5] leading-relaxed bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none p-2 -ml-2 transition-colors resize-y overflow-hidden"
                 />
               </div>
-            </div>
-
-            {/* Right: Blockers + Change Orders */}
-            <div className="lg:col-span-7 space-y-6">
-
-              {/* Blockers */}
-              <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
-                    {openBlockers.length > 0 ? (
-                      <span className="text-[#ff7351]">⚠ Open Blockers ({openBlockers.length})</span>
-                    ) : (
-                      "Blockers"
-                    )}
-                  </h3>
-                </div>
-
-                {job.blockers.length === 0 ? (
-                  <div className="flex flex-col items-center gap-2 py-6 text-[#ababa8]">
-                    <span className="material-symbols-outlined text-2xl text-[#aeee2a]" translate="no">check_circle</span>
-                    <p className="text-sm font-bold text-[#faf9f5]">No blockers — all clear</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {job.blockers.map((b: any) => (
-                      <div
-                        key={b.id}
-                        className={`flex items-center gap-4 p-4 rounded-xl border ${
-                          b.status === "open"
-                            ? "bg-[#ff7351]/8 border-[#ff7351]/20"
-                            : "bg-[#1e201e] border-[#474846]/10 opacity-50"
-                        }`}
-                      >
-                        <span
-                          className="material-symbols-outlined"
-                          translate="no"
-                          style={{ color: b.status === "open" ? "#ff7351" : "#ababa8" }}
-                        >
-                          {BLOCKER_ICON[b.type] ?? "warning"}
-                        </span>
-                        <div className="flex-1">
-                          <p className="font-bold text-sm text-[#faf9f5]">{b.title}</p>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">{b.type}</p>
-                        </div>
-                        {b.status === "open" && (
-                          <button
-                            onClick={() => handleResolveBlocker(b.id)}
-                            className="px-3 py-1.5 bg-[#aeee2a]/10 text-[#aeee2a] text-[10px] font-bold uppercase rounded-lg hover:bg-[#aeee2a]/20 transition-colors border border-[#aeee2a]/20"
-                          >
-                            Resolve
-                          </button>
-                        )}
-                        {b.status !== "open" && (
-                          <span className="text-[10px] font-bold text-[#aeee2a] uppercase">Resolved ✓</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
               {/* Change Orders */}
               <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
                 <div className="flex items-center justify-between mb-5">
@@ -859,7 +836,6 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
               </div>
-            </div>
           </div>
         )}
 
@@ -935,6 +911,105 @@ export default function ProjectDetailPage() {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-[#faf9f5]">Project Vault</h3>
               <p className="text-xs text-[#ababa8]">Documents, photos, and media files for #{job.job_number}</p>
+            </div>
+
+            {/* ── Signing Documents (Milestones) ── */}
+            <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#6366f1]/10 border border-[#6366f1]/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[#818cf8]" translate="no">contract_edit</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-[#faf9f5]">Signing Documents</h4>
+                    <p className="text-[10px] text-[#ababa8]">Job Start Certificate & Certificates of Completion</p>
+                  </div>
+                </div>
+                <button
+                  onClick={fetchMilestones}
+                  className="text-[10px] text-[#aeee2a] font-bold uppercase tracking-wider hover:underline cursor-pointer"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {loadingMilestones ? (
+                <div className="flex justify-center py-8">
+                  <span className="material-symbols-outlined text-2xl text-[#ababa8] animate-spin" translate="no">progress_activity</span>
+                </div>
+              ) : milestones.length === 0 ? (
+                <p className="text-xs text-[#474846] py-4 text-center">No signing documents generated yet. They are created automatically when a new project is submitted.</p>
+              ) : (
+                <div className="space-y-3">
+                  {milestones.map((ms: any) => {
+                    const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+                      draft:             { bg: "bg-[#474846]/15", text: "text-[#ababa8]", label: "Draft" },
+                      pending_signature: { bg: "bg-[#f59e0b]/10", text: "text-[#f59e0b]", label: "Awaiting Signature" },
+                      signed:            { bg: "bg-[#22c55e]/10", text: "text-[#22c55e]", label: "Signed" },
+                      paid:              { bg: "bg-[#818cf8]/10", text: "text-[#818cf8]", label: "Paid" },
+                    };
+                    const sc = STATUS_COLORS[ms.status] || STATUS_COLORS.draft;
+                    const isDraft = ms.status === "draft";
+                    const isPending = ms.status === "pending_signature";
+                    const isSigned = ms.status === "signed" || ms.status === "paid";
+                    const signingUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/projects/${jobId}/contract/${ms.id}`;
+
+                    return (
+                      <div key={ms.id} className="bg-[#1e201e] rounded-xl p-4 border border-[#474846]/15">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="material-symbols-outlined text-[20px] text-[#818cf8] shrink-0" translate="no">
+                              {ms.document_type === "job_start" ? "play_circle" : "verified"}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-[#faf9f5] truncate">{ms.title}</p>
+                              <p className="text-[10px] text-[#ababa8]">
+                                {ms.amount > 0 ? `$${ms.amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "No value set"}
+                                {ms.signed_at && ` · Signed ${fmt(ms.signed_at)}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${sc.bg} ${sc.text}`}>
+                              {sc.label}
+                            </span>
+
+                            {isDraft && (
+                              <button
+                                onClick={async () => {
+                                  await supabase.from("project_payment_milestones").update({ status: "pending_signature" }).eq("id", ms.id);
+                                  fetchMilestones();
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#aeee2a] text-[#3a5400] text-[10px] font-black uppercase rounded-lg hover:bg-[#a0df14] transition-colors cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[14px]" translate="no">send</span>
+                                Send to Client
+                              </button>
+                            )}
+
+                            {(isPending || isSigned) && (
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(signingUrl);
+                                  setCopiedLink(ms.id);
+                                  setTimeout(() => setCopiedLink(null), 2000);
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#242624] text-[#faf9f5] text-[10px] font-bold rounded-lg hover:bg-[#323632] transition-colors cursor-pointer border border-[#474846]/30"
+                              >
+                                <span className="material-symbols-outlined text-[14px]" translate="no">
+                                  {copiedLink === ms.id ? "check" : "link"}
+                                </span>
+                                {copiedLink === ms.id ? "Copied!" : "Copy Link"}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* 3 Upload Blocks */}

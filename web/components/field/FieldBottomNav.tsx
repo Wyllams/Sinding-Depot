@@ -7,41 +7,51 @@ export function FieldBottomNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { name: "Home", href: "/field", icon: "home" },
-    { name: "My Jobs", href: "/field/jobs", icon: "handyman" },
-    { name: "Alerts", href: "/field/alerts", icon: "notifications" },
-    { name: "Profile", href: "/field/profile", icon: "person" },
+    { label: "HOME", href: "/field", icon: "home", isActive: pathname === "/field" },
+    { label: "MY JOBS", href: "/field/jobs", icon: "handyman", isActive: pathname.startsWith("/field/jobs") },
+    { label: "ALERTS", href: "/field/alerts", icon: "notifications", isActive: pathname.startsWith("/field/alerts") },
+    { label: "PROFILE", href: "/field/profile", icon: "person", isActive: pathname.startsWith("/field/profile") },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#121412]/95 backdrop-blur-xl border-t border-[#242624] px-6 py-4 pb-safe flex justify-between items-center shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-      {navItems.map((item) => {
-        // Active if exact match for home, or starts with for others (like /field/jobs/123)
-        const isActive = 
-          item.href === "/field" 
-            ? pathname === "/field" 
-            : pathname.startsWith(item.href);
-
-        return (
-          <Link
-            key={item.name}
-            href={item.href}
-            className={`flex flex-col items-center gap-1.5 transition-all w-16 ${
-              isActive ? "text-[#aeee2a] drop-shadow-[0_0_8px_rgba(174,238,42,0.6)]" : "text-[#ababa8] hover:text-[#faf9f5]"
-            }`}
-          >
-            <span 
-              className={`material-symbols-outlined text-[28px] ${isActive ? "font-variation-settings-[\\'FILL\\'_1]" : ""}`} 
-              translate="no"
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#050505]/95 backdrop-blur-md border-t border-zinc-800 px-6 py-3 z-50 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+      <ul className="flex justify-between items-center">
+        {navItems.map((item) => (
+          <li key={item.label} className="w-1/4">
+            <Link
+              href={item.href}
+              className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 ${
+                item.isActive
+                  ? "text-[var(--color-siding-green)] scale-110"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
             >
-              {item.icon}
-            </span>
-            <span className={`text-[10px] uppercase tracking-widest font-bold ${isActive ? "opacity-100" : "opacity-60"}`}>
-              {item.name}
-            </span>
-          </Link>
-        );
-      })}
+              <div
+                className={`relative flex items-center justify-center ${
+                  item.isActive ? "drop-shadow-[0_0_8px_rgba(174,238,42,0.5)]" : ""
+                }`}
+              >
+                <span
+                  className="material-symbols-outlined text-[22px]"
+                  translate="no"
+                  style={{
+                    fontVariationSettings: item.isActive ? "'FILL' 1" : "'FILL' 0",
+                  }}
+                >
+                  {item.icon}
+                </span>
+              </div>
+              <span
+                className={`text-[10px] font-bold tracking-wider ${
+                  item.isActive ? "opacity-100" : "opacity-70"
+                }`}
+              >
+                {item.label}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </nav>
   );
 }

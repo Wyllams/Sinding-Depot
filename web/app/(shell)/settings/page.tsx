@@ -186,7 +186,7 @@ export default function SettingsPage() {
   // ─────────────────────────────────────────────────────
   return (
     <>
-      <TopBar title="Settings" />
+      <TopBar />
 
       <main className="px-4 sm:px-6 lg:px-8 pb-20 pt-8 min-h-screen bg-[#0d0f0d]">
         <div className="max-w-7xl mx-auto space-y-12">

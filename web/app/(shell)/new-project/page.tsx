@@ -408,6 +408,29 @@ export default function NewProjectPage() {
         customerId = newCustomer.id;
       }
 
+      // ── Auto-create Customer Portal access (auth user + profile + email) ──
+      try {
+        const portalRes = await fetch("/api/customers/create-portal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerId,
+            fullName: clientName,
+            email: email || null,
+            phone: phone || null,
+          }),
+        });
+        const portalData = await portalRes.json();
+        if (portalData.success) {
+          console.log(`🔑 Customer portal: ${portalData.username} (${portalData.alreadyExists ? "existing" : "new"})`);
+        } else {
+          console.warn("⚠️ Portal creation failed:", portalData.error);
+        }
+      } catch (portalErr) {
+        // Portal failure should NOT block project creation
+        console.error("⚠️ Portal creation error (non-blocking):", portalErr);
+      }
+
       // Try fuzzy matching salesperson by first name
       const { data: spMatch } = await supabase
          .from("salespersons")
@@ -610,6 +633,43 @@ export default function NewProjectPage() {
          });
       }
 
+      // ── Automação: Gerar Payment Milestones (Job Start + COC por serviço) ──
+      const contractVal = contractAmount ? parseFloat(contractAmount) : 0;
+
+      // 1) Job Start Certificate — valor total do contrato
+      await supabase.from("project_payment_milestones").insert({
+        job_id: newJob.id,
+        job_service_id: null,
+        sort_order: 1,
+        document_type: "job_start" as const,
+        title: "Job Start Certificate",
+        description: "Payment due at job start. Covers initial project mobilization.",
+        amount: contractVal,
+        status: "draft" as const,
+      });
+
+      // 2) Buscar job_services recém-criados para gerar COC individual por serviço
+      const { data: createdServices } = await supabase
+        .from("job_services")
+        .select("id, service_type_id, contracted_amount, service_types (name)")
+        .eq("job_id", newJob.id)
+        .order("sort_order", { ascending: true });
+
+      if (createdServices && createdServices.length > 0) {
+        const cocMilestones = createdServices.map((js: any, idx: number) => ({
+          job_id: newJob.id,
+          job_service_id: js.id,
+          sort_order: idx + 2,
+          document_type: "completion_certificate" as const,
+          title: `Certificate of Completion — ${js.service_types?.name || "Service"}`,
+          description: `Final payment upon completion of ${js.service_types?.name || "service"}.`,
+          amount: js.contracted_amount || 0,
+          status: "draft" as const,
+        }));
+
+        await supabase.from("project_payment_milestones").insert(cocMilestones);
+      }
+
       router.push("/projects");
     } catch (err: any) {
       console.error(err);
@@ -633,7 +693,7 @@ export default function NewProjectPage() {
 
   return (
     <>
-      <TopBar title="Create New Job" leftSlot={
+      <TopBar leftSlot={
         <Link href="/projects">
           <div className="flex items-center gap-2 text-[#aeee2a] cursor-pointer">
             <span className="material-symbols-outlined text-sm" translate="no">arrow_back</span>

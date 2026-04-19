@@ -10,7 +10,7 @@ A partir daqui, qualquer nódio do Segundo Cérebro está a apenas um clique de 
 *O núcleo da operação. Como a empresa funciona, quem faz o quê e qual o vocabulário oficial.*
 - [[Glossário da Empresa]]
 - [[Regras de Agendamento (Scheduling)]]
-- [[Autenticação e Permissões (Roles)]]
+- [[Niveis_de_Acesso_Roles]]
 
 ### ⚙️ 2. Arquitetura Técnica Base
 *O motor debaixo do capô. Como os dados se comunicam e as escolhas de infraestrutura.*
@@ -34,6 +34,7 @@ A partir daqui, qualquer nódio do Segundo Cérebro está a apenas um clique de 
 ### 🚀 5. Operações e DevOps
 *Colocando o navio no mar e traçando a rota.*
 - [[Deploy e Variáveis de Ambiente]]
+- [[Publicação e Deploy iOS]]
 - [[Roadmap e Dívidas Técnicas]]
 - [[Regras de IA (Prompts e Instruções)]]
 

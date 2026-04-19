@@ -23,7 +23,7 @@ export default function Dashboard() {
             className="text-2xl sm:text-4xl font-extrabold tracking-tighter text-[#faf9f5]"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
           >
-            Overview
+            Dashboard
           </h2>
           <p className="text-[#ababa8]">Global project metrics and operational health.</p>
         </div>

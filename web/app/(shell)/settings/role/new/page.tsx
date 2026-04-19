@@ -135,7 +135,7 @@ export default function CreateRolePage() {
 
   return (
     <>
-      <TopBar title="Roles & Permissions" />
+      <TopBar />
 
       <main className="px-6 lg:px-12 pb-12 pt-8 max-w-6xl mx-auto min-h-screen">
         {/* ── Breadcrumb ── */}

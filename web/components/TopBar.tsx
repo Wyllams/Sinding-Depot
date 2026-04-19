@@ -114,7 +114,7 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex justify-between items-center px-4 sm:px-8 py-3 sm:py-4 bg-[#0d0f0d]/80 backdrop-blur-3xl border-b border-[#474846]/20">
+      <header className="sticky top-0 z-40 flex justify-between items-center px-4 sm:px-8 bg-[#0d0f0d]/80 backdrop-blur-3xl border-b border-[#474846]/20" style={{ height: "56px" }}>
       {/* Left side */}
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         {/* Hamburger — only visible on mobile */}

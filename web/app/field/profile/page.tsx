@@ -1,71 +1,151 @@
 "use client";
 
-import { FieldTopBar } from "@/components/field/FieldTopBar";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createBrowserClient } from "@supabase/ssr";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/lib/supabase";
+
+// =============================================
+// FieldProfile — Perfil do Parceiro
+// Padrão unificado: Avatar upload, dados reais, Material Symbols
+// =============================================
 
 export default function FieldProfile() {
-  const router = useRouter();
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [name, setName] = useState("Wyllams Team");
+  const [profile, setProfile] = useState<{ full_name: string; email: string; avatar_url: string | null; initials: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSignOut = async () => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    await supabase.auth.signOut();
-    router.push('/login?role=crew');
-    router.refresh();
-  };
+  useEffect(() => {
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", user.id)
+        .single();
+      const name = data?.full_name || user.email?.split("@")[0] || "Crew";
+      const initials = name.split(" ").map((w: string) => w[0]).join("").substring(0, 2).toUpperCase();
+      setProfile({
+        full_name: name,
+        email: user.email ?? "",
+        avatar_url: data?.avatar_url ?? null,
+        initials,
+      });
+    };
+    load();
+  }, []);
 
-  const toggleEditName = () => {
-    setIsEditingName(!isEditingName);
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const ext = file.name.split(".").pop();
+      const filePath = `avatars/${user.id}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("attachments")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("attachments")
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl + `?t=${Date.now()}`;
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      setProfile((prev) => prev ? { ...prev, avatar_url: publicUrl } : prev);
+    } catch (err: any) {
+      console.error("Avatar upload error:", err);
+      alert("Failed to upload photo: " + err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
-    <>
-      <FieldTopBar title="My Profile" />
-      
-      <div className="p-4 space-y-6 flex flex-col items-center pt-8">
-        {/* Profile Avatar */}
-        <div className="w-24 h-24 rounded-full bg-[#1e201e] border-2 border-[#aeee2a] flex items-center justify-center shadow-[0_0_20px_rgba(174,238,42,0.15)]">
-           <span className="material-symbols-outlined text-[48px] text-[#faf9f5]" translate="no">engineering</span>
-        </div>
-        
-        <div className="text-center w-full max-w-[200px]">
-           {isEditingName ? (
-             <div className="flex flex-col items-center gap-2">
-               <input 
-                 autoFocus
-                 type="text" 
-                 value={name} 
-                 onChange={(e) => setName(e.target.value)}
-                 className="w-full bg-[#0a0a0a] border border-[#aeee2a] text-[#faf9f5] font-headline text-xl font-bold tracking-tight text-center rounded-lg py-1 px-2 focus:outline-none"
-               />
-               <button onClick={toggleEditName} className="text-[10px] bg-[#aeee2a] text-[#0a0a0a] px-3 py-1 rounded-full font-bold uppercase tracking-widest">
-                 Save
-               </button>
-             </div>
-           ) : (
-             <h2 className="text-[#faf9f5] font-headline text-2xl font-bold tracking-tight">{name}</h2>
-           )}
-           <p className="text-[#ababa8] text-sm mt-1">Lead Siding Installer</p>
+    <div className="p-5 space-y-8 bg-[#050505] min-h-full">
+      {/* Profile Header */}
+      <section className="flex flex-col items-center pt-4">
+        {/* Avatar with Upload */}
+        <div className="relative group mb-4">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarUpload}
+          />
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-[#aeee2a] shadow-[0_0_20px_rgba(174,238,42,0.15)] transition-transform active:scale-95"
+          >
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-[#181a18] flex items-center justify-center">
+                <span className="material-symbols-outlined text-[48px] text-[#faf9f5]" translate="no">engineering</span>
+              </div>
+            )}
+
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="material-symbols-outlined text-white text-[24px]" translate="no">photo_camera</span>
+            </div>
+          </button>
+
+          {/* Upload spinner */}
+          {uploading && (
+            <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-[#474846] border-t-[#aeee2a] rounded-full animate-spin" />
+            </div>
+          )}
+
+          {/* Camera badge */}
+          <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#aeee2a] rounded-full flex items-center justify-center shadow-lg border-2 border-[#050505]">
+            <span className="material-symbols-outlined text-[14px] text-[#0a0a0a]" translate="no">photo_camera</span>
+          </div>
         </div>
 
-        {/* Settings Buttons */}
-        <div className="w-full space-y-3 mt-8">
-           <button onClick={toggleEditName} className="w-full bg-[#1e201e] border border-white/5 p-4 rounded-2xl flex items-center justify-between hover:bg-[#2a2c2a] transition-colors">
-              <span className="text-[#faf9f5] font-bold text-sm">App Settings (Change Name)</span>
-              <span className="material-symbols-outlined text-[#474846]" translate="no">edit</span>
-           </button>
-           
-           <button onClick={handleSignOut} className="w-full bg-[#ff7351]/10 border border-[#ff7351]/20 p-4 rounded-2xl flex items-center justify-center mt-8 hover:bg-[#ff7351]/20 transition-colors">
-              <span className="text-[#ff7351] font-bold text-sm">Sign Out</span>
-           </button>
+        <h2 className="text-[#faf9f5] font-headline text-2xl font-bold tracking-tight">
+          {profile?.full_name ?? "..."}
+        </h2>
+        <p className="text-[#aeee2a] text-xs font-bold uppercase tracking-widest mt-1">Partner / Field Crew</p>
+        <p className="text-[#ababa8] text-xs mt-0.5">{profile?.email ?? ""}</p>
+      </section>
+
+      {/* Menu Options */}
+      <div className="space-y-3">
+        <div className="bg-[#181a18] border border-white/5 rounded-2xl overflow-hidden">
+          <button className="w-full px-5 py-4 flex items-center gap-4 hover:bg-[#242624] transition-colors">
+            <span className="material-symbols-outlined text-[#ababa8]" translate="no">person</span>
+            <span className="text-[#faf9f5] font-bold text-sm flex-1 text-left">Edit Profile</span>
+            <span className="material-symbols-outlined text-[#474846] text-lg" translate="no">chevron_right</span>
+          </button>
         </div>
       </div>
-    </>
+
+      {/* App version */}
+      <p className="text-center text-[#474846] text-[10px] font-bold uppercase tracking-widest">
+        Siding Depot v1.0 • Field Edition
+      </p>
+    </div>
   );
 }

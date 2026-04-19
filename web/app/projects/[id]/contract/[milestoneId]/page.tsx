@@ -152,26 +152,19 @@ export default function ContractPage() {
       customerNotes?: string;
       signatureDataUrl: string;
       paymentMethod: MilestonePaymentMethod;
+      consentAcceptedAt: string;
+      consentText: string;
+      userAgent: string;
+      geolocation?: { lat: number; lng: number; accuracy_meters?: number } | null;
     }) => {
-      const now = new Date().toISOString();
+      const res = await fetch("/api/documents/sign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-      const { error: updateErr } = await supabase
-        .from("project_payment_milestones")
-        .update({
-          status: "signed",
-          signed_at: now,
-          signature_data_url: payload.signatureDataUrl,
-          payment_method: payload.paymentMethod,
-          ...(payload.initials
-            ? { marketing_authorization_initials: payload.initials }
-            : {}),
-          ...(payload.customerNotes !== undefined
-            ? { customer_notes: payload.customerNotes }
-            : {}),
-        })
-        .eq("id", payload.milestoneId);
-
-      if (updateErr) throw new Error(updateErr.message);
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to sign document");
 
       setSigned(true);
       setMilestone((prev) =>
@@ -179,7 +172,7 @@ export default function ContractPage() {
           ? {
               ...prev,
               status: "signed",
-              signed_at: now,
+              signed_at: result.signedAt,
               signature_data_url: payload.signatureDataUrl,
               payment_method: payload.paymentMethod,
             }
