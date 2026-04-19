@@ -113,9 +113,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     // ─── Monta dados para o PDF ──────────────────────────────
-    const meta = milestone.signature_metadata || {};
-    const customer = job.customers as { full_name: string; phone: string };
-    const salesperson = job.salespersons as { full_name: string } | null;
+    const meta = (milestone.signature_metadata || {}) as Record<string, any>;
+    const customer = job.customers as unknown as { full_name: string; phone: string };
+    const salesperson = job.salespersons as unknown as { full_name: string } | null;
 
     const pdfData: SignedDocumentPDFData = {
       title: milestone.title,
@@ -144,7 +144,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const filename = `${safeTitle}_${safeName}_${job.job_number}.pdf`;
 
     // ─── Retorna PDF ─────────────────────────────────────────
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
