@@ -1155,6 +1155,19 @@ export default function ProjectDetailPage() {
                               </button>
                             )}
 
+                            {isSigned && (
+                              <button
+                                onClick={() => {
+                                  const url = `/api/documents/download?milestoneId=${ms.id}`;
+                                  window.open(url, "_blank");
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#22c55e]/10 text-[#22c55e] text-[10px] font-black uppercase rounded-lg hover:bg-[#22c55e]/20 transition-colors cursor-pointer border border-[#22c55e]/20"
+                              >
+                                <span className="material-symbols-outlined text-[14px]" translate="no">picture_as_pdf</span>
+                                PDF
+                              </button>
+                            )}
+
                             {(isPending || isSigned) && (
                               <button
                                 onClick={() => {
