@@ -31,6 +31,7 @@ interface JobDetail {
   city: string;
   job_number: string;
   status: string;
+  services: string[];
 }
 
 interface DashboardData {
@@ -254,7 +255,7 @@ export default function ReportsPage() {
     const monthDates = getMonthDates(selectedYear, selectedMonth);
     const { data: jobs, error: err } = await supabase
       .from("jobs")
-      .select("id, title, contract_amount, contract_signed_at, city, job_number, created_at, status")
+      .select("id, title, contract_amount, contract_signed_at, city, job_number, created_at, status, job_services:job_services(service_type:service_types(name))")
       .eq("salesperson_id", spId)
       .in("status", ["active", "on_hold", "completed", "pending_scheduling", "draft", "cancelled"]);
 
@@ -269,7 +270,12 @@ export default function ReportsPage() {
       return d >= monthDates.start && d <= monthDates.end;
     });
 
-    setSpJobs((prev) => ({ ...prev, [spId]: filtered as JobDetail[] }));
+    const mapped: JobDetail[] = filtered.map((j: any) => ({
+      ...j,
+      services: (j.job_services || []).map((s: any) => s.service_type?.name).filter(Boolean),
+    }));
+
+    setSpJobs((prev) => ({ ...prev, [spId]: mapped }));
     setLoadingJobs(null);
   };
 
@@ -836,15 +842,17 @@ export default function ReportsPage() {
                               </div>
                             ) : (
                               <div className="space-y-1">
-                                <div className="grid grid-cols-[100px_1fr_100px_60px] gap-2 px-2 pb-1 text-[9px] text-[#ababa8] uppercase tracking-widest font-bold border-b border-white/5 mb-2">
+                                <div className="grid grid-cols-[90px_1fr_120px_90px_50px] gap-2 px-2 pb-1 text-[9px] text-[#ababa8] uppercase tracking-widest font-bold border-b border-white/5 mb-2">
                                   <span>Data</span>
                                   <span className="text-center">Job Title</span>
-                                  <span className="text-center">VALOR</span>
-                                  <span className="text-right">STATUS</span>
+                                  <span className="text-center">Service</span>
+                                  <span className="text-center">Valor</span>
+                                  <span className="text-right">Status</span>
                                 </div>
                                 {(spJobs[sp.id]?.length || 0) === 0 ? (
-                                  <div className="grid grid-cols-[100px_1fr_100px_60px] gap-2 px-2 py-2 rounded-lg text-xs items-center">
+                                  <div className="grid grid-cols-[90px_1fr_120px_90px_50px] gap-2 px-2 py-2 rounded-lg text-xs items-center">
                                     <span className="text-[#474846] font-mono">--</span>
+                                    <span className="text-[#474846] font-semibold text-center">--</span>
                                     <span className="text-[#474846] font-semibold text-center">--</span>
                                     <span className="text-[#474846] font-semibold text-center">--</span>
                                     <span className="text-right text-[#474846] font-bold text-sm">--</span>
@@ -855,7 +863,7 @@ export default function ReportsPage() {
                                     return (
                                       <div
                                         key={job.id}
-                                        className={`grid grid-cols-[100px_1fr_100px_60px] gap-2 px-2 py-2 rounded-lg hover:bg-[#1e201e]/40 transition-colors text-xs items-center ${isCancelled ? "opacity-50" : ""}`}
+                                        className={`grid grid-cols-[90px_1fr_120px_90px_50px] gap-2 px-2 py-2 rounded-lg hover:bg-[#1e201e]/40 transition-colors text-xs items-center ${isCancelled ? "opacity-50" : ""}`}
                                       >
                                         <span className={`text-[#ababa8] font-mono ${isCancelled ? "line-through" : ""}`}>
                                           {(() => {
@@ -868,6 +876,13 @@ export default function ReportsPage() {
                                         <span className={`text-[#faf9f5] font-semibold truncate text-center ${isCancelled ? "line-through" : ""}`}>
                                           {job.title}
                                         </span>
+                                        <div className="flex flex-wrap gap-1 justify-center">
+                                          {(job.services?.length ? job.services : ["—"]).map((svc, i) => (
+                                            <span key={i} className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#aeee2a]/10 text-[#aeee2a] whitespace-nowrap">
+                                              {svc}
+                                            </span>
+                                          ))}
+                                        </div>
                                         
                                         <span className={`text-center font-bold text-sm ${isCancelled ? "line-through text-[#808080]" : ""}`} style={!isCancelled ? { color: sp.color } : {}}>
                                           {fmtFull(Number(job.contract_amount))}
