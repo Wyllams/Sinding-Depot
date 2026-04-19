@@ -279,7 +279,7 @@ export default function ProjectDetailPage() {
     table: "jobs" | "customers",
     recordId: string,
     field: string,
-    value: string | null
+    value: string | number | null
   ) => {
     if (!recordId) return;
     try {
