@@ -509,9 +509,9 @@ export default function SettingsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center justify-end gap-2">
+                            <div className="relative flex items-center justify-end">
                               {/* Toggle Active */}
-                              <div className="flex flex-col items-center">
+                              <div className="flex flex-col items-center min-w-[44px]">
                                 <button
                                   onClick={() => handleToggleActive(user)}
                                   disabled={updatingId === user.id || user.id === myProfile?.id}
@@ -529,14 +529,14 @@ export default function SettingsPage() {
                                 </p>
                               </div>
 
-                              {/* Delete button */}
+                              {/* Delete button — positioned absolutely so it doesn't shift the toggle */}
                               {user.id !== myProfile?.id && (
                                 <button
                                   onClick={() => setDeleteTarget(user)}
-                                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#ff7351]/10 text-[#474846] hover:text-[#ff7351] transition-all opacity-0 group-hover:opacity-100"
+                                  className="absolute -right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#ff7351]/10 text-[#474846] hover:text-[#ff7351] transition-all opacity-0 group-hover:opacity-100"
                                   title="Delete user"
                                 >
-                                  <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
+                                  <span className="material-symbols-outlined text-[14px]" translate="no">delete</span>
                                 </button>
                               )}
                             </div>
