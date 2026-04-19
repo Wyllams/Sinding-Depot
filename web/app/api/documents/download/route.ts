@@ -140,7 +140,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // ─── Monta filename ──────────────────────────────────────
     const safeName = customer.full_name.replace(/[^a-zA-Z0-9]/g, "_");
-    const safeTitle = milestone.title.replace(/[^a-zA-Z0-9\s—-]/g, "").replace(/\s+/g, "_");
+    const safeTitle = milestone.title.replace(/\u2014/g, "-").replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "_");
     const filename = `${safeTitle}_${safeName}_${job.job_number}.pdf`;
 
     // ─── Retorna PDF ─────────────────────────────────────────
