@@ -153,9 +153,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       },
     });
   } catch (error) {
-    console.error("[documents/download] Error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error("[documents/download] Error:", message, stack);
     return NextResponse.json(
-      { error: "Failed to generate PDF" },
+      { error: "Failed to generate PDF", details: message },
       { status: 500 }
     );
   }
