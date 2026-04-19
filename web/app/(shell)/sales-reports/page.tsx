@@ -293,6 +293,21 @@ export default function ReportsPage() {
     }
   };
 
+  const handleRestoreJob = async (jobId: string, spId: string): Promise<void> => {
+    try {
+      const { error } = await supabase.from("jobs").update({ status: "active" }).eq("id", jobId);
+      if (error) throw error;
+      setSpJobs((prev) => ({
+        ...prev,
+        [spId]: (prev[spId] || []).map(j => j.id === jobId ? { ...j, status: "active" } : j)
+      }));
+      fetchData(selectedYear, selectedMonth);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to restore job.");
+    }
+  };
+
   // ─────────────────────────────────────────────────────────────────────────
   // Load/Save Summary
   // ─────────────────────────────────────────────────────────────────────────
@@ -860,9 +875,16 @@ export default function ReportsPage() {
 
                                         <div className="flex justify-end pr-2">
                                           {isCancelled ? (
-                                             <span className="text-[9px] font-black text-[#ff7351] bg-[#ff7351]/10 px-1.5 py-0.5 rounded uppercase tracking-widest" title="Abandoned">
-                                                ABD
-                                             </span>
+                                             <button
+                                                title="Restaurar Job"
+                                                onClick={(e) => {
+                                                   e.stopPropagation();
+                                                   handleRestoreJob(job.id, sp.id);
+                                                }}
+                                                className="w-6 h-6 rounded-md bg-[#22c55e]/10 text-[#22c55e] hover:bg-[#22c55e]/20 flex items-center justify-center transition-all border border-[#22c55e]/30 hover:border-[#22c55e]/50 cursor-pointer"
+                                             >
+                                                <span className="material-symbols-outlined text-[13px]" translate="no">check_circle</span>
+                                             </button>
                                           ) : (
                                              <button 
                                                 title="Marcar como Abandonado"
@@ -872,7 +894,7 @@ export default function ReportsPage() {
                                                 }}
                                                 className="w-6 h-6 rounded-md bg-[#242624] text-[#808080] hover:text-[#ff7351] hover:bg-[#ff7351]/10 flex items-center justify-center transition-all border border-[#474846]/20 hover:border-[#ff7351]/40 cursor-pointer"
                                              >
-                                                <span className="material-symbols-outlined text-[13px]" translate="no">edit</span>
+                                                <span className="material-symbols-outlined text-[13px]" translate="no">block</span>
                                              </button>
                                           )}
                                         </div>
