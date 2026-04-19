@@ -49,6 +49,7 @@ interface JobDetail {
   salesperson: { full_name: string } | null;
   salesperson_id?: string | null;
   contract_amount?: number | null;
+  sq?: number | null;
   services: { id: string; service_type: { name: string } | null }[];
   blockers: { id: string; title: string; type: string; status: string }[];
   crews: {
@@ -377,7 +378,7 @@ export default function ProjectDetailPage() {
         .from("jobs")
         .select(`
           id, job_number, title, status, gate_status, city, state, service_address_line_1, postal_code,
-          requested_start_date, target_completion_date, description, salesperson_id, contract_amount,
+          requested_start_date, target_completion_date, description, salesperson_id, contract_amount, sq,
           customer:customers (id, full_name, email, phone),
           salesperson:salespersons (full_name),
           services:job_services (
@@ -423,6 +424,7 @@ export default function ProjectDetailPage() {
         salesperson: j.salesperson,
         salesperson_id: j.salesperson_id,
         contract_amount: j.contract_amount ?? null,
+        sq: j.sq ?? null,
         services: j.services ?? [],
         blockers: j.blockers ?? [],
         crews: (j.services ?? []).flatMap((s: any) => 
@@ -821,7 +823,7 @@ export default function ProjectDetailPage() {
                         className="w-full text-[#faf9f5] font-bold font-mono bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       <div className="bg-[#1e201e] rounded-xl p-3 relative border border-transparent hover:border-[#474846]/30 transition-colors">
                         <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Salesperson</p>
                         <div className="relative -ml-1">
@@ -851,6 +853,20 @@ export default function ProjectDetailPage() {
                             className="w-full text-[#faf9f5] font-black bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 transition-colors"
                           />
                         </div>
+                      </div>
+                      <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
+                        <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">SQ</p>
+                        <input 
+                          type="text" 
+                          defaultValue={job.sq != null ? String(job.sq) : ""} 
+                          onBlur={(e) => {
+                            const raw = e.target.value.replace(/[^0-9.]/g, '');
+                            const num = parseFloat(raw);
+                            handleAutoSave("jobs", job.id, "sq", isNaN(num) ? 0 : num);
+                          }}
+                          placeholder="0"
+                          className="w-full text-[#faf9f5] font-black bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 transition-colors"
+                        />
                       </div>
                     </div>
                   </div>

@@ -414,6 +414,7 @@ export async function POST(req: Request) {
         state: state,
         postal_code: zip,
         contract_amount: numericValue || 0,
+        sq: squareFootage,
         description: `Webhook Source: ClickOne`
       })
       .select("id")
