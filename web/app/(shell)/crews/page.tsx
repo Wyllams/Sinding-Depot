@@ -161,26 +161,8 @@ function CrewCard({
         </div>
       )}
 
-      {/* Capacity */}
+      {/* CTAs */}
       <div className="mt-auto">
-        <div className="flex justify-between items-center mb-3">
-          <span className="text-[10px] font-black text-[#ababa8] tracking-widest uppercase">Weekly Capacity</span>
-          <span className={`text-xs font-black uppercase ${getLoadLabel(crew.overallLoad)}`}>{crew.overallLoad}% Busy</span>
-        </div>
-        <div className="flex items-end gap-1.5 h-14 mb-1">
-          {crew.weekCapacity.map((day, idx) => (
-            <div key={idx} className="flex flex-col items-center flex-1">
-              <div className="w-full bg-[#1e201e] rounded-sm flex items-end h-full">
-                <div
-                  className={`w-full rounded-sm transition-all duration-700 ${getBarColor(day.state)}`}
-                  style={{ height: `${Math.max((day.percentage / 100) * 100, 12)}%` }}
-                />
-              </div>
-              <span className="text-[9px] text-[#3a3c3a] font-bold mt-1">{day.dayLabel}</span>
-            </div>
-          ))}
-        </div>
-
         {/* CTAs */}
         <div className="flex gap-2 mt-5">
           <button
