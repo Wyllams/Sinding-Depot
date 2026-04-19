@@ -607,7 +607,7 @@ async function sendCustomerWelcomeEmail(params: WelcomeEmailParams): Promise<voi
           <td style="padding:40px;">
             <h1 style="font-size:22px;font-weight:800;color:#121412;margin:0 0 8px;">Welcome, ${customerName}!</h1>
             <p style="font-size:14px;color:#474846;line-height:1.6;margin:0 0 28px;">
-              Your project with Siding Depot has been set up successfully. Below are your credentials to access the <strong>Customer Portal</strong>, where you can track progress, review documents, and approve changes.
+              Your project with Siding Depot has been successfully closed. Below are your credentials to access the <strong>Customer Portal</strong>, where you can track progress, review documents, and approve changes.
             </p>
 
             <!-- Credentials Box -->
