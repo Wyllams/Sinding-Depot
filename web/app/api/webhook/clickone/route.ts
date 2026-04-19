@@ -91,33 +91,45 @@ export async function POST(req: Request) {
     const emailAddress = payload.email || payload["E-mail principal"] || null;
     const phoneNumber = payload.phone || payload["Telefone principal"] || null;
     
-    // ── Address: `location` = Siding Depot sub-account, NOT customer address! ──
-    // Customer address must come from contact-level fields added to the webhook
+    // ── ClickOne sends custom fields as HEADERS (Cabeçalhos), not body! ──
+    // Read from both headers AND body for maximum compatibility
+    const headers = req.headers;
+    const h = (name: string): string | null => headers.get(name) || null;
+
+    // ── Address from headers (Street_Address, City, State, Postal_Code) then body ──
     const directStreet =
-      payload["Street Address"] || payload.street_address ||
+      h("Street_Address") || h("street_address") || h("Street-Address") ||
+      payload["Street_Address"] || payload["Street Address"] || payload.street_address ||
       payload["Endereço"] || payload.street ||
       payload["address1"] || payload["address"] ||
       null;
 
     const directCity =
+      h("City") || h("city") ||
       payload["City"] || payload.city ||
       payload["Cidade"] ||
       null;
 
     const directState =
+      h("State") || h("state") ||
       payload["State"] || payload.state ||
       payload["Estado"] ||
       null;
 
     const directZip =
-      payload["Postal Code"] || payload["Postal code"] || payload["ZIP Code"] || payload["Zip Code"] ||
+      h("Postal_Code") || h("postal_code") || h("Postal-Code") ||
+      payload["Postal_Code"] || payload["Postal Code"] || payload["ZIP Code"] || payload["Zip Code"] ||
       payload.zip_code || payload.zip || payload.postal_code ||
       payload["CEP"] ||
       null;
 
     // Log what we found for debugging
-    console.log("🔍 Address fields found:", { directStreet, directCity, directState, directZip });
-    console.log("🔍 All payload keys:", Object.keys(payload).sort().join(", "));
+    console.log("🔍 Headers:", { 
+      Street_Address: h("Street_Address"), City: h("City"), 
+      State: h("State"), Postal_Code: h("Postal_Code"), 
+      Vendedor: h("Vendedor") 
+    });
+    console.log("🔍 Address resolved:", { directStreet, directCity, directState, directZip });
 
     // Normalize state: "Georgia" → "GA", "Florida" → "FL", etc.
     const stateMap: Record<string, string> = {
@@ -174,9 +186,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── Salesperson: ClickOne sends as `owner` ──
+    // ── Salesperson: ClickOne sends as `owner`, or `Vendedor` in headers ──
     const salespersonName =
+      h("Vendedor") || h("vendedor") ||                       // Header: "Ruby Davenport"
       payload.owner ||                                        // "Ruby Davenport"
+      payload["Vendedor"] || payload["vendedor"] ||
       payload["Proprietário"] || payload["Proprietario"] ||
       payload["Nome do Responsavel"] || payload["Nome do Responsável"] ||
       payload.salesperson || payload.Salesperson ||
