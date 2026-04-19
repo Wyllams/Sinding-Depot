@@ -77,7 +77,7 @@ export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: b
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0d0f0d]/80 backdrop-blur-3xl border-b border-[#474846]/20 flex items-center justify-between px-4 h-14 relative">
+    <header className="safe-area-top sticky top-0 z-50 bg-[#0d0f0d]/80 backdrop-blur-3xl border-b border-[#474846]/20 flex items-center justify-between px-4 min-h-14 relative">
 
       {/* Left — Hamburger or Back */}
       <div className="w-10 flex items-center justify-start relative" ref={menuRef}>

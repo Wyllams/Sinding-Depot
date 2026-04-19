@@ -45,7 +45,7 @@ export default function CustomerLayout({
   return (
     <div className="bg-[#faf9f5] min-h-screen font-body text-[#121412]">
       {/* Header */}
-      <header className="bg-white border-b border-[#e5e5e3] sticky top-0 z-50">
+      <header className="safe-area-top bg-white border-b border-[#e5e5e3] sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Logo */}
