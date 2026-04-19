@@ -43,6 +43,14 @@ export default function SettingsPage() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [updatingId, setUpdatingId]       = useState<string | null>(null);
 
+  // ── Invite form state ──────────────────────────
+  const [inviteName, setInviteName]       = useState("");
+  const [inviteEmail, setInviteEmail]     = useState("");
+  const [inviteRole, setInviteRole]       = useState("admin");
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [inviteError, setInviteError]     = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState(false);
+
   // ── Delete confirmation modal ──────────────────
   const [deleteTarget, setDeleteTarget]   = useState<Profile | null>(null);
   const [deleting, setDeleting]           = useState(false);
@@ -563,27 +571,58 @@ export default function SettingsPage() {
                 <p className="text-[#ababa8] text-xs mt-1">Send an invitation to join Siding Depot.</p>
               </div>
               <button
-                onClick={() => setInviteModalOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-[#242624] text-[#ababa8] transition-colors"
+                onClick={() => { setInviteModalOpen(false); setInviteError(null); setInviteSuccess(false); }}
+                disabled={sendingInvite}
+                className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-[#242624] text-[#ababa8] transition-colors disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-lg" translate="no">close</span>
               </button>
             </div>
 
             <div className="p-6 space-y-4">
+              {/* Success message */}
+              {inviteSuccess && (
+                <div className="flex items-center gap-3 bg-[#aeee2a]/10 border border-[#aeee2a]/30 rounded-xl p-3">
+                  <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">check_circle</span>
+                  <p className="text-xs text-[#aeee2a] font-medium">Invitation sent successfully! The user will receive an email with instructions.</p>
+                </div>
+              )}
+
+              {/* Error message */}
+              {inviteError && (
+                <div className="flex items-center gap-3 bg-[#ff7351]/10 border border-[#ff7351]/30 rounded-xl p-3">
+                  <span className="material-symbols-outlined text-[#ff7351] text-lg" translate="no">error</span>
+                  <p className="text-xs text-[#ff7351] font-medium">{inviteError}</p>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Full Name</label>
-                <input type="text" placeholder="e.g. John Doe" className="w-full bg-[#181a18] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#aeee2a] transition-colors" />
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={inviteName}
+                  onChange={e => setInviteName(e.target.value)}
+                  disabled={sendingInvite}
+                  className="w-full bg-[#181a18] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#aeee2a] transition-colors disabled:opacity-50"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Email Address</label>
-                <input type="email" placeholder="john@example.com" className="w-full bg-[#181a18] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#aeee2a] transition-colors" />
+                <input
+                  type="email"
+                  placeholder="john@example.com"
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                  disabled={sendingInvite}
+                  className="w-full bg-[#181a18] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#aeee2a] transition-colors disabled:opacity-50"
+                />
               </div>
               <div className="space-y-1.5 relative z-40">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Role</label>
                 <CustomDropdown
-                  value="admin" // Mock
-                  onChange={() => {}}
+                  value={inviteRole}
+                  onChange={(val) => setInviteRole(val)}
                   options={[
                     { value: "admin", label: "Admin" },
                     { value: "salesperson", label: "Salesperson" },
@@ -596,14 +635,68 @@ export default function SettingsPage() {
             </div>
 
             <div className="p-4 bg-[#181a18] border-t border-white/5 flex gap-3 justify-end">
-              <button onClick={() => setInviteModalOpen(false)} className="px-5 py-2.5 rounded-xl text-xs font-bold text-[#faf9f5] hover:bg-[#242624] transition-colors">
+              <button
+                onClick={() => { setInviteModalOpen(false); setInviteError(null); setInviteSuccess(false); }}
+                disabled={sendingInvite}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold text-[#faf9f5] hover:bg-[#242624] transition-colors disabled:opacity-50"
+              >
                 Cancel
               </button>
               <button
-                onClick={() => { alert("User invitation sent! (Mocked)"); setInviteModalOpen(false); }}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#aeee2a] text-[#1a2e00] hover:scale-105 transition-transform"
+                onClick={async () => {
+                  setInviteError(null);
+                  setInviteSuccess(false);
+
+                  if (!inviteName.trim()) { setInviteError('Please enter the full name.'); return; }
+                  if (!inviteEmail.trim()) { setInviteError('Please enter the email address.'); return; }
+
+                  setSendingInvite(true);
+                  try {
+                    const res = await fetch('/api/users/invite', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        email: inviteEmail.trim(),
+                        full_name: inviteName.trim(),
+                        role: inviteRole,
+                      }),
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                      throw new Error(data.error || 'Failed to send invitation');
+                    }
+
+                    setInviteSuccess(true);
+                    setInviteName('');
+                    setInviteEmail('');
+                    setInviteRole('admin');
+
+                    // Refresh user list after short delay
+                    setTimeout(() => {
+                      fetchProfiles();
+                      setInviteModalOpen(false);
+                      setInviteSuccess(false);
+                    }, 2000);
+                  } catch (err: unknown) {
+                    const msg = err instanceof Error ? err.message : 'Unknown error';
+                    setInviteError(msg);
+                  } finally {
+                    setSendingInvite(false);
+                  }
+                }}
+                disabled={sendingInvite || inviteSuccess}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#aeee2a] text-[#1a2e00] hover:scale-105 transition-transform disabled:opacity-60 flex items-center gap-2"
               >
-                Send Invitation
+                {sendingInvite ? (
+                  <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />
+                ) : inviteSuccess ? (
+                  <span className="material-symbols-outlined text-sm" translate="no">check_circle</span>
+                ) : (
+                  <span className="material-symbols-outlined text-sm" translate="no">send</span>
+                )}
+                {sendingInvite ? 'Sending...' : inviteSuccess ? 'Sent!' : 'Send Invitation'}
               </button>
             </div>
           </div>
