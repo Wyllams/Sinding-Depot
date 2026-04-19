@@ -496,22 +496,35 @@ export default function ReportsPage() {
   })();
 
   // ── Summary Text (auto-generated, or use saved) ─────────────────────────
-  const DEFAULT_SUMMARY_TEMPLATE = `📆 *Monthly Sales Update – Siding Depot*
+  // Helper: find salesperson job count by keyword match on name
+  const getSpJobCount = (keyword: string): number => {
+    if (!data) return 0;
+    const sp = data.salespeople.find((s) => s.full_name.toLowerCase().includes(keyword.toLowerCase()));
+    return sp?.jobs_sold_count ?? 0;
+  };
 
-{{periodLabel}}
+  const getSpRevenue = (keyword: string): string => {
+    if (!data) return fmt(0);
+    const sp = data.salespeople.find((s) => s.full_name.toLowerCase().includes(keyword.toLowerCase()));
+    return fmt(sp?.total_revenue ?? 0);
+  };
 
-✅ *Total Sold:* {{totalSold}}
-✅ *Jobs Closed:* {{totalJobs}}
-✅ *Avg Ticket:* {{avgTicket}}
-🎯 *Monthly Goal:* {{monthlyGoal}}
-📈 *Progress:* {{progressPct}}
-💰 *Remaining:* {{remaining}}
+  const DEFAULT_SUMMARY_TEMPLATE = `📆 {{periodLabel}} Sales Update
 
-🏆 *Top Performer:* {{topPerformer}}
+✅ Total Jobs Closed: {{totalJobs}}
 
-💪 Let's finish strong! {{daysLeft}} days left.
+🟪 Ruby: {{rubyJobs}}
+🟩 Matheus: {{mattJobs}}
+🟥 Armando: {{armandoJobs}}
 
-– Siding Depot HQ`;
+🎯 Monthly Goal: {{monthlyGoal}}
+✍️ Total Sold: {{totalSold}}
+💰 Remaining: {{remaining}}
+📈 Progress: {{progressPct}}
+
+🏆 Top Performer: {{topPerformer}}
+
+💪 Let's finish strong! {{daysLeft}} days left.`;
 
   const templateVars: Record<string, string> = {
     "{{periodLabel}}": data?.period.label || "",
@@ -523,6 +536,12 @@ export default function ReportsPage() {
     "{{remaining}}": remaining === 0 ? "Achieved!" : fmt(remaining),
     "{{topPerformer}}": data?.salespeople.length && data.salespeople[0].total_revenue > 0 ? `${data.salespeople[0].full_name} (${fmt(data.salespeople[0].total_revenue)})` : "N/A",
     "{{daysLeft}}": String(periodDaysLeft),
+    "{{rubyJobs}}": String(getSpJobCount("Ruby")),
+    "{{mattJobs}}": String(getSpJobCount("Matt")),
+    "{{armandoJobs}}": String(getSpJobCount("Armando")),
+    "{{rubyRevenue}}": getSpRevenue("Ruby"),
+    "{{mattRevenue}}": getSpRevenue("Matt"),
+    "{{armandoRevenue}}": getSpRevenue("Armando"),
   };
 
   const rawTemplate = savedSummary || DEFAULT_SUMMARY_TEMPLATE;
