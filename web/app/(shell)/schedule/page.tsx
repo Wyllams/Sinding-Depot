@@ -1089,7 +1089,7 @@ export default function SchedulePage() {
                               </div>
                               <div className="flex items-center justify-between gap-1 w-full mt-0.5">
                                 <span className="text-[9px] truncate" style={{ color: `${sc.color}90` }}>
-                                  <span className="font-semibold uppercase tracking-wider text-[8px]" style={{ color: sc.color }}>{job.serviceType.replace("_", " ")}</span>
+                                  <span className="font-semibold uppercase tracking-wider text-[8px]" style={{ color: sc.color }}>{job.serviceNames?.[0] || job.serviceType.replace("_", " ")}</span>
                                   {job.city && <span className="opacity-80"> • {job.city}</span>}
                                 </span>
                                 {job.sq != null && (
