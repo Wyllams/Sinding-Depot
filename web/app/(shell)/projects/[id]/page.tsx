@@ -534,13 +534,14 @@ export default function ProjectDetailPage() {
     if (!addingServiceId) return;
     try {
       const selectedType = allServiceTypes.find(s => s.id === addingServiceId);
+      const svcName = selectedType?.name?.toLowerCase() || "";
       
       const { data, error } = await supabase
         .from("job_services")
         .insert({ 
           job_id: jobId, 
           service_type_id: addingServiceId,
-          scope_of_work: "Standard exterior work", // required field!
+          scope_of_work: "Standard exterior work",
         })
         .select("id, service_type:service_types(name)")
         .single();
@@ -550,7 +551,7 @@ export default function ProjectDetailPage() {
       const addedServices = [data];
 
       // Auto-add Painting if Siding is selected and not already in job
-      if (selectedType && selectedType.name.toLowerCase() === "siding") {
+      if (svcName === "siding") {
         const hasPainting = job?.services.some((s: any) => s.service_type?.name?.toLowerCase() === "painting");
         if (!hasPainting) {
            const paintingType = allServiceTypes.find(s => s.name.toLowerCase() === "painting");
@@ -572,7 +573,7 @@ export default function ProjectDetailPage() {
       }
 
       // Auto-add Roofing if Gutters is selected and not already in job
-      if (selectedType && selectedType.name.toLowerCase() === "gutters") {
+      if (svcName === "gutters") {
         const hasRoofing = job?.services.some((s: any) => s.service_type?.name?.toLowerCase() === "roofing");
         if (!hasRoofing) {
            const roofingType = allServiceTypes.find(s => s.name.toLowerCase() === "roofing");
@@ -593,8 +594,142 @@ export default function ProjectDetailPage() {
         }
       }
 
+      // ── Create service_assignments for each added service ──
+      // This ensures they appear on the calendar immediately.
+      const jobStartDate = job?.requested_start_date
+        ? new Date(job.requested_start_date).toISOString().split("T")[0]
+        : null;
+      const todayIso = new Date().toISOString().split("T")[0];
+      const sq = job?.sq ? Number(job.sq) : 0;
+
+      // Duration calculator (same as new-project page)
+      const calcDuration = (code: string): number => {
+        if (sq <= 0) return 1;
+        if (code === "siding") return sq <= 15 ? 3 : sq <= 25 ? 4 : sq <= 35 ? 5 : 6;
+        if (code === "painting") return sq <= 20 ? 2 : sq <= 35 ? 3 : 4;
+        return 1; // gutters, roofing, windows, doors = 1 day
+      };
+
+      // Skip-Sunday helper
+      const skipSunday = (iso: string): string => {
+        const d = new Date(iso + "T12:00:00");
+        if (d.getDay() === 0) { d.setDate(d.getDate() + 1); return d.toISOString().split("T")[0]; }
+        return iso;
+      };
+
+      // Add working days helper
+      const addWorkingDays = (startIso: string, days: number): string => {
+        const d = new Date(startIso + "T12:00:00");
+        let remaining = days - 1;
+        while (remaining > 0) {
+          d.setDate(d.getDate() + 1);
+          if (d.getDay() !== 0) remaining--;
+        }
+        return d.toISOString().split("T")[0];
+      };
+
+      // Get existing service end dates for cascade calc
+      const existingAssignments = (job?.services ?? []).flatMap((s: any) =>
+        (s.assignments ?? []).map((a: any) => ({
+          code: s.service_type?.name?.toLowerCase() || "",
+          end: a.scheduled_end_at ? new Date(a.scheduled_end_at).toISOString().split("T")[0] : null,
+        }))
+      );
+
+      // Cascade predecessors map
+      const CASCADE_PREDECESSORS: Record<string, string[]> = {
+        painting: ["siding"],
+        gutters:  ["painting", "siding"],
+        roofing:  ["gutters", "painting", "siding"],
+      };
+
+      for (const svc of addedServices) {
+        const svcCode = ((svc as any).service_type?.name?.toLowerCase()) || "";
+        const duration = calcDuration(svcCode);
+        let startIso = todayIso; // Default: today
+
+        // For windows/doors: use today if project already started, else job start
+        if (svcCode === "windows" || svcCode === "doors") {
+          if (jobStartDate && todayIso <= jobStartDate) {
+            startIso = jobStartDate;
+          }
+          // else: today (already default)
+        } else {
+          // Cascade: find latest predecessor end date
+          const predecessors = CASCADE_PREDECESSORS[svcCode] || [];
+          for (const pred of predecessors) {
+            const predAssign = existingAssignments.find((a: any) => a.code === pred && a.end);
+            if (predAssign && predAssign.end) {
+              const predEnd = new Date(predAssign.end + "T12:00:00");
+              predEnd.setDate(predEnd.getDate() + 1);
+              if (predEnd.getDay() === 0) predEnd.setDate(predEnd.getDate() + 1);
+              startIso = predEnd.toISOString().split("T")[0];
+              break;
+            }
+          }
+          // If no predecessor found, use today or job start
+          if (!predecessors.length || !existingAssignments.some((a: any) => predecessors.includes(a.code) && a.end)) {
+            if (jobStartDate && todayIso <= jobStartDate) {
+              startIso = jobStartDate;
+            }
+          }
+        }
+
+        startIso = skipSunday(startIso);
+        const endIso = addWorkingDays(startIso, duration);
+        const startAt = new Date(startIso + "T08:00:00");
+        const endAt = new Date(endIso + "T12:00:00");
+        endAt.setDate(endAt.getDate() + 1);
+
+        // Find a default crew for this service type
+        const crewNameMap: Record<string, string> = {
+          windows: "SERGIO", doors: "SERGIO",
+          siding: "XICARA", painting: "OSVIN",
+          gutters: "LEANDRO", roofing: "JOSUE",
+        };
+        const defaultCrew = crewNameMap[svcCode] || "";
+        const { data: crewMatch } = defaultCrew
+          ? await supabase.from("crews").select("id").ilike("name", defaultCrew).limit(1)
+          : { data: null };
+        const crewId = crewMatch?.[0]?.id || null;
+
+        // Find specialty_id (required by DB trigger)
+        const specialtyNameMap: Record<string, string> = {
+          siding: "Siding Installation", painting: "Painting",
+          gutters: "Gutters", roofing: "Roofing",
+          windows: "Windows", doors: "Doors",
+        };
+        const specName = specialtyNameMap[svcCode] || svcCode;
+        const { data: specMatch } = await supabase
+          .from("specialties")
+          .select("id")
+          .ilike("name", specName)
+          .limit(1);
+        const specialtyId = specMatch?.[0]?.id || null;
+
+        const { error: assignErr } = await supabase
+          .from("service_assignments")
+          .insert({
+            job_service_id: svc.id,
+            crew_id: crewId,
+            specialty_id: specialtyId,
+            status: "scheduled",
+            scheduled_start_at: startAt.toISOString(),
+            scheduled_end_at: endAt.toISOString(),
+          });
+
+        if (assignErr) {
+          console.error("[AddService] assignment error for " + svcCode + ":", assignErr);
+        } else {
+          console.log("[AddService] Created assignment for " + svcCode + ": " + startIso + " -> " + endIso);
+        }
+      }
+
       setJob((j: any) => j ? { ...j, services: [...j.services, ...addedServices] } : j);
       setAddingServiceId("");
+      
+      // Re-fetch to update crews/assignments display
+      fetchJob();
     } catch (err: any) {
       console.error("[AddService] error:", err);
       alert(`Error adding service: ${err.message || JSON.stringify(err)}`);
