@@ -39,7 +39,7 @@ const services = [
   { id: "painting", icon: "format_paint",   label: "Painting", color: "#f5a623", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
   { id: "windows",  icon: "window",         label: "Windows",  color: "#60b8f5", partners: ["SIDING DEPOT", "SERGIO"] },
   { id: "decks",    icon: "deck",           label: "Decks",    color: "#eab308", partners: ["SIDING DEPOT"] },
-  { id: "roofing",  icon: "roofing",        label: "Roofing",  color: "#fb923c", partners: ["SIDING DEPOT", "JOSUE"] },
+  { id: "roofing",  icon: "roofing",        label: "Roofing",  color: "#ef4444", partners: ["SIDING DEPOT", "JOSUE"] },
   { id: "dumpster", icon: "delete",         label: "Dumpster", color: "#64748b", partners: ["SIDING DEPOT"] },
 ];
 

@@ -15,7 +15,7 @@ const DISCIPLINE_VIS: Record<string, { icon: string; color: string }> = {
   doors:    { icon: "door_front",   color: "#f5a623" },
   painting: { icon: "format_paint", color: "#60b8f5" },
   gutters:  { icon: "water_drop",   color: "#c084fc" },
-  roofing:  { icon: "roofing",      color: "#fb923c" },
+  roofing:  { icon: "roofing",      color: "#ef4444" },
   decks:    { icon: "deck",         color: "#22d3ee" },
 };
 
