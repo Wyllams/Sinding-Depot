@@ -11,7 +11,7 @@ import { supabase } from "../../../../lib/supabase";
 // ─── Discipline visuals (reused from /crews) ──────────────────────
 const DISCIPLINE_VIS: Record<string, { icon: string; color: string }> = {
   siding:   { icon: "home_work",    color: "#aeee2a" },
-  windows:  { icon: "sensor_door",  color: "#60b8f5" },
+  windows:  { icon: "sensor_door",  color: "#f5a623" },
   doors:    { icon: "door_front",   color: "#f5a623" },
   painting: { icon: "format_paint", color: "#f5a623" },
   gutters:  { icon: "water_drop",   color: "#c084fc" },
