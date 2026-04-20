@@ -12,6 +12,7 @@ import { supabase } from "../../../../lib/supabase";
 const DISCIPLINE_VIS: Record<string, { icon: string; color: string }> = {
   siding:   { icon: "home_work",    color: "#aeee2a" },
   windows:  { icon: "sensor_door",  color: "#60b8f5" },
+  doors:    { icon: "door_front",   color: "#f5a623" },
   painting: { icon: "format_paint", color: "#f5a623" },
   gutters:  { icon: "water_drop",   color: "#c084fc" },
   roofing:  { icon: "roofing",      color: "#fb923c" },
@@ -1478,7 +1479,17 @@ export default function ProjectDetailPage() {
                                   }
                                   
                                   // Determine specialty matching the service (similar to new-project logic)
-                                  const specCode = specKey === "siding" ? "siding_installation" : (specKey === "painting" ? "painting" : specKey + "_installation");
+                                  const SPEC_CODE_MAP: Record<string, string> = {
+                                    siding: "siding_installation",
+                                    "siding installation": "siding_installation",
+                                    painting: "painting",
+                                    windows: "windows",
+                                    doors: "doors",
+                                    gutters: "gutters",
+                                    roofing: "roofing",
+                                    decks: "deck_building",
+                                  };
+                                  const specCode = SPEC_CODE_MAP[specKey] || specKey;
                                   const { data: spec } = await supabase.from("specialties").select("id").eq("code", specCode).maybeSingle();
                                   
                                   const specialty_id = spec?.id || "26652a43-728d-43c1-935a-c39f1dea4d7d"; // fallback

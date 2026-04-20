@@ -576,6 +576,7 @@ export default function NewProjectPage() {
                else if (svcId === "gutters") specCode = "gutters";
                else if (svcId === "roofing") specCode = "roofing";
                else if (svcId === "windows") specCode = "windows";
+               else if (svcId === "doors") specCode = "doors";
                
                const { data: spec } = await supabase.from("specialties").select("id").eq("code", specCode).maybeSingle();
 
