@@ -956,11 +956,26 @@ export default function SchedulePage() {
                 {cat.partners.map(name => {
                   const pJobs = partnerJobs(name).sort((a, b) => b.durationDays - a.durationDays);
 
+                  // Compute max overlap to scale row height
+                  const visiblePJobs = pJobs.filter(j => cardStyle(j) !== null);
+                  let maxOverlap = 1;
+                  for (const job of visiblePJobs) {
+                    const jStart = dayIndex(job, weekBase);
+                    const jEnd = jStart + job.durationDays;
+                    const count = visiblePJobs.filter(o => {
+                      const oS = dayIndex(o, weekBase);
+                      const oE = oS + o.durationDays;
+                      return oS < jEnd && oE > jStart;
+                    }).length;
+                    if (count > maxOverlap) maxOverlap = count;
+                  }
+                  const rowHeight = Math.max(80, maxOverlap * 60);
+
                   return (
                     <div
                       key={name}
                       className="grid border-b border-white/[0.04] hover:bg-[#141614]/40 transition-colors"
-                      style={{ gridTemplateColumns: "200px 1fr", minHeight: "80px" }}
+                      style={{ gridTemplateColumns: "200px 1fr", minHeight: `${rowHeight}px` }}
                     >
                       {/* Partner info */}
                       <div 
@@ -1005,28 +1020,54 @@ export default function SchedulePage() {
                         </div>
 
                         {/* Job cards — DRAGGABLE (6.5) */}
-                        {pJobs.map(job => {
-                          const pos = cardStyle(job);
-                          if (!pos) return null;
-                          const visualStatus = getVisualStatus(job);
-                          const sc = STATUS_CONFIG[visualStatus] || STATUS_CONFIG.scheduled;
+                        {(() => {
+                          // Pre-compute overlap slots so stacked cards split 50/50
+                          const visibleJobs = pJobs.filter(j => cardStyle(j) !== null);
+                          const getOverlapSlot = (job: ScheduledJob) => {
+                            const jStart = dayIndex(job, weekBase);
+                            const jEnd = jStart + job.durationDays;
+                            const overlapping = visibleJobs.filter(other => {
+                              const oStart = dayIndex(other, weekBase);
+                              const oEnd = oStart + other.durationDays;
+                              return oStart < jEnd && oEnd > jStart;
+                            });
+                            const slotIdx = overlapping.findIndex(o => o.id === job.id);
+                            return { slotIdx: Math.max(slotIdx, 0), total: overlapping.length };
+                          };
 
-                          return (
-                            <button
-                              key={job.id}
-                              draggable={true}
-                              onDragStart={e => handleDragStart(e, job)}
-                              onDragEnd={handleDragEnd}
-                              onClick={() => openReschedule(job)}
-                              title="Drag to reschedule or click to edit"
-                              className={`absolute top-2 bottom-2 flex flex-col justify-between z-10 rounded-xl cursor-grab active:cursor-grabbing hover:brightness-110 transition-all text-left group/card px-3 py-2 ${dragJob && dragJob.id !== job.id ? 'pointer-events-none' : ''}`}
-                              style={{
-                                left: pos.left,
-                                width: pos.width,
-                                background: sc.bg.replace("0.12", "0.2"),
-                                border: `1px solid ${sc.color}40`,
-                                backdropFilter: "blur(16px)",
-                              }}
+                          return visibleJobs.map(job => {
+                            const pos = cardStyle(job)!;
+                            const visualStatus = getVisualStatus(job);
+                            const sc = STATUS_CONFIG[visualStatus] || STATUS_CONFIG.scheduled;
+                            const { slotIdx, total } = getOverlapSlot(job);
+
+                            // Vertical positioning: split row height equally among overlapping cards
+                            const gap = 4; // px gap between cards
+                            const topPx = total <= 1
+                              ? "8px"
+                              : `calc(${(slotIdx / total) * 100}% + ${gap / 2}px)`;
+                            const bottomPx = total <= 1
+                              ? "8px"
+                              : `calc(${((total - slotIdx - 1) / total) * 100}% + ${gap / 2}px)`;
+
+                            return (
+                              <button
+                                key={job.id}
+                                draggable={true}
+                                onDragStart={e => handleDragStart(e, job)}
+                                onDragEnd={handleDragEnd}
+                                onClick={() => openReschedule(job)}
+                                title="Drag to reschedule or click to edit"
+                                className={`absolute flex flex-col justify-between z-10 rounded-xl cursor-grab active:cursor-grabbing hover:brightness-110 transition-all text-left group/card px-3 py-1.5 ${dragJob && dragJob.id !== job.id ? 'pointer-events-none' : ''}`}
+                                style={{
+                                  left: pos.left,
+                                  width: pos.width,
+                                  top: topPx,
+                                  bottom: bottomPx,
+                                  background: sc.bg.replace("0.12", "0.2"),
+                                  border: `1px solid ${sc.color}40`,
+                                  backdropFilter: "blur(16px)",
+                                }}
                             >
                               <div className="flex items-center justify-between gap-1">
                                 <span className="text-[11px] font-bold truncate" style={{ color: sc.color }}>
@@ -1061,8 +1102,9 @@ export default function SchedulePage() {
                                 drag or click to reschedule
                               </span>
                             </button>
-                          );
-                        })}
+                            );
+                          });
+                        })()}
 
                         {pJobs.length === 0 && (
                           <div className="absolute inset-0 flex items-center px-4">
