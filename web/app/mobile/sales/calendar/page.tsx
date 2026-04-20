@@ -339,7 +339,7 @@ export default function SalesMobileCalendar() {
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold tracking-widest uppercase text-[#aeee2a]">Service Info</span>
                 <h2 className="text-xl font-black text-[#faf9f5] mt-1 pr-4">{selectedTask.serviceName}</h2>
-                <span className="text-[#ababa8] font-bold text-xs mt-0.5">#{selectedTask.jobNumber} - {selectedTask.jobTitle}</span>
+                <span className="text-[#ababa8] font-bold text-xs mt-0.5">{selectedTask.jobNumber} - {selectedTask.jobTitle}</span>
               </div>
               <button onClick={() => setSelectedTask(null)} className="w-8 h-8 shrink-0 rounded-full bg-[#1e201e] border border-[#474846]/30 flex items-center justify-center text-[#faf9f5]">
                 <span className="material-symbols-outlined text-[18px]">close</span>

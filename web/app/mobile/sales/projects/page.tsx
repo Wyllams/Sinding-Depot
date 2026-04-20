@@ -193,7 +193,7 @@ export default function SalesProjectsMobile() {
                     {/* Top Row: Job Number & Status icon */}
                     <div className="flex justify-between items-center pl-2">
                       <span className="font-mono text-[10px] text-[#7B7B78] font-bold uppercase tracking-widest pl-1">
-                        Job #{job.job_number}
+                        Job {job.job_number}
                       </span>
                       {job.status === "active" ? (
                         <div className="bg-[#aeee2a]/15 text-[#aeee2a] px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-[#aeee2a]/20">Active</div>

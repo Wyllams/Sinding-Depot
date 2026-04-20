@@ -677,7 +677,7 @@ export default function ProjectDetailPage() {
                 <span className={`px-4 py-1.5 text-xs font-bold rounded-full tracking-wider ${statusConf.style}`}>
                   {statusConf.label}
                 </span>
-                <span className="text-[#ababa8] text-sm font-mono">#{job.job_number}</span>
+                <span className="text-[#ababa8] text-sm font-mono">{job.job_number}</span>
                 {fullAddress && (
                   <button
                     onClick={handleCopyAddress}
@@ -1104,7 +1104,7 @@ export default function ProjectDetailPage() {
             {/* Vault Header */}
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-[#faf9f5]">Project Vault</h3>
-              <p className="text-xs text-[#ababa8]">Documents, photos, and media files for #{job.job_number}</p>
+              <p className="text-xs text-[#ababa8]">Documents, photos, and media files for {job.job_number}</p>
             </div>
 
             {/* ── Signing Documents (Milestones) ── */}

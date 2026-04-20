@@ -226,7 +226,7 @@ export default function ContractPage() {
           }}
         />
         <div style={headerJobStyle}>
-          <span style={headerJobLabel}>Job #{job.job_number}</span>
+          <span style={headerJobLabel}>Job {job.job_number}</span>
           <span style={headerStepStyle}>
             Documento {formData.sortOrder} —{" "}
             {formData.documentType === "job_start"

@@ -151,7 +151,7 @@ function CrewCard({
         <div className="mb-4 space-y-1.5">
           {crew.assignedJobs.slice(0, 2).map((j) => (
             <div key={j.id} className="flex items-center gap-2 bg-[#1a1c1a] rounded-lg px-3 py-2 border border-[#242624]">
-              <span className="text-[10px] font-black text-[#aeee2a]">#{j.job_number}</span>
+              <span className="text-[10px] font-black text-[#aeee2a]">{j.job_number}</span>
               <span className="text-[10px] text-[#faf9f5] font-medium truncate flex-1">{j.client}</span>
               <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${j.status === "Active" ? "bg-[#aeee2a]/15 text-[#aeee2a]" : "bg-[#e3eb5d]/15 text-[#e3eb5d]"}`}>
                 {j.status}
@@ -858,7 +858,7 @@ export default function CrewsPage() {
                       <div key={job.id} className="rounded-xl bg-[#1a1c1a] border border-[#242624] px-4 py-3 flex justify-between items-center">
                         <div>
                           <div className="flex items-center gap-2 mb-0.5">
-                            <span className="text-[10px] font-black text-[#aeee2a]">#{job.job_number}</span>
+                            <span className="text-[10px] font-black text-[#aeee2a]">{job.job_number}</span>
                             <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${job.status === "Active" ? "bg-[#aeee2a]/15 text-[#aeee2a]" : "bg-[#e3eb5d]/15 text-[#e3eb5d]"}`}>
                               {job.status}
                             </span>
@@ -992,7 +992,7 @@ export default function CrewsPage() {
                       <CustomDropdown
                         value={assignJobId}
                         onChange={(val) => setAssignJobId(val)}
-                        options={openJobs.map((j) => ({ value: j.id, label: `#${j.job_number} · ${j.customer_name} ${j.city ? `— ${j.city}` : ""}` }))}
+                        options={openJobs.map((j) => ({ value: j.id, label: `${j.job_number} · ${j.customer_name} ${j.city ? `— ${j.city}` : ""}` }))}
                         placeholder="— Choose a project —"
                         className="w-full bg-[#181a18] border border-[#474846]/30 rounded-xl px-4 py-3 text-sm text-[#faf9f5] font-bold flex justify-between items-center transition-all hover:border-[#aeee2a]/50"
                       />

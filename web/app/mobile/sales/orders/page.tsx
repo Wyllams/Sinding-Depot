@@ -206,7 +206,7 @@ export default function SalesMobileOrdersPage() {
                                 {cfg.label}
                              </span>
                              <span className="text-[10px] font-bold text-[#ababa8] tracking-widest uppercase">
-                               {order.job?.job_number ? `#${order.job.job_number}` : "—"}
+                               {order.job?.job_number ? order.job.job_number : "—"}
                              </span>
                            </div>
                            <h3 className="text-sm font-extrabold text-[#faf9f5] leading-tight truncate">{order.title}</h3>

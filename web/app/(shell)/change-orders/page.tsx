@@ -294,7 +294,7 @@ export default function ChangeOrdersPage() {
                       <div className="flex justify-between items-start mb-4">
                         <div>
                           <p className="text-[10px] font-bold text-[#ababa8] tracking-widest uppercase">
-                            {order.job?.job_number ? `#${order.job.job_number}` : "—"} • {fmtDate(order.requested_at)}
+                            {order.job?.job_number ? `${order.job.job_number}` : "—"} • {fmtDate(order.requested_at)}
                           </p>
                           <h3
                             className="text-base font-bold mt-1 group-hover:text-[#aeee2a] transition-colors leading-tight"
@@ -579,7 +579,7 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
                 <CustomDropdown
                   value={jobId}
                   onChange={(val) => setJobId(val)}
-                  options={jobs.map(j => ({ value: j.id, label: `#${j.job_number} — ${j.customer_name}` }))}
+                  options={jobs.map(j => ({ value: j.id, label: `${j.job_number} — ${j.customer_name}` }))}
                   placeholder="Select a Project..."
                   className="w-full bg-[#242624] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-3.5 text-[15px] font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
                 />
@@ -807,7 +807,7 @@ function ChangeOrderDrawer({
                 {cfg.label}
               </span>
               {order.job?.job_number && (
-                <span className="text-[10px] text-[#ababa8] font-bold">#{order.job.job_number}</span>
+                <span className="text-[10px] text-[#ababa8] font-bold">{order.job.job_number}</span>
               )}
             </div>
             <h2 className="text-lg font-extrabold text-[#faf9f5] leading-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
@@ -1074,7 +1074,7 @@ function ChangeOrderDrawer({
               {order.job?.job_number && (
                 <div className="flex justify-between items-center text-xs mt-1.5">
                   <span className="text-[#ababa8]">Project</span>
-                  <span className="text-[#faf9f5] font-bold">#{order.job.job_number}</span>
+                  <span className="text-[#faf9f5] font-bold">{order.job.job_number}</span>
                 </div>
               )}
               {order.job?.customer?.full_name && (

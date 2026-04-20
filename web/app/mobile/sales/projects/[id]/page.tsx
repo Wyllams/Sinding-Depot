@@ -75,7 +75,7 @@ export default function MobileProjectDetail() {
          </button>
          <div className="flex flex-col ml-1">
             <span className="text-[#aeee2a] text-[10px] uppercase font-bold tracking-widest pl-1">Project Details</span>
-            <h1 className="text-2xl font-black tracking-tight text-[#faf9f5]">Job #{job.job_number}</h1>
+            <h1 className="text-2xl font-black tracking-tight text-[#faf9f5]">Job {job.job_number}</h1>
          </div>
       </div>
 

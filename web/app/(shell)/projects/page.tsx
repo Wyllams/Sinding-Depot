@@ -389,7 +389,7 @@ export default function ProjectsPage() {
           <table className="w-full min-w-[1100px] text-left border-collapse">
             <thead>
               <tr className="bg-[#1e201e]/50">
-                {["SP", "Client", "Job #", "Services", "Gating / Operational Status", "Job Start Status", ""].map((col) => (
+                {["SP", "Client", "Job", "Services", "Gating / Operational Status", "Job Start Status", ""].map((col) => (
                   <th
                     key={col}
                     className={`px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#ababa8] ${col === "SP" ? "text-center" : ""}`}
@@ -466,7 +466,7 @@ export default function ProjectsPage() {
 
                       {/* Job # */}
                       <td className="px-6 py-5 font-mono text-[#ababa8] text-sm">
-                        #{job.job_number}
+                        {job.job_number}
                       </td>
 
                       {/* Services */}
@@ -546,7 +546,7 @@ export default function ProjectsPage() {
                             e.stopPropagation();
                             setDeleteTarget({
                               id: job.id,
-                              label: job.customer?.full_name ?? `#${job.job_number}`,
+                              label: job.customer?.full_name ?? job.job_number,
                             });
                           }}
                           className="inline-flex items-center justify-center p-2 rounded-lg transition-all cursor-pointer opacity-0 group-hover:opacity-100 text-[#ababa8] hover:text-[#ff7351] hover:bg-[#ff7351]/10"

@@ -150,7 +150,7 @@ export default function SalesOrderDetailsPage({ params }: { params: Promise<{ id
            </button>
            <div className="flex flex-col ml-1">
               <span className="text-[#aeee2a] text-[10px] uppercase font-bold tracking-widest pl-1">Change Order</span>
-              <h1 className="text-2xl font-black tracking-tight text-[#faf9f5]">CO #{order.job?.job_number || "—"}</h1>
+              <h1 className="text-2xl font-black tracking-tight text-[#faf9f5]">CO {order.job?.job_number || "—"}</h1>
            </div>
         </div>
       </div>
@@ -196,7 +196,7 @@ export default function SalesOrderDetailsPage({ params }: { params: Promise<{ id
            
            <div className="flex flex-col gap-1">
               <span className="text-[10px] uppercase text-[#7B7B78] font-bold tracking-wider">Project No.</span>
-              <span className="text-sm font-bold text-[#faf9f5]">#{order.job?.job_number || "—"}</span>
+              <span className="text-sm font-bold text-[#faf9f5]">{order.job?.job_number || "—"}</span>
            </div>
            
            <div className="flex flex-col gap-1">
