@@ -267,6 +267,7 @@ export default function ProjectDetailPage() {
   const [availableCrews, setAvailableCrews] = useState<AvailableCrew[]>([]);
   const [loadingCrews, setLoadingCrews] = useState(false);
   const [expandedCrewGroups, setExpandedCrewGroups] = useState<Record<string, boolean>>({});
+  const [swapTarget, setSwapTarget] = useState<{ assignmentId: string; jobServiceId: string; serviceName: string } | null>(null);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loadingMilestones, setLoadingMilestones] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
@@ -386,6 +387,7 @@ export default function ProjectDetailPage() {
             id,
             service_type:service_types (id, name),
             assignments:service_assignments (
+              id,
               crew:crews (id, name, phone),
               scheduled_start_at,
               scheduled_end_at
@@ -430,6 +432,8 @@ export default function ProjectDetailPage() {
         blockers: j.blockers ?? [],
         crews: (j.services ?? []).flatMap((s: any) => 
           (s.assignments ?? []).map((a: any) => ({
+             assignment_id: a.id,
+             job_service_id: s.id,
              crew: { ...a.crew, discipline: s.service_type?.name ?? "General" },
              start_date: a.scheduled_start_at,
              end_date: a.scheduled_end_at
@@ -1062,24 +1066,48 @@ export default function ProjectDetailPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {job.crews.map((jc: any, idx: number) => (
-                  <div key={idx} className="bg-[#1e201e] rounded-xl p-5 border border-[#474846]/20">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#aeee2a]/10 border border-[#aeee2a]/20 flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-[#aeee2a]" translate="no">groups</span>
+                {job.crews.map((jc: any, idx: number) => {
+                  const discKey = (jc.crew?.discipline ?? "").toLowerCase();
+                  const cVis = DISCIPLINE_VIS[discKey] ?? { icon: "construction", color: "#ababa8" };
+                  return (
+                    <div key={idx} className="bg-[#1e201e] rounded-xl p-5 border border-[#474846]/20 hover:border-[#474846]/40 transition-colors">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: `${cVis.color}12`, border: `1px solid ${cVis.color}25` }}
+                          >
+                            <span className="material-symbols-outlined" style={{ color: cVis.color }} translate="no">{cVis.icon}</span>
+                          </div>
+                          <div>
+                            <p className="font-black text-[#faf9f5] text-sm uppercase tracking-wide">{jc.crew?.name ?? "—"}</p>
+                            <p className="text-[10px] uppercase font-bold" style={{ color: cVis.color }}>{jc.crew?.discipline ?? "—"}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSwapTarget({
+                              assignmentId: jc.assignment_id,
+                              jobServiceId: jc.job_service_id,
+                              serviceName: jc.crew?.discipline ?? "",
+                            });
+                            setCrewPopupOpen(true);
+                            fetchMatchingCrews();
+                          }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-[#ababa8] hover:text-[#faf9f5] bg-[#242624] hover:bg-[#323632] border border-[#474846]/30 transition-all cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[13px]" translate="no">swap_horiz</span>
+                          Change
+                        </button>
                       </div>
-                      <div>
-                        <p className="font-black text-[#faf9f5] text-sm uppercase tracking-wide">{jc.crew?.name ?? "—"}</p>
-                        <p className="text-[10px] text-[#ababa8] uppercase font-bold">{jc.crew?.discipline ?? "—"}</p>
+                      <div className="space-y-1 text-xs text-[#ababa8]">
+                        {jc.start_date && <p>Start: <span className="text-[#faf9f5] font-bold">{fmt(jc.start_date)}</span></p>}
+                        {jc.end_date && <p>End: <span className="text-[#faf9f5] font-bold">{fmt(jc.end_date)}</span></p>}
+                        {!jc.start_date && !jc.end_date && <p className="text-[#474846] italic">No schedule set</p>}
                       </div>
                     </div>
-                    <div className="space-y-1 text-xs text-[#ababa8]">
-                      {jc.start_date && <p>Start: <span className="text-[#faf9f5] font-bold">{fmt(jc.start_date)}</span></p>}
-                      {jc.end_date && <p>End: <span className="text-[#faf9f5] font-bold">{fmt(jc.end_date)}</span></p>}
-                      {jc.crew?.phone && <p className="font-mono">{jc.crew.phone}</p>}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 
                 {/* Add Crew Button Card */}
                 <button 
@@ -1308,7 +1336,7 @@ export default function ProjectDetailPage() {
       {crewPopupOpen && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setCrewPopupOpen(false)}
+          onClick={() => { setCrewPopupOpen(false); setSwapTarget(null); }}
         >
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
@@ -1323,14 +1351,17 @@ export default function ProjectDetailPage() {
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#474846]/20">
               <div>
                 <h2 className="text-lg font-black text-[#faf9f5] tracking-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
-                  Available Crews
+                  {swapTarget ? "Change Crew" : "Available Crews"}
                 </h2>
                 <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest mt-1">
-                  Matching: {job.services.map((s: any) => s.service_type?.name).filter(Boolean).join(", ") || "All Services"}
+                  {swapTarget
+                    ? `Swapping crew for: ${swapTarget.serviceName}`
+                    : `Matching: ${job.services.map((s: any) => s.service_type?.name).filter(Boolean).join(", ") || "All Services"}`
+                  }
                 </p>
               </div>
               <button
-                onClick={() => setCrewPopupOpen(false)}
+                onClick={() => { setCrewPopupOpen(false); setSwapTarget(null); }}
                 className="w-8 h-8 rounded-lg bg-[#1e201e] flex items-center justify-center text-[#ababa8] hover:text-[#faf9f5] hover:bg-[#242624] transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
@@ -1494,24 +1525,66 @@ export default function ProjectDetailPage() {
                                   
                                   const specialty_id = spec?.id || "26652a43-728d-43c1-935a-c39f1dea4d7d"; // fallback
 
-                                  // Insert assignment connecting the Job Service, Crew and Specialty
+                                  // ─── SWAP MODE: update existing assignment crew ───
+                                  if (swapTarget) {
+                                    const { error } = await supabase
+                                      .from('service_assignments')
+                                      .update({ crew_id: crew.id, specialty_id: specialty_id })
+                                      .eq('id', swapTarget.assignmentId);
+                                    if (error) throw error;
+                                    btn.textContent = "Swapped ✓";
+                                    btn.style.backgroundColor = vis.color;
+                                    btn.style.color = "#121412";
+                                    btn.disabled = true;
+                                    setSwapTarget(null);
+                                    setCrewPopupOpen(false);
+                                    fetchJob();
+                                    return;
+                                  }
+
+                                  // ─── NEW ASSIGNMENT: calculate dates from SQ ───
+                                  const parsedSq = parseFloat(job.sq ?? 0);
+                                  const jobStartDate = job.requested_start_date;
+                                  let scheduled_start_at: string | null = null;
+                                  let scheduled_end_at: string | null = null;
+
+                                  if (jobStartDate) {
+                                    let duration = 1;
+                                    if (specKey === "siding") duration = Math.max(1, Math.ceil(parsedSq / 8));
+                                    else if (specKey === "painting") duration = Math.max(1, Math.ceil(parsedSq / 10));
+
+                                    const startAt = new Date(jobStartDate + "T08:00:00");
+                                    const endDay = new Date(jobStartDate + "T12:00:00");
+                                    let added = 0;
+                                    while (added < duration - 1) {
+                                      endDay.setDate(endDay.getDate() + 1);
+                                      if (endDay.getDay() !== 0) added++; // Skip Sundays
+                                    }
+                                    const endAt = new Date(endDay);
+                                    endAt.setDate(endAt.getDate() + 1); // exclusive boundary for calendar
+
+                                    scheduled_start_at = startAt.toISOString();
+                                    scheduled_end_at = endAt.toISOString();
+                                  }
+
                                   const { error } = await supabase.from('service_assignments').insert({
                                     job_service_id: svc.id,
                                     crew_id: crew.id,
                                     specialty_id: specialty_id,
-                                    status: "planned"
+                                    status: scheduled_start_at ? "scheduled" : "planned",
+                                    scheduled_start_at,
+                                    scheduled_end_at,
                                   });
                                   
                                   if (error) throw error;
                                   
                                   // Visual feedback immediately without closing the modal
-                                  btn.textContent = "Assigned";
+                                  btn.textContent = "Assigned ✓";
                                   btn.style.backgroundColor = vis.color;
                                   btn.style.color = "#121412";
                                   btn.disabled = true;
                                   btn.style.cursor = "default";
                                   
-                                  // Fetch the job silently in the background so main UI reflects the additions when closing
                                   fetchJob();
                                 } catch(err: any) {
                                   alert("Error assigning crew: " + (err.message || JSON.stringify(err)));
@@ -1526,7 +1599,7 @@ export default function ProjectDetailPage() {
                               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = `${vis.color}25`)}
                               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = `${vis.color}12`)}
                             >
-                              Assign
+                              {swapTarget ? "Select" : "Assign"}
                             </button>
                           </div>
                         ))}
@@ -1544,7 +1617,7 @@ export default function ProjectDetailPage() {
                 Manage All Crews →
               </Link>
               <button
-                onClick={() => setCrewPopupOpen(false)}
+                onClick={() => { setCrewPopupOpen(false); setSwapTarget(null); }}
                 className="px-4 py-2 bg-[#242624] text-[#faf9f5] text-xs font-bold rounded-xl hover:bg-[#2e302e] transition-colors cursor-pointer"
               >
                 Close
