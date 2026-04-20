@@ -208,6 +208,7 @@ export default function SchedulePage() {
   // ─── Drag & Drop State (6.5) ───────────────────
   const [dragJob, setDragJob] = useState<ScheduledJob | null>(null);
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   const pushUndo = useCallback((label: string, prevJobs: ScheduledJob[]) => {
     setUndoStack(prev => {
@@ -371,7 +372,7 @@ export default function SchedulePage() {
       );
       const jobCategory = SERVICE_CATEGORIES.find(sc => sc.id === dragJob.serviceType);
       if (targetCategory && jobCategory && targetCategory.id !== jobCategory.id) {
-        alert(`Cannot move "${jobCategory.label}" service to ${targetPartnerName}.\n${targetPartnerName} handles "${targetCategory.label}" only.`);
+        setAlertMessage(`Cannot move "${jobCategory.label}" service to ${targetPartnerName}.\n${targetPartnerName} handles "${targetCategory.label}" only.`);
         setDragJob(null);
         return;
       }
@@ -801,6 +802,31 @@ export default function SchedulePage() {
           >
             Undo
           </button>
+        </div>
+      )}
+
+      {/* Custom Alert Modal */}
+      {alertMessage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1a1c1a] border border-[#474846]/50 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="flex items-center gap-3 px-6 pt-5 pb-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#ef4444]/10 border border-[#ef4444]/20">
+                <span className="material-symbols-outlined text-[#ef4444] text-[22px]" translate="no">block</span>
+              </div>
+              <h3 className="text-[#faf9f5] font-extrabold text-base tracking-tight" style={{ fontFamily: 'Manrope, system-ui, sans-serif' }}>Action Not Allowed</h3>
+            </div>
+            <div className="px-6 pb-5">
+              <p className="text-[#ababa8] text-sm leading-relaxed whitespace-pre-line">{alertMessage}</p>
+            </div>
+            <div className="flex justify-end px-6 pb-5">
+              <button
+                onClick={() => setAlertMessage(null)}
+                className="px-6 py-2.5 rounded-xl text-sm font-black bg-[#aeee2a] text-[#1a1c1a] hover:brightness-110 transition-all active:scale-95 cursor-pointer"
+              >
+                OK
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
