@@ -146,9 +146,21 @@ const getVisualStatus = (job: ScheduledJob): "scheduled" | "in_progress" | "done
   } catch (e) {}
   
   if (job.jobStartStatus === "active" && job.status === "scheduled") {
-    // If the job is confirmed in Sales but hasn't explicitly been completed
-    // and is inside the timeframe, show it as In Progress
-    return "in_progress";
+    // Only show as In Progress when today is within the service date range
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const start = new Date(job.startDate + "T00:00:00");
+      start.setHours(0, 0, 0, 0);
+      const end = getJobEndDate(job.startDate, job.durationDays);
+      end.setHours(23, 59, 59, 999);
+
+      if (today >= start && today <= end) {
+        return "in_progress";
+      }
+    } catch (e) {}
+    // Not yet in the date range — keep as scheduled (blue)
+    return "scheduled";
   }
 
   return job.status || "scheduled";
