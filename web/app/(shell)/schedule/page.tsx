@@ -256,6 +256,8 @@ export default function SchedulePage() {
           postal_code,
           service_address_line_1,
           salesperson_id,
+          sq,
+          contract_amount,
           customers!jobs_customer_id_fkey(
             full_name,
             phone,
@@ -304,7 +306,8 @@ export default function SchedulePage() {
         serviceCodes: js?.service_types?.code ? [js.service_types.code] : [],
         serviceNames: js?.service_types?.name ? [js.service_types.name] : [],
         crewId: a.crew_id,
-        sq: js?.unit_of_measure === 'SQ' ? js?.quantity : null,
+        sq: jb?.sq != null ? Number(jb.sq) : (js?.unit_of_measure === 'SQ' && js?.quantity != null ? Number(js.quantity) : null),
+        contract_amount: jb?.contract_amount != null ? Number(jb.contract_amount) : undefined,
       };
     });
 
@@ -1181,8 +1184,8 @@ export default function SchedulePage() {
                     </div>
                   </div>
 
-                  {/* SQ Input */}
-                  {editJob?.serviceType === "siding" && (
+                  {/* SQ Input — visible for siding & paint (both use SQ for duration calc) */}
+                  {(editJob?.serviceType === "siding" || editJob?.serviceType === "paint") && (
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
                         SQ (Square Footage)
