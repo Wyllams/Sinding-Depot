@@ -145,21 +145,19 @@ const getVisualStatus = (job: ScheduledJob): "scheduled" | "in_progress" | "done
     if (new Date() >= at18PM) return "done";
   } catch (e) {}
   
-  // Show as In Progress when today is within the service date range (any non-done job)
-  if (job.status !== "done") {
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const start = new Date(job.startDate + "T00:00:00");
-      start.setHours(0, 0, 0, 0);
-      const end = getJobEndDate(job.startDate, job.durationDays);
-      end.setHours(23, 59, 59, 999);
+  // Show as In Progress when today is within the service date range
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(job.startDate + "T00:00:00");
+    start.setHours(0, 0, 0, 0);
+    const end = getJobEndDate(job.startDate, job.durationDays);
+    end.setHours(23, 59, 59, 999);
 
-      if (today >= start && today <= end) {
-        return "in_progress";
-      }
-    } catch (e) {}
-  }
+    if (today >= start && today <= end) {
+      return "in_progress";
+    }
+  } catch (e) {}
 
   return job.status || "scheduled";
 };
