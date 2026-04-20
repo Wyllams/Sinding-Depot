@@ -555,20 +555,29 @@ export default function NewProjectPage() {
                      roofing:  ["gutters", "painting", "siding"],
                   };
 
-                  if (svcId !== "windows" && svcId !== "doors") {
-                     const predecessors = CASCADE_PREDECESSORS[svcId] || [];
-                     for (const pred of predecessors) {
-                        if (prevEndpoints[pred]) {
-                           const predEnd = new Date(prevEndpoints[pred] + "T12:00:00");
-                           startIso = dateHelpers.nextWorkingDay(predEnd)
-                                        .toISOString().split("T")[0];
-                           console.log(
-                             `[Cascade] ${svcId}: after ${pred} end=${prevEndpoints[pred]} → start=${startIso}`
-                           );
-                           break; // Use the first (most recent) predecessor found
-                        }
-                     }
-                  }
+                   if (svcId === "windows" || svcId === "doors") {
+                      // Late addition: if project already started, use today
+                      const todayIso = new Date().toISOString().split("T")[0];
+                      if (todayIso > startDate) {
+                         startIso = todayIso;
+                         const d = new Date(startIso + "T12:00:00");
+                         if (d.getDay() === 0) {
+                            d.setDate(d.getDate() + 1);
+                            startIso = d.toISOString().split("T")[0];
+                         }
+                         console.log("[Cascade] " + svcId + ": late addition, start=" + startIso);
+                      }
+                   } else {
+                      const predecessors = CASCADE_PREDECESSORS[svcId] || [];
+                      for (const pred of predecessors) {
+                         if (prevEndpoints[pred]) {
+                            const predEnd = new Date(prevEndpoints[pred] + "T12:00:00");
+                            startIso = dateHelpers.nextWorkingDay(predEnd).toISOString().split("T")[0];
+                            console.log("[Cascade] " + svcId + ": after " + pred + " -> start=" + startIso);
+                            break;
+                         }
+                      }
+                   }
 
                   // Start at 08:00 (matches schedule page format)
                   startAt = new Date(startIso + "T08:00:00");
