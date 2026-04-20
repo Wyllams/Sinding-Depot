@@ -205,8 +205,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── Salesperson: customData.Vendedor, headers, or payload.owner ──
-    // Helper: returns null for empty, 'undefined', 'null' strings
+    // ── Helper: returns null for empty, 'undefined', 'null' strings ──
     const nonEmpty = (v: unknown): string | null => {
       if (!v || typeof v !== 'string') return null;
       const t = v.trim();
@@ -214,16 +213,57 @@ export async function POST(req: Request) {
       return t;
     };
 
-    // NOTE: payload.user is the CRM ACCOUNT owner (e.g. Armando), NOT the deal salesperson.
-    // The actual salesperson/Proprietário must come from: customData.Vendedor, owner, or Proprietário fields.
-    const salespersonName =
-      nonEmpty(cd.Vendedor) || nonEmpty(cd.vendedor) ||
-      nonEmpty(h("Vendedor")) || nonEmpty(h("vendedor")) ||
-      nonEmpty(payload.owner) ||
-      nonEmpty(payload["Vendedor"]) || nonEmpty(payload["vendedor"]) ||
-      nonEmpty(payload["Proprietário"]) || nonEmpty(payload["Proprietario"]) ||
-      nonEmpty(payload.salesperson) || nonEmpty(payload.Salesperson) ||
-      null;
+    // ── Salesperson: VendedorOP vs VendedorUser comparison logic ──
+    // VendedorOP = opportunity.assignedToUsersName (deal owner)
+    // VendedorUser = user.name (CRM user who triggered)
+    // Rules: same name → use it; only one filled → use it; different names → null
+    const vendedorOP = nonEmpty(cd.VendedorOP) || nonEmpty(cd.vendedorOP);
+    const vendedorUser = nonEmpty(cd.VendedorUser) || nonEmpty(cd.vendedorUser);
+
+    let salespersonName: string | null = null;
+    if (vendedorOP && vendedorUser) {
+      // Both filled: only use if they match (case-insensitive)
+      if (vendedorOP.toLowerCase() === vendedorUser.toLowerCase()) {
+        salespersonName = vendedorOP;
+      } else {
+        // Different names → DO NOT assign
+        console.warn(`⚠️ VendedorOP (${vendedorOP}) ≠ VendedorUser (${vendedorUser}) — skipping salesperson`);
+        salespersonName = null;
+      }
+    } else {
+      // Only one filled → use whichever has a value
+      salespersonName = vendedorOP || vendedorUser || null;
+    }
+
+    // Legacy fallbacks (for older webhook formats)
+    if (!salespersonName) {
+      salespersonName =
+        nonEmpty(cd.Vendedor) || nonEmpty(cd.vendedor) ||
+        nonEmpty(h("Vendedor")) || nonEmpty(h("vendedor")) ||
+        nonEmpty(payload.owner) ||
+        nonEmpty(payload["Vendedor"]) || nonEmpty(payload["vendedor"]) ||
+        nonEmpty(payload["Proprietário"]) || nonEmpty(payload["Proprietario"]) ||
+        nonEmpty(payload.salesperson) || nonEmpty(payload.Salesperson) ||
+        null;
+    }
+
+    // ── Agendamento: appointment start date from customData ──
+    const rawAgendamento = nonEmpty(cd.Agendamento) || nonEmpty(cd.agendamento) || nonEmpty(payload["Close Date"]);
+    let startDateIso: string | null = null;
+    if (rawAgendamento) {
+      // ClickOne sends dates like "April 22, 2026" or "2026-04-22"
+      const parsed = new Date(rawAgendamento);
+      if (!isNaN(parsed.getTime())) {
+        startDateIso = parsed.toISOString().split('T')[0]; // "2026-04-22"
+      }
+    }
+    // Fallback: use today if no date provided
+    if (!startDateIso) {
+      startDateIso = new Date().toISOString().split('T')[0];
+    }
+
+    // ── Crew Lead: partner name from ClickOne ──
+    const rawCrewLead = nonEmpty(payload["Crew Lead"]) || nonEmpty(cd.Crew_Lead) || nonEmpty(cd.crew_lead);
 
     // ── Valor: ClickOne sends as `Job Value`, `lead_value`, or `Valor` header ──
     // ── Valor: customData.Valor, headers, or payload fields ──
@@ -259,8 +299,9 @@ export async function POST(req: Request) {
 
     console.log(`👤 Client: ${clientName} | 📧 ${emailAddress}`);
     console.log(`📍 Address: ${finalAddress}, ${city}, ${state} ${zip}`);
-    console.log(`👔 Salesperson: ${salespersonName} | 🔧 Service: ${rawServices}`);
-    console.log(`📐 SQ: ${squareFootage ?? 'N/A'} | 💰 Value: ${serviceValue}`);
+    console.log(`👔 Salesperson: ${salespersonName} (OP: ${vendedorOP || 'N/A'}, User: ${vendedorUser || 'N/A'})`);
+    console.log(`🔧 Service: ${rawServices} | 📐 SQ: ${squareFootage ?? 'N/A'} | 💰 Value: ${serviceValue}`);
+    console.log(`📅 Agendamento: ${startDateIso} | 👷 Crew Lead: ${rawCrewLead || 'default'}`);
 
     if (!clientName || clientName === "Unknown Client") {
       console.warn("ClickOne Webhook missing client name, proceeding with generic name");
@@ -452,6 +493,7 @@ export async function POST(req: Request) {
         title: `${rawServices} - ${clientName}`,
         status: "draft",
         gate_status: "NOT_CONTACTED",
+        requested_start_date: startDateIso,
         service_address_line_1: finalAddress,
         city: city,
         state: state,
@@ -465,24 +507,243 @@ export async function POST(req: Request) {
 
     if (jobErr) throw jobErr;
 
-    // 4. Register Services in job_services table for dashboard visibility
-    const svcNames = rawServices.split(",").map((s: string) => s.trim()).filter(Boolean);
-    for (const svcName of svcNames) {
-      const { data: svcMatch } = await supabaseAdmin
-         .from("service_types")
-         .select("id")
-         .ilike("name", `%${svcName}%`)
-         .maybeSingle();
+    // 4. Register Services + Create Cascade Scheduling
+    // ── Service code normalization ──
+    const normalizeServiceCode = (name: string): string => {
+      const n = name.toLowerCase().trim();
+      if (n.includes('siding')) return 'siding';
+      if (n.includes('paint')) return 'painting';
+      if (n.includes('window')) return 'windows';
+      if (n.includes('door')) return 'doors';
+      if (n.includes('gutter')) return 'gutters';
+      if (n.includes('roof')) return 'roofing';
+      if (n.includes('deck')) return 'decks';
+      if (n.includes('dumpster')) return 'dumpster';
+      return n;
+    };
 
-      if (svcMatch) {
-         await supabaseAdmin.from("job_services").insert({
-            job_id: newJob.id,
-            service_type_id: svcMatch.id,
-            scope_of_work: 'To be determined from initial inspection',
-            quantity: squareFootage,
-            unit_of_measure: squareFootage ? 'SQ' : null,
-         });
+    const svcNames = rawServices.split(",").map((s: string) => s.trim()).filter(Boolean);
+    let svcCodes = svcNames.map(normalizeServiceCode);
+
+    // Auto-add painting if siding is selected (business rule)
+    if (svcCodes.includes('siding') && !svcCodes.includes('painting')) {
+      svcCodes.push('painting');
+    }
+    // Auto-add roofing if gutters is selected (business rule)
+    if (svcCodes.includes('gutters') && !svcCodes.includes('roofing')) {
+      svcCodes.push('roofing');
+    }
+
+    // Order services for correct cascade calculation
+    const SERVICE_ORDER = ['siding', 'windows', 'doors', 'decks', 'dumpster', 'painting', 'gutters', 'roofing'];
+    svcCodes.sort((a: string, b: string) => {
+      const idxA = SERVICE_ORDER.indexOf(a);
+      const idxB = SERVICE_ORDER.indexOf(b);
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+    // Remove duplicates
+    svcCodes = [...new Set(svcCodes)];
+
+    // ── Duration calculator based on SQ (same as new-project) ──
+    const parsedSq = squareFootage || 0;
+    const calcDuration = (code: string): number => {
+      if (code === 'siding') return Math.max(1, Math.ceil(parsedSq / 8));
+      if (code === 'painting') return Math.max(1, Math.ceil(parsedSq / 10));
+      return 1; // Default for gutters, roofing, windows, doors, etc.
+    };
+
+    // ── Date helpers (working days, skip Sundays) ──
+    const addWorkingDays = (startIso: string, duration: number): Date => {
+      const d = new Date(startIso + 'T12:00:00');
+      let added = 0;
+      while (added < duration - 1) {
+        d.setDate(d.getDate() + 1);
+        if (d.getDay() !== 0) added++; // Skip Sundays
       }
+      return d;
+    };
+    const nextWorkingDay = (dateObj: Date): Date => {
+      const d = new Date(dateObj);
+      d.setDate(d.getDate() + 1);
+      if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+      return d;
+    };
+
+    // Cascade predecessor chain
+    const CASCADE_PREDECESSORS: Record<string, string[]> = {
+      painting: ['siding'],
+      gutters:  ['painting', 'siding'],
+      roofing:  ['gutters', 'painting', 'siding'],
+    };
+
+    // ── Default crew mapping per service ──
+    const DEFAULT_CREWS: Record<string, string> = {
+      siding: 'XICARA',
+      painting: 'OSVIN',
+      windows: 'SERGIO',
+      doors: 'SERGIO',
+      gutters: 'LEANDRO',
+      roofing: 'JOSUE',
+    };
+
+    // ── Specialty code mapping ──
+    const SPECIALTY_CODES: Record<string, string> = {
+      siding: 'siding_installation',
+      painting: 'painting',
+      windows: 'windows',
+      doors: 'doors',
+      gutters: 'gutters',
+      roofing: 'roofing',
+      decks: 'deck_building',
+    };
+
+    // Fetch crews and specialties from DB
+    const { data: allCrews } = await supabaseAdmin.from('crews').select('id, name, code');
+    const { data: allSpecs } = await supabaseAdmin.from('specialties').select('id, code');
+
+    // Resolve Crew Lead from webhook → match to DB crew
+    let crewLeadId: string | null = null;
+    let crewLeadName: string | null = null;
+    if (rawCrewLead && allCrews) {
+      const norm = rawCrewLead.toLowerCase().trim();
+      const match = allCrews.find(c =>
+        c.name?.toLowerCase() === norm || c.code?.toLowerCase() === norm
+      );
+      if (match) {
+        crewLeadId = match.id;
+        crewLeadName = match.name;
+        console.log(`👷 Crew Lead resolved: ${rawCrewLead} → ${match.name} (${match.id})`);
+      } else {
+        console.warn(`⚠️ Crew Lead '${rawCrewLead}' not found in DB, using defaults`);
+      }
+    }
+
+    const prevEndpoints: Record<string, string> = {};
+
+    for (const svcCode of svcCodes) {
+      // Find service_type in DB (search by code first, then by name)
+      let svcTypeId: string | null = null;
+      const { data: svcByCode } = await supabaseAdmin
+        .from('service_types')
+        .select('id')
+        .ilike('code', svcCode)
+        .maybeSingle();
+      if (svcByCode) {
+        svcTypeId = svcByCode.id;
+      } else {
+        // Fallback: search by name
+        const searchName = svcNames.find((n: string) => normalizeServiceCode(n) === svcCode) || svcCode;
+        const { data: svcByName } = await supabaseAdmin
+          .from('service_types')
+          .select('id')
+          .ilike('name', `%${searchName}%`)
+          .maybeSingle();
+        svcTypeId = svcByName?.id || null;
+      }
+
+      if (!svcTypeId) {
+        console.warn(`⚠️ Service type not found for '${svcCode}', skipping`);
+        continue;
+      }
+
+      // Create job_service
+      const { data: newJs } = await supabaseAdmin.from('job_services').insert({
+        job_id: newJob.id,
+        service_type_id: svcTypeId,
+        scope_of_work: 'To be determined from initial inspection',
+        quantity: squareFootage,
+        unit_of_measure: squareFootage ? 'SQ' : null,
+      }).select('id').single();
+
+      if (!newJs) continue;
+
+      // ── Calculate cascade dates ──
+      const duration = calcDuration(svcCode);
+      let svcStartIso = startDateIso!;
+
+      if (svcCode === 'windows' || svcCode === 'doors') {
+        // Windows/Doors run in parallel with Siding (same start date)
+        // Late addition: if project already started, use today
+        const todayIso = new Date().toISOString().split('T')[0];
+        if (todayIso > startDateIso!) {
+          svcStartIso = todayIso;
+          const d = new Date(svcStartIso + 'T12:00:00');
+          if (d.getDay() === 0) {
+            d.setDate(d.getDate() + 1);
+            svcStartIso = d.toISOString().split('T')[0];
+          }
+        }
+      } else {
+        // Cascade: start after predecessor ends
+        const predecessors = CASCADE_PREDECESSORS[svcCode] || [];
+        for (const pred of predecessors) {
+          if (prevEndpoints[pred]) {
+            const predEnd = new Date(prevEndpoints[pred] + 'T12:00:00');
+            svcStartIso = nextWorkingDay(predEnd).toISOString().split('T')[0];
+            console.log(`[Cascade] ${svcCode}: after ${pred} → start=${svcStartIso}`);
+            break;
+          }
+        }
+      }
+
+      // Ensure start is not on Sunday
+      const startCheck = new Date(svcStartIso + 'T12:00:00');
+      if (startCheck.getDay() === 0) {
+        startCheck.setDate(startCheck.getDate() + 1);
+        svcStartIso = startCheck.toISOString().split('T')[0];
+      }
+
+      const startAt = new Date(svcStartIso + 'T08:00:00');
+      const lastDayInclusive = addWorkingDays(svcStartIso, duration);
+      prevEndpoints[svcCode] = lastDayInclusive.toISOString().split('T')[0];
+
+      const endAt = new Date(prevEndpoints[svcCode] + 'T12:00:00');
+      endAt.setDate(endAt.getDate() + 1);
+
+      console.log(`[Cascade] ${svcCode}: dur=${duration} start=${svcStartIso} end=${prevEndpoints[svcCode]}`);
+
+      // ── Resolve crew for this service ──
+      let crewId: string | null = null;
+
+      // If Crew Lead matches this service's specialty, use it
+      // Crew Lead from ClickOne is typically for Siding
+      if (crewLeadId && svcCode === 'siding') {
+        crewId = crewLeadId;
+      } else {
+        // Use default crew for other services
+        const defaultCrewName = DEFAULT_CREWS[svcCode];
+        if (defaultCrewName && allCrews) {
+          const match = allCrews.find(c => c.name?.toUpperCase() === defaultCrewName.toUpperCase());
+          crewId = match?.id || null;
+        }
+      }
+
+      // ── Resolve specialty_id (required by DB trigger) ──
+      const specCode = SPECIALTY_CODES[svcCode] || 'siding_installation';
+      const specMatch = (allSpecs || []).find(s => s.code === specCode);
+      const specialtyId = specMatch?.id || '26652a43-728d-43c1-935a-c39f1dea4d7d'; // fallback: siding_installation
+
+      // ── Create service_assignment ──
+      await supabaseAdmin.from('service_assignments').insert({
+        job_service_id: newJs.id,
+        crew_id: crewId,
+        specialty_id: specialtyId,
+        status: 'scheduled',
+        scheduled_start_at: startAt.toISOString(),
+        scheduled_end_at: endAt.toISOString(),
+      });
+
+      console.log(`✅ Assignment: ${svcCode} → crew=${crewId ? (allCrews?.find(c => c.id === crewId)?.name || crewId) : 'none'} | ${svcStartIso} to ${prevEndpoints[svcCode]}`);
+    }
+
+    // Update target_completion_date from cascade endpoints
+    if (Object.values(prevEndpoints).length > 0) {
+      const endDates = Object.values(prevEndpoints).map(d => new Date(d + 'T12:00:00').getTime());
+      const maxTime = Math.max(...endDates);
+      const maxDateStr = new Date(maxTime).toISOString().split('T')[0];
+      await supabaseAdmin.from('jobs').update({ target_completion_date: maxDateStr }).eq('id', newJob.id);
     }
 
     // 4b. Automação 3.5 — Criar window_order se serviço for Windows ou Doors
