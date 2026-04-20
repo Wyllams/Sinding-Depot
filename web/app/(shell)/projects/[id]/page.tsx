@@ -1405,12 +1405,28 @@ export default function ProjectDetailPage() {
                   </p>
                 </div>
               ) : (() => {
+                // In swap mode, only show crews matching the specific service being swapped
+                const crewsToShow = swapTarget
+                  ? availableCrews.filter((c) =>
+                      c.matchedSpecialties.some((spec) => {
+                        const specNorm = spec.toLowerCase().replace(/ (installation|building)$/, "");
+                        const svcNorm = swapTarget.serviceName.toLowerCase();
+                        return specNorm === svcNorm || spec.toLowerCase() === svcNorm;
+                      })
+                    )
+                  : availableCrews;
+
                 // Group crews by specialty for organized display
                 const grouped = new Map<string, AvailableCrew[]>();
-                for (const crew of availableCrews) {
+                for (const crew of crewsToShow) {
                   for (const spec of crew.matchedSpecialties) {
+                    // In swap mode, only group under the matching specialty
+                    if (swapTarget) {
+                      const specNorm = spec.toLowerCase().replace(/ (installation|building)$/, "");
+                      const svcNorm = swapTarget.serviceName.toLowerCase();
+                      if (specNorm !== svcNorm && spec.toLowerCase() !== svcNorm) continue;
+                    }
                     if (!grouped.has(spec)) grouped.set(spec, []);
-                    // Avoid duplicate entries if multiple specialties match same crew
                     if (!grouped.get(spec)!.find(c => c.id === crew.id)) {
                       grouped.get(spec)!.push(crew);
                     }
