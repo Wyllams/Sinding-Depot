@@ -205,14 +205,28 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── Salesperson: customData.Vendedor, headers, or payload.owner ──
+    // ── Salesperson: customData.Vendedor, headers, payload.owner or payload.user ──
+    // Helper: returns null for empty, 'undefined', 'null' strings
+    const nonEmpty = (v: unknown): string | null => {
+      if (!v || typeof v !== 'string') return null;
+      const t = v.trim();
+      if (!t || t === 'undefined' || t === 'null') return null;
+      return t;
+    };
+
+    // user object is always present — contains the CRM user who triggered the workflow
+    const userFullName = payload.user
+      ? [payload.user.firstName, payload.user.lastName].filter(Boolean).join(' ').trim() || null
+      : null;
+
     const salespersonName =
-      cd.Vendedor || cd.vendedor ||
-      h("Vendedor") || h("vendedor") ||
-      payload.owner ||
-      payload["Vendedor"] || payload["vendedor"] ||
-      payload["Proprietário"] || payload["Proprietario"] ||
-      payload.salesperson || payload.Salesperson ||
+      nonEmpty(cd.Vendedor) || nonEmpty(cd.vendedor) ||
+      nonEmpty(h("Vendedor")) || nonEmpty(h("vendedor")) ||
+      nonEmpty(payload.owner) ||
+      nonEmpty(payload["Vendedor"]) || nonEmpty(payload["vendedor"]) ||
+      nonEmpty(payload["Proprietário"]) || nonEmpty(payload["Proprietario"]) ||
+      nonEmpty(payload.salesperson) || nonEmpty(payload.Salesperson) ||
+      nonEmpty(userFullName) ||  // Fallback: CRM user who triggered the workflow
       null;
 
     // ── Valor: ClickOne sends as `Job Value`, `lead_value`, or `Valor` header ──
