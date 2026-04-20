@@ -141,6 +141,25 @@ graph LR
 → Portal: [[Customer Portal]]
 → Auth: [[Autenticação e Controle de Acesso]]
 
+### 2026-04-19 — Gmail SMTP, Compressão de Imagens e Storage Cleanup
+
+| Feature | Descrição | Arquivos |
+|---------|-----------|----------|
+| **Gmail SMTP** | Migrado de Resend para Nodemailer + Gmail App Password | `webhook/clickone/route.ts` |
+| **Compressão de imagens** | Reduz ~80% do tamanho antes de upload (1920px + 82% JPEG) | `lib/compressImage.ts` |
+| **5 pontos de upload atualizados** | Services edit, New Service Call, Change Orders (admin + field) | Múltiplos |
+| **Storage cleanup on delete** | Ao deletar projeto, limpa fotos/vídeos/docs do Storage | `projects/page.tsx` |
+| **Serviço "Doors" adicionado** | Novo tipo de serviço no banco e mapeamento do webhook | `service_types` table |
+| **Sales Reports: Client + Service** | Nome do cliente e badges de serviço na tabela do accordion | `sales-reports/page.tsx` |
+| **Alias mapping de vendedores** | Normaliza nomes do CRM ClickOne para nomes internos | `webhook/clickone/route.ts` |
+| **customData extraction** | Extrai campos personalizados do payload do webhook | `webhook/clickone/route.ts` |
+| **Teste de email endpoint** | Rota `/api/test-email` para validar Gmail SMTP | `api/test-email/route.ts` |
+
+→ Webhook: [[Webhook ClickOne]]
+→ Serviços: [[Services e Warranty]]
+→ Vendas: [[Sales Reports]]
+→ Credenciais: [[Credenciais Customer Portal]]
+
 ---
 
 > [!NOTE]

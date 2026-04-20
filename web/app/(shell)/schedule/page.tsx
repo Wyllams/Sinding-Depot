@@ -145,8 +145,8 @@ const getVisualStatus = (job: ScheduledJob): "scheduled" | "in_progress" | "done
     if (new Date() >= at18PM) return "done";
   } catch (e) {}
   
-  if (job.jobStartStatus === "active" && job.status === "scheduled") {
-    // Only show as In Progress when today is within the service date range
+  // Show as In Progress when today is within the service date range (any non-done job)
+  if (job.status !== "done") {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -159,8 +159,6 @@ const getVisualStatus = (job: ScheduledJob): "scheduled" | "in_progress" | "done
         return "in_progress";
       }
     } catch (e) {}
-    // Not yet in the date range — keep as scheduled (blue)
-    return "scheduled";
   }
 
   return job.status || "scheduled";
