@@ -369,6 +369,17 @@ export default function SchedulePage() {
     const norm = (s?: string) => s ? s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase() : "";
     
     if (targetPartnerName && norm(targetPartnerName) !== norm(dragJob.partnerName)) {
+      // ── Validate specialty match: block cross-specialty drops ──
+      const targetCategory = SERVICE_CATEGORIES.find(sc =>
+        sc.partners.some(p => norm(p) === norm(targetPartnerName))
+      );
+      const jobCategory = SERVICE_CATEGORIES.find(sc => sc.id === dragJob.serviceType);
+      if (targetCategory && jobCategory && targetCategory.id !== jobCategory.id) {
+        alert(`Cannot move "${jobCategory.label}" service to ${targetPartnerName}.\n${targetPartnerName} handles "${targetCategory.label}" only.`);
+        setDragJob(null);
+        return;
+      }
+
       const c = allCrews.find(crew => norm(crew.name) === norm(targetPartnerName));
       if (c) {
         targetCrewId = c.id;
