@@ -440,7 +440,8 @@ export async function POST(req: Request) {
         salesperson_id: spId,
         job_number: jobNumber,
         title: `${rawServices} - ${clientName}`,
-        status: "pending_scheduling", // Specific status mapped to the Calendar
+        status: "draft",
+        gate_status: "NOT_CONTACTED",
         service_address_line_1: finalAddress,
         city: city,
         state: state,
