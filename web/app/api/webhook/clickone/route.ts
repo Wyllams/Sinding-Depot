@@ -603,9 +603,38 @@ export async function POST(req: Request) {
     const { data: allCrews } = await supabaseAdmin.from('crews').select('id, name, code');
     const { data: allSpecs } = await supabaseAdmin.from('specialties').select('id, code');
 
+    // Fetch crew_specialties to know which services each crew handles
+    const { data: crewSpecLinks } = await supabaseAdmin
+      .from('crew_specialties')
+      .select('crew_id, specialty_id');
+
+    // Build a map: specialty_code → Set of crew_ids that handle it
+    // And reverse: crew_id → Set of specialty_codes
+    const crewToSpecCodes = new Map<string, Set<string>>();
+    if (crewSpecLinks && allSpecs) {
+      for (const link of crewSpecLinks) {
+        const spec = allSpecs.find(s => s.id === link.specialty_id);
+        if (!spec) continue;
+        if (!crewToSpecCodes.has(link.crew_id)) crewToSpecCodes.set(link.crew_id, new Set());
+        crewToSpecCodes.get(link.crew_id)!.add(spec.code);
+      }
+    }
+
+    // Map specialty codes to service codes for matching
+    const SPEC_TO_SVC: Record<string, string> = {
+      siding_installation: 'siding',
+      painting: 'painting',
+      windows: 'windows',
+      doors: 'doors',
+      gutters: 'gutters',
+      roofing: 'roofing',
+      deck_building: 'decks',
+    };
+
     // Resolve Crew Lead from webhook → match to DB crew
     let crewLeadId: string | null = null;
     let crewLeadName: string | null = null;
+    const crewLeadServiceCodes = new Set<string>(); // service codes this crew handles
     if (rawCrewLead && allCrews) {
       const norm = rawCrewLead.toLowerCase().trim();
       const match = allCrews.find(c =>
@@ -614,7 +643,15 @@ export async function POST(req: Request) {
       if (match) {
         crewLeadId = match.id;
         crewLeadName = match.name;
-        console.log(`👷 Crew Lead resolved: ${rawCrewLead} → ${match.name} (${match.id})`);
+        // Get which services this crew can do
+        const specCodes = crewToSpecCodes.get(match.id);
+        if (specCodes) {
+          for (const sc of specCodes) {
+            const svc = SPEC_TO_SVC[sc];
+            if (svc) crewLeadServiceCodes.add(svc);
+          }
+        }
+        console.log(`👷 Crew Lead resolved: ${rawCrewLead} → ${match.name} (${match.id}) | Services: ${[...crewLeadServiceCodes].join(', ')}`);
       } else {
         console.warn(`⚠️ Crew Lead '${rawCrewLead}' not found in DB, using defaults`);
       }
@@ -707,12 +744,11 @@ export async function POST(req: Request) {
       // ── Resolve crew for this service ──
       let crewId: string | null = null;
 
-      // If Crew Lead matches this service's specialty, use it
-      // Crew Lead from ClickOne is typically for Siding
-      if (crewLeadId && svcCode === 'siding') {
+      // If Crew Lead handles this service's specialty, assign them
+      if (crewLeadId && crewLeadServiceCodes.has(svcCode)) {
         crewId = crewLeadId;
       } else {
-        // Use default crew for other services
+        // Use default crew for services the Crew Lead doesn't handle
         const defaultCrewName = DEFAULT_CREWS[svcCode];
         if (defaultCrewName && allCrews) {
           const match = allCrews.find(c => c.name?.toUpperCase() === defaultCrewName.toUpperCase());
