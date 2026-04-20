@@ -455,6 +455,8 @@ export default function NewProjectPage() {
         requested_start_date: startDate || null,
         target_completion_date: endDate || null,
         contract_amount: contractAmount ? parseFloat(contractAmount) : null,
+        sq: sq ? parseFloat(sq) : null,
+        gate_status: gateStatus,
         description: notes
       }).select("id").single();
       
@@ -540,26 +542,46 @@ export default function NewProjectPage() {
                // Compute dates if standard startDate was provided
                if (startDate) {
                   const duration = calcDuration(svcId);
-                  let startIso = startDate; // Default
-                  
-                  // Sequential Logic Reference
-                  if (svcId === "windows" && finalSelected.includes("siding")) {
-                     startIso = startDate; // Same as Siding default start
-                  } else if (svcId === "painting" && finalSelected.includes("siding") && prevEndpoints["siding"]) {
-                     startIso = dateHelpers.nextWorkingDay(new Date(prevEndpoints["siding"] + "T12:00:00")).toISOString().split("T")[0];
-                  } else if (svcId === "gutters" && finalSelected.includes("painting") && prevEndpoints["painting"]) {
-                     startIso = dateHelpers.nextWorkingDay(new Date(prevEndpoints["painting"] + "T12:00:00")).toISOString().split("T")[0];
-                  } else if (svcId === "roofing" && finalSelected.includes("gutters") && prevEndpoints["gutters"]) {
-                     startIso = dateHelpers.nextWorkingDay(new Date(prevEndpoints["gutters"] + "T12:00:00")).toISOString().split("T")[0];
+                  let startIso = startDate; // Default: same as job start
+
+                  // ── Cascade Chain ──────────────────────────────────────
+                  // Each service starts the NEXT WORKING DAY after its
+                  // predecessor ends. Falls back to earlier predecessors
+                  // if the immediate one wasn't selected.
+                  // Windows/Doors run in parallel with Siding (no cascade).
+                  const CASCADE_PREDECESSORS: Record<string, string[]> = {
+                     painting: ["siding"],
+                     gutters:  ["painting", "siding"],
+                     roofing:  ["gutters", "painting", "siding"],
+                  };
+
+                  if (svcId !== "windows" && svcId !== "doors") {
+                     const predecessors = CASCADE_PREDECESSORS[svcId] || [];
+                     for (const pred of predecessors) {
+                        if (prevEndpoints[pred]) {
+                           const predEnd = new Date(prevEndpoints[pred] + "T12:00:00");
+                           startIso = dateHelpers.nextWorkingDay(predEnd)
+                                        .toISOString().split("T")[0];
+                           console.log(
+                             `[Cascade] ${svcId}: after ${pred} end=${prevEndpoints[pred]} → start=${startIso}`
+                           );
+                           break; // Use the first (most recent) predecessor found
+                        }
+                     }
                   }
 
-                  startAt = new Date(startIso + "T12:00:00");
+                  // Start at 08:00 (matches schedule page format)
+                  startAt = new Date(startIso + "T08:00:00");
+
                   const lastDayInclusive = dateHelpers.addWorkingDays(startIso, duration);
-                  
                   prevEndpoints[svcId] = lastDayInclusive.toISOString().split("T")[0];
-                  
-                  // For DB/Gantt, endAt is the boundary (exclusive next calendar day)
-                  endAt = new Date(lastDayInclusive);
+
+                  console.log(
+                    `[Cascade] ${svcId}: dur=${duration} start=${startIso} end=${prevEndpoints[svcId]}`
+                  );
+
+                  // endAt = exclusive boundary (next calendar day at noon)
+                  endAt = new Date(prevEndpoints[svcId] + "T12:00:00");
                   endAt.setDate(endAt.getDate() + 1);
                }
 
