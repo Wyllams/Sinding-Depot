@@ -5,8 +5,9 @@ tags:
   - gantt
   - calendário
   - drag-and-drop
+  - duração
 created: 2026-04-17
-updated: 2026-04-20
+updated: 2026-04-21
 ---
 
 # 📅 Job Schedule — Calendário Gantt Semanal
@@ -55,13 +56,34 @@ Quando múltiplos serviços (ex: Windows + Doors) são agendados no mesmo dia pa
 | Automação | Detalhe |
 |-----------|---------|
 | **Siding → Paint** | Ao mover um job de Siding, o job de Paint correspondente (mesmo cliente) se move automaticamente para o dia seguinte |
-| **Sunday Block** | Não permite agendar em Domingos (day OFF) |
+| **Sunday Block** | Não permite agendar em Domingos (day OFF). **Sábado é dia útil** ✅ |
 | **Duration Awareness** | Barras se estendem corretamente por múltiplos dias |
 | **Auto-Confirm** | Jobs `Tentative` mudam automaticamente para `Confirmed` quando a data de início chega |
+| **Calculador de Duração** | Ao alterar SQ no modal, recalcula `durationDays` pela tabela do parceiro → [[Calculador de Duração por Parceiro]] |
+
+---
+
+## Calculador de Duração por Parceiro (2026-04-21)
+
+> **Detalhes completos:** [[Calculador de Duração por Parceiro]]
+
+Substituiu as fórmulas genéricas (`SQ÷8` e `SQ÷10`) por tabelas individuais por crew. **Módulo:** `lib/duration-calculator.ts`
+
+| Parceiro | Serviço | Lógica |
+|---------|---------|--------|
+| XICARA / XICARA 02 | Siding | Faixas + `ceil(SQ÷10)` para 21+ SQ |
+| WILMAR / WILMAR 02 | Siding | Faixas + `ceil(SQ÷6)` para 13+ SQ |
+| SULA | Siding | Faixas progressivas + `round(SQ÷10)` para 56+ SQ |
+| LUÍS | Siding | Faixas + `round(SQ÷4.5)` para 28+ SQ |
+| OSVIN / OSVIN 02 | Painting | Faixas + `ceil(SQ÷13)` para 41+ SQ |
+| VICTOR / JUAN | Painting | Faixas + `round(SQ÷7.5)` para 21+ SQ |
+| Qualquer | Gutters / Roofing | **1 dia** fixo |
+| Qualquer | Decks | **2 dias** fixo |
 
 ---
 
 ## Auto-Confirm (Status Automático)
+
 
 O status do job no popup/modal muda automaticamente baseado na data:
 

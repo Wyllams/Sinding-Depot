@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { TopBar } from "../../../../components/TopBar";
 import CustomDatePicker from "../../../../components/CustomDatePicker";
 import { CustomDropdown } from "../../../../components/CustomDropdown";
 import { supabase } from "../../../../lib/supabase";
+import { calculateServiceDuration } from "../../../../lib/duration-calculator";
+import { ProjectWeatherCard } from "../../../../components/ProjectWeatherCard";
 
 // ─── Discipline visuals (reused from /crews) ──────────────────────
 const DISCIPLINE_VIS: Record<string, { icon: string; color: string }> = {
@@ -18,6 +20,196 @@ const DISCIPLINE_VIS: Record<string, { icon: string; color: string }> = {
   roofing:  { icon: "roofing",      color: "#ef4444" },
   decks:    { icon: "deck",         color: "#22d3ee" },
 };
+
+// ─── All available services (matches Create Job layout — with partners) ──
+type SubServiceDef = { id: string; icon: string; label: string };
+type ServiceDef = { id: string; icon: string; label: string; color: string; partners: string[]; subServices?: SubServiceDef[] };
+
+const DWD_SUB_SERVICES: SubServiceDef[] = [
+  { id: "doors",   icon: "door_front", label: "Doors" },
+  { id: "windows", icon: "window",     label: "Windows" },
+  { id: "decks",   icon: "deck",       label: "Decks" },
+];
+
+const ALL_SERVICES: ServiceDef[] = [
+  { id: "siding",   icon: "view_day",       label: "Siding",   color: "#aeee2a", partners: ["SIDING DEPOT", "XICARA", "XICARA 02", "WILMAR", "WILMAR 02", "SULA", "LUIS"] },
+  { id: "gutters",  icon: "horizontal_rule", label: "Gutters",  color: "#c084fc", partners: ["SIDING DEPOT", "LEANDRO"] },
+  { id: "painting", icon: "format_paint",   label: "Painting", color: "#f5a623", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
+  { id: "doors_windows_decks", icon: "window", label: "Doors / Windows / Decks", color: "#60b8f5", partners: ["SIDING DEPOT", "SERGIO"], subServices: DWD_SUB_SERVICES },
+  { id: "roofing",  icon: "roofing",        label: "Roofing",  color: "#ef4444", partners: ["SIDING DEPOT", "JOSUE"] },
+  { id: "dumpster", icon: "delete",         label: "Dumpster", color: "#64748b", partners: ["SIDING DEPOT"] },
+];
+
+// ─── Input classes (matches Create Job) ──────────────────────────
+const detailInputCls =
+  "w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#aeee2a] focus:ring-1 focus:ring-[#aeee2a] transition-all h-[48px] text-[15px]";
+const detailLabelCls = "text-xs uppercase tracking-wider text-[#ababa8] font-bold";
+
+// ─── SectionHeader (matches Create Job) ──────────────────────────
+function SectionHeader({ icon, title }: { icon: string; title: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-6">
+      <span className="material-symbols-outlined text-[#aeee2a]" translate="no">
+        {icon}
+      </span>
+      <h2 className="text-xl font-bold" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+// ─── Services Carousel for Detail page (matches Create Job exactly) ───
+function DetailServicesCarousel({
+  selectedCodes,
+  onToggle,
+  assignedPartners,
+  onAssignClick,
+}: {
+  selectedCodes: string[];
+  onToggle: (svcCode: string) => void;
+  assignedPartners: Record<string, string>;
+  onAssignClick: (svc: ServiceDef) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (dir: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardWidth = el.clientWidth / 4;
+    el.scrollBy({ left: dir === "right" ? cardWidth : -cardWidth, behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative group/carousel">
+      {/* Left arrow */}
+      <button
+        type="button"
+        onClick={() => scroll("left")}
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 rounded-full bg-[#242624] border border-[#474846]/40 text-[#ababa8] hover:text-[#aeee2a] hover:border-[#aeee2a]/40 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover/carousel:opacity-100 cursor-pointer"
+      >
+        <span className="material-symbols-outlined text-[20px]" translate="no">chevron_left</span>
+      </button>
+
+      {/* Cards strip */}
+      <div
+        ref={scrollRef}
+        className="flex gap-4 overflow-x-auto scroll-smooth pb-1 pt-1"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {ALL_SERVICES.map((svc) => {
+          // For combined cards (doors/windows/decks), check if ANY sub-service is active
+          const hasSubs = svc.subServices && svc.subServices.length > 0;
+          const on = hasSubs
+            ? svc.subServices!.some((sub) => selectedCodes.includes(sub.id))
+            : selectedCodes.includes(svc.id);
+          const partner = assignedPartners[svc.id];
+          const hasPartnersList = svc.partners && svc.partners.length > 0;
+
+          return (
+            <div
+              key={svc.id}
+              onClick={() => {
+                if (hasPartnersList) {
+                  onAssignClick(svc);
+                } else if (on) {
+                  onToggle(svc.id);
+                } else {
+                  onToggle(svc.id);
+                }
+              }}
+              className={`relative flex-shrink-0 px-2 py-5 rounded-xl cursor-pointer transition-all group ${
+                hasSubs ? "w-[calc(40%-12px)] min-w-[240px]" : "w-[calc(25%-12px)] min-w-[140px]"
+              } ${
+                on
+                  ? "bg-[#121412] border-2"
+                  : "bg-[#121412] border border-[#474846]/15 hover:bg-[#1e201e]"
+              }`}
+              style={on ? { borderColor: svc.color, boxShadow: `0 0 15px ${svc.color}1A` } : {}}
+            >
+              {/* ── Combined card: 3 sub-service icons side by side ── */}
+              {hasSubs ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex items-center justify-center gap-5">
+                    {svc.subServices!.map((sub) => {
+                      const subOn = selectedCodes.includes(sub.id);
+                      return (
+                        <div key={sub.id} className="flex flex-col items-center gap-1">
+                          <span
+                            className={`material-symbols-outlined text-2xl transition-colors ${
+                              on
+                                ? (subOn ? "" : "text-[#faf9f5]/60")
+                                : "text-[#ababa8]"
+                            }`}
+                            style={on && subOn ? { color: svc.color } : {}}
+                            translate="no"
+                          >
+                            {sub.icon}
+                          </span>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors text-[#faf9f5]`}>
+                            {sub.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                /* ── Standard single-service card ── */
+                <div className="flex flex-col items-center text-center gap-2">
+                  <span
+                    className={`material-symbols-outlined text-3xl transition-colors ${
+                      !on ? "text-[#ababa8]" : ""
+                    }`}
+                    style={on ? { color: svc.color } : {}}
+                    translate="no"
+                  >
+                    {svc.icon}
+                  </span>
+                  <span className="font-bold tracking-tight text-sm text-[#faf9f5]">{svc.label}</span>
+                </div>
+              )}
+
+              {/* Partner badge */}
+              {on && hasPartnersList && (
+                <div className="mt-3 flex justify-center w-full">
+                   {partner ? (
+                       <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider px-2.5 py-1 rounded-md border" style={{ backgroundColor: `${svc.color}33`, borderColor: svc.color }}>{partner}</span>
+                   ) : (
+                       <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider border px-2.5 py-1 rounded-full transition-colors" style={{ backgroundColor: `${svc.color}1A`, borderColor: `${svc.color}80` }}>Assign Partner</span>
+                   )}
+                </div>
+              )}
+
+              {/* X to deselect */}
+              {on && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggle(svc.id);
+                  }}
+                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-[#1a1c1a] border border-[#ff7351]/50 text-[#ff7351] hover:bg-[#ff7351] hover:text-[#121412] transition-colors shadow-md z-10 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[14px]" translate="no">close</span>
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Right arrow */}
+      <button
+        type="button"
+        onClick={() => scroll("right")}
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-9 h-9 rounded-full bg-[#242624] border border-[#474846]/40 text-[#ababa8] hover:text-[#aeee2a] hover:border-[#aeee2a]/40 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover/carousel:opacity-100 cursor-pointer"
+      >
+        <span className="material-symbols-outlined text-[20px]" translate="no">chevron_right</span>
+      </button>
+    </div>
+  );
+}
 
 interface AvailableCrew {
   id: string;
@@ -61,14 +253,11 @@ interface JobDetail {
   change_orders: { id: string; title: string; status: string; proposed_amount: number | null }[];
 }
 
-// ─── Status Map ───────────────────────────────────────────────────
+// ─── Status Map (3 values matching calendar popup) ─────────────────────
 const STATUS_MAP: Record<string, { label: string; style: string }> = {
-  active:             { label: "Confirmed", style: "bg-[#aeee2a] text-[#3a5400]"           },
-  draft:              { label: "Tentative", style: "bg-[#e3eb5d]/20 text-[#e3eb5d]"        },
-  pending_scheduling: { label: "Awaiting",  style: "bg-[#a855f7]/20 text-[#a855f7]"        },
-  on_hold:            { label: "Pending",   style: "bg-[#ff7351]/20 text-[#ff7351]"        },
-  completed:          { label: "Completed", style: "bg-[#242624] text-[#ababa8]"           },
-  cancelled:          { label: "Cancelled", style: "bg-[#ba1212]/20 text-[#ba1212]"        },
+  active:  { label: "Confirmed", style: "bg-[#aeee2a] text-[#3a5400]"           },
+  draft:   { label: "Tentative", style: "bg-[#e3eb5d]/20 text-[#e3eb5d]"        },
+  on_hold: { label: "Pending",   style: "bg-[#ff7351]/20 text-[#ff7351]"        },
 };
 
 const BLOCKER_ICON: Record<string, string> = {
@@ -96,7 +285,9 @@ const GATE_CONFIG: Record<string, { color: string; icon: string; title: string }
 
 function fmt(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const dt = new Date(iso);
+  if (isNaN(dt.getTime())) return "—";
+  return `${(dt.getMonth() + 1).toString().padStart(2, '0')}/${dt.getDate().toString().padStart(2, '0')}/${dt.getFullYear()}`;
 }
 
 // ─── Paint Colors Card (Admin) ────────────────────────────────────
@@ -219,7 +410,7 @@ function PaintColorsCard({ jobId }: { jobId: string }) {
           <p className="text-xs text-[#474846]">No colors submitted yet</p>
           {paintDate && (
             <p className="text-[10px] text-[#ababa8] mt-1">
-              Paint scheduled: {new Date(paintDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              Paint scheduled: {(() => { const _d = new Date(paintDate); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}
             </p>
           )}
         </div>
@@ -242,7 +433,7 @@ function PaintColorsCard({ jobId }: { jobId: string }) {
             <div className="pt-3 mt-2 border-t border-[#474846]/30">
               <p className="text-[10px] text-[#ababa8] flex items-center gap-1">
                 <span className="material-symbols-outlined text-[12px]" translate="no">event</span>
-                Paint: {new Date(paintDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                Paint: {(() => { const _d = new Date(paintDate); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}
               </p>
             </div>
           )}
@@ -277,6 +468,14 @@ export default function ProjectDetailPage() {
   const [editingServices, setEditingServices] = useState(false);
   const [allServiceTypes, setAllServiceTypes] = useState<{ id: string; name: string }[]>([]);
   const [addingServiceId, setAddingServiceId] = useState("");
+
+  // ── Partner assignment modal states (same as Create Job) ──
+  const [openPartnerModal, setOpenPartnerModal] = useState<ServiceDef | null>(null);
+  const [assignedPartners, setAssignedPartners] = useState<Record<string, string>>({});
+  const [windowCount, setWindowCount] = useState("");
+  const [windowTrim, setWindowTrim] = useState<"yes" | "no" | "">("");
+  const [windowsStep, setWindowsStep] = useState<"partner" | "subservices" | "config">("partner");
+  const [selectedSubSvcs, setSelectedSubSvcs] = useState<string[]>([]);
 
   const handleAutoSave = async (
     table: "jobs" | "customers",
@@ -444,6 +643,24 @@ export default function ProjectDetailPage() {
 
       setJob(mapped);
 
+      // Populate assignedPartners from existing service_assignments
+      const partnerMap: Record<string, string> = {};
+      const dwdCodes = ["doors", "windows", "decks"];
+      for (const svc of mapped.services) {
+        const svcCode = (svc as any).service_type?.name?.toLowerCase();
+        const firstAssignment = ((svc as any).assignments ?? [])[0];
+        if (svcCode && firstAssignment?.crew?.name) {
+          const crewName = firstAssignment.crew.name.toUpperCase();
+          // Map doors/windows/decks sub-services to the combined card key
+          if (dwdCodes.includes(svcCode)) {
+            partnerMap["doors_windows_decks"] = crewName;
+          } else {
+            partnerMap[svcCode] = crewName;
+          }
+        }
+      }
+      setAssignedPartners(partnerMap);
+
       // Prioridade: gate_status salvo no DB → fallback: deriva dos blockers
       const savedGate = (j as any).gate_status as string | null;
       if (savedGate && GATE_CONFIG[savedGate]) {
@@ -508,13 +725,12 @@ export default function ProjectDetailPage() {
 
   async function handleGateChange(gate: string) {
     setGateStatus(gate);
-    const newStatus = gate === "READY" ? "active" : gate === "NOT_CONTACTED" ? "draft" : "on_hold";
-    // Persiste TANTO o gate_status exato QUANTO o status operacional derivado
+    // Gating is purely visual — does NOT change jobs.status (JOB START STATUS)
+    // Only the calendar popup (for Siding service) controls JOB START STATUS
     await supabase
       .from("jobs")
-      .update({ status: newStatus, gate_status: gate })
+      .update({ gate_status: gate })
       .eq("id", jobId);
-    setJob((prev: any) => prev ? { ...prev, status: newStatus } : prev);
   }
 
   async function handleResolveBlocker(blockerId: string) {
@@ -530,17 +746,18 @@ export default function ProjectDetailPage() {
     if (data) setAllServiceTypes(data);
   }
 
-  async function handleAddService() {
-    if (!addingServiceId) return;
+  async function handleAddService(overrideTypeId?: string) {
+    const effectiveId = overrideTypeId || addingServiceId;
+    if (!effectiveId) return;
     try {
-      const selectedType = allServiceTypes.find(s => s.id === addingServiceId);
+      const selectedType = allServiceTypes.find(s => s.id === effectiveId);
       const svcName = selectedType?.name?.toLowerCase() || "";
       
       const { data, error } = await supabase
         .from("job_services")
         .insert({ 
           job_id: jobId, 
-          service_type_id: addingServiceId,
+          service_type_id: effectiveId,
           scope_of_work: "Standard exterior work",
         })
         .select("id, service_type:service_types(name)")
@@ -602,12 +819,9 @@ export default function ProjectDetailPage() {
       const todayIso = new Date().toISOString().split("T")[0];
       const sq = job?.sq ? Number(job.sq) : 0;
 
-      // Duration calculator (same as new-project page)
-      const calcDuration = (code: string): number => {
-        if (sq <= 0) return 1;
-        if (code === "siding") return sq <= 15 ? 3 : sq <= 25 ? 4 : sq <= 35 ? 5 : 6;
-        if (code === "painting") return sq <= 20 ? 2 : sq <= 35 ? 3 : 4;
-        return 1; // gutters, roofing, windows, doors = 1 day
+      // Duration calculator — uses partner-specific SQ tables
+      const calcDuration = (code: string, partnerName: string): number => {
+        return calculateServiceDuration(partnerName, code, sq);
       };
 
       // Skip-Sunday helper
@@ -643,9 +857,17 @@ export default function ProjectDetailPage() {
         roofing:  ["gutters", "painting", "siding"],
       };
 
+      // Default crew map (used for duration calc and crew assignment)
+      const crewNameMap: Record<string, string> = {
+        windows: "SERGIO", doors: "SERGIO", decks: "SERGIO",
+        siding: "XICARA", painting: "OSVIN",
+        gutters: "LEANDRO", roofing: "JOSUE",
+      };
+
       for (const svc of addedServices) {
         const svcCode = ((svc as any).service_type?.name?.toLowerCase()) || "";
-        const duration = calcDuration(svcCode);
+        const crewForDuration = crewNameMap[svcCode] || "SIDING DEPOT";
+        const duration = calcDuration(svcCode, crewForDuration);
         let startIso = todayIso; // Default: today
 
         // For windows/doors: use today if project already started, else job start
@@ -681,12 +903,6 @@ export default function ProjectDetailPage() {
         const endAt = new Date(endIso + "T12:00:00");
         endAt.setDate(endAt.getDate() + 1);
 
-        // Find a default crew for this service type
-        const crewNameMap: Record<string, string> = {
-          windows: "SERGIO", doors: "SERGIO",
-          siding: "XICARA", painting: "OSVIN",
-          gutters: "LEANDRO", roofing: "JOSUE",
-        };
         const defaultCrew = crewNameMap[svcCode] || "";
         const { data: crewMatch } = defaultCrew
           ? await supabase.from("crews").select("id").ilike("name", defaultCrew).limit(1)
@@ -697,7 +913,7 @@ export default function ProjectDetailPage() {
         const specialtyNameMap: Record<string, string> = {
           siding: "Siding Installation", painting: "Painting",
           gutters: "Gutters", roofing: "Roofing",
-          windows: "Windows", doors: "Doors",
+          windows: "Windows", doors: "Doors", decks: "Decks",
         };
         const specName = specialtyNameMap[svcCode] || svcCode;
         const { data: specMatch } = await supabase
@@ -896,6 +1112,9 @@ export default function ProjectDetailPage() {
           ))}
         </div>
 
+        {/* ── Weather Card (auto-loads city from project) ── */}
+        <ProjectWeatherCard city={job.city ?? ""} state={job.state ?? ""} />
+
         {/* ── Tabs ── */}
         <div className="flex bg-[#121412] p-1 rounded-xl w-fit max-w-full overflow-x-auto gap-0.5 mb-8">
           {[
@@ -922,219 +1141,253 @@ export default function ProjectDetailPage() {
             TAB 1: OVERVIEW
         ══════════════════════════════════════════════════ */}
         {activeTab === "overview" && (
-          <div className="flex flex-col gap-6">
+          <div className="space-y-12">
 
-            {/* Client Info, Services, Notes, Change Orders (Full Width) */}
-
-              {/* Client Card */}
-              <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-5">Client Info & Location</h3>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
-                  {/* LEFT: 4 Independent Inputs */}
-                  <div className="flex flex-col gap-3">
-                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
-                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Customer Name</p>
-                      <input 
-                        type="text" 
-                        defaultValue={job.customer?.full_name ?? ""} 
-                        onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "full_name", e.target.value)}
-                        placeholder="Customer Name"
-                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
-                      />
-                    </div>
-                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
-                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Email</p>
-                      <input 
-                        type="email" 
-                        defaultValue={job.customer?.email ?? ""} 
-                        onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "email", e.target.value)}
-                        placeholder="customer@email.com"
-                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
-                      />
-                    </div>
-                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
-                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Phone</p>
-                      <input 
-                        type="tel" 
-                        defaultValue={job.customer?.phone ?? ""} 
-                        onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "phone", e.target.value)}
-                        placeholder="+1 (000) 000-0000"
-                        className="w-full text-[#faf9f5] font-bold font-mono bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-[#1e201e] rounded-xl p-3 relative border border-transparent hover:border-[#474846]/30 transition-colors">
-                        <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Salesperson</p>
-                        <div className="relative -ml-1">
-                          <CustomDropdown
-                            value={job.salesperson_id || ""}
-                            onChange={(val) => handleAutoSave("jobs", job.id, "salesperson_id", val)}
-                            options={allSalespersons.map(s => ({ value: s.id, label: s.full_name }))}
-                            placeholder="No Salesperson"
-                            inline
-                            className="w-full text-[#faf9f5] font-bold bg-transparent outline-none cursor-pointer hover:text-[#aeee2a] transition-colors flex items-center"
-                          />
-                        </div>
-                      </div>
-                      <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
-                        <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Contract Value</p>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[#aeee2a] font-black text-sm">$</span>
-                          <input 
-                            type="text" 
-                            defaultValue={job.contract_amount != null ? job.contract_amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ""} 
-                            onBlur={(e) => {
-                              const raw = e.target.value.replace(/[^0-9.]/g, '');
-                              const num = parseFloat(raw);
-                              handleAutoSave("jobs", job.id, "contract_amount", isNaN(num) ? 0 : num);
-                            }}
-                            placeholder="0.00"
-                            className="w-full text-[#faf9f5] font-black bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 transition-colors"
-                          />
-                        </div>
-                      </div>
-                      <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
-                        <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">SQ</p>
-                        <input 
-                          type="text" 
-                          defaultValue={job.sq != null ? String(job.sq) : ""} 
-                          onBlur={(e) => {
-                            const raw = e.target.value.replace(/[^0-9.]/g, '');
-                            const num = parseFloat(raw);
-                            handleAutoSave("jobs", job.id, "sq", isNaN(num) ? 0 : num);
-                          }}
-                          placeholder="0"
-                          className="w-full text-[#faf9f5] font-black bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 transition-colors"
-                        />
-                      </div>
-                    </div>
+            {/* ── Section: Client Information ── */}
+            <section>
+              <SectionHeader icon="person_add" title="Client Information" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>Client Name *</label>
+                  <input
+                    type="text"
+                    defaultValue={job.customer?.full_name ?? ""}
+                    onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "full_name", e.target.value)}
+                    placeholder="Customer Name"
+                    className={detailInputCls}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>Email</label>
+                  <input
+                    type="email"
+                    defaultValue={job.customer?.email ?? ""}
+                    onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "email", e.target.value)}
+                    placeholder="customer@email.com"
+                    className={detailInputCls}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>Phone Number</label>
+                  <input
+                    type="tel"
+                    defaultValue={job.customer?.phone ?? ""}
+                    onBlur={(e) => job.customer?.id && handleAutoSave("customers", job.customer.id, "phone", e.target.value)}
+                    placeholder="(555) 000-0000"
+                    className={`${detailInputCls} font-mono`}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>Salesperson</label>
+                  <div className="relative">
+                    <CustomDropdown
+                      value={job.salesperson_id || ""}
+                      onChange={(val) => handleAutoSave("jobs", job.id, "salesperson_id", val)}
+                      options={allSalespersons.map(s => ({ value: s.id, label: s.full_name }))}
+                      placeholder="No Salesperson"
+                      className={`${detailInputCls} cursor-pointer flex justify-between items-center`}
+                    />
                   </div>
-
-                  {/* RIGHT: 4 Independent Inputs */}
-                  <div className="flex flex-col gap-3">
-                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
-                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">Street Address</p>
-                      <input 
-                        type="text" 
-                        defaultValue={job.address ?? ""} 
-                        onBlur={(e) => handleAutoSave("jobs", job.id, "service_address_line_1", e.target.value)}
-                        placeholder="Address"
-                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
-                      />
-                    </div>
-                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
-                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">City</p>
-                      <input 
-                        type="text" 
-                        defaultValue={job.city ?? ""} 
-                        onBlur={(e) => handleAutoSave("jobs", job.id, "city", e.target.value)}
-                        placeholder="City"
-                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
-                      />
-                    </div>
-                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
-                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">State</p>
-                      <input 
-                        type="text" 
-                        defaultValue={job.state ?? ""} 
-                        onBlur={(e) => handleAutoSave("jobs", job.id, "state", e.target.value)}
-                        placeholder="State (e.g. GA)"
-                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
-                      />
-                    </div>
-                    <div className="bg-[#1e201e] rounded-xl p-3 border border-transparent hover:border-[#474846]/30 transition-colors">
-                      <p className="text-[#ababa8] font-bold mb-1 tracking-widest uppercase text-[9px] pointer-events-none">ZIP Code</p>
-                      <input 
-                        type="text" 
-                        defaultValue={job.zip_code ?? ""} 
-                        onBlur={(e) => handleAutoSave("jobs", job.id, "postal_code", e.target.value)}
-                        placeholder="ZIP Code"
-                        className="w-full text-[#faf9f5] font-bold bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none py-0.5 pl-1 -ml-1 transition-colors"
-                      />
-                    </div>
-                  </div>
-
                 </div>
               </div>
+            </section>
 
-              {/* Services */}
-              <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Services</h3>
-                  <button 
-                    onClick={() => {
-                      if (!editingServices && allServiceTypes.length === 0) loadServiceTypes();
-                      setEditingServices(!editingServices);
-                      setAddingServiceId("");
+            {/* ── Section: Project Address ── */}
+            <section>
+              <SectionHeader icon="location_on" title="Project Address" />
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+                <div className="md:col-span-4 space-y-2">
+                  <label className={detailLabelCls}>Street Address *</label>
+                  <input
+                    type="text"
+                    defaultValue={job.address ?? ""}
+                    onBlur={(e) => handleAutoSave("jobs", job.id, "service_address_line_1", e.target.value)}
+                    placeholder="123 Industrial Way"
+                    className={detailInputCls}
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className={detailLabelCls}>City *</label>
+                  <input
+                    type="text"
+                    defaultValue={job.city ?? ""}
+                    onBlur={(e) => handleAutoSave("jobs", job.id, "city", e.target.value)}
+                    placeholder="City"
+                    className={detailInputCls}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>State *</label>
+                  <input
+                    type="text"
+                    defaultValue={job.state ?? ""}
+                    onBlur={(e) => handleAutoSave("jobs", job.id, "state", e.target.value)}
+                    placeholder="GA"
+                    className={detailInputCls}
+                    maxLength={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>ZIP Code *</label>
+                  <input
+                    type="text"
+                    defaultValue={job.zip_code ?? ""}
+                    onBlur={(e) => handleAutoSave("jobs", job.id, "postal_code", e.target.value)}
+                    placeholder="10001"
+                    className={detailInputCls}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section: Job Details ── */}
+            <section>
+              <SectionHeader icon="architecture" title="Job Details" />
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>Contract Value</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-bold text-[15px]">$</span>
+                    <input
+                      type="text"
+                      defaultValue={job.contract_amount != null ? job.contract_amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ""}
+                      onBlur={(e) => {
+                        const raw = e.target.value.replace(/[^0-9.]/g, '');
+                        const num = parseFloat(raw);
+                        handleAutoSave("jobs", job.id, "contract_amount", isNaN(num) ? 0 : num);
+                      }}
+                      placeholder="0.00"
+                      className={`${detailInputCls} pl-8 font-black`}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>SQ (Square)</label>
+                  <input
+                    type="text"
+                    defaultValue={job.sq != null ? String(job.sq) : ""}
+                    onBlur={(e) => {
+                      const raw = e.target.value.replace(/[^0-9.]/g, '');
+                      const num = parseFloat(raw);
+                      handleAutoSave("jobs", job.id, "sq", isNaN(num) ? 0 : num);
                     }}
-                    className="text-[#aeee2a] text-[10px] font-bold uppercase hover:underline"
-                  >
-                    {editingServices ? "Done" : "Edit"}
-                  </button>
+                    placeholder="e.g. 24.5"
+                    className={`${detailInputCls} font-black`}
+                  />
                 </div>
-
-                {job.services.length === 0 && !editingServices ? (
-                  <p className="text-xs text-[#474846]">No services assigned</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {job.services.map((s: any) => (
-                      <span key={s.id} className={`flex items-center gap-2 px-3 py-1.5 bg-[#242624] border border-[#474846]/30 rounded-xl text-xs font-bold text-[#faf9f5] ${editingServices ? "pr-2" : ""}`}>
-                        {s.service_type?.name ?? "—"}
-                        {editingServices && (
-                          <button 
-                            onClick={() => handleRemoveService(s.id)} 
-                            className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-[#ba1212]/20 hover:text-[#ba1212] transition-colors text-[#ababa8]"
-                          >
-                            <span className="material-symbols-outlined text-[12px]" translate="no">close</span>
-                          </button>
-                        )}
-                      </span>
-                    ))}
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>Job Number</label>
+                  <div className={`${detailInputCls} flex items-center text-[#ababa8] cursor-default`}>
+                    {job.job_number}
                   </div>
-                )}
+                </div>
+              </div>
+            </section>
 
-                {editingServices && (
-                  <div className="mt-4 pt-4 border-t border-[#474846]/20 flex gap-2">
+            {/* ── Section: Services Requested (Carousel — matches Create Job) ── */}
+            <section>
+              <SectionHeader icon="handyman" title="Services Requested" />
+              <DetailServicesCarousel
+                selectedCodes={job.services.map((s: any) => s.service_type?.name?.toLowerCase()).filter(Boolean)}
+                assignedPartners={assignedPartners}
+                onToggle={async (svcCode: string) => {
+                  const svcDef = ALL_SERVICES.find((s) => s.id === svcCode);
+                  // Combined card: remove ALL sub-services
+                  if (svcDef?.subServices) {
+                    for (const sub of svcDef.subServices) {
+                      const existing = job.services.find((s: any) => s.service_type?.name?.toLowerCase() === sub.id);
+                      if (existing) await handleRemoveService(existing.id);
+                    }
+                    setAssignedPartners((prev) => { const n = { ...prev }; delete n[svcCode]; return n; });
+                  } else {
+                    const existingSvc = job.services.find((s: any) => s.service_type?.name?.toLowerCase() === svcCode);
+                    if (existingSvc) {
+                      await handleRemoveService(existingSvc.id);
+                      setAssignedPartners((prev) => { const n = { ...prev }; delete n[svcCode]; return n; });
+                    }
+                  }
+                }}
+                onAssignClick={(svc) => {
+                  if (svc.subServices) {
+                    // Combined card: pre-select currently active sub-services
+                    const activeSubs = svc.subServices
+                      .filter((sub) => job.services.some((s: any) => s.service_type?.name?.toLowerCase() === sub.id))
+                      .map((sub) => sub.id);
+                    setSelectedSubSvcs(activeSubs);
+                    setWindowsStep("partner");
+                  } else if (svc.id === "windows") {
+                    setWindowsStep("partner");
+                  }
+                  setOpenPartnerModal(svc);
+                }}
+              />
+            </section>
+
+            {/* ── Section: Operational Status & Salesperson (side-by-side) ── */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8">
+              <div className="flex flex-col">
+                <SectionHeader icon="traffic" title="Operational Status" />
+                <div className="p-6 sm:p-8 rounded-xl bg-[#121412] border border-[#474846]/15 h-full">
+                  <div className="space-y-4">
+                    <label className={detailLabelCls}>Current Gate Status</label>
+                    <div className="relative group w-full">
                       <CustomDropdown
-                        value={addingServiceId}
-                        onChange={(val) => setAddingServiceId(val)}
-                        options={allServiceTypes.filter(st => !job.services.some((s: any) => s.service_type?.name === st.name)).map(st => ({ value: st.id, label: st.name }))}
-                        placeholder="Add a service..."
-                        className="w-full bg-[#1e201e] border border-[#474846]/20 hover:border-[#aeee2a]/50 rounded-xl py-2 px-3 text-[#faf9f5] font-bold text-xs transition-colors flex justify-between items-center"
+                        value={gateStatus}
+                        onChange={(val) => handleGateChange(val)}
+                        options={Object.entries(GATE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }))}
+                        className="w-full bg-[#0a0a0a] border border-[#474846] rounded-xl pl-12 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-[#faf9f5] shadow-inner transition-colors flex justify-between items-center hover:border-[#aeee2a]/50"
                       />
-                    <button
-                      onClick={handleAddService}
-                      disabled={!addingServiceId}
-                      className="px-4 py-2 bg-[#aeee2a] text-[#3a5400] font-black text-xs rounded-xl hover:bg-[#a0df14] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Add
-                    </button>
+                      <div
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 pointer-events-none"
+                        style={{
+                          backgroundColor: `${gateConf.color}25`,
+                          border: `1px solid ${gateConf.color}40`,
+                        }}
+                      >
+                        <span className="material-symbols-outlined text-[15px]" style={{ color: gateConf.color }} translate="no">
+                          {gateConf.icon}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-
-              {/* Notes */}
-              <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Internal Notes</h3>
-                <textarea 
-                  defaultValue={job.notes || ""}
-                  onBlur={(e) => handleAutoSave("jobs", job.id, "description", e.target.value)}
-                  placeholder="Type any internal notes here... Changes save automatically."
-                  className="w-full min-h-[100px] text-sm text-[#faf9f5] leading-relaxed bg-transparent hover:bg-[#242624] focus:bg-[#1e201e] border border-transparent focus:border-[#aeee2a] rounded outline-none p-2 -ml-2 transition-colors resize-y overflow-hidden"
-                />
-              </div>
-              {/* Change Orders */}
-              <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Change Orders</h3>
-                  <Link href="/change-orders">
-                    <button className="text-[#aeee2a] text-xs font-bold hover:underline">View All →</button>
-                  </Link>
                 </div>
+              </div>
 
+              {/* Paint Colors */}
+              <div className="flex flex-col">
+                <SectionHeader icon="palette" title="Paint Colors" />
+                <PaintColorsCard jobId={job.id} />
+              </div>
+            </section>
+
+            {/* ── Section: Internal Notes ── */}
+            <section>
+              <SectionHeader icon="description" title="Internal Notes" />
+              <div className="p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>Project Notes</label>
+                  <textarea
+                    defaultValue={job.notes || ""}
+                    onBlur={(e) => handleAutoSave("jobs", job.id, "description", e.target.value)}
+                    placeholder="Provide any additional context or specific requirements for this job..."
+                    className={`${detailInputCls} h-auto min-h-[160px] resize-none`}
+                    rows={6}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section: Change Orders ── */}
+            <section>
+              <div className="flex items-center justify-between">
+                <SectionHeader icon="request_quote" title="Change Orders" />
+                <Link href="/change-orders">
+                  <button className="text-[#aeee2a] text-xs font-bold uppercase hover:underline tracking-widest mb-6">View All →</button>
+                </Link>
+              </div>
+              <div className="p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
                 {job.change_orders.length === 0 ? (
-                  <p className="text-xs text-[#474846] py-4 text-center">No change orders for this project</p>
+                  <p className="text-sm text-[#474846] text-center py-4">No change orders for this project</p>
                 ) : (
                   <div className="space-y-3">
                     {job.change_orders.map((co: any) => {
@@ -1147,7 +1400,7 @@ export default function ProjectDetailPage() {
                       };
                       const c = coColors[co.status] ?? "#ababa8";
                       return (
-                        <div key={co.id} className="flex items-center justify-between p-4 bg-[#1e201e] rounded-xl border border-[#474846]/15">
+                        <div key={co.id} className="flex items-center justify-between p-4 bg-[#242624] rounded-xl border border-[#474846]/15 hover:border-[#474846]/40 transition-colors">
                           <div>
                             <p className="text-sm font-bold text-[#faf9f5]">{co.title}</p>
                             <span
@@ -1166,9 +1419,7 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
               </div>
-
-              {/* ── Paint Colors Card ── */}
-              <PaintColorsCard jobId={job.id} />
+            </section>
 
           </div>
         )}
@@ -1784,6 +2035,205 @@ export default function ProjectDetailPage() {
           `}</style>
         </div>
       )}
+      {/* ═══════ MODAL — ASSIGN PARTNER ═══════ */}
+      {openPartnerModal && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setOpenPartnerModal(null)}>
+            <div className="bg-[#181a18] border border-[#474846]/40 rounded-2xl shadow-2xl w-full max-w-lg p-8" onClick={(e) => e.stopPropagation()} style={{ animation: "fadeInScale .2s ease" }}>
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center border" style={{ backgroundColor: `${openPartnerModal.color}1A`, borderColor: `${openPartnerModal.color}33` }}>
+                      <span className="material-symbols-outlined text-[24px]" style={{ color: openPartnerModal.color }} translate="no">{openPartnerModal.icon}</span>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-white uppercase tracking-tight">{openPartnerModal.label}</h2>
+                      <p className="text-xs text-[#ababa8] mt-1 font-medium">
+                        {windowsStep === "partner" ? "Select a partner" : windowsStep === "subservices" ? "Select services" : "Configure windows"}
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => setOpenPartnerModal(null)} type="button" className="w-8 h-8 rounded-full bg-[#242624] flex items-center justify-center hover:bg-[#aeee2a] hover:text-[#3a5400] transition-colors">
+                    <span className="material-symbols-outlined text-sm" translate="no">close</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 max-h-[50vh] overflow-y-auto pr-2" style={{ scrollbarWidth: "none" }}>
+
+                  {/* ── STEP 1: Select Partner ── */}
+                  {windowsStep === "partner" && (
+                    <>
+                      {openPartnerModal.partners?.map((partner) => {
+                        const isSelected = assignedPartners[openPartnerModal.id] === partner;
+                        return (
+                          <button key={partner} type="button"
+                            onClick={() => {
+                              const svcId = openPartnerModal.id;
+                              setAssignedPartners((prev) => ({ ...prev, [svcId]: partner }));
+                              // Combined card → go to sub-services step
+                              if (openPartnerModal.subServices) {
+                                setWindowsStep("subservices");
+                                return;
+                              }
+                              // Auto-chain: Siding → Painting
+                              if (svcId === "siding") {
+                                const p = ALL_SERVICES.find((s) => s.id === "painting");
+                                if (p) { setOpenPartnerModal(p); return; }
+                              }
+                              // Auto-chain: Gutters → Roofing
+                              if (svcId === "gutters") {
+                                const r = ALL_SERVICES.find((s) => s.id === "roofing");
+                                if (r) { setOpenPartnerModal(r); return; }
+                              }
+                              setOpenPartnerModal(null);
+                            }}
+                            className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isSelected ? '' : 'bg-[#181a18] border-[#474846]/40 hover:bg-[#242624] hover:border-[#747673]'}`}
+                            style={isSelected ? { backgroundColor: `${openPartnerModal.color}1A`, borderColor: openPartnerModal.color } : {}}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isSelected ? '' : 'bg-[#242624] text-[#ababa8]'}`}
+                                   style={isSelected ? { backgroundColor: openPartnerModal.color, color: '#000' } : {}}>
+                                {partner.charAt(0)}
+                              </div>
+                              <span className={`text-sm font-bold tracking-wide uppercase ${isSelected ? '' : 'text-[#faf9f5]'}`} style={isSelected ? { color: openPartnerModal.color } : {}}>{partner}</span>
+                            </div>
+                            {isSelected && <span className="material-symbols-outlined" style={{ color: openPartnerModal.color }} translate="no">check_circle</span>}
+                          </button>
+                        );
+                      })}
+                      {assignedPartners[openPartnerModal.id] && (
+                        <button type="button" onClick={() => {
+                          const c = { ...assignedPartners }; delete c[openPartnerModal.id]; setAssignedPartners(c);
+                          setWindowCount(""); setWindowTrim(""); setSelectedSubSvcs([]); setOpenPartnerModal(null);
+                        }} className="mt-4 flex items-center justify-center p-3 rounded-xl border border-dashed border-[#ba1212]/30 text-[#ba1212] hover:bg-[#ba1212]/10 transition-colors">
+                          <span className="text-xs font-bold uppercase tracking-wider">Unassign Partner</span>
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {/* ── STEP 2: Sub-service selection (combined DWD card only) ── */}
+                  {windowsStep === "subservices" && openPartnerModal.subServices && (
+                    <div className="space-y-5">
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#60b8f5] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#60b8f5] uppercase tracking-wider">Partner</span>
+                        </div>
+                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#60b8f5]/20 border border-[#60b8f5] flex items-center justify-center">
+                            <span className="text-[10px] font-black text-[#60b8f5]">2</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Select Services</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-[#ababa8]">
+                        Assigned to <span className="text-[#60b8f5] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Select which services to include:
+                      </p>
+                      {openPartnerModal.subServices.map((sub) => {
+                        const checked = selectedSubSvcs.includes(sub.id);
+                        return (
+                          <button key={sub.id} type="button"
+                            onClick={() => setSelectedSubSvcs((prev) => checked ? prev.filter((x) => x !== sub.id) : [...prev, sub.id])}
+                            className={`flex items-center gap-4 w-full p-4 rounded-xl border transition-all ${checked ? '' : 'bg-[#181a18] border-[#474846]/40 hover:bg-[#242624]'}`}
+                            style={checked ? { backgroundColor: `${openPartnerModal.color}1A`, borderColor: openPartnerModal.color } : {}}
+                          >
+                            <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-all ${checked ? '' : 'border-[#474846]'}`}
+                                 style={checked ? { backgroundColor: openPartnerModal.color, borderColor: openPartnerModal.color } : {}}>
+                              {checked && <span className="material-symbols-outlined text-[16px] text-[#000]" translate="no">check</span>}
+                            </div>
+                            <span className="material-symbols-outlined text-xl" style={{ color: checked ? openPartnerModal.color : '#747673' }} translate="no">{sub.icon}</span>
+                            <span className={`text-sm font-bold uppercase tracking-wide ${checked ? 'text-[#faf9f5]' : 'text-[#ababa8]'}`}>{sub.label}</span>
+                          </button>
+                        );
+                      })}
+                      <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setWindowsStep("partner")} className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all">Back</button>
+                        <button type="button" disabled={selectedSubSvcs.length === 0}
+                          onClick={async () => {
+                            // Add each selected sub-service to DB
+                            let types = allServiceTypes;
+                            if (types.length === 0) {
+                              const { data } = await supabase.from("service_types").select("id, name").order("name");
+                              types = data || []; setAllServiceTypes(types);
+                            }
+                            for (const subId of selectedSubSvcs) {
+                              const exists = job?.services?.some((s: any) => s.service_type?.name?.toLowerCase() === subId);
+                              if (!exists) {
+                                const match = types.find((st) => st.name.toLowerCase() === subId);
+                                if (match) await handleAddService(match.id);
+                              }
+                            }
+                            // Remove sub-services that were deselected
+                            const allSubIds = openPartnerModal.subServices!.map((s) => s.id);
+                            for (const subId of allSubIds) {
+                              if (!selectedSubSvcs.includes(subId)) {
+                                const existing = job?.services?.find((s: any) => s.service_type?.name?.toLowerCase() === subId);
+                                if (existing) await handleRemoveService(existing.id);
+                              }
+                            }
+                            // If windows is selected, go to config
+                            if (selectedSubSvcs.includes("windows")) { setWindowsStep("config"); return; }
+                            setOpenPartnerModal(null);
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#60b8f5] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#4da8e5] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >Confirm</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 3: Windows Config ── */}
+                  {windowsStep === "config" && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="w-6 h-6 rounded-full bg-[#60b8f5] flex items-center justify-center"><span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span></div>
+                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="w-6 h-6 rounded-full bg-[#60b8f5] flex items-center justify-center"><span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span></div>
+                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#60b8f5]/20 border border-[#60b8f5] flex items-center justify-center"><span className="text-[10px] font-black text-[#60b8f5]">3</span></div>
+                          <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Windows Config</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-[#ababa8]">Assigned to <span className="text-[#60b8f5] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Configure windows:</p>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">How many windows?</label>
+                        <input type="number" min="1" value={windowCount} onChange={(e) => setWindowCount(e.target.value)} placeholder="e.g. 42"
+                          className="w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#60b8f5] focus:ring-1 focus:ring-[#60b8f5] transition-all h-[48px] text-[15px]" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">Trim?</label>
+                        <CustomDropdown value={windowTrim} onChange={(val) => setWindowTrim(val as "yes" | "no")}
+                          options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} placeholder="Select..."
+                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#60b8f5]/50 transition-colors flex justify-between items-center" />
+                      </div>
+                      {windowCount && windowTrim && (
+                        <div className="p-4 rounded-xl bg-[#60b8f5]/10 border border-[#60b8f5]/20">
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-[#60b8f5] text-lg" translate="no">calendar_month</span>
+                            <div>
+                              <p className="text-sm font-bold text-[#faf9f5]">Duration: <span className="text-[#60b8f5]">{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}</span></p>
+                              <p className="text-[10px] text-[#ababa8] mt-0.5">{parseInt(windowCount)} windows ÷ {windowTrim === "yes" ? "12" : "20"}/day</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setWindowsStep("subservices")} className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all">Back</button>
+                        <button type="button" disabled={!windowCount || !windowTrim}
+                          onClick={() => { setWindowsStep("partner"); setOpenPartnerModal(null); }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#60b8f5] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#4da8e5] transition-all disabled:opacity-30 disabled:cursor-not-allowed">Confirm</button>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+            </div>
+         </div>
+      )}
+
     </>
   );
 }

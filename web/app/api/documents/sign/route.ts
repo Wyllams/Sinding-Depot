@@ -150,6 +150,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       console.error("[sign] Notification error (non-blocking):", notifErr);
     }
 
+    // ┌──────────────────────────────────────────────────────┐
+    // │  🚫 PAUSED — Signed document email to customer      │
+    // │  To reactivate: set CUSTOMER_DOCUMENT_EMAIL_PAUSED   │
+    // │  to false below.                                     │
+    // └──────────────────────────────────────────────────────┘
+    const CUSTOMER_DOCUMENT_EMAIL_PAUSED = true; // ← flip to false to re-enable
+
+    if (!CUSTOMER_DOCUMENT_EMAIL_PAUSED) {
     // ── 8. Generate PDF and send email to customer ──
     try {
       // Fetch full job+customer data for the PDF
@@ -209,6 +217,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     } catch (pdfErr) {
       // PDF/email failure should NOT block the signing response
       console.error("[sign] PDF/Email error (non-blocking):", pdfErr);
+    }
+    } else {
+      console.log(`[sign] ⏸️ Customer document email PAUSED — signature saved but email not sent.`);
     }
 
     return NextResponse.json({

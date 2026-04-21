@@ -141,8 +141,11 @@ export default function CustomerDocuments(): React.ReactElement {
     })();
   }, []);
 
-  const fmtDate = (d: string): string =>
-    new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const fmtDate = (d: string): string => {
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return "—";
+    return `${(dt.getMonth() + 1).toString().padStart(2, '0')}/${dt.getDate().toString().padStart(2, '0')}/${dt.getFullYear()}`;
+  };
 
   function handleView(doc: DocItem): void {
     if (doc.storage_path) {

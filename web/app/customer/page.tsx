@@ -186,7 +186,7 @@ export default function CustomerDashboard() {
         <div className="bg-white p-5 rounded-2xl border border-[#e5e5e3] shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-1">Target Completion</p>
           <p className="font-headline text-lg font-bold text-[#121412]">
-            {data.targetCompletion ? new Date(data.targetCompletion).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "To be scheduled"}
+            {data.targetCompletion ? (() => { const _d = new Date(data.targetCompletion); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })() : "To be scheduled"}
           </p>
         </div>
       </div>

@@ -62,11 +62,11 @@ interface ServiceCategory {
 
 // ─── Discipline Config ───────────────────────────────────────────
 const DISCIPLINE_CONFIG: Record<string, { label: string; icon: string; accentColor: string }> = {
-  siding:          { label: "Siding",            icon: "home_work",     accentColor: "#aeee2a" },
-  doors_windows:   { label: "Doors / Windows",   icon: "sensor_door",   accentColor: "#f5a623" },
-  painting:        { label: "Paint",             icon: "format_paint",  accentColor: "#60b8f5" },
-  gutters:         { label: "Gutters",           icon: "water_drop",    accentColor: "#c084fc" },
-  roofing:         { label: "Roofing",           icon: "roofing",       accentColor: "#ef4444" },
+  siding:              { label: "Siding",                  icon: "home_work",     accentColor: "#aeee2a" },
+  doors_windows_decks: { label: "Doors / Windows / Decks", icon: "sensor_door",   accentColor: "#f5a623" },
+  painting:            { label: "Paint",                   icon: "format_paint",  accentColor: "#60b8f5" },
+  gutters:             { label: "Gutters",                 icon: "water_drop",    accentColor: "#c084fc" },
+  roofing:             { label: "Roofing",                 icon: "roofing",       accentColor: "#ef4444" },
 };
 
 // ─── Map DB status → UI status ────────────────────────────────────
@@ -462,7 +462,7 @@ export default function CrewsPage() {
         
         // Normalize DB specialty code to UI category IDs
         let disc = "other";
-        if (rawCode.includes("door") || rawCode.includes("window") || rawCode.includes("doo-")) disc = "doors_windows";
+        if (rawCode.includes("door") || rawCode.includes("window") || rawCode.includes("doo-") || rawCode.includes("deck")) disc = "doors_windows_decks";
         else if (rawCode.includes("paint") || rawCode.includes("pai-")) disc = "painting";
         else if (rawCode.includes("gutter") || rawCode.includes("gut-")) disc = "gutters";
         else if (rawCode.includes("roof") || rawCode.includes("roo-")) disc = "roofing";
@@ -504,7 +504,7 @@ export default function CrewsPage() {
       }
 
       // Build categories in canonical order
-      const orderedKeys = ["siding", "doors_windows", "painting", "gutters", "roofing"];
+      const orderedKeys = ["siding", "doors_windows_decks", "painting", "gutters", "roofing"];
       const cats: ServiceCategory[] = orderedKeys
         .map((k) => ({
           id: k,
@@ -624,7 +624,7 @@ export default function CrewsPage() {
         if (allSpecs && allSpecs.length > 0) {
             let terms = [addModalCat];
             if (addModalCat === "painting") terms = ["paint" , "painting"];
-            if (addModalCat === "doors_windows") terms = ["door", "window", "doors_windows"];
+            if (addModalCat === "doors_windows_decks") terms = ["door", "window", "deck", "doors_windows", "doors_windows_decks"];
             if (addModalCat === "gutters") terms = ["gutter", "gutters"];
             if (addModalCat === "roofing") terms = ["roof", "roofing"];
             if (addModalCat === "siding") terms = ["siding", "sid"];
@@ -1202,7 +1202,7 @@ export default function CrewsPage() {
                   </p>
                   {detailInactiveCrew.inactivatedAt && (
                     <div className="mt-4 pt-3 border-t border-[#474846]/30">
-                      <p className="text-[10px] text-[#474846] font-mono uppercase tracking-widest">Date: {new Date(detailInactiveCrew.inactivatedAt).toLocaleDateString()}</p>
+                      <p className="text-[10px] text-[#474846] font-mono uppercase tracking-widest">Date: {(() => { const _d = new Date(detailInactiveCrew.inactivatedAt); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}</p>
                     </div>
                   )}
                 </div>

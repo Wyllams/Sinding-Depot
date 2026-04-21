@@ -421,6 +421,14 @@ export async function POST(req: Request) {
 
           console.log(`🔑 Customer portal created: ${finalUsername} / ${portalEmail}`);
 
+          // ┌──────────────────────────────────────────────────────┐
+          // │  🚫 PAUSED — Customer portal welcome email disabled  │
+          // │  To reactivate: set CUSTOMER_PORTAL_EMAIL_PAUSED      │
+          // │  to false below.                                      │
+          // └──────────────────────────────────────────────────────┘
+          const CUSTOMER_PORTAL_EMAIL_PAUSED = true; // ← flip to false to re-enable
+
+          if (!CUSTOMER_PORTAL_EMAIL_PAUSED) {
           // Send welcome email with credentials via Gmail SMTP
           const gmailUser = process.env.GMAIL_USER;
           const gmailPass = process.env.GMAIL_APP_PASSWORD;
@@ -442,6 +450,9 @@ export async function POST(req: Request) {
             }
           } else {
             console.warn("⚠️ Skipping welcome email: GMAIL_USER/GMAIL_APP_PASSWORD or customer email not available.");
+          }
+          } else {
+            console.log(`⏸️ Welcome email PAUSED for ${emailAddress || 'unknown'} — portal credentials created but email not sent.`);
           }
         }
         } // end else (no existing profile_id)

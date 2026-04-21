@@ -59,6 +59,7 @@ created: 2026-04-17
 #### Coluna Esquerda — Overview
 - **Header Hero** com nome do cliente como H1 gigante
 - **KPI Strip** (4 cards): Start Date, End Date, Open Blockers, Pending COs
+- **Weather Card**: Previsão das 2 semanas seguintes para a cidade do projeto → [[Weather Card — Previsão por Projeto]]
 - **Client Card**: Avatar, nome, email, telefone — todos **editáveis inline**
 - **Salesperson**: Dropdown dinâmico com auto-save
 - **Location**: City e State editáveis inline
@@ -122,3 +123,4 @@ Abaixo dos signing documents, há o **Project Vault**:
 - [[Banco de Dados]]
 - [[Documentos e Contratos Digitais]]
 - [[Customer Portal]]
+- [[Weather Card — Previsão por Projeto]]

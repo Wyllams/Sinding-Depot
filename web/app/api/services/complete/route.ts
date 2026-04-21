@@ -85,7 +85,8 @@ export async function POST(req: Request) {
     );
     parsedBody = parsedBody.replace(/{{salesperson_name}}/g, spData?.full_name || "Siding Depot Agent");
     
-    const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    const _now = new Date();
+    const today = `${(_now.getMonth() + 1).toString().padStart(2, '0')}/${_now.getDate().toString().padStart(2, '0')}/${_now.getFullYear()}`;
     parsedBody = parsedBody.replace(/{{date_today}}/g, today);
 
     // 5. Create the Document in the Database

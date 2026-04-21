@@ -173,7 +173,7 @@ export default function CustomerColors() {
                 setOverrideMinutes(Math.round((overrideUntil!.getTime() - now.getTime()) / 60000));
               } else {
                 setIsLocked(true);
-                setLockMessage(`Editing is locked — painting is scheduled for ${paintStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} (within 24 hours).`);
+                setLockMessage(`Editing is locked — painting is scheduled for ${`${(paintStart.getMonth() + 1).toString().padStart(2, '0')}/${paintStart.getDate().toString().padStart(2, '0')}/${paintStart.getFullYear()}`} (within 24 hours).`);
               }
             }
           }

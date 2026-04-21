@@ -5,6 +5,7 @@ import { TopBar } from "../../../components/TopBar";
 import CustomDatePicker from "../../../components/CustomDatePicker";
 import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
+import { calculateServiceDuration } from "../../../lib/duration-calculator";
 
 // =============================================
 // JOB SCHEDULE — Weekly Gantt with Drag & Drop
@@ -13,7 +14,7 @@ import { supabase } from "../../../lib/supabase";
 // =============================================
 
 // ─── Service Categories ───────────────────────
-type ServiceId = "siding" | "doors_windows" | "paint" | "gutters" | "roofing";
+type ServiceId = "siding" | "doors_windows_decks" | "paint" | "gutters" | "roofing";
 
 const SERVICE_CATEGORIES: {
   id: ServiceId;
@@ -22,11 +23,11 @@ const SERVICE_CATEGORIES: {
   icon: string;
   partners: string[];
 }[] = [
-  { id: "siding",       label: "Siding",         color: "#aeee2a", icon: "home_work",    partners: ["XICARA", "XICARA 02", "WILMAR", "WILMAR 02", "SULA", "LUIS"] },
-  { id: "doors_windows",label: "Doors / Windows", color: "#f5a623", icon: "sensor_door",  partners: ["SERGIO"] },
-  { id: "paint",        label: "Paint",           color: "#60b8f5", icon: "format_paint", partners: ["OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
-  { id: "gutters",      label: "Gutters",         color: "#c084fc", icon: "water_drop",   partners: ["LEANDRO"] },
-  { id: "roofing",      label: "Roofing",         color: "#ef4444", icon: "roofing",      partners: ["JOSUE"] },
+  { id: "siding",             label: "Siding",                  color: "#aeee2a", icon: "home_work",    partners: ["XICARA", "XICARA 02", "WILMAR", "WILMAR 02", "SULA", "LUIS"] },
+  { id: "doors_windows_decks",label: "Doors / Windows / Decks", color: "#f5a623", icon: "sensor_door",  partners: ["SERGIO"] },
+  { id: "paint",              label: "Paint",                   color: "#60b8f5", icon: "format_paint", partners: ["OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
+  { id: "gutters",            label: "Gutters",                 color: "#c084fc", icon: "water_drop",   partners: ["LEANDRO"] },
+  { id: "roofing",            label: "Roofing",                 color: "#ef4444", icon: "roofing",      partners: ["JOSUE"] },
 ];
 
 // ─── Job Model (real dates) ──────────────────
@@ -39,7 +40,7 @@ interface ScheduledJob {
   salesperson?: string;
   startDate: string;
   durationDays: number;
-  status: "scheduled" | "in_progress" | "done";
+  status: "tentative" | "scheduled" | "in_progress" | "done";
   jobStartStatus?: "active" | "draft" | "on_hold";
   address?: string;
   contract_amount?: number;
@@ -80,7 +81,7 @@ const getWeekDates = (monday: Date): Date[] =>
   });
 
 const fmtDate = (d: Date) =>
-  d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`;
 
 const toIso = (d: Date) => d.toISOString().split("T")[0];
 const fromIso = (s: string): Date => new Date(s + "T12:00:00");
@@ -106,7 +107,8 @@ const isSundayIso = (iso: string) => fromIso(iso).getDay() === 0;
 
 // ─── Dynamic Status Colors (6.3) ─────────────────
 const STATUS_CONFIG: Record<string, { color: string; label: string; bg: string }> = {
-  scheduled:   { color: "#60b8f5", label: "Scheduled",   bg: "rgba(96,184,245,0.12)" },
+  tentative:   { color: "#f5a623", label: "Tentative",   bg: "rgba(245,166,35,0.12)" },
+  scheduled:   { color: "#60b8f5", label: "Confirmed",   bg: "rgba(96,184,245,0.12)" },
   in_progress: { color: "#aeee2a", label: "In Progress", bg: "rgba(174,238,42,0.12)" },
   done:        { color: "#22c55e", label: "Done",        bg: "rgba(34,197,94,0.12)" },
 };
@@ -132,8 +134,12 @@ const getJobEndDate = (startDateIso: string, durationDays: number): Date => {
   return endDay;
 };
 
-const getVisualStatus = (job: ScheduledJob): "scheduled" | "in_progress" | "done" => {
+const getVisualStatus = (job: ScheduledJob): "tentative" | "scheduled" | "in_progress" | "done" => {
   if (job.status === "done") return "done";
+
+  // Tentative: job not yet confirmed (draft status) — always orange regardless of date
+  if (job.jobStartStatus === "draft") return "tentative";
+
   try {
     const end = getJobEndDate(job.startDate, job.durationDays);
     const fmtY = end.getFullYear();
@@ -199,6 +205,7 @@ export default function SchedulePage() {
   }[]>([]);
   const [confirmingSchedule, setConfirmingSchedule] = useState(false);
   const [allCrews, setAllCrews] = useState<{ id: string; name: string }[]>([]);
+  const [deleteStep, setDeleteStep] = useState<"idle" | "confirming" | "deleting">("idle");
 
   // ─── Undo Stack ────────────────────────────────
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
@@ -262,6 +269,9 @@ export default function SchedulePage() {
             full_name,
             phone,
             email
+          ),
+          salespersons!jobs_salesperson_id_fkey(
+            full_name
           )
         )
       )
@@ -292,7 +302,7 @@ export default function SchedulePage() {
         clientName: c && c.full_name ? c.full_name : "Unknown",
         serviceType: mapCodeToServiceId(js?.service_types?.code),
         partnerName: a.crews?.name || "Siding Depot",
-        salesperson: "Matheus (Matt)",
+        salesperson: jb?.salespersons?.full_name || "Not assigned",
         startDate: startIso,
         durationDays: a.scheduled_end_at && a.scheduled_start_at
            ? Math.max(1, Math.round((new Date(a.scheduled_end_at).getTime() - new Date(a.scheduled_start_at).getTime()) / MS_DAY))
@@ -326,7 +336,7 @@ export default function SchedulePage() {
     if (c.includes("roof")) return "roofing";
     if (c.includes("paint")) return "paint";
     if (c.includes("gutter") || c.includes("downspout")) return "gutters";
-    if (c.includes("window") || c.includes("door")) return "doors_windows";
+    if (c.includes("deck") || c.includes("window") || c.includes("door")) return "doors_windows_decks";
     return "siding";
   };
 
@@ -425,7 +435,7 @@ export default function SchedulePage() {
 
     if (dragJob.serviceType === "siding") {
        // Doors/Windows stays on the same day as Siding
-       const doorsJob = getJobByService("doors_windows");
+       const doorsJob = getJobByService("doors_windows_decks");
        if (doorsJob) {
           const idx = updatedJobs.findIndex(j => j.id === doorsJob.id);
           if (idx >= 0) {
@@ -522,13 +532,14 @@ export default function SchedulePage() {
     );
     setServiceCrewOptions([]);
     setConfirmingSchedule(false);
+    setDeleteStep("idle");
 
     const specialtyCodeMap: Record<string, string> = {
-      siding:        "siding_installation",
-      doors_windows: "windows",
-      paint:         "painting",
-      gutters:       "gutters",
-      roofing:       "roofing",
+      siding:              "siding_installation",
+      doors_windows_decks: "windows",
+      paint:               "painting",
+      gutters:             "gutters",
+      roofing:             "roofing",
     };
 
     if (job.jobServiceIds && job.jobServiceIds.length > 0) {
@@ -629,7 +640,7 @@ export default function SchedulePage() {
           if (editJob.source === "service_assignments") {
              const { error: updateErr } = await supabase.from("service_assignments").update({
                 crew_id: crewId,
-                status: editStatus === "active" ? "in_progress" : "scheduled",
+                status: "scheduled",
                 scheduled_start_at: startAt,
                 scheduled_end_at: endAt.toISOString()
              }).eq("id", editJob.id);
@@ -647,7 +658,7 @@ export default function SchedulePage() {
           await supabase.from("service_assignments").update({
             scheduled_start_at: startAt,
             scheduled_end_at: endAt.toISOString(),
-            status: editStatus === "active" ? "in_progress" : "scheduled",
+            status: "scheduled",
           }).eq("id", editJob.id);
         }
       }
@@ -660,8 +671,8 @@ export default function SchedulePage() {
         if (sqErr) console.error("SQ update error:", sqErr);
       }
 
-      // Activate the main job if needed
-      if (editJob.jobId) {
+      // Update JOB START STATUS only for Siding (main service controls job status)
+      if (editJob.jobId && editJob.serviceType === "siding") {
         await supabase.from("jobs").update({ status: editStatus }).eq("id", editJob.jobId);
       }
 
@@ -669,17 +680,25 @@ export default function SchedulePage() {
       const selectedCrewId = editJob.jobServiceIds && editJob.jobServiceIds.length > 0 ? selectedCrewIds[editJob.jobServiceIds[0]] : undefined;
       const newCrewName = selectedCrewId ? allCrews.find(c => c.id === selectedCrewId)?.name || editJob.partnerName : editJob.partnerName;
 
-      // Automatically compute editDur based on editSq input if specified
+      // Automatically compute duration based on partner-specific SQ tables
       let finalDur = editDur;
       if (editSq && !isNaN(parseFloat(editSq))) {
          const newSq = parseFloat(editSq);
-         if (editJob.serviceType === "siding") finalDur = Math.max(1, Math.ceil(newSq / 8));
-         if (editJob.serviceType === "paint") finalDur = Math.max(1, Math.ceil(newSq / 10));
+         // Map schedule serviceType to service name for the calculator
+         const svcNameMap: Record<string, string> = {
+           siding: "siding",
+           paint: "painting",
+           gutters: "gutters",
+           roofing: "roofing",
+           doors_windows_decks: "doors_windows_decks",
+         };
+         const svcName = svcNameMap[editJob.serviceType] || editJob.serviceType;
+         finalDur = calculateServiceDuration(newCrewName, svcName, newSq);
       }
 
       const newJobs = jobs.map(j => {
         if (j.id === editJob.id)
-          return { ...j, startDate: editDate, durationDays: finalDur, jobStartStatus: editStatus, status: "in_progress" as const, crewId: selectedCrewId || j.crewId, partnerName: newCrewName };
+          return { ...j, startDate: editDate, durationDays: finalDur, jobStartStatus: editStatus, status: "scheduled" as const, crewId: selectedCrewId || j.crewId, partnerName: newCrewName };
         return j;
       });
 
@@ -700,7 +719,7 @@ export default function SchedulePage() {
       const jobsToUpdate: ScheduledJob[] = [];
 
       if (editJob.serviceType === "siding") {
-         const doorsJob = getJobBySvc("doors_windows");
+         const doorsJob = getJobBySvc("doors_windows_decks");
          if (doorsJob) {
             const idx = newJobs.findIndex(j => j.id === doorsJob.id);
             if (idx >= 0) {
@@ -1133,7 +1152,8 @@ export default function SchedulePage() {
         {/* ── Legend ── */}
         <div className="mt-5 flex items-center flex-wrap gap-6 px-1">
           {[
-            { color: "#60b8f5", label: "Scheduled" },
+            { color: "#f5a623", label: "Tentative" },
+            { color: "#60b8f5", label: "Confirmed" },
             { color: "#aeee2a", label: "In Progress" },
             { color: "#22c55e", label: "Done" },
           ].map(l => (
@@ -1211,7 +1231,7 @@ export default function SchedulePage() {
                     />
                     {editDate && (
                       <p className="text-[10px] text-[#ababa8] mt-1.5 ml-1">
-                        {fromIso(editDate).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                        {(() => { const _d = fromIso(editDate); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}
                       </p>
                     )}
                   </div>
@@ -1381,30 +1401,79 @@ export default function SchedulePage() {
 
             {/* Fixed Footer */}
             <div className="px-8 pt-4 pb-6 shrink-0 border-t border-white/5">
-              <div className="flex gap-3 justify-end">
+              <div className="flex justify-between items-center">
+                {/* Delete button — left side */}
                 <button
                   type="button"
-                  onClick={() => setEditJob(null)}
-                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#ababa8] hover:text-[#faf9f5] transition-colors bg-[#121412] border border-[#474846]/20 cursor-pointer"
+                  disabled={deleteStep === "deleting"}
+                  onClick={async () => {
+                    if (deleteStep === "idle") {
+                      setDeleteStep("confirming");
+                      return;
+                    }
+                    if (deleteStep === "confirming") {
+                      setDeleteStep("deleting");
+                      try {
+                        if (editJob!.source === "service_assignments") {
+                          const { error } = await supabase.from("service_assignments").delete().eq("id", editJob!.id);
+                          if (error) { console.error("Delete error:", error); setDeleteStep("idle"); return; }
+                        } else {
+                          const { error } = await supabase.from("jobs").delete().eq("id", editJob!.id);
+                          if (error) { console.error("Delete error:", error); setDeleteStep("idle"); return; }
+                        }
+                        setJobs(prev => prev.filter(j => j.id !== editJob!.id));
+                        setEditJob(null);
+                        setDeleteStep("idle");
+                        fetchSchedule();
+                      } catch (err) {
+                        console.error("Delete failed:", err);
+                        setDeleteStep("idle");
+                      }
+                    }
+                  }}
+                  onBlur={() => { if (deleteStep === "confirming") setDeleteStep("idle"); }}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 cursor-pointer border ${
+                    deleteStep === "confirming"
+                      ? "bg-[#ef4444] text-white border-[#ef4444] shadow-[0_0_16px_rgba(239,68,68,0.3)]"
+                      : deleteStep === "deleting"
+                      ? "bg-[#ef4444]/50 text-white/60 border-[#ef4444]/30"
+                      : "bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20 hover:bg-[#ef4444]/20 hover:border-[#ef4444]/40"
+                  }`}
                 >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={!editDate || isSundayIso(editDate) || confirmingSchedule}
-                  onClick={confirmReschedule}
-                  className="px-6 py-2.5 rounded-xl text-sm font-black bg-[#aeee2a] text-[#3a5400] flex items-center gap-2 active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] disabled:opacity-50 cursor-pointer"
-                  style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-                >
-                  {confirmingSchedule ? (
-                    <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />
+                  {deleteStep === "deleting" ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <>
-                      <span className="material-symbols-outlined text-sm" translate="no">check_circle</span>
-                      Save Changes
-                    </>
+                    <span className="material-symbols-outlined text-sm" translate="no">delete</span>
                   )}
+                  {deleteStep === "confirming" ? "Confirm Delete?" : deleteStep === "deleting" ? "Deleting..." : "Delete"}
                 </button>
+
+                {/* Cancel + Save — right side */}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setEditJob(null); setDeleteStep("idle"); }}
+                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#ababa8] hover:text-[#faf9f5] transition-colors bg-[#121412] border border-[#474846]/20 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!editDate || isSundayIso(editDate) || confirmingSchedule}
+                    onClick={confirmReschedule}
+                    className="px-6 py-2.5 rounded-xl text-sm font-black bg-[#aeee2a] text-[#3a5400] flex items-center gap-2 active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] disabled:opacity-50 cursor-pointer"
+                    style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
+                  >
+                    {confirmingSchedule ? (
+                      <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-sm" translate="no">check_circle</span>
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 

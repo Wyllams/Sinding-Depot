@@ -52,9 +52,9 @@ function fmt$(n: number | null): string {
 }
 
 function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-  });
+  const dt = new Date(iso);
+  if (isNaN(dt.getTime())) return "—";
+  return `${(dt.getMonth() + 1).toString().padStart(2, '0')}/${dt.getDate().toString().padStart(2, '0')}/${dt.getFullYear()}`;
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────

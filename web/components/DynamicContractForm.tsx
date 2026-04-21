@@ -445,7 +445,7 @@ export default function DynamicContractForm({
         <div className={styles.signatureDateRow}>
           <span className={styles.signatureDateLabel}>DATE:</span>
           <span className={styles.signatureDateValue}>
-            {isSigned ? data.contractDate : new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+            {isSigned ? data.contractDate : (() => { const _d = new Date(); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}
           </span>
         </div>
       </div>

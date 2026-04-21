@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "80d099ad9e199c1b",
+        "id": "9d5ce04f968a25ab",
         "type": "tabs",
         "children": [
           {
-            "id": "79a797aa0730d10c",
+            "id": "c040124f634fb6a8",
             "type": "leaf",
             "state": {
               "type": "graph",
@@ -74,8 +74,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "bcf8a329ece3590b",
@@ -177,8 +176,12 @@
       "bases:Criar nova base": false
     }
   },
-  "active": "79a797aa0730d10c",
+  "active": "c040124f634fb6a8",
   "lastOpenFiles": [
+    "RikoGMB/Log e Correções - Produção e Limpeza de Dados Mock.md",
+    "RikoGMB/RikoGMB - Documentação Completa do Projeto.md",
+    "RikoGMB - Documenta��o Completa do Projeto.md",
+    "RikoGMB",
     "Siding Depot/🏗️ Siding Depot — Home.md",
     "Siding Depot/Assinatura Digital e Compliance.md",
     "Siding Depot/5. Operações e DevOps/Regras de IA (Prompts e Instruções).md",
@@ -207,9 +210,6 @@
     "Siding Depot/1. Regras de Negócio e Domínio/Regras de Agendamento (Scheduling).md",
     "Siding Depot/1. Regras de Negócio e Domínio",
     "Siding Depot/Siding Depot — Índice.md",
-    "Siding Depot/Acessos de Teste.md",
-    "Siding Depot/Arquitetura Técnica.md",
-    "Sem título.md",
     "Siding Depot"
   ]
 }

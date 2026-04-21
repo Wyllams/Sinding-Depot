@@ -80,9 +80,7 @@ function getMonthDates(year: number, month: number): { start: string; end: strin
 }
 
 function fmt(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}k`;
-  return `$${n.toFixed(0)}`;
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
 }
 
 function fmtFull(n: number): string {
@@ -872,7 +870,7 @@ export default function ReportsPage() {
                                             const dStr = job.contract_signed_at || job.created_at;
                                             if (!dStr) return "—";
                                             const normalized = dStr.length === 10 ? `${dStr}T12:00:00` : dStr;
-                                            return new Date(normalized).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+                                            return (() => { const _dt = new Date(normalized); return isNaN(_dt.getTime()) ? "—" : `${(_dt.getMonth() + 1).toString().padStart(2, '0')}/${_dt.getDate().toString().padStart(2, '0')}/${_dt.getFullYear()}`; })();
                                           })()}
                                         </span>
                                         <span className={`text-[#faf9f5] font-semibold truncate text-center ${isCancelled ? "line-through" : ""}`}>
@@ -1232,7 +1230,10 @@ export default function ReportsPage() {
                 <table className="w-full text-left min-w-[900px]">
                   <thead>
                     <tr className="bg-[#1e201e]/50">
-                      <th className="px-4 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest sticky left-0 bg-[#1e201e]/80 backdrop-blur-sm z-10">
+                      <th className="w-10 px-3 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest sticky left-0 bg-[#1e201e]/80 backdrop-blur-sm z-10">
+                        #
+                      </th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest sticky left-10 bg-[#1e201e]/80 backdrop-blur-sm z-10">
                         Salesperson
                       </th>
                       {MONTH_NAMES.map((m, idx) => (
@@ -1249,12 +1250,26 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {annualSalespeople.map((sp) => {
-                      const months = annualData[sp.id] || Array(12).fill(0);
-                      const total = months.reduce((a, b) => a + b, 0);
-                      return (
+                    {(() => {
+                      // Sort by annual total descending
+                      const sorted = annualSalespeople
+                        .map((sp) => {
+                          const months = annualData[sp.id] || Array(12).fill(0);
+                          const total = months.reduce((a, b) => a + b, 0);
+                          return { ...sp, months, total };
+                        })
+                        .sort((a, b) => b.total - a.total);
+
+                      return sorted.map((sp, rank) => (
                         <tr key={sp.id} className="hover:bg-[#1e201e]/30 transition-colors">
-                          <td className="px-4 py-3 sticky left-0 bg-[#121412] z-10">
+                          <td className="w-10 px-3 py-3 sticky left-0 bg-[#121412] z-10">
+                            {rank === 0 && sp.total > 0 ? (
+                              <span className="text-base">🏆</span>
+                            ) : (
+                              <span className="text-sm font-bold text-[#474846]">#{rank + 1}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 sticky left-10 bg-[#121412] z-10">
                             <div className="flex items-center gap-2">
                               <div
                                 className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black"
@@ -1265,7 +1280,7 @@ export default function ReportsPage() {
                               <span className="text-xs font-semibold text-[#faf9f5]">{sp.name}</span>
                             </div>
                           </td>
-                          {months.map((val, idx) => (
+                          {sp.months.map((val, idx) => (
                             <td
                               key={idx}
                               className={`px-3 py-3 text-center text-[11px] font-bold ${
@@ -1277,11 +1292,11 @@ export default function ReportsPage() {
                             </td>
                           ))}
                           <td className="px-4 py-3 text-right text-xs font-black" style={{ color: sp.color }}>
-                            {total > 0 ? fmt(total) : "—"}
+                            {sp.total > 0 ? fmt(sp.total) : "—"}
                           </td>
                         </tr>
-                      );
-                    })}
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>

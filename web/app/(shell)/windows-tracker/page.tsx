@@ -64,7 +64,8 @@ const fmt = (v: number): string =>
 const fmtDate = (d: string): string => {
   if (!d || String(d) === "0" || String(d) === "null") return "—";
   const date = new Date(d + "T12:00:00");
-  return isNaN(date.getTime()) ? "—" : date.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+  if (isNaN(date.getTime())) return "—";
+  return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear()}`;
 };
 
 export default function WindowsTrackerPage() {

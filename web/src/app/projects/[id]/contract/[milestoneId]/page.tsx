@@ -109,16 +109,8 @@ export default function ContractPage() {
     if (!milestone || !job) return null;
 
     const contractDate = milestone.signed_at
-      ? new Date(milestone.signed_at).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      : new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
+      ? (() => { const _d = new Date(milestone.signed_at); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()
+      : (() => { const _d = new Date(); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })();
 
     return {
       id: milestone.id,

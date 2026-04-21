@@ -102,16 +102,8 @@ export default function ContractPage() {
     if (!milestone || !job) return null;
 
     const contractDate = milestone.signed_at
-      ? new Date(milestone.signed_at).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      : new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
+      ? (() => { const _d = new Date(milestone.signed_at); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()
+      : (() => { const _d = new Date(); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })();
 
     return {
       id: milestone.id,
@@ -239,7 +231,7 @@ export default function ContractPage() {
       {/* Already signed banner */}
       {!signed && (milestone.status === "signed" || milestone.status === "paid") && (
         <div style={successBannerStyle}>
-          ✅ Document signed on {new Date(milestone.signed_at!).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+          ✅ Document signed on {(() => { const _d = new Date(milestone.signed_at!); const date = `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; const time = _d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }); return `${date} ${time}`; })()}
         </div>
       )}
 

@@ -40,6 +40,7 @@ created: 2026-04-17
 | [[New Project]] | Formulário multi-step de criação de projeto |
 | [[Crews e Partners]] | Diretório de equipes com capacidade e especialidades |
 | [[Job Schedule]] | Calendário Gantt semanal com drag & drop |
+| [[Calculador de Duração por Parceiro]] | Tabelas de SQ/dia por parceiro para cálculo automático de `durationDays` |
 
 ### Financeiro
 
@@ -159,6 +160,22 @@ graph LR
 → Serviços: [[Services e Warranty]]
 → Vendas: [[Sales Reports]]
 → Credenciais: [[Credenciais Customer Portal]]
+
+### 2026-04-21 — Calculador de Duração por Parceiro + Melhorias de UI
+
+| Feature | Descrição | Arquivos |
+|---------|-----------|----------|
+| **Calculador de Duração** | Substituiu fórmulas genéricas por tabelas específicas de cada parceiro (XICARA, WILMAR, SULA, LUÍS para Siding; OSVIN, VICTOR, JUAN para Painting) | `lib/duration-calculator.ts` |
+| **Integração no Schedule** | Modal de rescheduling recalcula `durationDays` automaticamente ao alterar SQ, usando a tabela do parceiro atribuído | `schedule/page.tsx` |
+| **Integração em New Project** | Criação de projeto usa o parceiro selecionado no formulário para calcular datas de fim precisas | `new-project/page.tsx` |
+| **Integração em Project Detail** | Adição de serviços a projeto existente calcula duração pelo crew padrão de cada serviço | `projects/[id]/page.tsx` |
+| **Sábado como dia útil** | Confirmado que Sábado é dia de trabalho — apenas Domingo pula | Todos os cálculos de cascata |
+| **Project Preview (Satellite)** | Card lateral usa Google Maps Satellite Embed para mostrar vista aérea real do endereço | `new-project/page.tsx` |
+| **Cards 100% largura** | Detalhes do projeto removeram `max-w-4xl` para cards de ponta a ponta | `projects/[id]/page.tsx` |
+| **DWD Card color fix** | Cards de Doors/Windows/Decks inativos corrigidos para fundo branco (mesmo estilo dos demais) | `projects/[id]/page.tsx` |
+
+→ Calculador: [[Calculador de Duração por Parceiro]]
+→ Schedule: [[Job Schedule]]
 
 ---
 

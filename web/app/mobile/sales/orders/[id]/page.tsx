@@ -49,9 +49,11 @@ function formatCurrency(v: number | null) {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit"
-  });
+  const dt = new Date(iso);
+  if (isNaN(dt.getTime())) return "—";
+  const date = `${(dt.getMonth() + 1).toString().padStart(2, '0')}/${dt.getDate().toString().padStart(2, '0')}/${dt.getFullYear()}`;
+  const time = dt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  return `${date} ${time}`;
 }
 
 export default function SalesOrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {

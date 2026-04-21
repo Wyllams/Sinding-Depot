@@ -13,6 +13,13 @@
         "a": 1,
         "rgb": 11402804
       }
+    },
+    {
+      "query": "path:RikoGMB  ",
+      "color": {
+        "a": 1,
+        "rgb": 2405295
+      }
     }
   ],
   "collapse-display": false,
@@ -25,6 +32,6 @@
   "repelStrength": 10,
   "linkStrength": 1,
   "linkDistance": 250,
-  "scale": 0.4788882052545201,
-  "close": true
+  "scale": 0.2726860817137683,
+  "close": false
 }

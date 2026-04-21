@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar } from "../../../components/TopBar";
 import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
+import { calculateServiceDuration } from "../../../lib/duration-calculator";
 
 // =============================================
 // Create New Job | Iron & Lime
@@ -38,7 +39,7 @@ const services = [
   { id: "gutters",  icon: "horizontal_rule", label: "Gutters",  color: "#c084fc", partners: ["SIDING DEPOT", "LEANDRO"] },
   { id: "painting", icon: "format_paint",   label: "Painting", color: "#f5a623", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
   { id: "windows",  icon: "window",         label: "Windows",  color: "#60b8f5", partners: ["SIDING DEPOT", "SERGIO"] },
-  { id: "decks",    icon: "deck",           label: "Decks",    color: "#eab308", partners: ["SIDING DEPOT"] },
+  { id: "decks",    icon: "deck",           label: "Decks",    color: "#eab308", partners: ["SIDING DEPOT", "SERGIO"] },
   { id: "roofing",  icon: "roofing",        label: "Roofing",  color: "#ef4444", partners: ["SIDING DEPOT", "JOSUE"] },
   { id: "dumpster", icon: "delete",         label: "Dumpster", color: "#64748b", partners: ["SIDING DEPOT"] },
 ];
@@ -340,6 +341,11 @@ export default function NewProjectPage() {
   const [openPartnerModal, setOpenPartnerModal] = useState<Service | null>(null);
   const [assignedPartners, setAssignedPartners] = useState<Record<string, string>>({});
 
+  // ── Windows service config ──
+  const [windowCount, setWindowCount] = useState("");
+  const [windowTrim, setWindowTrim] = useState<"yes" | "no" | "">("" );
+  const [windowsStep, setWindowsStep] = useState<"partner" | "config">("partner");
+
   const handleServiceToggle = (id: string) => {
     setSelected(prev => {
        let next = [...prev];
@@ -482,12 +488,22 @@ export default function NewProjectPage() {
          return idxA - idxB;
       });
 
-      // Duration and Date Helpers
+      // Duration calculator — uses partner-specific SQ tables
       const parsedSq = sq ? parseFloat(sq) : 0;
       const calcDuration = (serviceId: string) => {
-         if (serviceId === "siding") return Math.max(1, Math.ceil(parsedSq / 8));
-         if (serviceId === "painting") return Math.max(1, Math.ceil(parsedSq / 10));
-         return 1; // Default for gutters, roofing, windows, etc.
+         // Get the assigned partner for this service (or fallback to SIDING DEPOT)
+         const partnerName = assignedPartners[serviceId] || (serviceId === "painting" ? assignedPartners["siding"] : null) || "SIDING DEPOT";
+
+         // Special case: windows duration by count (kept for backwards compat)
+         if (serviceId === "windows") {
+           const wCount = parseInt(windowCount) || 0;
+           if (wCount > 0) {
+             const rate = windowTrim === "yes" ? 12 : 20;
+             return Math.max(1, Math.round(wCount / rate));
+           }
+         }
+
+         return calculateServiceDuration(partnerName, serviceId, parsedSq);
       };
 
       const dateHelpers = {
@@ -633,19 +649,20 @@ export default function NewProjectPage() {
 
       // ── Automação 3.5: Criar window_order ao selecionar serviço de Windows ──
       if (selected.includes("windows")) {
+        const wQty = parseInt(windowCount) || null;
         await supabase.from("window_orders").insert({
           job_id: newJob.id,
           customer_name: clientName,
           status: "Measurement",
           money_collected: "NO",
-          quantity: null,
+          quantity: wQty,
           quote: null,
           deposit: null,
           ordered_on: null,
           expected_delivery: null,
           supplier: "",
           order_number: null,
-          notes: null,
+          notes: windowTrim === "yes" ? "Trim: YES" : windowTrim === "no" ? "Trim: NO" : null,
         });
       }
 
@@ -854,7 +871,10 @@ export default function NewProjectPage() {
                 selected={selected} 
                 toggle={toggle} 
                 assignedPartners={assignedPartners}
-                onAssignClick={setOpenPartnerModal}
+                onAssignClick={(svc) => {
+                  if (svc.id === "windows") setWindowsStep("partner");
+                  setOpenPartnerModal(svc);
+                }}
               />
             </section>
 
@@ -973,51 +993,185 @@ export default function NewProjectPage() {
       </main>
 
       {/* ── Map Preview Panel — fixed to right side of viewport (xl+) ── */}
-      <div className="hidden xl:block fixed right-0 top-0 h-full w-[400px] p-6 pointer-events-none z-30">
-        <div className="h-full w-full glass-card rounded-3xl border border-[#474846]/20 overflow-hidden relative pointer-events-auto">
-          {/* Map image */}
-          <div className="absolute inset-0 z-0">
-            <img
-              className="w-full h-full object-cover opacity-40 mix-blend-luminosity"
-              alt="Satellite map urban neighborhood with green highlights"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1Hp59mrKmha0ODBeyPk5bl8FoQ_-pCzr3y4R0EOkrPC79zO2WLMO2uq9-zX4uwPDUQMP63wBc6jFub_Oy-oc9rkY0j4qRRM0a0fMGdcXQvjAHU--X04u5Y9OncI5Ioc-QR40P-tVWv3gU6u1bFzVPhy8q_rSp4-NbRGC02sjR30w5HYAN0Hf-iko-nfSiGSQvNqRMDAyag8Xj6nITm1FvZR8zDxwml64Tw8fo2hZWu5ARHsPhtXnEdPXliODUriv2h7xdpG43iKg"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0d0f0d] via-transparent to-transparent" />
-          </div>
+      {(() => {
+        const hasAddress = streetAddress.trim() && city.trim() && state.trim();
 
-          {/* Panel content */}
-          <div className="relative z-10 p-8 flex flex-col h-full">
-            <div className="mb-auto">
-              <h3
-                className="text-xl font-bold text-[#aeee2a] mb-2"
-                style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-              >
-                Project Preview
-              </h3>
-              <p className="text-sm text-[#ababa8]">
-                Visualizing job site impact and logistics based on entered address.
-              </p>
-            </div>
+        // Build Google Maps embed URL (satellite view — shows the house)
+        let mapSrc = "";
+        if (hasAddress) {
+          const q = encodeURIComponent(`${streetAddress}, ${city}, ${state} ${zipCode}`.trim());
+          mapSrc = `https://maps.google.com/maps?q=${q}&t=k&z=19&ie=UTF8&iwloc=&output=embed`;
+        }
 
-            <div className="bg-[#242624]/80 backdrop-blur-md p-6 rounded-2xl border border-[#474846]/30">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-full bg-[#aeee2a]/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[#aeee2a]" translate="no">
-                    streetview
-                  </span>
+        // Compute form completeness for progress bar
+        const fields = [clientName, streetAddress, city, state, zipCode, jobTitle];
+        const filledFields = fields.filter(f => f.trim().length > 0).length;
+        const progress = Math.round((filledFields / fields.length) * 100);
+
+        const selectedServices = services.filter(s => selected.includes(s.id));
+
+        return (
+          <div className="hidden xl:block fixed right-0 top-0 h-full w-[400px] pt-[72px] pb-6 pr-6 pointer-events-none z-30">
+            <div className="h-full w-full rounded-3xl border border-[#474846]/20 overflow-hidden relative pointer-events-auto" style={{ background: "#111311" }}>
+
+              {/* Map area */}
+              <div className="h-[45%] relative overflow-hidden">
+                {hasAddress ? (
+                  <>
+                    <iframe
+                      key={mapSrc}
+                      title="Project Location"
+                      className="w-full h-full border-0"
+                      src={mapSrc}
+                      style={{ filter: "brightness(0.85) contrast(1.1)" }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      allowFullScreen
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#111311] via-transparent to-transparent pointer-events-none" />
+                  </>
+                ) : (
+                  <>
+                    <img
+                      className="w-full h-full object-cover opacity-20 mix-blend-luminosity"
+                      alt="Map placeholder"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1Hp59mrKmha0ODBeyPk5bl8FoQ_-pCzr3y4R0EOkrPC79zO2WLMO2uq9-zX4uwPDUQMP63wBc6jFub_Oy-oc9rkY0j4qRRM0a0fMGdcXQvjAHU--X04u5Y9OncI5Ioc-QR40P-tVWv3gU6u1bFzVPhy8q_rSp4-NbRGC02sjR30w5HYAN0Hf-iko-nfSiGSQvNqRMDAyag8Xj6nITm1FvZR8zDxwml64Tw8fo2hZWu5ARHsPhtXnEdPXliODUriv2h7xdpG43iKg"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#111311] via-transparent to-transparent" />
+                  </>
+                )}
+              </div>
+
+              {/* Panel content */}
+              <div className="relative z-10 px-7 pb-7 pt-2 flex flex-col" style={{ height: "55%" }}>
+                <div className="mb-5">
+                  <h3
+                    className="text-lg font-bold text-[#aeee2a] mb-1"
+                    style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
+                  >
+                    Project Preview
+                  </h3>
+                  <p className="text-[11px] text-[#747673]">
+                    Live preview based on form data
+                  </p>
                 </div>
-                <div>
-                  <p className="text-xs uppercase text-[#ababa8] font-bold">Pending Geolocation</p>
-                  <p className="font-bold">Enter address to sync</p>
+
+                {/* Client + Address */}
+                <div className="space-y-3 mb-5 flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+                  {/* Client */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-[#aeee2a] text-[16px]" translate="no">person</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] uppercase tracking-widest text-[#747673] font-bold">Client</p>
+                      <p className="text-sm font-bold text-[#faf9f5] truncate">
+                        {clientName || <span className="text-[#474846] italic font-normal">Not entered</span>}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-[#aeee2a] text-[16px]" translate="no">location_on</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] uppercase tracking-widest text-[#747673] font-bold">Address</p>
+                      <p className="text-sm font-bold text-[#faf9f5] truncate">
+                        {hasAddress
+                          ? <>{streetAddress}, {city}</>
+                          : <span className="text-[#474846] italic font-normal">Pending</span>
+                        }
+                      </p>
+                      {hasAddress && (
+                        <p className="text-[11px] text-[#ababa8]">{state} {zipCode}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* SQ & Contract */}
+                  {(sq || contractAmount) && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {sq && (
+                        <div className="bg-[#1e201e] rounded-xl p-3 border border-[#474846]/15">
+                          <p className="text-[9px] uppercase tracking-widest text-[#747673] font-bold">SQ</p>
+                          <p className="text-base font-black text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{sq}</p>
+                        </div>
+                      )}
+                      {contractAmount && (
+                        <div className="bg-[#1e201e] rounded-xl p-3 border border-[#474846]/15">
+                          <p className="text-[9px] uppercase tracking-widest text-[#747673] font-bold">Contract</p>
+                          <p className="text-base font-black text-[#aeee2a]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                            ${Number(contractAmount).toLocaleString("en-US", { minimumFractionDigits: 0 })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Services */}
+                  {selectedServices.length > 0 && (
+                    <div>
+                      <p className="text-[9px] uppercase tracking-widest text-[#747673] font-bold mb-2">Services ({selectedServices.length})</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedServices.map(s => {
+                          const partner = assignedPartners[s.id];
+                          return (
+                            <div
+                              key={s.id}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold"
+                              style={{
+                                backgroundColor: `${s.color}12`,
+                                borderColor: `${s.color}30`,
+                                color: s.color,
+                              }}
+                            >
+                              <span className="material-symbols-outlined text-[12px]" translate="no">{s.icon}</span>
+                              {s.label}
+                              {partner && (
+                                <span className="text-[8px] bg-white/10 px-1.5 py-0.5 rounded-full ml-0.5 uppercase">
+                                  {partner}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Progress bar */}
+                <div className="bg-[#1e201e]/80 backdrop-blur-md p-4 rounded-2xl border border-[#474846]/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px] text-[#aeee2a]" translate="no">
+                        {progress === 100 ? "check_circle" : "pending"}
+                      </span>
+                      <p className="text-[10px] uppercase text-[#ababa8] font-bold tracking-widest">
+                        {progress === 100 ? "Ready to Submit" : "Form Completion"}
+                      </p>
+                    </div>
+                    <span className="text-xs font-black text-[#aeee2a]">{progress}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-[#121412] rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500 ease-out"
+                      style={{
+                        width: `${progress}%`,
+                        background: progress === 100
+                          ? "linear-gradient(90deg, #aeee2a, #7bc922)"
+                          : "linear-gradient(90deg, #aeee2a, #e3eb5d)",
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="w-full h-1 bg-[#121412] rounded-full overflow-hidden">
-                <div className="h-full w-1/3 bg-[#aeee2a]" />
-              </div>
             </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* ════════════════════════════════════════════════════
           MODAL — ASSIGN PARTNER
@@ -1047,74 +1201,192 @@ export default function NewProjectPage() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 max-h-[50vh] overflow-y-auto pr-2" style={{ scrollbarWidth: "none" }}>
-                  {openPartnerModal.partners?.map((partner) => {
-                    const isSelected = assignedPartners[openPartnerModal.id] === partner;
-                    return (
-                      <button
-                        key={partner}
-                        type="button"
-                        onClick={() => {
-                          setAssignedPartners((prev) => ({ ...prev, [openPartnerModal.id]: partner }));
-                          
-                          if (openPartnerModal.id === "siding") {
-                            const paintingService = services.find((s) => s.id === "painting");
-                            if (paintingService) {
-                              setSelected((prev) => (prev.includes("painting") ? prev : [...prev, "painting"]));
-                              setOpenPartnerModal(paintingService);
-                              return;
-                            }
-                          }
-                          
-                          if (openPartnerModal.id === "gutters") {
-                            const roofingService = services.find((s) => s.id === "roofing");
-                            if (roofingService) {
-                              setSelected((prev) => (prev.includes("roofing") ? prev : [...prev, "roofing"]));
-                              setOpenPartnerModal(roofingService);
-                              return;
-                            }
-                          }
-                          
-                          setOpenPartnerModal(null);
-                        }}
-                        className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
-                          isSelected 
-                            ? '' 
-                            : 'bg-[#181a18] border-[#474846]/40 hover:bg-[#242624] hover:border-[#747673]'
-                        }`}
-                        style={isSelected ? { backgroundColor: `${openPartnerModal.color}1A`, borderColor: openPartnerModal.color, boxShadow: `0 0 15px ${openPartnerModal.color}1A` } : {}}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isSelected ? '' : 'bg-[#242624] text-[#ababa8]'}`}
-                               style={isSelected ? { backgroundColor: openPartnerModal.color, color: '#000000' } : {}}>
-                            {partner.charAt(0)}
-                          </div>
-                          <span className={`text-sm font-bold tracking-wide uppercase ${isSelected ? '' : 'text-[#faf9f5]'}`} style={isSelected ? { color: openPartnerModal.color } : {}}>
-                            {partner}
-                          </span>
-                        </div>
-                        {isSelected && (
-                          <span className="material-symbols-outlined" style={{ color: openPartnerModal.color }} translate="no">
-                            check_circle
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                  
-                  {assignedPartners[openPartnerModal.id] && (
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          const current = { ...assignedPartners };
-                          delete current[openPartnerModal.id];
-                          setAssignedPartners(current);
-                          setOpenPartnerModal(null);
-                        }}
-                        className="mt-4 flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-[#ba1212]/30 text-[#ba1212] hover:bg-[#ba1212]/10 transition-colors"
-                      >
-                        <span className="text-xs font-bold uppercase tracking-wider">Unassign Partner</span>
-                      </button>
+
+                  {/* ── STEP 1: Select Partner ── */}
+                  {(openPartnerModal.id !== "windows" || windowsStep === "partner") && (
+                    <>
+                      {openPartnerModal.partners?.map((partner) => {
+                        const isSelected = assignedPartners[openPartnerModal.id] === partner;
+                        return (
+                          <button
+                            key={partner}
+                            type="button"
+                            onClick={() => {
+                              setAssignedPartners((prev) => ({ ...prev, [openPartnerModal.id]: partner }));
+                              
+                              if (openPartnerModal.id === "siding") {
+                                const paintingService = services.find((s) => s.id === "painting");
+                                if (paintingService) {
+                                  setSelected((prev) => (prev.includes("painting") ? prev : [...prev, "painting"]));
+                                  setOpenPartnerModal(paintingService);
+                                  return;
+                                }
+                              }
+                              
+                              if (openPartnerModal.id === "gutters") {
+                                const roofingService = services.find((s) => s.id === "roofing");
+                                if (roofingService) {
+                                  setSelected((prev) => (prev.includes("roofing") ? prev : [...prev, "roofing"]));
+                                  setOpenPartnerModal(roofingService);
+                                  return;
+                                }
+                              }
+
+                              // If Windows → go to config step
+                              if (openPartnerModal.id === "windows") {
+                                setWindowsStep("config");
+                                return;
+                              }
+                              
+                              setOpenPartnerModal(null);
+                            }}
+                            className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                              isSelected 
+                                ? '' 
+                                : 'bg-[#181a18] border-[#474846]/40 hover:bg-[#242624] hover:border-[#747673]'
+                            }`}
+                            style={isSelected ? { backgroundColor: `${openPartnerModal.color}1A`, borderColor: openPartnerModal.color, boxShadow: `0 0 15px ${openPartnerModal.color}1A` } : {}}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isSelected ? '' : 'bg-[#242624] text-[#ababa8]'}`}
+                                   style={isSelected ? { backgroundColor: openPartnerModal.color, color: '#000000' } : {}}>
+                                {partner.charAt(0)}
+                              </div>
+                              <span className={`text-sm font-bold tracking-wide uppercase ${isSelected ? '' : 'text-[#faf9f5]'}`} style={isSelected ? { color: openPartnerModal.color } : {}}>
+                                {partner}
+                              </span>
+                            </div>
+                            {isSelected && (
+                              <span className="material-symbols-outlined" style={{ color: openPartnerModal.color }} translate="no">
+                                check_circle
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                      
+                      {assignedPartners[openPartnerModal.id] && (
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const current = { ...assignedPartners };
+                              delete current[openPartnerModal.id];
+                              setAssignedPartners(current);
+                              if (openPartnerModal.id === "windows") {
+                                setWindowCount("");
+                                setWindowTrim("");
+                                setWindowsStep("partner");
+                              }
+                              setOpenPartnerModal(null);
+                            }}
+                            className="mt-4 flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-[#ba1212]/30 text-[#ba1212] hover:bg-[#ba1212]/10 transition-colors"
+                          >
+                            <span className="text-xs font-bold uppercase tracking-wider">Unassign Partner</span>
+                          </button>
+                      )}
+                    </>
                   )}
+
+                  {/* ── STEP 2: Windows Config (quantity + trim) ── */}
+                  {openPartnerModal.id === "windows" && windowsStep === "config" && (
+                    <div className="space-y-6">
+                      {/* Step indicator */}
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#60b8f5] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#60b8f5] uppercase tracking-wider">Partner</span>
+                        </div>
+                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#60b8f5]/20 border border-[#60b8f5] flex items-center justify-center">
+                            <span className="text-[10px] font-black text-[#60b8f5]">2</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Windows Config</span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#ababa8]">
+                        Assigned to <span className="text-[#60b8f5] font-bold uppercase">{assignedPartners["windows"]}</span>. Now configure the windows for this project.
+                      </p>
+
+                      {/* Window Count */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">
+                          How many windows in the contract?
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={windowCount}
+                          onChange={(e) => setWindowCount(e.target.value)}
+                          placeholder="e.g. 42"
+                          className="w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#60b8f5] focus:ring-1 focus:ring-[#60b8f5] transition-all h-[48px] text-[15px]"
+                        />
+                      </div>
+
+                      {/* Trim? */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">
+                          Trim?
+                        </label>
+                        <CustomDropdown
+                          value={windowTrim}
+                          onChange={(val) => setWindowTrim(val as "yes" | "no")}
+                          options={[
+                            { value: "yes", label: "Yes" },
+                            { value: "no", label: "No" },
+                          ]}
+                          placeholder="Select..."
+                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#60b8f5]/50 transition-colors flex justify-between items-center"
+                        />
+                      </div>
+
+                      {/* Duration preview */}
+                      {windowCount && windowTrim && (
+                        <div className="p-4 rounded-xl bg-[#60b8f5]/10 border border-[#60b8f5]/20">
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-[#60b8f5] text-lg" translate="no">calendar_month</span>
+                            <div>
+                              <p className="text-sm font-bold text-[#faf9f5]">
+                                Estimated Duration:{" "}
+                                <span className="text-[#60b8f5]">
+                                  {Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}
+                                </span>
+                              </p>
+                              <p className="text-[10px] text-[#ababa8] mt-0.5">
+                                {parseInt(windowCount)} windows ÷ {windowTrim === "yes" ? "12" : "20"}/day {windowTrim === "yes" ? "(with trim)" : "(no trim)"} = {(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)).toFixed(1)} → {Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setWindowsStep("partner")}
+                          className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!windowCount || !windowTrim}
+                          onClick={() => {
+                            setWindowsStep("partner");
+                            setOpenPartnerModal(null);
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#60b8f5] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#4da8e5] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
             </div>
          </div>

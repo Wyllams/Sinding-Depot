@@ -41,8 +41,11 @@ const MONTH_NAMES = [
 const fmt = (v: number): string =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
 
-const fmtDate = (d: string): string =>
-  new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+const fmtDate = (d: string): string => {
+  const dt = new Date(d + "T12:00:00");
+  if (isNaN(dt.getTime())) return "—";
+  return `${(dt.getMonth() + 1).toString().padStart(2, '0')}/${dt.getDate().toString().padStart(2, '0')}/${dt.getFullYear()}`;
+};
 
 const ActionMenu = ({ p, onEdit, onDelete }: { p: CashPayment, onEdit: () => void, onDelete: () => void }) => {
   const [open, setOpen] = useState(false);
@@ -232,7 +235,7 @@ export default function CashPaymentsPage() {
     const { data, error } = await supabase
       .from("cash_payments")
       .select("id, date, job_name, store, amount, picked_by, notes")
-      .order("date", { ascending: false });
+      .order("created_at", { ascending: false });
     
     if (data) {
       setPayments(data.map(d => ({
@@ -441,12 +444,16 @@ export default function CashPaymentsPage() {
       if (pDate.getMonth() !== selectedMonth || pDate.getFullYear() !== selectedYear) return false;
       // Search
       if (searchQuery) {
-        const q = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase().replace(/[$,]/g, "");
+        const amountStr = p.amount.toFixed(2);
+        const amountWhole = String(p.amount);
         const matches =
           p.jobName.toLowerCase().includes(q) ||
           p.store.toLowerCase().includes(q) ||
           p.pickedBy.toLowerCase().includes(q) ||
-          p.notes.toLowerCase().includes(q);
+          p.notes.toLowerCase().includes(q) ||
+          amountStr.includes(q) ||
+          amountWhole.includes(q);
         if (!matches) return false;
       }
       return true;
@@ -550,7 +557,7 @@ export default function CashPaymentsPage() {
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] text-[18px]" translate="no">search</span>
             <input
               type="text"
-              placeholder="Search jobs, stores, notes..."
+              placeholder="Search jobs, stores, amount..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-[#1e201e] text-[#faf9f5] text-sm rounded-xl pl-10 pr-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] w-64"
@@ -711,21 +718,7 @@ export default function CashPaymentsPage() {
                   ))
                 )}
               </tbody>
-              {filtered.length > 0 && (
-                <tfoot>
-                  <tr style={{ borderTop: "1px solid rgba(174,238,42,0.15)", background: "rgba(174,238,42,0.03)" }}>
-                    <td colSpan={3} className="px-6 py-4 text-xs font-black uppercase tracking-widest text-[#ababa8]">
-                      Total ({filtered.length} records)
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-lg font-black text-[#aeee2a]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
-                        {fmt(total)}
-                      </span>
-                    </td>
-                    <td colSpan={3} />
-                  </tr>
-                </tfoot>
-              )}
+
             </table>
           </div>
 

@@ -233,15 +233,13 @@ function SignedDocumentPDF({
 }: {
   data: SignedDocumentPDFData;
 }): React.ReactElement {
-  const fmtDate = (iso: string): string =>
-    new Date(iso).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZoneName: "short",
-    });
+  const fmtDate = (iso: string): string => {
+    const dt = new Date(iso);
+    if (isNaN(dt.getTime())) return "—";
+    const date = `${(dt.getMonth() + 1).toString().padStart(2, '0')}/${dt.getDate().toString().padStart(2, '0')}/${dt.getFullYear()}`;
+    const time = dt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
+    return `${date} ${time}`;
+  };
 
   const fmtAmount = (n: number): string =>
     `$${n.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;

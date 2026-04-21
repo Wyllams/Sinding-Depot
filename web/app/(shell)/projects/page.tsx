@@ -28,14 +28,11 @@ const GATE_CONFIG: Record<string, { color: string; icon: string; title: string; 
   PERMIT:        { color: "#747673", icon: "contract",        title: "Pending Permit",       desc: "Waiting on city or county permit clearance."              },
 };
 
-// Map job_status → display values
+// Map job_status → display values (3 values matching calendar popup)
 const STATUS_MAP: Record<string, { label: string; style: string }> = {
-  active:             { label: "Ready to Start",    style: "bg-green-500/10 text-green-400 border border-green-500/20"          },
-  draft:              { label: "Not Yet Contacted", style: "bg-[#ba1212]/10 text-[#ff4444] border border-[#ba1212]/40"          },
-  pending_scheduling: { label: "Pending",           style: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20"          },
-  on_hold:            { label: "Pending",           style: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20"          },
-  completed:          { label: "Pending",           style: "bg-[#ababa8]/10 text-[#ababa8] border border-[#ababa8]/20"          },
-  cancelled:          { label: "Pending",           style: "bg-[#ba1212]/10 text-[#ba1212] border border-[#ba1212]/20"          },
+  active:  { label: "Confirmed", style: "bg-green-500/10 text-green-400 border border-green-500/20"     },
+  draft:   { label: "Tentative", style: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20"    },
+  on_hold: { label: "Pending",   style: "bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20"     },
 };
 
 // SP color by salesperson name (first name prefix match)
@@ -259,25 +256,22 @@ export default function ProjectsPage() {
   }
 
   async function handleGateChange(jobId: string, gate: string) {
-    // Map gate → job_status operacional equivalente
-    let newStatus = "active";
-    if (gate === "READY") newStatus = "active";
-    else if (gate === "NOT_CONTACTED") newStatus = "draft";
-    else newStatus = "on_hold";
+    // Gating is purely visual — does NOT change jobs.status (JOB START STATUS)
+    // Only the calendar popup (for Siding service) controls JOB START STATUS
 
-    // Otimistic update na UI
+    // Optimistic update na UI (only gate fields, status untouched)
     setJobs((prev) =>
       prev.map((j) =>
         j.id === jobId
-          ? { ...j, blocker_type: gate, gate_status: gate, status: newStatus }
+          ? { ...j, blocker_type: gate, gate_status: gate }
           : j
       )
     );
 
-    // Persiste AMBOS os campos no banco
+    // Persist only gate_status in DB — status remains unchanged
     await supabase
       .from("jobs")
-      .update({ status: newStatus as any, gate_status: gate })
+      .update({ gate_status: gate })
       .eq("id", jobId);
   }
 
@@ -337,12 +331,9 @@ export default function ProjectsPage() {
               value={statusFilter}
               onChange={(val) => setStatusFilter(val)}
               options={[
-                { value: "active", label: "Confirmed (Ready to Start)" },
-                { value: "draft", label: "Tentative (Not Yet Contacted)" },
-                { value: "pending_scheduling", label: "Pending" },
-                { value: "on_hold", label: "Pending (On Hold)" },
-                { value: "completed", label: "Completed" },
-                { value: "cancelled", label: "Cancelled" }
+                { value: "active", label: "Confirmed" },
+                { value: "draft", label: "Tentative" },
+                { value: "on_hold", label: "Pending" },
               ]}
               placeholder="All Statuses"
               className="w-full sm:w-36 bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] hover:border-[#aeee2a]/50 transition-colors flex justify-between items-center"

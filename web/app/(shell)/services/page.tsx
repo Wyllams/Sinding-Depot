@@ -542,7 +542,7 @@ export default function ServicesPage() {
 
                         {/* Date */}
                         <td className="px-5 py-4 text-right text-xs font-bold text-[#faf9f5]">
-                          {new Date(issue.reported_at).toLocaleDateString("en-US", { month: "short", day: "2-digit" })}
+                          {(() => { const _d = new Date(issue.reported_at); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}
                         </td>
 
                         {/* Signal indicator */}
