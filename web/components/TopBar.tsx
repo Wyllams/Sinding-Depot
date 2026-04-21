@@ -152,14 +152,14 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {rightSlot && <>{rightSlot}<div className="hidden sm:block w-px h-6 bg-[#474846]/50" /></>}
 
         {/* History Action Button */}
-        <div className="relative mr-2 sm:mr-3" ref={historyRef}>
+        <div className="relative" ref={historyRef}>
           <button
             onClick={() => setHistoryOpen(!historyOpen)}
-            className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all ${history.length > 0 ? "text-[#aeee2a] bg-[#aeee2a]/10 hover:bg-[#aeee2a]/20" : "text-[#ababa8] bg-transparent hover:bg-white/5"}`}
+            className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all ${history.length > 0 ? "text-[#aeee2a] bg-[#aeee2a]/10 hover:bg-[#aeee2a]/20" : "text-[#ababa8] bg-transparent hover:bg-white/5"}`}
             title="History"
           >
             <span className="material-symbols-outlined text-[18px] sm:text-[22px]" translate="no">history</span>

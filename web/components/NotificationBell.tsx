@@ -125,7 +125,7 @@ export function NotificationBell() {
       {/* Bell button */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative p-2 text-[#ababa8] hover:text-[#faf9f5] transition-colors rounded-full hover:bg-[#242624]"
+        className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 text-[#ababa8] hover:text-[#faf9f5] transition-colors rounded-full hover:bg-[#242624]"
         aria-label="Notifications"
       >
         <span className="material-symbols-outlined text-[22px]" translate="no">
