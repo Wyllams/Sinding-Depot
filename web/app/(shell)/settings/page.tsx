@@ -110,21 +110,24 @@ export default function SettingsPage() {
 
     setUploadingAvatar(true);
     try {
-      const ext      = file.name.split(".").pop();
-      const filePath = `${myProfile.id}/avatar.${ext}`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", `avatars/${myProfile.id}`);
 
-      const { error: uploadErr } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true, contentType: file.type });
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-      if (uploadErr) throw uploadErr;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to upload to R2");
+      }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
+      const { url } = await res.json();
 
       // Add cache-buster so browser doesn't serve stale image
-      const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+      const avatarUrl = `${url}?t=${Date.now()}`;
 
       const { error: updateErr } = await supabase
         .from("profiles")
