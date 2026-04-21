@@ -281,6 +281,11 @@ export default function SchedulePage() {
       const c = jb?.customers;
       const startIso = a.scheduled_start_at ? a.scheduled_start_at.split('T')[0] : shiftDate(toIso(new Date()), 1);
 
+      // Auto-confirm: if today >= start date, status becomes active (Confirmed)
+      const rawJobStatus = (jb?.status === "active" || jb?.status === "on_hold" || jb?.status === "draft") ? jb.status : "active";
+      const todayIso = new Date().toISOString().split('T')[0];
+      const autoConfirmedStatus = (rawJobStatus === "draft" && startIso <= todayIso) ? "active" as const : rawJobStatus;
+
       return {
         id: a.id,
         jobId: jb?.id,
@@ -293,7 +298,7 @@ export default function SchedulePage() {
            ? Math.max(1, Math.round((new Date(a.scheduled_end_at).getTime() - new Date(a.scheduled_start_at).getTime()) / MS_DAY))
            : 1,
         status: (a.status === 'in_progress' ? 'in_progress' : a.status === 'completed' ? 'done' : 'scheduled') as ScheduledJob["status"],
-        jobStartStatus: (jb?.status === "active" || jb?.status === "on_hold" || jb?.status === "draft") ? jb.status : "active",
+        jobStartStatus: autoConfirmedStatus,
         address: jb?.city || "Unknown",
         phone: c?.phone || "",
         email: c?.email || "",
@@ -504,7 +509,11 @@ export default function SchedulePage() {
     setEditJob(job);
     setEditDate(job.isPending ? "" : job.startDate);
     setEditDur(job.durationDays);
-    setEditStatus(job.jobStartStatus ?? "active");
+    // Auto-confirm if start date is today or earlier
+    const todayStr = new Date().toISOString().split('T')[0];
+    const baseStatus = job.jobStartStatus ?? "active";
+    const confirmedStatus = (baseStatus === "draft" && job.startDate <= todayStr) ? "active" : baseStatus;
+    setEditStatus(confirmedStatus as "active" | "draft" | "on_hold");
     setEditSq(job.sq != null ? String(job.sq) : "");
     setSelectedCrewIds(
       job.jobServiceIds && job.jobServiceIds.length > 0 && job.crewId 
