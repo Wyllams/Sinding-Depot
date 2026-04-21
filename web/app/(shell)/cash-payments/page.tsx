@@ -485,7 +485,10 @@ export default function CashPaymentsPage() {
     <>
       <TopBar />
 
-      <main className="px-4 sm:px-6 lg:px-8 pb-20 pt-8 min-h-screen">
+      <main className="px-4 sm:px-6 lg:px-8 pt-8 flex flex-col overflow-hidden" style={{ height: "calc(100dvh - 56px)" }}>
+
+        {/* ── Fixed section (header + KPIs + filters) ── */}
+        <div className="shrink-0">
 
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
@@ -625,15 +628,16 @@ export default function CashPaymentsPage() {
             </button>
           )}
         </div>
+        </div>{/* end shrink-0 */}
 
-        {/* Table */}
+        {/* ── Scrollable table section ── */}
         <div
-          className="rounded-2xl overflow-hidden border"
+          className="flex-1 min-h-0 rounded-2xl overflow-hidden border flex flex-col mb-4"
           style={{ background: "rgba(18,20,18,0.8)", borderColor: "rgba(71,72,70,0.2)" }}
         >
-          <div className="overflow-x-auto">
+          <div className="flex-1 min-h-0 overflow-auto" style={{ scrollbarWidth: "thin" }}>
             <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead>
+              <thead className="sticky top-0 z-10" style={{ background: "#121412" }}>
                 <tr style={{ borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
                   {["Date", "Job Name", "Store", "Amount", "Employee", "Notes", ""].map((h) => (
                     <th key={h} className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">{h}</th>
