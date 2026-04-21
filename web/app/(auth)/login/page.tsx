@@ -282,7 +282,7 @@ function QuickAccessButtons() {
     { role: "admin",       label: "Admin",      icon: "shield_person",  email: "admin@sidingdepot.com",        password: "Password123!", color: "#aeee2a", redirect: "/" },
     { role: "salesperson", label: "Vendedor",    icon: "sell",           email: "salesperson@sidingdepot.com",  password: "Password123!", color: "#60a5fa", redirect: "/sales" },
     { role: "partner",     label: "Parceiro",    icon: "engineering",    email: "crew@sidingdepot.com",         password: "Password123!", color: "#f59e0b", redirect: "/field" },
-    { role: "customer",    label: "Cliente",     icon: "person",         email: "wyllams_bione_3@customer.sidingdepot.app", password: "WyllamsB*2026", color: "#a78bfa", redirect: "/customer" },
+    { role: "customer",    label: "Cliente",     icon: "person",         email: "wyllams_bione@customer.sidingdepot.app", password: "WyllamsB*2026", color: "#a78bfa", redirect: "/customer" },
   ];
 
   const handleQuickLogin = async (item: typeof quickAccess[0]) => {
