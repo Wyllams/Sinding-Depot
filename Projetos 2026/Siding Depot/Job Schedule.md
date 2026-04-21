@@ -29,6 +29,8 @@ updated: 2026-04-20
 | **Auto-Complete** | Jobs automaticamente marcados como `done` às 18h do último dia |
 | **Month Picker** | Seletor de mês/ano com navegação semanal |
 | **Cards Side-by-Side** | Cards sobrepostos no mesmo dia dividem espaço verticalmente (50/50) |
+| **Nome do Serviço** | Cada card mostra o nome real (ex: "Windows" ou "Doors"), não a categoria genérica |
+| **Auto-Confirm** | Status muda automaticamente para `Confirmed` quando hoje ≥ data de início |
 
 ---
 
@@ -55,6 +57,45 @@ Quando múltiplos serviços (ex: Windows + Doors) são agendados no mesmo dia pa
 | **Siding → Paint** | Ao mover um job de Siding, o job de Paint correspondente (mesmo cliente) se move automaticamente para o dia seguinte |
 | **Sunday Block** | Não permite agendar em Domingos (day OFF) |
 | **Duration Awareness** | Barras se estendem corretamente por múltiplos dias |
+| **Auto-Confirm** | Jobs `Tentative` mudam automaticamente para `Confirmed` quando a data de início chega |
+
+---
+
+## Auto-Confirm (Status Automático)
+
+O status do job no popup/modal muda automaticamente baseado na data:
+
+| Status DB (`jobs.status`) | Label no Popup | Comportamento |
+|---------------------------|----------------|---------------|
+| `draft` | **Tentative** (amarelo) | Padrão para jobs futuros |
+| `active` | **Confirmed** (verde) | Quando hoje ≥ data de início |
+| `on_hold` | **Pending** (vermelho) | Bloqueio manual, não é alterado |
+
+### Regras de transição automática:
+
+| Cenário | Resultado |
+|---------|----------|
+| Job `Tentative` + início **amanhã** | Mantém `Tentative` |
+| Job `Tentative` + início **hoje** | → `Confirmed` ✅ |
+| Job `Tentative` + início **ontem** | → `Confirmed` ✅ |
+| Job `Pending` + qualquer data | Mantém `Pending` (não altera) |
+
+> [!NOTE]
+> A transição é calculada no **frontend** ao carregar os dados. O status no banco (`jobs.status`) permanece inalterado até o usuário salvar.
+
+---
+
+## Diferenciação de Serviços nos Cards
+
+Cada card no calendário mostra o **nome específico do serviço** ao invés da categoria genérica:
+
+| Antes | Agora |
+|-------|-------|
+| `DOORS WINDOWS` | `WINDOWS` (card 1) + `DOORS` (card 2) |
+| `DOORS WINDOWS` | `WINDOWS` (se só windows) |
+| `SIDING` | `SIDING` (sem mudança) |
+
+→ Usa `serviceNames[0]` (vindo de `service_types.name`) ao invés de `serviceType.replace("_", " ")`
 
 ---
 
