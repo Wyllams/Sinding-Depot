@@ -455,6 +455,21 @@ export default function CashPaymentsPage() {
 
   const total = filtered.reduce((s, p) => s + p.amount, 0);
 
+  // ── Pagination ──────────────────────────────────
+  const ITEMS_PER_PAGE = 20;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStore, filterPickedBy, selectedMonth, selectedYear, searchQuery]);
+
+  const paginatedPayments = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filtered.slice(start, start + ITEMS_PER_PAGE);
+  }, [filtered, currentPage]);
+
   // ── Month navigation ────────────────────────────
   const goToPrevMonth = (): void => {
     if (selectedMonth === 0) { setSelectedYear(selectedYear - 1); setSelectedMonth(11); }
@@ -636,11 +651,11 @@ export default function CashPaymentsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((p, i) => (
+                  paginatedPayments.map((p, i) => (
                     <tr
                       key={p.id}
                       className="hover:bg-[#1e201e]/50 transition-colors group"
-                      style={{ borderBottom: i < filtered.length - 1 ? "1px solid rgba(71,72,70,0.1)" : "none" }}
+                      style={{ borderBottom: i < paginatedPayments.length - 1 ? "1px solid rgba(71,72,70,0.1)" : "none" }}
                     >
                       <td className="px-6 py-4 text-sm text-[#ababa8] whitespace-nowrap">{fmtDate(p.date)}</td>
                       <td className="px-6 py-4">
@@ -709,6 +724,76 @@ export default function CashPaymentsPage() {
               )}
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div
+              className="flex items-center justify-between px-6 py-4"
+              style={{ borderTop: "1px solid rgba(71,72,70,0.15)" }}
+            >
+              <p className="text-xs text-[#ababa8]">
+                Showing{" "}
+                <span className="font-bold text-[#faf9f5]">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>
+                {" "}–{" "}
+                <span className="font-bold text-[#faf9f5]">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</span>
+                {" "}of{" "}
+                <span className="font-bold text-[#faf9f5]">{filtered.length}</span>{" "}records
+              </p>
+              <div className="flex items-center gap-1">
+                {/* Prev */}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#ababa8]"
+                >
+                  <span className="material-symbols-outlined text-sm" translate="no">chevron_left</span>
+                </button>
+
+                {/* Page numbers */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((page) => {
+                    if (totalPages <= 7) return true;
+                    if (page === 1 || page === totalPages) return true;
+                    if (Math.abs(page - currentPage) <= 1) return true;
+                    return false;
+                  })
+                  .reduce<(number | "...")[]>((acc, page, idx, arr) => {
+                    if (idx > 0) {
+                      const prev = arr[idx - 1];
+                      if (page - prev > 1) acc.push("...");
+                    }
+                    acc.push(page);
+                    return acc;
+                  }, [])
+                  .map((item, idx) =>
+                    item === "..." ? (
+                      <span key={`dots-${idx}`} className="w-8 h-8 flex items-center justify-center text-[#474846] text-xs">…</span>
+                    ) : (
+                      <button
+                        key={item}
+                        onClick={() => setCurrentPage(item)}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${
+                          currentPage === item
+                            ? "bg-[#aeee2a] text-[#3a5400]"
+                            : "text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624]"
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    )
+                  )}
+
+                {/* Next */}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#ababa8]"
+                >
+                  <span className="material-symbols-outlined text-sm" translate="no">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
