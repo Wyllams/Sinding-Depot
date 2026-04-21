@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { CustomDropdown } from "../../../components/CustomDropdown";
 import CustomDatePicker from "../../../components/CustomDatePicker";
@@ -146,6 +146,20 @@ export default function CashPaymentsPage() {
     notes: "",
   });
 
+  // Customer autocomplete — Add Modal
+  const [customerSuggestions, setCustomerSuggestions] = useState<{ id: string; full_name: string }[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const addSuggestionsRef = useRef<HTMLDivElement>(null);
+  const addInputRef = useRef<HTMLInputElement>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Customer autocomplete — Edit Modal
+  const [editCustomerSuggestions, setEditCustomerSuggestions] = useState<{ id: string; full_name: string }[]>([]);
+  const [showEditSuggestions, setShowEditSuggestions] = useState(false);
+  const editSuggestionsRef = useRef<HTMLDivElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+  const editDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Manage Employees Modal
   const [cashEmployees, setCashEmployees] = useState<{ id: string; name: string }[]>([]);
   const [employeesLoading, setEmployeesLoading] = useState(true);
@@ -176,6 +190,35 @@ export default function CashPaymentsPage() {
   // Edit Payment Modal
   const [editingPayment, setEditingPayment] = useState<CashPayment | null>(null);
   const [editForm, setEditForm] = useState<CashPayment | null>(null);
+
+  // ── Customer search helper (shared) ──────────────
+  const searchCustomers = useCallback(async (query: string): Promise<{ id: string; full_name: string }[]> => {
+    if (query.trim().length < 1) return [];
+    const { data, error } = await supabase
+      .from("customers")
+      .select("id, full_name")
+      .ilike("full_name", `%${query.trim()}%`)
+      .order("created_at", { ascending: false })
+      .limit(8);
+    if (error) { console.error("[CashPayments] customer search error:", error); return []; }
+    return data ?? [];
+  }, []);
+
+  // ── Close autocomplete on outside click ──────────
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (addSuggestionsRef.current && !addSuggestionsRef.current.contains(e.target as Node) &&
+          addInputRef.current && !addInputRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+      if (editSuggestionsRef.current && !editSuggestionsRef.current.contains(e.target as Node) &&
+          editInputRef.current && !editInputRef.current.contains(e.target as Node)) {
+        setShowEditSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // ── Load stores from Supabase ────────────────────
   useEffect(() => {
@@ -695,11 +738,52 @@ export default function CashPaymentsPage() {
                     disableSundays={false}
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 relative">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Job Name</label>
-                  <input required type="text" placeholder="e.g. Eric Lefebvre" value={form.jobName}
-                    onChange={(e) => setForm({ ...form, jobName: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]" />
+                  <input
+                    ref={addInputRef}
+                    required
+                    type="text"
+                    placeholder="Search client name..."
+                    value={form.jobName}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setForm({ ...form, jobName: val });
+                      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+                      if (val.trim().length < 1) { setCustomerSuggestions([]); setShowSuggestions(false); return; }
+                      debounceTimerRef.current = setTimeout(async () => {
+                        const results = await searchCustomers(val);
+                        setCustomerSuggestions(results);
+                        setShowSuggestions(results.length > 0);
+                      }, 300);
+                    }}
+                    onFocus={() => { if (customerSuggestions.length > 0) setShowSuggestions(true); }}
+                    autoComplete="off"
+                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+                  />
+                  {showSuggestions && customerSuggestions.length > 0 && (
+                    <div
+                      ref={addSuggestionsRef}
+                      className="absolute top-full left-0 right-0 mt-1 bg-[#181a18] border border-[#aeee2a]/20 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-[200px] overflow-y-auto z-50"
+                      style={{ scrollbarWidth: "thin" }}
+                    >
+                      {customerSuggestions.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setForm({ ...form, jobName: c.full_name });
+                            setShowSuggestions(false);
+                            setCustomerSuggestions([]);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-[#faf9f5] hover:bg-[#aeee2a]/10 hover:text-[#aeee2a] transition-colors flex items-center gap-2"
+                        >
+                          <span className="material-symbols-outlined text-[14px] text-[#ababa8]" translate="no">person</span>
+                          {c.full_name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -899,11 +983,52 @@ export default function CashPaymentsPage() {
                     disableSundays={false}
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 relative">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Job Name</label>
-                  <input required type="text" value={editForm.jobName}
-                    onChange={(e) => setEditForm({ ...editForm, jobName: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors" />
+                  <input
+                    ref={editInputRef}
+                    required
+                    type="text"
+                    placeholder="Search client name..."
+                    value={editForm.jobName}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditForm({ ...editForm, jobName: val });
+                      if (editDebounceTimerRef.current) clearTimeout(editDebounceTimerRef.current);
+                      if (val.trim().length < 1) { setEditCustomerSuggestions([]); setShowEditSuggestions(false); return; }
+                      editDebounceTimerRef.current = setTimeout(async () => {
+                        const results = await searchCustomers(val);
+                        setEditCustomerSuggestions(results);
+                        setShowEditSuggestions(results.length > 0);
+                      }, 300);
+                    }}
+                    onFocus={() => { if (editCustomerSuggestions.length > 0) setShowEditSuggestions(true); }}
+                    autoComplete="off"
+                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+                  />
+                  {showEditSuggestions && editCustomerSuggestions.length > 0 && (
+                    <div
+                      ref={editSuggestionsRef}
+                      className="absolute top-full left-0 right-0 mt-1 bg-[#181a18] border border-[#aeee2a]/20 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-[200px] overflow-y-auto z-50"
+                      style={{ scrollbarWidth: "thin" }}
+                    >
+                      {editCustomerSuggestions.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setEditForm({ ...editForm, jobName: c.full_name });
+                            setShowEditSuggestions(false);
+                            setEditCustomerSuggestions([]);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-[#faf9f5] hover:bg-[#aeee2a]/10 hover:text-[#aeee2a] transition-colors flex items-center gap-2"
+                        >
+                          <span className="material-symbols-outlined text-[14px] text-[#ababa8]" translate="no">person</span>
+                          {c.full_name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
