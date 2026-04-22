@@ -7,7 +7,7 @@ tags:
   - drag-and-drop
   - duração
 created: 2026-04-17
-updated: 2026-04-21
+updated: 2026-04-22
 ---
 
 # 📅 Job Schedule — Calendário Gantt Semanal
@@ -26,18 +26,75 @@ updated: 2026-04-21
 | **Drag & Drop** | Arrastar cards entre dias para reagendar |
 | **Categorias** | Filtro por serviço: Siding, Doors/Windows, Paint, Gutters, Roofing |
 | **Rows por Partner** | Cada linha representa um parceiro/crew ([[Crews e Partners]]) |
-| **Status Dinâmico** | `scheduled` (azul) → `in_progress` (verde) → `done` (verde forte) |
+| **Status Dinâmico** | `Pending` (vermelho) → `Confirmed` (azul) → `In Progress` (verde) → `Done` |
 | **Auto-Complete** | Jobs automaticamente marcados como `done` às 18h do último dia |
-| **Month Picker** | Seletor de mês/ano com navegação semanal |
+| **Month Picker** | Seletor de mês/ano — navega para primeira segunda-feira do mês selecionado |
 | **Cards Side-by-Side** | Cards sobrepostos no mesmo dia dividem espaço verticalmente (50/50) |
 | **Nome do Serviço** | Cada card mostra o nome real (ex: "Windows" ou "Doors"), não a categoria genérica |
 | **Auto-Confirm** | Status muda automaticamente para `Confirmed` quando hoje ≥ data de início |
 
 ---
 
-## Cards Sobrepostos (Side-by-Side)
+## Status do Job (Atualizado 22/04/2026)
 
-Quando múltiplos serviços (ex: Windows + Doors) são agendados no mesmo dia para o mesmo parceiro, os cards **dividem o espaço verticalmente**:
+| Status DB (`jobs.status`) | Label no Calendar | Cor | Ícone |
+|---------------------------|-------------------|-----|-------|
+| `draft` | **Pending** | 🔴 `#ef4444` (Vermelho) | Aguardando atribuição |
+| `active` | **Confirmed** | 🔵 `#60b8f5` (Azul) | Parceiro atribuído, agendado |
+| — | **In Progress** | 🟢 `#aeee2a` (Verde Lima) | Hoje está dentro do período |
+| — | **Done** | 🟢 `#22c55e` (Verde) | Após 18h do último dia |
+
+> [!IMPORTANT]
+> **"Tentative" foi renomeado para "Pending"** em 22/04/2026. A cor agora é **vermelha** (antes era amarela/laranja).
+
+### Regras de transição automática:
+
+| Cenário | Resultado |
+|---------|----------|
+| Job `Pending` + início **amanhã** | Mantém `Pending` |
+| Job `Pending` + início **hoje** | → `Confirmed` ✅ |
+| Job `Pending` + início **ontem** | → `Confirmed` ✅ |
+| Job `on_hold` + qualquer data | Mantém `Pending` (não altera) |
+
+> A transição é calculada no **frontend** ao carregar os dados.
+
+---
+
+## Atribuição Manual de Parceiros (Novo 22/04/2026)
+
+> [!IMPORTANT]
+> Parceiros/Crews **NÃO são atribuídos automaticamente** pelo sistema. O Admin (Nick) atribui manualmente via interface.
+
+### Fluxo:
+1. Projeto chega via Webhook → cria Job + Services (sem crew)
+2. Admin abre projeto → vê serviços sem parceiro
+3. Admin seleciona parceiro → Sistema cria `service_assignment` automaticamente
+4. Job aparece no calendário com datas calculadas
+
+### O que o sistema calcula ao criar a assignment:
+- **Duração** baseada no SQ e tabela do parceiro → [[Calculador de Duração por Parceiro]]
+- **Cascade** automática (Siding → Painting → Gutters → Roofing)
+- **Skip Sundays** — domingos são pulados
+- **Windows/Doors/Decks** com regras próprias de duração
+
+---
+
+## Month Picker (Corrigido 22/04/2026)
+
+O seletor de mês agora navega para a **primeira segunda-feira DENTRO do mês selecionado**:
+
+| Mês Clicado | Dia 1 | Primeira Segunda | Resultado |
+|-------------|-------|------------------|-----------|
+| Maio 2026 | Sexta | **4 de maio** | ✅ Exibe "maio" |
+| Março 2026 | Domingo | **2 de março** | ✅ Exibe "março" |
+| Junho 2026 | Segunda | **1 de junho** | ✅ Exibe "junho" |
+
+> [!NOTE]
+> Bug corrigido: antes o picker calculava o Monday da semana do dia 1, que podia cair no mês anterior.
+
+---
+
+## Cards Sobrepostos (Side-by-Side)
 
 | Overlap | Comportamento |
 |---------|---------------|
@@ -45,9 +102,9 @@ Quando múltiplos serviços (ex: Windows + Doors) são agendados no mesmo dia pa
 | 2 cards | Cada um ocupa 50% (lado a lado verticalmente) |
 | 3+ cards | Divide igualmente (33%, etc.) |
 
-- A row **aumenta de altura automaticamente** para acomodar múltiplos cards (`max(80px, N × 60px)`)
+- A row **aumenta de altura automaticamente** para acomodar múltiplos cards
 - Gap de 4px entre cards sobrepostos
-- Detecção de overlap baseada em day ranges (não apenas dia exato)
+- Detecção de overlap baseada em day ranges
 
 ---
 
@@ -58,16 +115,14 @@ Quando múltiplos serviços (ex: Windows + Doors) são agendados no mesmo dia pa
 | **Siding → Paint** | Ao mover um job de Siding, o job de Paint correspondente (mesmo cliente) se move automaticamente para o dia seguinte |
 | **Sunday Block** | Não permite agendar em Domingos (day OFF). **Sábado é dia útil** ✅ |
 | **Duration Awareness** | Barras se estendem corretamente por múltiplos dias |
-| **Auto-Confirm** | Jobs `Tentative` mudam automaticamente para `Confirmed` quando a data de início chega |
+| **Auto-Confirm** | Jobs `Pending` mudam automaticamente para `Confirmed` quando a data de início chega |
 | **Calculador de Duração** | Ao alterar SQ no modal, recalcula `durationDays` pela tabela do parceiro → [[Calculador de Duração por Parceiro]] |
 
 ---
 
-## Calculador de Duração por Parceiro (2026-04-21)
+## Calculador de Duração por Parceiro
 
 > **Detalhes completos:** [[Calculador de Duração por Parceiro]]
-
-Substituiu as fórmulas genéricas (`SQ÷8` e `SQ÷10`) por tabelas individuais por crew. **Módulo:** `lib/duration-calculator.ts`
 
 | Parceiro | Serviço | Lógica |
 |---------|---------|--------|
@@ -82,60 +137,6 @@ Substituiu as fórmulas genéricas (`SQ÷8` e `SQ÷10`) por tabelas individuais 
 
 ---
 
-## Auto-Confirm (Status Automático)
-
-
-O status do job no popup/modal muda automaticamente baseado na data:
-
-| Status DB (`jobs.status`) | Label no Popup | Comportamento |
-|---------------------------|----------------|---------------|
-| `draft` | **Tentative** (amarelo) | Padrão para jobs futuros |
-| `active` | **Confirmed** (verde) | Quando hoje ≥ data de início |
-| `on_hold` | **Pending** (vermelho) | Bloqueio manual, não é alterado |
-
-### Regras de transição automática:
-
-| Cenário | Resultado |
-|---------|----------|
-| Job `Tentative` + início **amanhã** | Mantém `Tentative` |
-| Job `Tentative` + início **hoje** | → `Confirmed` ✅ |
-| Job `Tentative` + início **ontem** | → `Confirmed` ✅ |
-| Job `Pending` + qualquer data | Mantém `Pending` (não altera) |
-
-> [!NOTE]
-> A transição é calculada no **frontend** ao carregar os dados. O status no banco (`jobs.status`) permanece inalterado até o usuário salvar.
-
----
-
-## Diferenciação de Serviços nos Cards
-
-Cada card no calendário mostra o **nome específico do serviço** ao invés da categoria genérica:
-
-| Antes | Agora |
-|-------|-------|
-| `DOORS WINDOWS` | `WINDOWS` (card 1) + `DOORS` (card 2) |
-| `DOORS WINDOWS` | `WINDOWS` (se só windows) |
-| `SIDING` | `SIDING` (sem mudança) |
-
-→ Usa `serviceNames[0]` (vindo de `service_types.name`) ao invés de `serviceType.replace("_", " ")`
-
----
-
-## Integração com Webhook
-
-Jobs criados via [[Webhook ClickOne]] aparecem automaticamente no calendário com:
-
-| Campo | Fonte | Resultado |
-|-------|-------|-----------|
-| **Data de início** | `customData.Agendamento` | Posição no calendário |
-| **Crew** | `Crew Lead` + defaults | Row do parceiro correto |
-| **Duração** | SQ × fórmula | Largura do card |
-| **Status** | `scheduled` | Card azul |
-
-→ Cascade automática: Siding → Painting → Gutters → Roofing
-
----
-
 ## Modal de Rescheduling
 
 - Seleção de nova data (DatePicker com domingos desabilitados)
@@ -143,7 +144,7 @@ Jobs criados via [[Webhook ClickOne]] aparecem automaticamente no calendário co
 - Seleção de SQ (square footage)
 - Crew assignment dropdown filtrado por especialidade
 - Preview de impacto (jobs afetados tipo Paint após Siding)
-- Status do job (active, draft, on_hold)
+- Status do job (Pending, Confirmed)
 
 ---
 
@@ -169,3 +170,4 @@ Jobs criados via [[Webhook ClickOne]] aparecem automaticamente no calendário co
 - [[Crews e Partners]]
 - [[New Project]]
 - [[Webhook ClickOne]]
+- [[Calculador de Duração por Parceiro]]

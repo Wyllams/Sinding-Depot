@@ -519,6 +519,24 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
       }).select("id").single();
       if (error) throw error;
       if (co && files.length > 0) await uploadFiles(co.id);
+
+      // Push notification to admins
+      try {
+        const selectedJob = jobs.find(j => j.id === jobId);
+        await fetch('/api/push/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: '📝 New Change Order',
+            body: `${title.trim()} — ${selectedJob?.customer_name || 'Project'} (${amount ? `$${parseFloat(amount).toLocaleString()}` : 'No amount'})`,
+            url: '/change-orders',
+            tag: 'change-order-created',
+            notificationType: 'change_order_created',
+            relatedEntityId: co?.id,
+          }),
+        });
+      } catch { /* non-blocking */ }
+
       onSaved();
     } catch (err) {
       console.error("[CreateChangeOrderModal] save error:", err);

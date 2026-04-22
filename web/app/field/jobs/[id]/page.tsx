@@ -196,6 +196,22 @@ export default function FieldJobDetail({
 
       if (error) throw new Error(error.message);
 
+      // Push notification to admins
+      try {
+        await fetch('/api/push/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: '📦 Extra Material Request',
+            body: `${profile?.full_name ?? 'Partner'} requested ${Number(materialQty)}x ${materialName.trim()} for ${job?.title || 'a project'}`,
+            url: `/projects/${jobId}`,
+            tag: 'extra-material-request',
+            notificationType: 'extra_material_request',
+            relatedEntityId: jobId,
+          }),
+        });
+      } catch { /* non-blocking */ }
+
       // Success
       setShowMaterialModal(false);
       setMaterialName("");

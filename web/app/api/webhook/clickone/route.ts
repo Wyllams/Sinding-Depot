@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
+import { sendPushToAdmins } from '@/lib/send-push';
 
 // NOTE: Client is created inside the handler (not at module level)
 // so that env vars are available at request-time, not build-time.
@@ -874,6 +875,20 @@ export async function POST(req: Request) {
       .eq("id", newJob.id);
 
     console.log("✅ ClickOne job successfully registered:", jobNumber);
+
+    // ── Push Notification: Notify admins about new project ──
+    try {
+      await sendPushToAdmins({
+        title: '📋 New Project from ClickOne',
+        body: `${clientName} — ${rawServices} (${jobNumber})`,
+        url: `/projects/${newJob.id}`,
+        tag: 'new-project-webhook',
+        notificationType: 'new_project',
+        relatedEntityId: newJob.id,
+      });
+    } catch (pushErr) {
+      console.error('[Webhook] Push notification failed (non-blocking):', pushErr);
+    }
 
     return NextResponse.json({
       success: true,

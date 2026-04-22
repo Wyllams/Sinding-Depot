@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
 import { generateSignedPDF, type SignedDocumentPDFData } from "@/lib/pdf/signed-document";
 import { sendSignedDocumentEmail } from "@/lib/email/send-signed-document";
+import { sendPushToAdmins } from "@/lib/send-push";
 
 // ── Server-side Supabase client (service role for bypassing RLS) ──
 const supabaseAdmin = createClient(
@@ -148,6 +149,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     } catch (notifErr) {
       // Notification failure should NOT block the signing response
       console.error("[sign] Notification error (non-blocking):", notifErr);
+    }
+
+    // ── 7b. Push notification to admins ──
+    try {
+      const { data: jobForPush } = await supabaseAdmin
+        .from("jobs")
+        .select("customers (full_name)")
+        .eq("id", milestone.job_id)
+        .single();
+      const pushName = (jobForPush as any)?.customers?.full_name ?? "A customer";
+
+      await sendPushToAdmins({
+        title: '✍️ Document Signed',
+        body: `${pushName} signed "${milestone.title}"`,
+        url: `/projects/${milestone.job_id}`,
+        tag: 'document-signed',
+        notificationType: 'document_signed',
+        relatedEntityId: milestone.id,
+      });
+    } catch (pushErr) {
+      console.error('[sign] Push notification failed (non-blocking):', pushErr);
     }
 
     // ┌──────────────────────────────────────────────────────┐

@@ -177,6 +177,25 @@ graph LR
 → Calculador: [[Calculador de Duração por Parceiro]]
 → Schedule: [[Job Schedule]]
 
+### 2026-04-22 — Atribuição Manual, Pending Status, Close Date, Material Extra
+
+| Feature | Descrição | Arquivos |
+|---------|-----------|----------|
+| **Atribuição Manual de Parceiros** | Webhook não atribui mais crews automaticamente — admin faz manualmente | `webhook/clickone/route.ts`, `projects/[id]/page.tsx`, `crews/page.tsx` |
+| **Close Date → Sold Date** | `Close_date` do ClickOne agora popula `contract_signed_at` automaticamente | `webhook/clickone/route.ts` |
+| **Tentative → Pending (vermelho)** | Status renomeado e cor alterada de amarelo para vermelho | `schedule/page.tsx`, `projects/page.tsx` |
+| **Webhook Status = Pending** | Jobs do webhook entram com status `pending` (antes `draft`) | `webhook/clickone/route.ts` |
+| **Solicitação de Material Extra** | Parceiros solicitam material pelo portal com nome, quantidade, tamanho e nota | `field/jobs/page.tsx`, `projects/[id]/page.tsx` |
+| **Portal Parceiro — My Jobs real** | Dados reais do banco via RLS (não mais fictício) | `field/jobs/page.tsx` |
+| **Month Picker fix** | Corrigido bug que selecionava o mês errado no calendário | `schedule/page.tsx` |
+| **Pause: Scheduling** | Flag global `SCHEDULING_PAUSED` impede criação automática de agendamentos | `lib/scheduling-flag.ts` |
+| **Pause: Welcome Email** | Flag `CUSTOMER_PORTAL_EMAIL_PAUSED` impede envio de email de boas-vindas | `webhook/clickone/route.ts` |
+
+→ Detalhes: [[Changelog 2026-04-22]]
+→ Webhook: [[Webhook ClickOne]]
+→ Schedule: [[Job Schedule]]
+→ Portal: [[Field App]]
+
 ---
 
 > [!NOTE]

@@ -1,6 +1,7 @@
 import { Sidebar } from "../../components/Sidebar";
 import { SidebarProvider } from "../../components/SidebarContext";
 import { UndoProvider } from "../../components/UndoContext";
+import { PushNotificationInit } from "../../components/pwa/PushNotificationInit";
 
 export default function ShellLayout({
   children,
@@ -16,6 +17,7 @@ export default function ShellLayout({
             {children}
           </div>
         </div>
+        <PushNotificationInit />
       </UndoProvider>
     </SidebarProvider>
   );

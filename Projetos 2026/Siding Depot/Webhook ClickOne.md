@@ -7,7 +7,7 @@ tags:
   - crm
   - automação
 created: 2026-04-17
-updated: 2026-04-20
+updated: 2026-04-22
 ---
 
 # 🔗 Webhook ClickOne — Integração CRM
@@ -18,7 +18,7 @@ updated: 2026-04-20
 
 ---
 
-## Fluxo Completo
+## Fluxo Completo (Atualizado 22/04)
 
 ```mermaid
 sequenceDiagram
@@ -26,23 +26,26 @@ sequenceDiagram
     participant API as Next.js API Route
     participant DB as Supabase DB
     participant Auth as Supabase Auth
-    participant Email as Gmail SMTP
 
     CRM->>API: POST /api/webhook/clickone
     API->>DB: Upsert Customer
     API->>Auth: Create Auth User (customer role)
     API->>DB: Create Profile
     API->>DB: Update Customer (portal credentials)
-    API->>Email: Send Welcome Email (Gmail SMTP)
+    Note over API: ⏸️ Welcome Email PAUSADO
     API->>DB: Resolve Salesperson (VendedorOP vs VendedorUser)
-    API->>DB: Create Job (com Agendamento + Crew Lead)
+    API->>DB: Create Job (status: pending)
     API->>DB: Create Job Services (com cascade)
-    API->>DB: Create Service Assignments (datas + crews)
+    Note over API: ❌ NÃO cria Service Assignments
+    Note over API: Admin atribui parceiro manualmente
     API->>DB: Create Window Order (if applicable)
     API->>DB: Update Sales Snapshot
-    API->>DB: Set contract_signed_at
+    API->>DB: Set contract_signed_at (Close_date)
     API-->>CRM: 200 OK
 ```
+
+> [!IMPORTANT]
+> **Mudança crítica (22/04/2026):** O webhook **NÃO cria mais `service_assignments` automaticamente**. O admin (Nick) atribui parceiros manualmente via interface do projeto. Quando o admin seleciona um parceiro, o sistema cria o agendamento com toda a lógica de cascade, SQ, duração, etc.
 
 ---
 
@@ -64,11 +67,38 @@ Os campos podem vir no root do payload OU dentro de `customData`:
 | `Valor` (customData) | `{{opportunity.lead_value}}` | → `jobs.contract_amount` |
 | `Squares` (customData) | `{{opportunity.squares}}` | → `jobs.sq` |
 | `Agendamento` (customData) | `{{appointment.only_start_date}}` | → `jobs.requested_start_date` |
+| `Close_date` (customData) | `{{contact.close_date}}` | → `jobs.contract_signed_at` (Sold Date) |
 | `Services` (root) | — | → `job_services` + cascade |
-| `Crew Lead` (root) | — | → `service_assignments.crew_id` |
+| `Crew Lead` (root) | — | ⚠️ Capturado mas **NÃO atribui** automaticamente |
 
 > [!NOTE]
 > O ClickOne envia campos personalizados dentro do objeto `customData`. O webhook extrai de ambos os locais (root e customData) com fallbacks múltiplos.
+
+---
+
+## Close Date → Sold Date (Novo 22/04)
+
+O campo `Close_date` do ClickOne é mapeado diretamente para o campo `contract_signed_at` (Sold Date) no sistema:
+
+| Campo ClickOne | Campo Siding Depot | Tipo |
+|----------------|-------------------|------|
+| `Close_date` / `close_date` / `CloseDate` | `jobs.contract_signed_at` | `date` |
+
+- Se o ClickOne enviar `Close_date`, usa a **data real** do fechamento
+- Se não enviar, usa a **data de hoje** como fallback
+
+---
+
+## Job Start Status (Atualizado 22/04)
+
+| Status no Banco | Label na UI | Cor |
+|----------------|-------------|-----|
+| `draft` | **Pending** | 🔴 Vermelho |
+| `active` | **Confirmed** | 🟢 Verde |
+| `on_hold` | **Pending** | 🔴 Vermelho |
+
+> [!WARNING]
+> O status anterior "Tentative" foi **renomeado para "Pending"**. Todos os projetos que entram via webhook agora recebem status `draft` → exibido como "Pending" (vermelho).
 
 ---
 
@@ -118,49 +148,33 @@ O campo `customData.Agendamento` define a **data de início** do projeto:
 3. **Data de hoje** (último recurso)
 
 → Salvo em `jobs.requested_start_date`
-→ Usado como data base para toda a **cascata de serviços**
 
 ---
 
-## Crew Lead (Parceiro Responsável)
+## Atribuição de Parceiros — Fluxo Manual (Novo 22/04)
 
-O campo `Crew Lead` define o **parceiro principal** que vai executar o serviço:
+> [!IMPORTANT]
+> O sistema **NÃO atribui parceiros/crews automaticamente**. Toda atribuição é feita manualmente pelo Admin.
 
-| Campo | Exemplo | Comportamento |
-|-------|---------|---------------|
-| `Crew Lead` | `"Xicara"` | Busca crew no banco (case-insensitive) |
+### Fluxo:
 
-### Resolução por Especialidade:
+```mermaid
+graph LR
+    A[Webhook cria Job + Services] --> B[Admin abre projeto]
+    B --> C[Admin seleciona Parceiro para cada serviço]
+    C --> D[Sistema cria agendamento com cascade completa]
+```
 
-O sistema busca as **especialidades da crew** via tabela `crew_specialties` e atribui ao serviço correspondente:
-
-| Crew Lead | Especialidades (do banco) | Atribuído a |
-|-----------|---------------------------|-------------|
-| `Xicara` | Siding Installation | Siding |
-| `Osvin` | Painting | Painting |
-| `Sergio` | Windows, Doors | Windows + Doors |
-| `Leandro` | Gutters | Gutters |
-| `Josue` | Roofing | Roofing |
-
-**Serviços que o Crew Lead não cobre → usam crew default:**
-
-| Serviço | Default Crew |
-|---------|-------------|
-| Siding | XICARA |
-| Painting | OSVIN |
-| Windows | SERGIO |
-| Doors | SERGIO |
-| Gutters | LEANDRO |
-| Roofing | JOSUE |
-
-> **Exemplo:** `Crew Lead = "Osvin"` + `Services = "Siding, Paint"`
-> → Painting = **OSVIN** (crew lead), Siding = **XICARA** (default)
+### O que acontece quando o Admin atribui um parceiro:
+1. Calcula **duração** baseada no SQ e tabela do parceiro
+2. Calcula **datas** com cascade (Siding → Painting → Gutters → Roofing)
+3. **Pula domingos** automaticamente
+4. Cria `service_assignment` com status `scheduled`
+5. Job aparece no calendário imediatamente
 
 ---
 
 ## Cascata de Agendamento
-
-Quando o webhook cria serviços, as datas são calculadas automaticamente usando a mesma lógica do `New Project`:
 
 ### Duração por SQ (Square Footage):
 
@@ -182,59 +196,26 @@ graph LR
     A -.->|paralelo| E[Windows/Doors]
 ```
 
-| Serviço | Predecessores | Início |
-|---------|--------------|--------|
-| Siding | — | Data do Agendamento |
-| Windows/Doors | — (paralelo) | Data do Agendamento |
-| Painting | Siding | Dia após fim do Siding |
-| Gutters | Painting → Siding | Dia após fim do Painting |
-| Roofing | Gutters → Painting → Siding | Dia após fim do Gutters |
-
 ### Regras de negócio automáticas:
 
 - Se tem **Siding** sem **Painting** → Painting é adicionado automaticamente
 - Se tem **Gutters** sem **Roofing** → Roofing é adicionado automaticamente
 - **Domingos** são pulados (dia de folga)
-- Cria `service_assignments` com status `scheduled` e datas calculadas
-
-### Exemplo concreto (18 SQ, início 22/04):
-
-| Serviço | Início | Duração | Fim | Crew |
-|---------|--------|---------|-----|------|
-| Siding | 22/04 (Qua) | 3 dias | 24/04 (Sex) | XICARA |
-| Windows | 22/04 (Qua) | 1 dia | 22/04 (Qua) | SERGIO |
-| Painting | 25/04 (Sáb) | 2 dias | 27/04 (Seg) | OSVIN |
 
 ---
 
 ## Customer Portal Auto-Generation
 
 | Campo | Formato | Exemplo |
-|-------|---------|---------
+|-------|---------|---------|
 | **Username** | `FirstName_LastName` | `Nick_Magalhaes` |
 | **Password** | `FirstNameX*Year` | `NickM*2026` |
 | **Portal Email** | `username@customer.sidingdepot.app` | `nick_magalhaes@customer.sidingdepot.app` |
 
-→ Credenciais enviadas via **Welcome Email** (Gmail SMTP / Nodemailer)
-→ **Proteção contra duplicação:** Verifica `customers.profile_id` antes de criar — se já existir, pula a criação.
+→ Credenciais criadas automaticamente no banco
+→ **Welcome Email PAUSADO** (flag `CUSTOMER_PORTAL_EMAIL_PAUSED = true`)
+→ **Proteção contra duplicação:** Verifica `customers.profile_id` antes de criar
 → Veja: [[Customer Portal]] | [[Credenciais Customer Portal]]
-
----
-
-## Envio de Email (Gmail SMTP)
-
-| Configuração | Variável de Ambiente |
-|-------------|---------------------|
-| **Email de envio** | `GMAIL_USER` |
-| **Senha de app** | `GMAIL_APP_PASSWORD` |
-
-- Biblioteca: `nodemailer` com `service: 'gmail'`
-- O email contém: nome do cliente, username, password e botão "Access Your Portal"
-- Mensagem: *"Your project with Siding Depot has been successfully closed."*
-- Se o envio falhar, o job é criado normalmente (non-blocking)
-
-> [!WARNING]
-> O Gmail tem limite de **500 emails/dia** (conta pessoal). Para escala, considerar migrar para domínio próprio via Resend.
 
 ---
 
@@ -256,16 +237,16 @@ graph LR
 
 ## Automações Disparadas
 
-| Automação | Módulo relacionado |
-|-----------|-------------------|
-| Criação de Customer | [[Banco de Dados]] |
-| Criação de Auth User | [[Autenticação e Controle de Acesso]] |
-| Criação de Job | [[Projects]] |
-| Criação de Job Services | [[Projects]] |
-| **Criação de Service Assignments (cascade)** | [[Job Schedule]] |
-| Criação de Window Order | [[Windows e Doors Tracker]] |
-| Update Sales Snapshot | [[Sales Reports]] |
-| Welcome Email (Gmail) | [[Customer Portal]] |
+| Automação | Status | Módulo relacionado |
+|-----------|--------|-------------------|
+| Criação de Customer | ✅ Ativo | [[Banco de Dados]] |
+| Criação de Auth User | ✅ Ativo | [[Autenticação e Controle de Acesso]] |
+| Criação de Job (status: pending) | ✅ Ativo | [[Projects]] |
+| Criação de Job Services | ✅ Ativo | [[Projects]] |
+| **Criação de Service Assignments** | ❌ **Removido** | Admin atribui manualmente |
+| Criação de Window Order | ✅ Ativo | [[Windows e Doors Tracker]] |
+| Update Sales Snapshot | ✅ Ativo | [[Sales Reports]] |
+| Welcome Email (Gmail) | ⏸️ **Pausado** | [[Customer Portal]] |
 
 ---
 
@@ -276,15 +257,6 @@ graph LR
 - Se job falhar → retorna HTTP 500 com mensagem de erro
 - Se customer já tem `profile_id` → pula criação de portal (proteção contra duplicação)
 - Se `service_type` não encontrado → pula serviço e loga warning
-- Se `Crew Lead` não encontrado → usa crews default
-
----
-
-## Endpoint de Teste de Email
-
-**Rota:** `GET /api/test-email`
-
-Endpoint temporário para validar se o Gmail SMTP está configurado corretamente. Envia um email de teste para `bionej20@gmail.com` e retorna o resultado.
 
 ---
 
@@ -297,3 +269,4 @@ Endpoint temporário para validar se o Gmail SMTP está configurado corretamente
 - [[Job Schedule]]
 - [[Crews e Partners]]
 - [[New Project]]
+- [[Field App — Portal de Campo]]
