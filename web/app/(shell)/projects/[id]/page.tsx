@@ -2434,8 +2434,139 @@ export default function ProjectDetailPage() {
                         Partner: <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Choose what to edit:
                       </p>
 
+                      {/* ── Sub-Services Toggle (Mark / Unmark) ── */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-[#747673]">Services</label>
+                        <div className="space-y-1.5">
+                          {(openPartnerModal.subServices ?? []).map((sub: { id: string; label: string; icon: string }) => {
+                            const isActive = job.services.some((s: any) => s.service_type?.name?.toLowerCase() === sub.id);
+                            return (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                onClick={async () => {
+                                  if (isActive) {
+                                    // ── REMOVE service ──
+                                    const existing = job.services.find((s: any) => s.service_type?.name?.toLowerCase() === sub.id);
+                                    if (!existing) return;
+                                    await handleRemoveService(existing.id);
+
+                                    // Also remove related window_orders if removing "windows" or "doors"
+                                    if (sub.id === "windows" || sub.id === "doors") {
+                                      const { error: woErr } = await supabase
+                                        .from("window_orders")
+                                        .delete()
+                                        .eq("job_id", job.id);
+                                      if (woErr) console.error("[EditMenu] Error removing window_orders:", woErr);
+                                      else console.log("[EditMenu] Removed window_orders for job:", job.id);
+                                    }
+
+                                    await fetchJob();
+                                    setSelectedSubSvcs((prev) => prev.filter((x) => x !== sub.id));
+
+                                    // If no sub-services remain active, close modal and clear partner
+                                    const remainingActive = (openPartnerModal.subServices ?? [])
+                                      .filter((s: { id: string }) => s.id !== sub.id)
+                                      .some((s: { id: string }) => job.services.some((js: any) => js.service_type?.name?.toLowerCase() === s.id));
+                                    if (!remainingActive) {
+                                      setAssignedPartners((prev) => { const n = { ...prev }; delete n[openPartnerModal.id]; return n; });
+                                      setOpenPartnerModal(null);
+                                    }
+                                  } else {
+                                    // ── RE-ADD service ──
+                                    // 1. Fetch service_type_id
+                                    let allTypes = allServiceTypes;
+                                    if (!allTypes.length) {
+                                      const { data } = await supabase.from("service_types").select("id, name").order("name");
+                                      allTypes = data || [];
+                                      setAllServiceTypes(allTypes);
+                                    }
+                                    const svcType = allTypes.find((t: any) => t.name.toLowerCase() === sub.id);
+                                    if (!svcType) { console.error("[EditMenu] service_type not found for", sub.id); return; }
+
+                                    // 2. Create job_service
+                                    const { data: newSvc, error: svcErr } = await supabase
+                                      .from("job_services")
+                                      .insert({ job_id: job.id, service_type_id: svcType.id, scope_of_work: `${sub.label} service` })
+                                      .select("id, service_type:service_types(name)")
+                                      .single();
+                                    if (svcErr || !newSvc) { console.error("[EditMenu] Error creating job_service:", svcErr); return; }
+
+                                    // 3. Calculate duration and create assignment (skip for decks — needs scope selection first)
+                                    if (sub.id !== "decks") {
+                                      const sq = job.sq ?? 0;
+                                      const partnerName = assignedPartners[openPartnerModal.id] || "SERGIO";
+                                      const dur = calculateServiceDuration(partnerName, sub.id, sq);
+                                      const jobStartDate = job.requested_start_date;
+                                      const todayIso = new Date().toISOString().split("T")[0];
+                                      let startIso = todayIso;
+                                      if (jobStartDate && todayIso <= jobStartDate) startIso = jobStartDate;
+
+                                      // Skip Sunday
+                                      const sd = new Date(startIso + "T12:00:00");
+                                      if (sd.getDay() === 0) { sd.setDate(sd.getDate() + 1); startIso = sd.toISOString().split("T")[0]; }
+
+                                      // Add working days
+                                      const ed = new Date(startIso + "T12:00:00");
+                                      let rem = dur - 1;
+                                      while (rem > 0) { ed.setDate(ed.getDate() + 1); if (ed.getDay() !== 0) rem--; }
+                                      const endIso = ed.toISOString().split("T")[0];
+
+                                      const startAt = new Date(startIso + "T08:00:00");
+                                      const endAt = new Date(endIso + "T12:00:00");
+                                      endAt.setDate(endAt.getDate() + 1);
+
+                                      // Find crew and specialty
+                                      const crewNameMap: Record<string, string> = { windows: "SERGIO", doors: "SERGIO", decks: "SERGIO" };
+                                      const crewDefault = crewNameMap[sub.id] || "SERGIO";
+                                      const { data: crewMatch } = await supabase.from("crews").select("id").ilike("name", crewDefault).limit(1);
+                                      const crewId = crewMatch?.[0]?.id || null;
+
+                                      const specNameMap: Record<string, string> = { windows: "Windows", doors: "Doors", decks: "Deck Building" };
+                                      const specName = specNameMap[sub.id] || sub.id;
+                                      const { data: specMatch } = await supabase.from("specialties").select("id").ilike("name", specName).limit(1);
+                                      const specialtyId = specMatch?.[0]?.id || null;
+
+                                      const { error: assignErr } = await supabase.from("service_assignments").insert({
+                                        job_service_id: newSvc.id,
+                                        crew_id: crewId,
+                                        specialty_id: specialtyId,
+                                        status: "scheduled",
+                                        scheduled_start_at: startAt.toISOString(),
+                                        scheduled_end_at: endAt.toISOString(),
+                                      });
+                                      if (assignErr) console.error("[EditMenu] assignment error:", assignErr);
+                                      else console.log("[EditMenu] Re-added", sub.id, ":", startIso, "->", endIso);
+                                    }
+
+                                    await fetchJob();
+                                    setSelectedSubSvcs((prev) => [...prev, sub.id]);
+
+                                    // If re-adding decks, go to deckscope step
+                                    if (sub.id === "decks") {
+                                      setWindowsStep("edit_deckscope");
+                                    }
+                                  }
+                                }}
+                                className={`flex items-center justify-between w-full p-3 rounded-xl border transition-all ${isActive ? 'border-[#f5a623]/30 bg-[#f5a623]/5 hover:bg-[#f5a623]/10' : 'border-[#474846]/20 bg-[#181a18] hover:bg-[#242624] hover:border-[#f5a623]/20'}`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-[#f5a623]/20' : 'bg-[#242624]'}`}>
+                                    <span className={`material-symbols-outlined text-[18px] ${isActive ? 'text-[#f5a623]' : 'text-[#747673]'}`} translate="no">{sub.icon}</span>
+                                  </div>
+                                  <span className={`text-sm font-bold uppercase tracking-wide ${isActive ? 'text-[#faf9f5]' : 'text-[#747673]'}`}>{sub.label}</span>
+                                </div>
+                                <div className={`w-10 h-6 rounded-full flex items-center transition-all ${isActive ? 'bg-[#f5a623] justify-end' : 'bg-[#474846]/40 justify-start'}`}>
+                                  <div className={`w-4 h-4 rounded-full mx-1 transition-all ${isActive ? 'bg-[#000]' : 'bg-[#747673]'}`} />
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       {/* Windows Config button (only if windows is active) */}
-                      {selectedSubSvcs.includes("windows") && (
+                      {job.services.some((s: any) => s.service_type?.name?.toLowerCase() === "windows") && (
                         <button
                           type="button"
                           onClick={() => setWindowsStep("edit_windows")}
@@ -2453,7 +2584,7 @@ export default function ProjectDetailPage() {
                       )}
 
                       {/* Deck Scope button (only if decks is active) */}
-                      {selectedSubSvcs.includes("decks") && (
+                      {job.services.some((s: any) => s.service_type?.name?.toLowerCase() === "decks") && (
                         <button
                           type="button"
                           onClick={() => setWindowsStep("edit_deckscope")}
