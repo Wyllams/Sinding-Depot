@@ -461,6 +461,7 @@ export default function NewProjectPage() {
         requested_start_date: startDate || null,
         target_completion_date: endDate || null,
         contract_amount: contractAmount ? parseFloat(contractAmount) : null,
+        contract_signed_at: new Date().toISOString().split("T")[0],
         sq: sq ? parseFloat(sq) : null,
         gate_status: gateStatus,
         description: notes

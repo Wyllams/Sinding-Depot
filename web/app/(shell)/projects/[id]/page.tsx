@@ -242,6 +242,7 @@ interface JobDetail {
   salesperson: { full_name: string } | null;
   salesperson_id?: string | null;
   contract_amount?: number | null;
+  contract_signed_at?: string | null;
   sq?: number | null;
   services: { id: string; service_type: { name: string } | null }[];
   blockers: { id: string; title: string; type: string; status: string }[];
@@ -579,7 +580,7 @@ export default function ProjectDetailPage() {
         .from("jobs")
         .select(`
           id, job_number, title, status, gate_status, city, state, service_address_line_1, postal_code,
-          requested_start_date, target_completion_date, description, salesperson_id, contract_amount, sq,
+          requested_start_date, target_completion_date, contract_signed_at, description, salesperson_id, contract_amount, sq,
           customer:customers (id, full_name, email, phone),
           salesperson:salespersons (full_name),
           services:job_services (
@@ -626,6 +627,7 @@ export default function ProjectDetailPage() {
         salesperson: j.salesperson,
         salesperson_id: j.salesperson_id,
         contract_amount: j.contract_amount ?? null,
+        contract_signed_at: j.contract_signed_at ?? null,
         sq: j.sq ?? null,
         services: j.services ?? [],
         blockers: j.blockers ?? [],
@@ -1260,6 +1262,15 @@ export default function ProjectDetailPage() {
                       className={`${detailInputCls} pl-8 font-black`}
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <label className={detailLabelCls}>Sold Date</label>
+                  <CustomDatePicker
+                    value={job.contract_signed_at ?? ''}
+                    onChange={(iso) => handleAutoSave("jobs", job.id, "contract_signed_at", iso || null)}
+                    placeholder="Set date"
+                    disableSundays={false}
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className={detailLabelCls}>SQ (Square)</label>
