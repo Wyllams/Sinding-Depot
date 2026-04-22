@@ -18,7 +18,7 @@ const DISCIPLINE_VIS: Record<string, { icon: string; color: string }> = {
   painting: { icon: "format_paint", color: "#60b8f5" },
   gutters:  { icon: "water_drop",   color: "#c084fc" },
   roofing:  { icon: "roofing",      color: "#ef4444" },
-  decks:    { icon: "deck",         color: "#22d3ee" },
+  decks:    { icon: "deck",         color: "#f5a623" },
 };
 
 // ─── All available services (matches Create Job layout — with partners) ──
@@ -34,8 +34,8 @@ const DWD_SUB_SERVICES: SubServiceDef[] = [
 const ALL_SERVICES: ServiceDef[] = [
   { id: "siding",   icon: "view_day",       label: "Siding",   color: "#aeee2a", partners: ["SIDING DEPOT", "XICARA", "XICARA 02", "WILMAR", "WILMAR 02", "SULA", "LUIS"] },
   { id: "gutters",  icon: "horizontal_rule", label: "Gutters",  color: "#c084fc", partners: ["SIDING DEPOT", "LEANDRO"] },
-  { id: "painting", icon: "format_paint",   label: "Painting", color: "#f5a623", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
-  { id: "doors_windows_decks", icon: "window", label: "Doors / Windows / Decks", color: "#60b8f5", partners: ["SIDING DEPOT", "SERGIO"], subServices: DWD_SUB_SERVICES },
+  { id: "painting", icon: "format_paint",   label: "Painting", color: "#60b8f5", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
+  { id: "doors_windows_decks", icon: "window", label: "Doors / Windows / Decks", color: "#f5a623", partners: ["SIDING DEPOT", "SERGIO"], subServices: DWD_SUB_SERVICES },
   { id: "roofing",  icon: "roofing",        label: "Roofing",  color: "#ef4444", partners: ["SIDING DEPOT", "JOSUE"] },
   { id: "dumpster", icon: "delete",         label: "Dumpster", color: "#64748b", partners: ["SIDING DEPOT"] },
 ];
@@ -475,8 +475,17 @@ export default function ProjectDetailPage() {
   const [assignedPartners, setAssignedPartners] = useState<Record<string, string>>({});
   const [windowCount, setWindowCount] = useState("");
   const [windowTrim, setWindowTrim] = useState<"yes" | "no" | "">("");
-  const [windowsStep, setWindowsStep] = useState<"partner" | "subservices" | "config">("partner");
+  const [windowsStep, setWindowsStep] = useState<"partner" | "subservices" | "config" | "deckscope" | "edit_menu" | "edit_windows" | "edit_deckscope">("partner");
   const [selectedSubSvcs, setSelectedSubSvcs] = useState<string[]>([]);
+
+  // ── Decks scope config ──
+  const DECK_SCOPE_OPTIONS = [
+    { value: "rebuild_demo", label: "Deck Rebuild (Demo)", days: 5 },
+    { value: "rebuild_porch", label: "Deck Rebuild (W/ Porch)", days: 10 },
+    { value: "floor_replacement", label: "Floor Replacement", days: 4 },
+    { value: "railing", label: "Railing", days: 1 },
+  ];
+  const [deckScope, setDeckScope] = useState("");
 
   const handleAutoSave = async (
     table: "jobs" | "customers",
@@ -870,6 +879,11 @@ export default function ProjectDetailPage() {
 
       // Duration calculator — uses partner-specific SQ tables
       const calcDuration = (code: string, partnerName: string): number => {
+        // If decks and a scope is selected, use scope-based duration
+        if (code === "decks" && deckScope) {
+          const opt = DECK_SCOPE_OPTIONS.find(o => o.value === deckScope);
+          if (opt) return opt.days;
+        }
         return calculateServiceDuration(partnerName, code, sq);
       };
 
@@ -919,8 +933,8 @@ export default function ProjectDetailPage() {
         const duration = calcDuration(svcCode, crewForDuration);
         let startIso = todayIso; // Default: today
 
-        // For windows/doors: use today if project already started, else job start
-        if (svcCode === "windows" || svcCode === "doors") {
+        // For windows/doors/decks: use today if project already started, else job start
+        if (svcCode === "windows" || svcCode === "doors" || svcCode === "decks") {
           if (jobStartDate && todayIso <= jobStartDate) {
             startIso = jobStartDate;
           }
@@ -962,7 +976,7 @@ export default function ProjectDetailPage() {
         const specialtyNameMap: Record<string, string> = {
           siding: "Siding Installation", painting: "Painting",
           gutters: "Gutters", roofing: "Roofing",
-          windows: "Windows", doors: "Doors", decks: "Decks",
+          windows: "Windows", doors: "Doors", decks: "Deck Building",
         };
         const specName = specialtyNameMap[svcCode] || svcCode;
         const { data: specMatch } = await supabase
@@ -1368,7 +1382,13 @@ export default function ProjectDetailPage() {
                       .filter((sub) => job.services.some((s: any) => s.service_type?.name?.toLowerCase() === sub.id))
                       .map((sub) => sub.id);
                     setSelectedSubSvcs(activeSubs);
-                    setWindowsStep("partner");
+                    
+                    // If partner already assigned, show edit menu instead of partner step
+                    if (assignedPartners[svc.id]) {
+                      setWindowsStep("edit_menu");
+                    } else {
+                      setWindowsStep("partner");
+                    }
                   } else if (svc.id === "windows") {
                     setWindowsStep("partner");
                   }
@@ -2102,7 +2122,7 @@ export default function ProjectDetailPage() {
                     <div>
                       <h2 className="text-xl font-black text-white uppercase tracking-tight">{openPartnerModal.label}</h2>
                       <p className="text-xs text-[#ababa8] mt-1 font-medium">
-                        {windowsStep === "partner" ? "Select a partner" : windowsStep === "subservices" ? "Select services" : "Configure windows"}
+                        {windowsStep === "partner" ? "Select a partner" : windowsStep === "subservices" ? "Select services" : windowsStep === "config" ? "Configure windows" : windowsStep === "deckscope" ? "Configure deck scope" : windowsStep === "edit_menu" ? "Edit configuration" : windowsStep === "edit_windows" ? "Edit windows config" : windowsStep === "edit_deckscope" ? "Edit deck scope" : ""}
                       </p>
                     </div>
                   </div>
@@ -2157,7 +2177,7 @@ export default function ProjectDetailPage() {
                       {assignedPartners[openPartnerModal.id] && (
                         <button type="button" onClick={() => {
                           const c = { ...assignedPartners }; delete c[openPartnerModal.id]; setAssignedPartners(c);
-                          setWindowCount(""); setWindowTrim(""); setSelectedSubSvcs([]); setOpenPartnerModal(null);
+                          setWindowCount(""); setWindowTrim(""); setSelectedSubSvcs([]); setDeckScope(""); setOpenPartnerModal(null);
                         }} className="mt-4 flex items-center justify-center p-3 rounded-xl border border-dashed border-[#ba1212]/30 text-[#ba1212] hover:bg-[#ba1212]/10 transition-colors">
                           <span className="text-xs font-bold uppercase tracking-wider">Unassign Partner</span>
                         </button>
@@ -2170,21 +2190,21 @@ export default function ProjectDetailPage() {
                     <div className="space-y-5">
                       <div className="flex items-center gap-2 pb-4 border-b border-white/5">
                         <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-full bg-[#60b8f5] flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center">
                             <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span>
                           </div>
-                          <span className="text-[10px] font-bold text-[#60b8f5] uppercase tracking-wider">Partner</span>
+                          <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Partner</span>
                         </div>
                         <div className="w-8 h-px bg-[#474846]"></div>
                         <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-full bg-[#60b8f5]/20 border border-[#60b8f5] flex items-center justify-center">
-                            <span className="text-[10px] font-black text-[#60b8f5]">2</span>
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center">
+                            <span className="text-[10px] font-black text-[#f5a623]">2</span>
                           </div>
                           <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Select Services</span>
                         </div>
                       </div>
                       <p className="text-xs text-[#ababa8]">
-                        Assigned to <span className="text-[#60b8f5] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Select which services to include:
+                        Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Select which services to include:
                       </p>
                       {openPartnerModal.subServices.map((sub) => {
                         const checked = selectedSubSvcs.includes(sub.id);
@@ -2214,6 +2234,8 @@ export default function ProjectDetailPage() {
                               types = data || []; setAllServiceTypes(types);
                             }
                             for (const subId of selectedSubSvcs) {
+                              // Skip decks here — it will be created in the deckscope step
+                              if (subId === "decks") continue;
                               const exists = job?.services?.some((s: any) => s.service_type?.name?.toLowerCase() === subId);
                               if (!exists) {
                                 const match = types.find((st) => st.name.toLowerCase() === subId);
@@ -2228,11 +2250,13 @@ export default function ProjectDetailPage() {
                                 if (existing) await handleRemoveService(existing.id);
                               }
                             }
-                            // If windows is selected, go to config
+                            // If windows is selected, go to config (then deckscope after)
                             if (selectedSubSvcs.includes("windows")) { setWindowsStep("config"); return; }
+                            // If only decks is selected (no windows), go to deckscope
+                            if (selectedSubSvcs.includes("decks")) { setWindowsStep("deckscope"); return; }
                             setOpenPartnerModal(null);
                           }}
-                          className="flex-1 py-2.5 rounded-xl bg-[#60b8f5] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#4da8e5] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                         >Confirm</button>
                       </div>
                     </div>
@@ -2242,33 +2266,33 @@ export default function ProjectDetailPage() {
                   {windowsStep === "config" && (
                     <div className="space-y-6">
                       <div className="flex items-center gap-2 pb-4 border-b border-white/5">
-                        <div className="w-6 h-6 rounded-full bg-[#60b8f5] flex items-center justify-center"><span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span></div>
+                        <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center"><span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span></div>
                         <div className="w-8 h-px bg-[#474846]"></div>
-                        <div className="w-6 h-6 rounded-full bg-[#60b8f5] flex items-center justify-center"><span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span></div>
+                        <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center"><span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span></div>
                         <div className="w-8 h-px bg-[#474846]"></div>
                         <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-full bg-[#60b8f5]/20 border border-[#60b8f5] flex items-center justify-center"><span className="text-[10px] font-black text-[#60b8f5]">3</span></div>
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center"><span className="text-[10px] font-black text-[#f5a623]">3</span></div>
                           <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Windows Config</span>
                         </div>
                       </div>
-                      <p className="text-xs text-[#ababa8]">Assigned to <span className="text-[#60b8f5] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Configure windows:</p>
+                      <p className="text-xs text-[#ababa8]">Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Configure windows:</p>
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">How many windows?</label>
                         <input type="number" min="1" value={windowCount} onChange={(e) => setWindowCount(e.target.value)} placeholder="e.g. 42"
-                          className="w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#60b8f5] focus:ring-1 focus:ring-[#60b8f5] transition-all h-[48px] text-[15px]" />
+                          className="w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">Trim?</label>
                         <CustomDropdown value={windowTrim} onChange={(val) => setWindowTrim(val as "yes" | "no")}
                           options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} placeholder="Select..."
-                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#60b8f5]/50 transition-colors flex justify-between items-center" />
+                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center" />
                       </div>
                       {windowCount && windowTrim && (
-                        <div className="p-4 rounded-xl bg-[#60b8f5]/10 border border-[#60b8f5]/20">
+                        <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
                           <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined text-[#60b8f5] text-lg" translate="no">calendar_month</span>
+                            <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
                             <div>
-                              <p className="text-sm font-bold text-[#faf9f5]">Duration: <span className="text-[#60b8f5]">{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}</span></p>
+                              <p className="text-sm font-bold text-[#faf9f5]">Duration: <span className="text-[#f5a623]">{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}</span></p>
                               <p className="text-[10px] text-[#ababa8] mt-0.5">{parseInt(windowCount)} windows ÷ {windowTrim === "yes" ? "12" : "20"}/day</p>
                             </div>
                           </div>
@@ -2277,8 +2301,351 @@ export default function ProjectDetailPage() {
                       <div className="flex gap-3 pt-2">
                         <button type="button" onClick={() => setWindowsStep("subservices")} className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all">Back</button>
                         <button type="button" disabled={!windowCount || !windowTrim}
-                          onClick={() => { setWindowsStep("partner"); setOpenPartnerModal(null); }}
-                          className="flex-1 py-2.5 rounded-xl bg-[#60b8f5] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#4da8e5] transition-all disabled:opacity-30 disabled:cursor-not-allowed">Confirm</button>
+                          onClick={() => { 
+                            // If decks is also selected, go to deckscope next
+                            if (selectedSubSvcs.includes("decks")) { setWindowsStep("deckscope"); return; }
+                            setWindowsStep("partner"); setOpenPartnerModal(null); 
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed">Confirm</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP: Deck Scope Config ── */}
+                  {windowsStep === "deckscope" && (
+                    <div className="space-y-6">
+                      {/* Step indicator */}
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Previous</span>
+                        </div>
+                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#f5a623]" translate="no">deck</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Deck Scope</span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#ababa8]">
+                        Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Select the scope of work for the deck:
+                      </p>
+
+                      {/* Scope Dropdown */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">
+                          Scope
+                        </label>
+                        <CustomDropdown
+                          value={deckScope}
+                          onChange={(val) => setDeckScope(val)}
+                          options={DECK_SCOPE_OPTIONS.map(o => ({
+                            value: o.value,
+                            label: `${o.label} — ${o.days >= 7 ? `${Math.round(o.days / 5)} weeks` : `${o.days} day${o.days !== 1 ? "s" : ""}`}`,
+                          }))}
+                          placeholder="Select scope..."
+                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
+                        />
+                      </div>
+
+                      {/* Duration preview */}
+                      {deckScope && (() => {
+                        const opt = DECK_SCOPE_OPTIONS.find(o => o.value === deckScope);
+                        if (!opt) return null;
+                        const durationLabel = opt.days >= 7
+                          ? `${Math.round(opt.days / 5)} weeks (${opt.days} working days)`
+                          : `${opt.days} day${opt.days !== 1 ? "s" : ""}`;
+                        return (
+                          <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
+                            <div className="flex items-center gap-3">
+                              <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
+                              <div>
+                                <p className="text-sm font-bold text-[#faf9f5]">
+                                  Estimated Duration:{" "}
+                                  <span className="text-[#f5a623]">{durationLabel}</span>
+                                </p>
+                                <p className="text-[10px] text-[#ababa8] mt-0.5">
+                                  {opt.label} scope selected
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Actions */}
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Go back to windows config if windows was selected, otherwise subservices
+                            if (selectedSubSvcs.includes("windows")) { setWindowsStep("config"); }
+                            else { setWindowsStep("subservices"); }
+                          }}
+                          className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!deckScope}
+                          onClick={async () => {
+                            // Now create the Decks service with deckScope already set
+                            let types = allServiceTypes;
+                            if (types.length === 0) {
+                              const { data } = await supabase.from("service_types").select("id, name").order("name");
+                              types = data || []; setAllServiceTypes(types);
+                            }
+                            const decksExists = job?.services?.some((s: any) => s.service_type?.name?.toLowerCase() === "decks");
+                            if (!decksExists) {
+                              const match = types.find((st) => st.name.toLowerCase() === "decks");
+                              if (match) await handleAddService(match.id);
+                            }
+                            setWindowsStep("partner");
+                            setOpenPartnerModal(null);
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+
+                  {/* ── EDIT MENU: Choose what to edit ── */}
+                  {windowsStep === "edit_menu" && openPartnerModal && (
+                    <div className="space-y-5">
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">edit</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Edit Configuration</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-[#ababa8]">
+                        Partner: <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Choose what to edit:
+                      </p>
+
+                      {/* Windows Config button (only if windows is active) */}
+                      {selectedSubSvcs.includes("windows") && (
+                        <button
+                          type="button"
+                          onClick={() => setWindowsStep("edit_windows")}
+                          className="flex items-center gap-4 w-full p-4 rounded-xl border border-[#f5a623]/30 bg-[#f5a623]/10 hover:bg-[#f5a623]/20 transition-all"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-[#f5a623]/20 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[#f5a623]" translate="no">window</span>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-bold text-[#faf9f5]">Windows Config</p>
+                            <p className="text-[10px] text-[#ababa8]">Change window count and trim settings</p>
+                          </div>
+                          <span className="material-symbols-outlined text-[#f5a623] ml-auto" translate="no">chevron_right</span>
+                        </button>
+                      )}
+
+                      {/* Deck Scope button (only if decks is active) */}
+                      {selectedSubSvcs.includes("decks") && (
+                        <button
+                          type="button"
+                          onClick={() => setWindowsStep("edit_deckscope")}
+                          className="flex items-center gap-4 w-full p-4 rounded-xl border border-[#f5a623]/30 bg-[#f5a623]/10 hover:bg-[#f5a623]/20 transition-all"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-[#f5a623]/20 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[#f5a623]" translate="no">deck</span>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-bold text-[#faf9f5]">Deck Scope</p>
+                            <p className="text-[10px] text-[#ababa8]">Change deck scope and duration</p>
+                          </div>
+                          <span className="material-symbols-outlined text-[#f5a623] ml-auto" translate="no">chevron_right</span>
+                        </button>
+                      )}
+
+                      {/* Change Partner button */}
+                      <button
+                        type="button"
+                        onClick={() => setWindowsStep("partner")}
+                        className="flex items-center gap-4 w-full p-4 rounded-xl border border-[#474846]/40 bg-[#181a18] hover:bg-[#242624] transition-all"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-[#242624] flex items-center justify-center">
+                          <span className="material-symbols-outlined text-[#ababa8]" translate="no">group</span>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-bold text-[#faf9f5]">Change Partner / Services</p>
+                          <p className="text-[10px] text-[#ababa8]">Reassign partner or change sub-services</p>
+                        </div>
+                        <span className="material-symbols-outlined text-[#ababa8] ml-auto" translate="no">chevron_right</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setOpenPartnerModal(null)}
+                        className="w-full py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ── EDIT WINDOWS: Reconfigure windows ── */}
+                  {windowsStep === "edit_windows" && openPartnerModal && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">edit</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Edit Windows Config</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-[#ababa8]">
+                        Update the windows configuration. Changes will be reflected in the calendar.
+                      </p>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">How many windows?</label>
+                        <input type="number" min="1" value={windowCount} onChange={(e) => setWindowCount(e.target.value)} placeholder="e.g. 42"
+                          className="w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">Trim?</label>
+                        <CustomDropdown value={windowTrim} onChange={(val) => setWindowTrim(val as "yes" | "no")}
+                          options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} placeholder="Select..."
+                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center" />
+                      </div>
+                      {windowCount && windowTrim && (
+                        <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
+                            <div>
+                              <p className="text-sm font-bold text-[#faf9f5]">New Duration: <span className="text-[#f5a623]">{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}</span></p>
+                              <p className="text-[10px] text-[#ababa8] mt-0.5">{parseInt(windowCount)} windows ÷ {windowTrim === "yes" ? "12" : "20"}/day</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setWindowsStep("edit_menu")} className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all">Back</button>
+                        <button type="button" disabled={!windowCount || !windowTrim}
+                          onClick={async () => {
+                            // Recalculate and update windows assignment in DB
+                            const newDays = Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)));
+                            const windowsSvc = job?.services?.find((s: any) => s.service_type?.name?.toLowerCase() === "windows");
+                            if (windowsSvc?.assignments?.[0]) {
+                              const assignment = windowsSvc.assignments[0];
+                              const startDate = assignment.scheduled_start_at ? new Date(assignment.scheduled_start_at) : new Date();
+                              const startIso = startDate.toISOString().split("T")[0];
+                              // Add working days
+                              const d = new Date(startIso + "T12:00:00");
+                              let remaining = newDays - 1;
+                              while (remaining > 0) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0) remaining--; }
+                              const endIso = d.toISOString().split("T")[0];
+                              const endAt = new Date(endIso + "T12:00:00");
+                              endAt.setDate(endAt.getDate() + 1);
+
+                              const { error } = await supabase.from("service_assignments")
+                                .update({ scheduled_end_at: endAt.toISOString() })
+                                .eq("id", assignment.id);
+                              if (error) console.error("[EditWindows] update error:", error);
+                              else console.log("[EditWindows] Updated windows:", startIso, "->", endIso, `(${newDays} days)`);
+                            }
+                            // Re-fetch job data using the full mapping
+                            await fetchJob();
+                            setWindowsStep("edit_menu");
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed">Save Changes</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── EDIT DECK SCOPE: Reconfigure deck scope ── */}
+                  {windowsStep === "edit_deckscope" && openPartnerModal && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">edit</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Edit Deck Scope</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-[#ababa8]">
+                        Update the deck scope. Changes will be reflected in the calendar.
+                      </p>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">Scope</label>
+                        <CustomDropdown
+                          value={deckScope}
+                          onChange={(val) => setDeckScope(val)}
+                          options={DECK_SCOPE_OPTIONS.map(o => ({
+                            value: o.value,
+                            label: `${o.label} — ${o.days >= 7 ? `${Math.round(o.days / 5)} weeks` : `${o.days} day${o.days !== 1 ? "s" : ""}`}`,
+                          }))}
+                          placeholder="Select scope..."
+                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
+                        />
+                      </div>
+
+                      {deckScope && (() => {
+                        const opt = DECK_SCOPE_OPTIONS.find(o => o.value === deckScope);
+                        if (!opt) return null;
+                        const durationLabel = opt.days >= 7
+                          ? `${Math.round(opt.days / 5)} weeks (${opt.days} working days)`
+                          : `${opt.days} day${opt.days !== 1 ? "s" : ""}`;
+                        return (
+                          <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
+                            <div className="flex items-center gap-3">
+                              <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
+                              <div>
+                                <p className="text-sm font-bold text-[#faf9f5]">
+                                  New Duration: <span className="text-[#f5a623]">{durationLabel}</span>
+                                </p>
+                                <p className="text-[10px] text-[#ababa8] mt-0.5">{opt.label} scope selected</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setWindowsStep("edit_menu")} className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all">Back</button>
+                        <button type="button" disabled={!deckScope}
+                          onClick={async () => {
+                            // Recalculate and update decks assignment in DB
+                            const opt = DECK_SCOPE_OPTIONS.find(o => o.value === deckScope);
+                            if (!opt) return;
+                            const newDays = opt.days;
+                            const decksSvc = job?.services?.find((s: any) => s.service_type?.name?.toLowerCase() === "decks");
+                            if (decksSvc?.assignments?.[0]) {
+                              const assignment = decksSvc.assignments[0];
+                              const startDate = assignment.scheduled_start_at ? new Date(assignment.scheduled_start_at) : new Date();
+                              const startIso = startDate.toISOString().split("T")[0];
+                              // Add working days
+                              const d = new Date(startIso + "T12:00:00");
+                              let remaining = newDays - 1;
+                              while (remaining > 0) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0) remaining--; }
+                              const endIso = d.toISOString().split("T")[0];
+                              const endAt = new Date(endIso + "T12:00:00");
+                              endAt.setDate(endAt.getDate() + 1);
+
+                              const { error } = await supabase.from("service_assignments")
+                                .update({ scheduled_end_at: endAt.toISOString() })
+                                .eq("id", assignment.id);
+                              if (error) console.error("[EditDeckScope] update error:", error);
+                              else console.log("[EditDeckScope] Updated decks:", startIso, "->", endIso, `(${newDays} days)`);
+                            }
+                            // Re-fetch job data using the full mapping
+                            await fetchJob();
+                            setWindowsStep("edit_menu");
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed">Save Changes</button>
                       </div>
                     </div>
                   )}

@@ -37,9 +37,9 @@ type SellerConfigKey = keyof typeof SELLER_CONFIG;
 const services = [
   { id: "siding",   icon: "view_day",       label: "Siding",   color: "#aeee2a", partners: ["SIDING DEPOT", "XICARA", "XICARA 02", "WILMAR", "WILMAR 02", "SULA", "LUIS"] },
   { id: "gutters",  icon: "horizontal_rule", label: "Gutters",  color: "#c084fc", partners: ["SIDING DEPOT", "LEANDRO"] },
-  { id: "painting", icon: "format_paint",   label: "Painting", color: "#f5a623", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
-  { id: "windows",  icon: "window",         label: "Windows",  color: "#60b8f5", partners: ["SIDING DEPOT", "SERGIO"] },
-  { id: "decks",    icon: "deck",           label: "Decks",    color: "#eab308", partners: ["SIDING DEPOT", "SERGIO"] },
+  { id: "painting", icon: "format_paint",   label: "Painting", color: "#60b8f5", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
+  { id: "windows",  icon: "window",         label: "Windows",  color: "#f5a623", partners: ["SIDING DEPOT", "SERGIO"] },
+  { id: "decks",    icon: "deck",           label: "Decks",    color: "#f5a623", partners: ["SIDING DEPOT", "SERGIO"] },
   { id: "roofing",  icon: "roofing",        label: "Roofing",  color: "#ef4444", partners: ["SIDING DEPOT", "JOSUE"] },
   { id: "dumpster", icon: "delete",         label: "Dumpster", color: "#64748b", partners: ["SIDING DEPOT"] },
 ];
@@ -343,8 +343,18 @@ export default function NewProjectPage() {
 
   // ── Windows service config ──
   const [windowCount, setWindowCount] = useState("");
-  const [windowTrim, setWindowTrim] = useState<"yes" | "no" | "">("" );
+  const [windowTrim, setWindowTrim] = useState<"yes" | "no" | "">("");
   const [windowsStep, setWindowsStep] = useState<"partner" | "config">("partner");
+
+  // ── Decks service config ──
+  const DECK_SCOPE_OPTIONS = [
+    { value: "rebuild_demo", label: "Deck Rebuild (Demo)", days: 5 },
+    { value: "rebuild_porch", label: "Deck Rebuild (W/ Porch)", days: 10 },
+    { value: "floor_replacement", label: "Floor Replacement", days: 4 },
+    { value: "railing", label: "Railing", days: 1 },
+  ];
+  const [deckScope, setDeckScope] = useState("");
+  const [decksStep, setDecksStep] = useState<"partner" | "config">("partner");
 
   const handleServiceToggle = (id: string) => {
     setSelected(prev => {
@@ -496,13 +506,19 @@ export default function NewProjectPage() {
          // Get the assigned partner for this service (or fallback to SIDING DEPOT)
          const partnerName = assignedPartners[serviceId] || (serviceId === "painting" ? assignedPartners["siding"] : null) || "SIDING DEPOT";
 
-         // Special case: windows duration by count (kept for backwards compat)
+          // Special case: windows duration by count (kept for backwards compat)
          if (serviceId === "windows") {
            const wCount = parseInt(windowCount) || 0;
            if (wCount > 0) {
              const rate = windowTrim === "yes" ? 12 : 20;
              return Math.max(1, Math.round(wCount / rate));
            }
+         }
+
+         // Special case: decks duration by scope selection
+         if (serviceId === "decks" && deckScope) {
+           const scopeOption = DECK_SCOPE_OPTIONS.find(o => o.value === deckScope);
+           if (scopeOption) return scopeOption.days;
          }
 
          return calculateServiceDuration(partnerName, serviceId, parsedSq);
@@ -885,6 +901,7 @@ export default function NewProjectPage() {
                 assignedPartners={assignedPartners}
                 onAssignClick={(svc) => {
                   if (svc.id === "windows") setWindowsStep("partner");
+                  if (svc.id === "decks") setDecksStep("partner");
                   setOpenPartnerModal(svc);
                 }}
               />
@@ -1215,7 +1232,7 @@ export default function NewProjectPage() {
                 <div className="grid grid-cols-1 gap-3 max-h-[50vh] overflow-y-auto pr-2" style={{ scrollbarWidth: "none" }}>
 
                   {/* ── STEP 1: Select Partner ── */}
-                  {(openPartnerModal.id !== "windows" || windowsStep === "partner") && (
+                  {(openPartnerModal.id !== "windows" || windowsStep === "partner") && (openPartnerModal.id !== "decks" || decksStep === "partner") && (
                     <>
                       {openPartnerModal.partners?.map((partner) => {
                         const isSelected = assignedPartners[openPartnerModal.id] === partner;
@@ -1247,6 +1264,12 @@ export default function NewProjectPage() {
                               // If Windows → go to config step
                               if (openPartnerModal.id === "windows") {
                                 setWindowsStep("config");
+                                return;
+                              }
+
+                              // If Decks → go to scope config step
+                              if (openPartnerModal.id === "decks") {
+                                setDecksStep("config");
                                 return;
                               }
                               
@@ -1289,6 +1312,10 @@ export default function NewProjectPage() {
                                 setWindowTrim("");
                                 setWindowsStep("partner");
                               }
+                              if (openPartnerModal.id === "decks") {
+                                setDeckScope("");
+                                setDecksStep("partner");
+                              }
                               setOpenPartnerModal(null);
                             }}
                             className="mt-4 flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-[#ba1212]/30 text-[#ba1212] hover:bg-[#ba1212]/10 transition-colors"
@@ -1305,22 +1332,22 @@ export default function NewProjectPage() {
                       {/* Step indicator */}
                       <div className="flex items-center gap-2 pb-4 border-b border-white/5">
                         <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-full bg-[#60b8f5] flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center">
                             <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span>
                           </div>
-                          <span className="text-[10px] font-bold text-[#60b8f5] uppercase tracking-wider">Partner</span>
+                          <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Partner</span>
                         </div>
                         <div className="w-8 h-px bg-[#474846]"></div>
                         <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-full bg-[#60b8f5]/20 border border-[#60b8f5] flex items-center justify-center">
-                            <span className="text-[10px] font-black text-[#60b8f5]">2</span>
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center">
+                            <span className="text-[10px] font-black text-[#f5a623]">2</span>
                           </div>
                           <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Windows Config</span>
                         </div>
                       </div>
 
                       <p className="text-xs text-[#ababa8]">
-                        Assigned to <span className="text-[#60b8f5] font-bold uppercase">{assignedPartners["windows"]}</span>. Now configure the windows for this project.
+                        Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners["windows"]}</span>. Now configure the windows for this project.
                       </p>
 
                       {/* Window Count */}
@@ -1334,7 +1361,7 @@ export default function NewProjectPage() {
                           value={windowCount}
                           onChange={(e) => setWindowCount(e.target.value)}
                           placeholder="e.g. 42"
-                          className="w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#60b8f5] focus:ring-1 focus:ring-[#60b8f5] transition-all h-[48px] text-[15px]"
+                          className="w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]"
                         />
                       </div>
 
@@ -1351,19 +1378,19 @@ export default function NewProjectPage() {
                             { value: "no", label: "No" },
                           ]}
                           placeholder="Select..."
-                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#60b8f5]/50 transition-colors flex justify-between items-center"
+                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
                         />
                       </div>
 
                       {/* Duration preview */}
                       {windowCount && windowTrim && (
-                        <div className="p-4 rounded-xl bg-[#60b8f5]/10 border border-[#60b8f5]/20">
+                        <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
                           <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined text-[#60b8f5] text-lg" translate="no">calendar_month</span>
+                            <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
                             <div>
                               <p className="text-sm font-bold text-[#faf9f5]">
                                 Estimated Duration:{" "}
-                                <span className="text-[#60b8f5]">
+                                <span className="text-[#f5a623]">
                                   {Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}
                                 </span>
                               </p>
@@ -1391,7 +1418,97 @@ export default function NewProjectPage() {
                             setWindowsStep("partner");
                             setOpenPartnerModal(null);
                           }}
-                          className="flex-1 py-2.5 rounded-xl bg-[#60b8f5] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#4da8e5] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#4da8e5] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 2: Decks Scope Config ── */}
+                  {openPartnerModal.id === "decks" && decksStep === "config" && (
+                    <div className="space-y-6">
+                      {/* Step indicator */}
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Partner</span>
+                        </div>
+                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center">
+                            <span className="text-[10px] font-black text-[#f5a623]">2</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Deck Scope</span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#ababa8]">
+                        Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners["decks"]}</span>. Now select the scope of work for this deck project.
+                      </p>
+
+                      {/* Scope Dropdown */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">
+                          Scope
+                        </label>
+                        <CustomDropdown
+                          value={deckScope}
+                          onChange={(val) => setDeckScope(val)}
+                          options={DECK_SCOPE_OPTIONS.map(o => ({
+                            value: o.value,
+                            label: `${o.label} — ${o.days >= 7 ? `${Math.round(o.days / 5)} weeks` : `${o.days} day${o.days !== 1 ? "s" : ""}`}`,
+                          }))}
+                          placeholder="Select scope..."
+                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
+                        />
+                      </div>
+
+                      {/* Duration preview */}
+                      {deckScope && (() => {
+                        const opt = DECK_SCOPE_OPTIONS.find(o => o.value === deckScope);
+                        if (!opt) return null;
+                        const durationLabel = opt.days >= 7
+                          ? `${Math.round(opt.days / 5)} weeks (${opt.days} working days)`
+                          : `${opt.days} day${opt.days !== 1 ? "s" : ""}`;
+                        return (
+                          <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
+                            <div className="flex items-center gap-3">
+                              <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
+                              <div>
+                                <p className="text-sm font-bold text-[#faf9f5]">
+                                  Estimated Duration:{" "}
+                                  <span className="text-[#f5a623]">{durationLabel}</span>
+                                </p>
+                                <p className="text-[10px] text-[#ababa8] mt-0.5">
+                                  {opt.label} scope selected
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Actions */}
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setDecksStep("partner")}
+                          className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!deckScope}
+                          onClick={() => {
+                            setDecksStep("partner");
+                            setOpenPartnerModal(null);
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#d4a106] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           Confirm
                         </button>
