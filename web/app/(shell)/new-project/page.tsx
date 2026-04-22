@@ -375,6 +375,7 @@ export default function NewProjectPage() {
   const [endDate, setEndDate] = useState("");
   const [sq, setSq] = useState("");
   const [contractAmount, setContractAmount] = useState("");
+  const [soldDate, setSoldDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -461,7 +462,7 @@ export default function NewProjectPage() {
         requested_start_date: startDate || null,
         target_completion_date: endDate || null,
         contract_amount: contractAmount ? parseFloat(contractAmount) : null,
-        contract_signed_at: new Date().toISOString().split("T")[0],
+        contract_signed_at: soldDate || new Date().toISOString().split("T")[0],
         sq: sq ? parseFloat(sq) : null,
         gate_status: gateStatus,
         description: notes
@@ -837,8 +838,8 @@ export default function NewProjectPage() {
             {/* Job Details */}
             <section>
               <SectionHeader icon="architecture" title="Job Details" />
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
-                <div className="space-y-2 xl:col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+                <div className="space-y-2 xl:col-span-3">
                   <label className={labelCls}>Job Title *</label>
                   <input required value={jobTitle} onChange={(e)=>setJobTitle(e.target.value)} className={inputCls} placeholder="Exterior Renovation" type="text" />
                 </div>
@@ -848,6 +849,10 @@ export default function NewProjectPage() {
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#ababa8] font-bold text-[15px]">$</span>
                     <input value={contractAmount} onChange={(e)=>setContractAmount(e.target.value)} className={`${inputCls} pl-8`} placeholder="0.00" type="number" step="0.01" />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>Sold Date</label>
+                  <CustomDatePicker value={soldDate} onChange={(v) => setSoldDate(v || "")} placeholder="Set date" disableSundays={false} />
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Start Date</label>
