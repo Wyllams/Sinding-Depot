@@ -1377,7 +1377,7 @@ export default function ProjectDetailPage() {
                 }}
                 onAssignClick={(svc) => {
                   if (svc.subServices) {
-                    // Combined card: pre-select currently active sub-services
+                    // Combined DWD card: pre-select currently active sub-services
                     const activeSubs = svc.subServices
                       .filter((sub) => job.services.some((s: any) => s.service_type?.name?.toLowerCase() === sub.id))
                       .map((sub) => sub.id);
@@ -1389,7 +1389,9 @@ export default function ProjectDetailPage() {
                     } else {
                       setWindowsStep("partner");
                     }
-                  } else if (svc.id === "windows") {
+                  } else {
+                    // All other service cards (Roofing, Gutters, Painting, Siding)
+                    // Always go directly to partner selection — no edit menu
                     setWindowsStep("partner");
                   }
                   setOpenPartnerModal(svc);
