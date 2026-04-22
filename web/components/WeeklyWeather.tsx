@@ -107,7 +107,7 @@ async function fetchFromNWS(lat: number, lon: number): Promise<WeatherDay[]> {
 // ─── Open-Meteo Fetcher (Fallback) ────────────────────────────────────────
 async function fetchFromOpenMeteo(lat: number, lon: number): Promise<WeatherDay[]> {
   const res = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&temperature_unit=fahrenheit&forecast_days=7`
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&temperature_unit=fahrenheit&forecast_days=14`
   );
   if (!res.ok) throw new Error(`Open-Meteo failed: ${res.status}`);
   const data = await res.json();
@@ -207,7 +207,7 @@ export function WeeklyWeather() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Fetch Weather — NWS primary, Open-Meteo fallback
+  // Fetch Weather — NWS primary, Open-Meteo fallback (7 days)
   useEffect(() => {
     const fetchWeather = async (): Promise<void> => {
       setIsLoadingWeather(true);
