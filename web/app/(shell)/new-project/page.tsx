@@ -7,6 +7,7 @@ import { TopBar } from "../../../components/TopBar";
 import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
 import { calculateServiceDuration } from "../../../lib/duration-calculator";
+import { SCHEDULING_PAUSED } from "../../../lib/scheduling-flag";
 
 // =============================================
 // Create New Job | Iron & Lime
@@ -645,14 +646,16 @@ export default function NewProjectPage() {
                
                const { data: spec } = await supabase.from("specialties").select("id").eq("code", specCode).maybeSingle();
 
-               await supabase.from("service_assignments").insert({
-                  job_service_id: newJs.id,
-                  crew_id: crew?.id || null,
-                  specialty_id: spec?.id || "26652a43-728d-43c1-935a-c39f1dea4d7d",
-                  status: startAt ? "scheduled" : "planned",
-                  scheduled_start_at: startAt ? startAt.toISOString() : null,
-                  scheduled_end_at: endAt ? endAt.toISOString() : null
-               });
+               if (!SCHEDULING_PAUSED) {
+                 await supabase.from("service_assignments").insert({
+                   job_service_id: newJs.id,
+                   crew_id: crew?.id || null,
+                   specialty_id: spec?.id || "26652a43-728d-43c1-935a-c39f1dea4d7d",
+                   status: startAt ? "scheduled" : "planned",
+                   scheduled_start_at: startAt ? startAt.toISOString() : null,
+                   scheduled_end_at: endAt ? endAt.toISOString() : null
+                 });
+               }
             }
         }
       }

@@ -256,22 +256,22 @@ export default function ProjectsPage() {
   }
 
   async function handleGateChange(jobId: string, gate: string) {
-    // Gating is purely visual — does NOT change jobs.status (JOB START STATUS)
-    // Only the calendar popup (for Siding service) controls JOB START STATUS
+    // Sync Job Start Status: READY → Active (Confirmed), anything else → Pending
+    const newJobStatus = gate === "READY" ? "active" : "on_hold";
 
-    // Optimistic update na UI (only gate fields, status untouched)
+    // Optimistic update (gate fields + status)
     setJobs((prev) =>
       prev.map((j) =>
         j.id === jobId
-          ? { ...j, blocker_type: gate, gate_status: gate }
+          ? { ...j, blocker_type: gate, gate_status: gate, status: newJobStatus }
           : j
       )
     );
 
-    // Persist only gate_status in DB — status remains unchanged
+    // Persist gate_status + status in DB
     await supabase
       .from("jobs")
-      .update({ gate_status: gate })
+      .update({ gate_status: gate, status: newJobStatus })
       .eq("id", jobId);
   }
 

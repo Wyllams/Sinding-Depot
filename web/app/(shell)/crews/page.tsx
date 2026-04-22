@@ -6,6 +6,7 @@ import CustomDatePicker from "../../../components/CustomDatePicker";
 import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
 import { useUndo } from "../../../components/UndoContext";
+import { SCHEDULING_PAUSED } from "../../../lib/scheduling-flag";
 
 // =============================================
 // Crews & Partners Directory
@@ -582,6 +583,10 @@ export default function CrewsPage() {
       }
 
       // 3. Insert the assignment with specialty_id
+      if (SCHEDULING_PAUSED) {
+        alert("Scheduling is currently paused. Assignment was not created.");
+        return;
+      }
       const { error } = await supabase.from("service_assignments").insert({
         job_service_id:    jsData.id,
         crew_id:           assignCrew.id,

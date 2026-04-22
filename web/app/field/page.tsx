@@ -7,27 +7,47 @@ import { supabase } from "@/lib/supabase";
 export default function FieldHome() {
   const [profile, setProfile] = useState<{ full_name: string } | null>(null);
   const [jobCount, setJobCount] = useState(0);
+  const [issueCount, setIssueCount] = useState(0);
 
   useEffect(() => {
-    const load = async () => {
+    const load = async (): Promise<void> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase
+      // Get profile name
+      const { data: prof } = await supabase
         .from("profiles")
         .select("full_name")
         .eq("id", user.id)
         .single();
+      if (prof) setProfile(prof);
 
-      if (data) setProfile(data);
+      // Find the crew linked to this user
+      const { data: crew } = await supabase
+        .from("crews")
+        .select("id")
+        .eq("profile_id", user.id)
+        .maybeSingle();
 
-      // Count pending jobs (simplified — a real query would filter by assigned crew)
-      const { count } = await supabase
-        .from("job_services")
+      if (!crew) return;
+
+      // Count active assignments for this crew
+      const { count: activeCount } = await supabase
+        .from("service_assignments")
         .select("id", { count: "exact", head: true })
-        .in("status", ["scheduled", "in_progress"]);
+        .eq("crew_id", crew.id)
+        .in("status", ["scheduled", "in_progress", "assigned"]);
 
-      setJobCount(count ?? 0);
+      setJobCount(activeCount ?? 0);
+
+      // Count open blockers for this crew
+      const { count: blockerCount } = await supabase
+        .from("blockers")
+        .select("id", { count: "exact", head: true })
+        .eq("crew_id", crew.id)
+        .in("status", ["open"]);
+
+      setIssueCount(blockerCount ?? 0);
     };
     load();
   }, []);
@@ -66,7 +86,7 @@ export default function FieldHome() {
             <span className="material-symbols-outlined text-[#ff7351]" translate="no">warning</span>
           </div>
           <div>
-            <p className="text-3xl font-black font-headline text-white tracking-tighter">0</p>
+            <p className="text-3xl font-black font-headline text-white tracking-tighter">{issueCount}</p>
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Issues</p>
           </div>
         </Link>

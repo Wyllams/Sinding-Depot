@@ -8,6 +8,7 @@ import CustomDatePicker from "../../../../components/CustomDatePicker";
 import { CustomDropdown } from "../../../../components/CustomDropdown";
 import { supabase } from "../../../../lib/supabase";
 import { calculateServiceDuration } from "../../../../lib/duration-calculator";
+import { SCHEDULING_PAUSED } from "../../../../lib/scheduling-flag";
 import { ProjectWeatherCard } from "../../../../components/ProjectWeatherCard";
 
 // ─── Discipline visuals (reused from /crews) ──────────────────────
@@ -452,7 +453,7 @@ export default function ProjectDetailPage() {
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "crews" | "documents">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "crews" | "documents" | "extra_material">("overview");
   const [copied, setCopied] = useState(false);
   const [gateStatus, setGateStatus] = useState<string>("READY");
   const [crewPopupOpen, setCrewPopupOpen] = useState(false);
@@ -486,6 +487,38 @@ export default function ProjectDetailPage() {
     { value: "railing", label: "Railing", days: 1 },
   ];
   const [deckScope, setDeckScope] = useState("");
+
+  // ── Dumpster Photos ──
+  const [dumpsterPhotos, setDumpsterPhotos] = useState<{ id: string; url: string; file_name: string | null; created_at: string }[]>([]);
+  const [loadingDumpster, setLoadingDumpster] = useState(false);
+  const [uploadingDumpster, setUploadingDumpster] = useState(false);
+  const [dumpsterPreview, setDumpsterPreview] = useState<string | null>(null);
+  const dumpsterInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Extra Material ──
+  const [extraMaterials, setExtraMaterials] = useState<{
+    id: string; material_name: string; customer_name: string; quantity: number; piece_size: string;
+    document_url: string | null; document_name: string | null; notes: string | null;
+    status: string; created_at: string;
+  }[]>([]);
+  const [loadingExtraMat, setLoadingExtraMat] = useState(false);
+  const [showAddExtraMat, setShowAddExtraMat] = useState(false);
+  const [emMaterialName, setEmMaterialName] = useState("");
+  const [emQty, setEmQty] = useState("1");
+  const [emSize, setEmSize] = useState("");
+  const [emNotes, setEmNotes] = useState("");
+  const [uploadingExtraDoc, setUploadingExtraDoc] = useState(false);
+  const [emDocUrl, setEmDocUrl] = useState<string | null>(null);
+  const [emDocName, setEmDocName] = useState<string | null>(null);
+  const extraMatDocRef = useRef<HTMLInputElement>(null);
+  const [emActionMenu, setEmActionMenu] = useState<string | null>(null);
+  const [editingMatId, setEditingMatId] = useState<string | null>(null);
+  const [editMatFields, setEditMatFields] = useState<{
+    material_name: string; quantity: string; piece_size: string;
+    document_url: string | null; document_name: string | null;
+  }>({ material_name: "", quantity: "1", piece_size: "", document_url: null, document_name: null });
+  const editMatDocRef = useRef<HTMLInputElement>(null);
+  const [uploadingEditDoc, setUploadingEditDoc] = useState(false);
 
   const handleAutoSave = async (
     table: "jobs" | "customers",
@@ -776,19 +809,186 @@ export default function ProjectDetailPage() {
     loadSalespersons();
   }, [fetchJob]);
 
-  // Load milestones when switching to documents tab
+
+  // Load milestones and dumpster photos when switching to documents tab
   useEffect(() => {
-    if (activeTab === "documents") fetchMilestones();
+    if (activeTab === "documents") {
+      fetchMilestones();
+      fetchDumpsterPhotos();
+    }
+    if (activeTab === "extra_material") {
+      fetchExtraMaterials();
+    }
   }, [activeTab, fetchMilestones]);
+
+  // ── Extra Material Functions ──
+  async function fetchExtraMaterials() {
+    setLoadingExtraMat(true);
+    const { data, error } = await supabase
+      .from("extra_materials")
+      .select("id, material_name, customer_name, quantity, piece_size, document_url, document_name, notes, status, created_at")
+      .eq("job_id", jobId)
+      .order("created_at", { ascending: false });
+    if (!error && data) setExtraMaterials(data);
+    setLoadingExtraMat(false);
+  }
+
+  async function handleAddExtraMaterial() {
+    if (!emMaterialName.trim() || !emSize.trim()) return;
+    const { error } = await supabase.from("extra_materials").insert({
+      job_id: jobId,
+      material_name: emMaterialName.trim(),
+      customer_name: job?.customer?.full_name ?? "",
+      quantity: parseInt(emQty) || 1,
+      piece_size: emSize.trim(),
+      document_url: emDocUrl,
+      document_name: emDocName,
+      notes: emNotes.trim() || null,
+      status: "pending",
+    });
+    if (!error) {
+      setEmMaterialName(""); setEmQty("1"); setEmSize(""); setEmNotes("");
+      setEmDocUrl(null); setEmDocName(null); setShowAddExtraMat(false);
+      await fetchExtraMaterials();
+    }
+  }
+
+  async function handleExtraMatDocUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploadingExtraDoc(true);
+    try {
+      const file = files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", `extra-materials/${jobId}`);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Upload failed");
+      setEmDocUrl(result.url);
+      setEmDocName(file.name);
+    } catch (err) {
+      console.error("[ExtraMat] Upload error:", err);
+    }
+    setUploadingExtraDoc(false);
+  }
+
+  async function handleDeleteExtraMat(id: string) {
+    const { error } = await supabase.from("extra_materials").delete().eq("id", id);
+    if (!error) setExtraMaterials((prev) => prev.filter((m) => m.id !== id));
+    setEmActionMenu(null);
+  }
+
+  function startEditMat(mat: typeof extraMaterials[number]) {
+    setEditingMatId(mat.id);
+    setEditMatFields({
+      material_name: mat.material_name,
+      quantity: String(mat.quantity),
+      piece_size: mat.piece_size,
+      document_url: mat.document_url,
+      document_name: mat.document_name,
+    });
+    setEmActionMenu(null);
+  }
+
+  async function handleSaveEditMat() {
+    if (!editingMatId) return;
+    const { error } = await supabase.from("extra_materials").update({
+      material_name: editMatFields.material_name.trim(),
+      quantity: parseInt(editMatFields.quantity) || 1,
+      piece_size: editMatFields.piece_size.trim(),
+      document_url: editMatFields.document_url,
+      document_name: editMatFields.document_name,
+      updated_at: new Date().toISOString(),
+    }).eq("id", editingMatId);
+    if (!error) {
+      setExtraMaterials((prev) => prev.map((m) => m.id === editingMatId ? {
+        ...m,
+        material_name: editMatFields.material_name.trim(),
+        quantity: parseInt(editMatFields.quantity) || 1,
+        piece_size: editMatFields.piece_size.trim(),
+        document_url: editMatFields.document_url,
+        document_name: editMatFields.document_name,
+      } : m));
+    }
+    setEditingMatId(null);
+  }
+
+  async function handleEditMatDocUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploadingEditDoc(true);
+    try {
+      const file = files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", `extra-materials/${jobId}`);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Upload failed");
+      setEditMatFields((prev) => ({ ...prev, document_url: result.url, document_name: file.name }));
+    } catch (err) {
+      console.error("[EditMat] Upload error:", err);
+    }
+    setUploadingEditDoc(false);
+  }
+
+  async function handleExtraMatStatus(id: string, newStatus: string) {
+    await supabase.from("extra_materials").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("id", id);
+    setExtraMaterials((prev) => prev.map((m) => m.id === id ? { ...m, status: newStatus } : m));
+  }
+
+  // ── Dumpster Photos Functions ──
+  async function fetchDumpsterPhotos() {
+    setLoadingDumpster(true);
+    const { data, error } = await supabase
+      .from("dumpster_photos")
+      .select("id, url, file_name, created_at")
+      .eq("job_id", jobId)
+      .order("created_at", { ascending: false });
+    if (!error && data) setDumpsterPhotos(data);
+    setLoadingDumpster(false);
+  }
+
+  async function handleDumpsterUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploadingDumpster(true);
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("folder", `dumpster/${jobId}`);
+
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Upload failed");
+
+        const { error: dbErr } = await supabase.from("dumpster_photos").insert({
+          job_id: jobId,
+          url: result.url,
+          file_name: file.name,
+        });
+        if (dbErr) console.error("[Dumpster] DB insert error:", dbErr);
+      }
+      await fetchDumpsterPhotos();
+    } catch (err) {
+      console.error("[Dumpster] Upload error:", err);
+    }
+    setUploadingDumpster(false);
+  }
+
+  async function handleDeleteDumpsterPhoto(photoId: string) {
+    const { error } = await supabase.from("dumpster_photos").delete().eq("id", photoId);
+    if (!error) setDumpsterPhotos((prev) => prev.filter((p) => p.id !== photoId));
+  }
 
   async function handleGateChange(gate: string) {
     setGateStatus(gate);
-    // Gating is purely visual — does NOT change jobs.status (JOB START STATUS)
-    // Only the calendar popup (for Siding service) controls JOB START STATUS
+    // Sync Job Start Status: READY → Active (Confirmed), anything else → Pending
+    const newJobStatus = gate === "READY" ? "active" : "on_hold";
     await supabase
       .from("jobs")
-      .update({ gate_status: gate })
+      .update({ gate_status: gate, status: newJobStatus })
       .eq("id", jobId);
+    setJob((prev: any) => prev ? { ...prev, status: newJobStatus } : prev);
   }
 
   async function handleResolveBlocker(blockerId: string) {
@@ -986,21 +1186,23 @@ export default function ProjectDetailPage() {
           .limit(1);
         const specialtyId = specMatch?.[0]?.id || null;
 
-        const { error: assignErr } = await supabase
-          .from("service_assignments")
-          .insert({
-            job_service_id: svc.id,
-            crew_id: crewId,
-            specialty_id: specialtyId,
-            status: "scheduled",
-            scheduled_start_at: startAt.toISOString(),
-            scheduled_end_at: endAt.toISOString(),
-          });
+        if (!SCHEDULING_PAUSED) {
+          const { error: assignErr } = await supabase
+            .from("service_assignments")
+            .insert({
+              job_service_id: svc.id,
+              crew_id: crewId,
+              specialty_id: specialtyId,
+              status: "scheduled",
+              scheduled_start_at: startAt.toISOString(),
+              scheduled_end_at: endAt.toISOString(),
+            });
 
-        if (assignErr) {
-          console.error("[AddService] assignment error for " + svcCode + ":", assignErr);
-        } else {
-          console.log("[AddService] Created assignment for " + svcCode + ": " + startIso + " -> " + endIso);
+          if (assignErr) {
+            console.error("[AddService] assignment error for " + svcCode + ":", assignErr);
+          } else {
+            console.log("[AddService] Created assignment for " + svcCode + ": " + startIso + " -> " + endIso);
+          }
         }
       }
 
@@ -1203,9 +1405,10 @@ export default function ProjectDetailPage() {
         {/* ── Tabs ── */}
         <div className="flex bg-[#121412] p-1 rounded-xl w-fit max-w-full overflow-x-auto gap-0.5 mb-8">
           {[
-            { key: "overview",   label: "Overview",    icon: "dashboard" },
-            { key: "crews",      label: "Crews",       icon: "groups" },
-            { key: "documents",  label: "Documents",   icon: "folder" },
+            { key: "overview",        label: "Overview",        icon: "dashboard" },
+            { key: "crews",           label: "Crews",           icon: "groups" },
+            { key: "documents",       label: "Documents",       icon: "folder" },
+            { key: "extra_material",  label: "Extra Material",  icon: "inventory_2" },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -1742,8 +1945,8 @@ export default function ProjectDetailPage() {
               )}
             </div>
 
-            {/* 3 Upload Blocks */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* 4 Upload Blocks */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               {/* Block 1: Contracts & Documents */}
               <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15 flex flex-col">
@@ -1801,6 +2004,86 @@ export default function ProjectDetailPage() {
                 </div>
                 <p className="text-[10px] text-[#474846] text-center mt-3">No videos yet</p>
               </div>
+
+              {/* Block 4: Dumpster Photos (FUNCTIONAL) */}
+              <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15 flex flex-col">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-[#64748b]/10 border border-[#64748b]/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[#64748b]" translate="no">delete</span>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-black text-[#faf9f5]">Dumpster</h4>
+                    <p className="text-[10px] text-[#ababa8]">Dumpster delivery & pickup photos</p>
+                  </div>
+                  {dumpsterPhotos.length > 0 && (
+                    <span className="text-[10px] font-bold text-[#64748b] bg-[#64748b]/10 px-2 py-1 rounded-lg">
+                      {dumpsterPhotos.length} photo{dumpsterPhotos.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+
+                {/* Upload Drop Zone */}
+                <input
+                  ref={dumpsterInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleDumpsterUpload(e.target.files)}
+                />
+                <div
+                  onClick={() => dumpsterInputRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-[#64748b]", "bg-[#64748b]/10"); }}
+                  onDragLeave={(e) => { e.currentTarget.classList.remove("border-[#64748b]", "bg-[#64748b]/10"); }}
+                  onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-[#64748b]", "bg-[#64748b]/10"); handleDumpsterUpload(e.dataTransfer.files); }}
+                  className="border-2 border-dashed border-[#474846]/40 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-[#0d0f0d] hover:border-[#64748b]/40 hover:bg-[#64748b]/5 transition-colors cursor-pointer group"
+                >
+                  {uploadingDumpster ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-[#64748b]/30 border-t-[#64748b] rounded-full animate-spin" />
+                      <span className="text-xs text-[#ababa8] font-bold">Uploading...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-2xl text-[#474846] group-hover:text-[#64748b] mb-1 transition-colors" translate="no">add_a_photo</span>
+                      <p className="text-xs font-bold text-[#faf9f5]">Upload dumpster photos</p>
+                      <p className="text-[10px] text-[#ababa8] mt-0.5">JPG, PNG, HEIC up to 20MB</p>
+                    </>
+                  )}
+                </div>
+
+                {/* Photo Gallery */}
+                {loadingDumpster ? (
+                  <div className="flex justify-center py-4">
+                    <div className="w-5 h-5 border-2 border-[#64748b]/30 border-t-[#64748b] rounded-full animate-spin" />
+                  </div>
+                ) : dumpsterPhotos.length === 0 ? (
+                  <p className="text-[10px] text-[#474846] text-center mt-3">No dumpster photos yet</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 mt-3">
+                    {dumpsterPhotos.map((photo) => (
+                      <div key={photo.id} className="relative group/photo rounded-lg overflow-hidden aspect-square bg-[#0d0f0d] border border-[#474846]/20">
+                        <img
+                          src={photo.url}
+                          alt={photo.file_name || "Dumpster photo"}
+                          className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
+                          onClick={() => setDumpsterPreview(photo.url)}
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteDumpsterPhoto(photo.id); }}
+                          className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity hover:bg-red-500/80"
+                        >
+                          <span className="material-symbols-outlined text-[14px] text-white" translate="no">close</span>
+                        </button>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1.5 opacity-0 group-hover/photo:opacity-100 transition-opacity">
+                          <p className="text-[8px] text-white truncate">{photo.file_name}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Vault note */}
@@ -1810,6 +2093,261 @@ export default function ProjectDetailPage() {
                 File storage integration with Supabase Storage is in the next sprint. Documents uploaded here will be securely stored and accessible to your team and client portal.
               </p>
             </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            TAB 4: EXTRA MATERIAL
+        ══════════════════════════════════════════════════ */}
+        {activeTab === "extra_material" && (
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black tracking-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Extra Material Requests</h3>
+                <p className="text-xs text-[#ababa8]">Purchase requests for extra materials needed on this project</p>
+              </div>
+              <button
+                onClick={() => setShowAddExtraMat(true)}
+                className="bg-[#aeee2a] hover:bg-[#a0df14] text-[#3a5400] font-bold px-5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-2 cursor-pointer text-xs"
+              >
+                <span className="material-symbols-outlined text-[16px]" translate="no">add_circle</span>
+                New Request
+              </button>
+            </div>
+
+            {/* Table */}
+            <div className="bg-[#121412] rounded-2xl overflow-hidden border border-[#474846]/15">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#1e201e]/50">
+                    {["Date", "Material", "Qty", "Piece Size", "Document", "Status", ""].map((col) => (
+                      <th key={col} className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#ababa8]">{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#474846]/10">
+                  {loadingExtraMat ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center gap-2 text-[#ababa8]">
+                          <span className="material-symbols-outlined text-2xl animate-spin" translate="no">progress_activity</span>
+                          <p className="text-xs font-bold">Loading requests...</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : extraMaterials.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center gap-2 text-[#ababa8]">
+                          <div className="w-12 h-12 rounded-full bg-[#1e201e] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-xl text-[#aeee2a]" translate="no">inventory_2</span>
+                          </div>
+                          <p className="text-sm font-bold text-[#faf9f5]">No requests yet</p>
+                          <p className="text-xs">Click &quot;New Request&quot; to add an extra material order.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    extraMaterials.map((mat) => {
+                      const statusColors: Record<string, string> = {
+                        pending: "bg-[#f5a623]/15 text-[#f5a623]",
+                        ordered: "bg-[#60b8f5]/15 text-[#60b8f5]",
+                        delivered: "bg-[#aeee2a]/15 text-[#aeee2a]",
+                        cancelled: "bg-[#ff7351]/15 text-[#ff7351]",
+                      };
+                      const isEditing = editingMatId === mat.id;
+                      return (
+                        <tr key={mat.id} className={`transition-colors group ${isEditing ? "bg-[#aeee2a]/[0.04]" : "hover:bg-[#1e201e]"}`}>
+                          <td className="px-5 py-4 text-xs text-[#ababa8]">{fmt(mat.created_at)}</td>
+                          <td className="px-5 py-4">
+                            {isEditing ? (
+                              <input
+                                value={editMatFields.material_name}
+                                onChange={(e) => setEditMatFields((p) => ({ ...p, material_name: e.target.value }))}
+                                className="bg-[#1e201e] border border-[#474846]/40 rounded-lg px-3 py-1.5 text-sm text-[#faf9f5] w-full outline-none focus:border-[#aeee2a]/50"
+                              />
+                            ) : (
+                              <span className="text-sm text-[#faf9f5] font-medium">{mat.material_name || "—"}</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4">
+                            {isEditing ? (
+                              <input
+                                type="number" min="1"
+                                value={editMatFields.quantity}
+                                onChange={(e) => setEditMatFields((p) => ({ ...p, quantity: e.target.value }))}
+                                className="bg-[#1e201e] border border-[#474846]/40 rounded-lg px-3 py-1.5 text-xs text-[#faf9f5] w-20 outline-none focus:border-[#aeee2a]/50"
+                              />
+                            ) : (
+                              <span className="bg-[#242624] px-3 py-1 rounded-lg text-xs font-bold text-[#faf9f5]">{mat.quantity}</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4">
+                            {isEditing ? (
+                              <input
+                                value={editMatFields.piece_size}
+                                onChange={(e) => setEditMatFields((p) => ({ ...p, piece_size: e.target.value }))}
+                                className="bg-[#1e201e] border border-[#474846]/40 rounded-lg px-3 py-1.5 text-sm text-[#faf9f5] w-full outline-none focus:border-[#aeee2a]/50"
+                              />
+                            ) : (
+                              <span className="text-sm text-[#ababa8]">{mat.piece_size}</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4">
+                            {isEditing ? (
+                              <div className="flex items-center gap-2">
+                                <input ref={editMatDocRef} type="file" className="hidden" onChange={(e) => handleEditMatDocUpload(e.target.files)} />
+                                {editMatFields.document_url ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="material-symbols-outlined text-[14px] text-[#aeee2a]" translate="no">check_circle</span>
+                                    <span className="text-xs text-[#faf9f5] truncate max-w-[100px]">{editMatFields.document_name}</span>
+                                    <button onClick={() => setEditMatFields((p) => ({ ...p, document_url: null, document_name: null }))} className="text-[#ababa8] hover:text-[#ff7351] cursor-pointer">
+                                      <span className="material-symbols-outlined text-[14px]" translate="no">close</span>
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => editMatDocRef.current?.click()}
+                                    disabled={uploadingEditDoc}
+                                    className="text-xs text-[#ababa8] hover:text-[#aeee2a] transition-colors cursor-pointer flex items-center gap-1"
+                                  >
+                                    {uploadingEditDoc ? (
+                                      <div className="w-3 h-3 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
+                                    ) : (
+                                      <span className="material-symbols-outlined text-[14px]" translate="no">upload_file</span>
+                                    )}
+                                    Attach
+                                  </button>
+                                )}
+                              </div>
+                            ) : mat.document_url ? (
+                              <a
+                                href={mat.document_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#60b8f5] hover:text-[#aeee2a] transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <span className="material-symbols-outlined text-[14px]" translate="no">attach_file</span>
+                                {mat.document_name || "View"}
+                              </a>
+                            ) : (
+                              <span className="text-xs text-[#474846]">—</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4">
+                            <select
+                              value={mat.status}
+                              onChange={(e) => handleExtraMatStatus(mat.id, e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border-none outline-none cursor-pointer ${statusColors[mat.status] || statusColors.pending}`}
+                              style={{ background: "transparent" }}
+                            >
+                              <option value="pending" className="bg-[#121412] text-[#faf9f5]">Pending</option>
+                              <option value="ordered" className="bg-[#121412] text-[#faf9f5]">Ordered</option>
+                              <option value="delivered" className="bg-[#121412] text-[#faf9f5]">Delivered</option>
+                              <option value="cancelled" className="bg-[#121412] text-[#faf9f5]">Cancelled</option>
+                            </select>
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <button
+                              onClick={() => handleDeleteExtraMat(mat.id)}
+                              className="p-1.5 rounded-lg text-[#ababa8] hover:text-[#ff7351] hover:bg-[#ff7351]/10 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                            >
+                              <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Add Request Modal */}
+            {showAddExtraMat && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowAddExtraMat(false)}>
+                <div className="bg-[#181a18] border border-[#474846]/30 rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()} style={{ animation: "fadeInScale 0.2s ease-out" }}>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[#aeee2a]" translate="no">inventory_2</span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>New Extra Material Request</h3>
+                      <p className="text-[10px] text-[#ababa8]">Fill in the details for the material order</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Material Name */}
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold block mb-1.5">Material Name</label>
+                      <input value={emMaterialName} onChange={(e) => setEmMaterialName(e.target.value)} className={detailInputCls} placeholder="e.g. J-Channel, Soffit, Fascia..." />
+                    </div>
+
+                    {/* Qty + Size row */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold block mb-1.5">Quantity (pcs)</label>
+                        <input type="number" min="1" value={emQty} onChange={(e) => setEmQty(e.target.value)} className={detailInputCls} />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold block mb-1.5">Piece Size</label>
+                        <input value={emSize} onChange={(e) => setEmSize(e.target.value)} className={detailInputCls} placeholder={'e.g. 12ft, 4x8, 10"'} />
+                      </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold block mb-1.5">Notes (optional)</label>
+                      <input value={emNotes} onChange={(e) => setEmNotes(e.target.value)} className={detailInputCls} placeholder="Additional details..." />
+                    </div>
+
+                    {/* Document */}
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold block mb-1.5">Document (optional)</label>
+                      <input ref={extraMatDocRef} type="file" className="hidden" onChange={(e) => handleExtraMatDocUpload(e.target.files)} />
+                      {emDocUrl ? (
+                        <div className="flex items-center gap-2 bg-[#242624] rounded-lg px-4 py-3">
+                          <span className="material-symbols-outlined text-[#aeee2a] text-[16px]" translate="no">check_circle</span>
+                          <span className="text-xs text-[#faf9f5] font-medium truncate flex-1">{emDocName}</span>
+                          <button onClick={() => { setEmDocUrl(null); setEmDocName(null); }} className="text-[#ababa8] hover:text-[#ff7351] transition-colors cursor-pointer">
+                            <span className="material-symbols-outlined text-[16px]" translate="no">close</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => extraMatDocRef.current?.click()}
+                          disabled={uploadingExtraDoc}
+                          className="w-full border-2 border-dashed border-[#474846]/40 rounded-lg py-3 flex items-center justify-center gap-2 text-xs text-[#ababa8] hover:border-[#aeee2a]/40 hover:text-[#faf9f5] transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {uploadingExtraDoc ? (
+                            <><div className="w-4 h-4 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" /> Uploading...</>
+                          ) : (
+                            <><span className="material-symbols-outlined text-[16px]" translate="no">upload_file</span> Attach document</>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 mt-6 justify-end">
+                    <button
+                      onClick={() => setShowAddExtraMat(false)}
+                      className="px-5 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] font-bold text-xs hover:bg-[#242624] transition-all cursor-pointer"
+                    >Cancel</button>
+                    <button
+                      onClick={handleAddExtraMaterial}
+                      disabled={!emMaterialName.trim() || !emSize.trim()}
+                      className="px-5 py-2.5 rounded-xl bg-[#aeee2a] text-[#3a5400] font-bold text-xs hover:bg-[#a0df14] transition-all cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >Add Request</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -2067,6 +2605,10 @@ export default function ProjectDetailPage() {
                                     scheduled_end_at = endAt.toISOString();
                                   }
 
+                                  if (SCHEDULING_PAUSED) {
+                                    alert("Scheduling is currently paused. Assignment was not created.");
+                                    return;
+                                  }
                                   const { error } = await supabase.from('service_assignments').insert({
                                     job_service_id: svc.id,
                                     crew_id: crew.id,
@@ -2549,16 +3091,18 @@ export default function ProjectDetailPage() {
                                       const { data: specMatch } = await supabase.from("specialties").select("id").ilike("name", specName).limit(1);
                                       const specialtyId = specMatch?.[0]?.id || null;
 
-                                      const { error: assignErr } = await supabase.from("service_assignments").insert({
-                                        job_service_id: newSvc.id,
-                                        crew_id: crewId,
-                                        specialty_id: specialtyId,
-                                        status: "scheduled",
-                                        scheduled_start_at: startAt.toISOString(),
-                                        scheduled_end_at: endAt.toISOString(),
-                                      });
-                                      if (assignErr) console.error("[EditMenu] assignment error:", assignErr);
-                                      else console.log("[EditMenu] Re-added", sub.id, ":", startIso, "->", endIso);
+                                      if (!SCHEDULING_PAUSED) {
+                                        const { error: assignErr } = await supabase.from("service_assignments").insert({
+                                          job_service_id: newSvc.id,
+                                          crew_id: crewId,
+                                          specialty_id: specialtyId,
+                                          status: "scheduled",
+                                          scheduled_start_at: startAt.toISOString(),
+                                          scheduled_end_at: endAt.toISOString(),
+                                        });
+                                        if (assignErr) console.error("[EditMenu] assignment error:", assignErr);
+                                        else console.log("[EditMenu] Re-added", sub.id, ":", startIso, "->", endIso);
+                                      }
                                     }
 
                                     await fetchJob();
@@ -2829,6 +3373,28 @@ export default function ProjectDetailPage() {
                 </div>
             </div>
          </div>
+      )}
+
+
+      {/* ── Dumpster Photo Lightbox ── */}
+      {dumpsterPreview && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setDumpsterPreview(null)}
+        >
+          <button
+            onClick={() => setDumpsterPreview(null)}
+            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-[#1e201e]/80 flex items-center justify-center text-white hover:bg-[#ff7351] transition-colors cursor-pointer z-10"
+          >
+            <span className="material-symbols-outlined" translate="no">close</span>
+          </button>
+          <img
+            src={dumpsterPreview}
+            alt="Dumpster preview"
+            className="max-w-[90vw] max-h-[85vh] object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
       )}
 
     </>

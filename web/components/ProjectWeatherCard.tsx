@@ -115,8 +115,8 @@ export function ProjectWeatherCard({ city: rawCity, state: rawState }: ProjectWe
           setTodayStr(daily?.time?.[7] ?? "");
           setWeather(daily);
         }
-      } catch (err) {
-        console.error("[ProjectWeatherCard] fetch error:", err);
+      } catch {
+        // Network errors (offline / API unreachable) – fail silently
         setGeocodeError(true);
       } finally {
         setIsLoadingWeather(false);

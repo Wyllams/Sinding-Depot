@@ -773,14 +773,23 @@ export async function POST(req: Request) {
       const specialtyId = specMatch?.id || '26652a43-728d-43c1-935a-c39f1dea4d7d'; // fallback: siding_installation
 
       // ── Create service_assignment ──
-      await supabaseAdmin.from('service_assignments').insert({
-        job_service_id: newJs.id,
-        crew_id: crewId,
-        specialty_id: specialtyId,
-        status: 'scheduled',
-        scheduled_start_at: startAt.toISOString(),
-        scheduled_end_at: endAt.toISOString(),
-      });
+      // ┌──────────────────────────────────────────────────────┐
+      // │  ⏸️ PAUSED — Service assignment creation disabled     │
+      // │  To reactivate: set SCHEDULING_PAUSED to false below │
+      // └──────────────────────────────────────────────────────┘
+      const SCHEDULING_PAUSED = true; // ← flip to false to re-enable
+      if (!SCHEDULING_PAUSED) {
+        await supabaseAdmin.from('service_assignments').insert({
+          job_service_id: newJs.id,
+          crew_id: crewId,
+          specialty_id: specialtyId,
+          status: 'scheduled',
+          scheduled_start_at: startAt.toISOString(),
+          scheduled_end_at: endAt.toISOString(),
+        });
+      } else {
+        console.log(`⏸️ Scheduling PAUSED — skipped assignment for ${svcCode}`);
+      }
 
       console.log(`✅ Assignment: ${svcCode} → crew=${crewId ? (allCrews?.find(c => c.id === crewId)?.name || crewId) : 'none'} | ${svcStartIso} to ${prevEndpoints[svcCode]}`);
     }
