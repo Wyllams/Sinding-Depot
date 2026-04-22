@@ -188,9 +188,13 @@ export function WeeklyWeather() {
       }
       setIsSearching(true);
       try {
-        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(search)}&count=5&language=en&format=json`);
+        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(search)}&count=10&language=en&format=json`);
         const data = await res.json();
-        setResults(data.results || []);
+        // Filter to only Georgia, US cities
+        const georgiaOnly = (data.results || []).filter(
+          (r: GeoResult) => r.country_code === "US" && r.admin1?.toLowerCase() === "georgia"
+        );
+        setResults(georgiaOnly);
       } catch (err) {
         console.error("Geocoding fetch error:", err);
         setResults([]);

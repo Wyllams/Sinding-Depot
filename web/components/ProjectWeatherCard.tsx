@@ -133,9 +133,9 @@ async function fetchFromOpenMeteo(lat: number, lon: number): Promise<WeatherDay[
 }
 
 // ─── Geocode city → lat/lon ───────────────────────────────────────────────
-async function geocodeCity(city: string, state: string): Promise<{ lat: number; lon: number; label: string } | null> {
+async function geocodeCity(city: string, _state: string): Promise<{ lat: number; lon: number; label: string } | null> {
   const geoRes = await fetch(
-    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=5&language=en&format=json`
+    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=10&language=en&format=json`
   );
   const geoData = await geoRes.json();
   const results: Array<{
@@ -149,18 +149,17 @@ async function geocodeCity(city: string, state: string): Promise<{ lat: number; 
 
   if (results.length === 0) return null;
 
-  // Prefer US result matching the state
-  const usResult =
-    results.find(
-      (r) =>
-        r.country_code === "US" &&
-        (r.admin1?.toLowerCase().startsWith(state.toLowerCase()) || state === "")
-    ) ?? results.find(r => r.country_code === "US") ?? results[0];
+  // ONLY Georgia, US — filter strictly
+  const georgiaResult = results.find(
+    (r) => r.country_code === "US" && r.admin1?.toLowerCase() === "georgia"
+  );
+
+  if (!georgiaResult) return null;
 
   return {
-    lat: usResult.latitude,
-    lon: usResult.longitude,
-    label: `${usResult.name}, ${usResult.admin1 ?? usResult.country}`,
+    lat: georgiaResult.latitude,
+    lon: georgiaResult.longitude,
+    label: `${georgiaResult.name}, Georgia`,
   };
 }
 
