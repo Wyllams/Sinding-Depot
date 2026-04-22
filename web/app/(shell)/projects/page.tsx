@@ -31,7 +31,7 @@ const GATE_CONFIG: Record<string, { color: string; icon: string; title: string; 
 // Map job_status → display values (3 values matching calendar popup)
 const STATUS_MAP: Record<string, { label: string; style: string }> = {
   active:  { label: "Confirmed", style: "bg-green-500/10 text-green-400 border border-green-500/20"     },
-  draft:   { label: "Pending",   style: "bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20"    },
+  draft:   { label: "Pending",   style: "bg-red-500/10 text-red-400 border border-red-500/20"          },
   on_hold: { label: "Pending",   style: "bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20"     },
 };
 
