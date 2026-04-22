@@ -941,11 +941,19 @@ export default function SchedulePage() {
               onChange={(e) => {
                 if (!e.target.value) return;
                 const [y, m] = e.target.value.split("-").map(Number);
+                // Navigate to the first Monday ON or AFTER the 1st of the selected month
                 const firstDay = new Date(y, m - 1, 1);
-                const day = firstDay.getDay(); // 0 is Sunday
-                const diff = firstDay.getDate() - day + (day === 0 ? -6 : 1);
-                const monday = new Date(firstDay.setDate(diff));
-                setWeekBase(monday);
+                const dow = firstDay.getDay(); // 0=Sun, 1=Mon, ...
+                if (dow === 1) {
+                  // Already Monday
+                  setWeekBase(firstDay);
+                } else if (dow === 0) {
+                  // Sunday → next Monday is the 2nd
+                  setWeekBase(new Date(y, m - 1, 2));
+                } else {
+                  // Tue-Sat → advance to next Monday
+                  setWeekBase(new Date(y, m - 1, 1 + (8 - dow)));
+                }
               }}
               className="bg-[#121412] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors cursor-pointer [color-scheme:dark] relative"
               style={{ height: "42px" }}
