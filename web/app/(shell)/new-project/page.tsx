@@ -351,6 +351,7 @@ export default function NewProjectPage() {
   const DECK_SCOPE_OPTIONS = [
     { value: "rebuild_demo", label: "Deck Rebuild (Demo)", days: 5 },
     { value: "rebuild_porch", label: "Deck Rebuild (W/ Porch)", days: 10 },
+    { value: "new_deck_build", label: "New Deck Build", days: 4 },
     { value: "floor_replacement", label: "Floor Replacement", days: 4 },
     { value: "railing", label: "Railing", days: 1 },
   ];
