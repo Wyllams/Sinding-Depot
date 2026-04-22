@@ -1006,6 +1006,28 @@ export default function ProjectDetailPage() {
 
       setJob((j: any) => j ? { ...j, services: [...j.services, ...addedServices] } : j);
       setAddingServiceId("");
+
+      // ── Auto-create window_order when Windows is added ──
+      const hasWindows = addedServices.some((s: any) => s.service_type?.name?.toLowerCase() === "windows");
+      if (hasWindows && job) {
+        const wQty = parseInt(windowCount) || null;
+        const { error: woErr } = await supabase.from("window_orders").insert({
+          job_id: job.id,
+          customer_name: job.customer?.full_name || job.title || "",
+          status: "Measurement",
+          money_collected: "NO",
+          quantity: wQty,
+          quote: null,
+          deposit: null,
+          ordered_on: null,
+          expected_delivery: null,
+          supplier: "",
+          order_number: null,
+          notes: windowTrim === "yes" ? "Trim: YES" : windowTrim === "no" ? "Trim: NO" : null,
+        });
+        if (woErr) console.error("[AddService] Error creating window_order:", woErr);
+        else console.log("[AddService] Auto-created window_order for job:", job.id);
+      }
       
       // Re-fetch to update crews/assignments display
       fetchJob();
@@ -2541,6 +2563,27 @@ export default function ProjectDetailPage() {
 
                                     await fetchJob();
                                     setSelectedSubSvcs((prev) => [...prev, sub.id]);
+
+                                    // Auto-create window_order when re-adding Windows
+                                    if (sub.id === "windows" || sub.id === "doors") {
+                                      const wQty = parseInt(windowCount) || null;
+                                      const { error: woErr } = await supabase.from("window_orders").insert({
+                                        job_id: job.id,
+                                        customer_name: job.customer?.full_name || job.title || "",
+                                        status: "Measurement",
+                                        money_collected: "NO",
+                                        quantity: wQty,
+                                        quote: null,
+                                        deposit: null,
+                                        ordered_on: null,
+                                        expected_delivery: null,
+                                        supplier: "",
+                                        order_number: null,
+                                        notes: windowTrim === "yes" ? "Trim: YES" : windowTrim === "no" ? "Trim: NO" : null,
+                                      });
+                                      if (woErr) console.error("[EditMenu] Error creating window_order:", woErr);
+                                      else console.log("[EditMenu] Auto-created window_order for job:", job.id);
+                                    }
 
                                     // If re-adding decks, go to deckscope step
                                     if (sub.id === "decks") {
