@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { TopBar } from "../../../components/TopBar";
 import { supabase } from "../../../lib/supabase";
+import CustomDatePicker from "../../../components/CustomDatePicker";
 
 // =============================================
 // Sales Dashboard — v2 (Monthly-centric)
@@ -114,6 +115,106 @@ export default function ReportsPage() {
   const [spJobs, setSpJobs] = useState<Record<string, JobDetail[]>>({});
   const [loadingJobs, setLoadingJobs] = useState<string | null>(null);
   const [jobToAbandon, setJobToAbandon] = useState<{jobId: string, spId: string, title: string} | null>(null);
+
+  // ── Inline Dropdown & Edit Modal ────────────────────────────────────────
+  const [openDropdownJobId, setOpenDropdownJobId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [editingJob, setEditingJob] = useState<{ job: JobDetail; spId: string } | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editServices, setEditServices] = useState<string[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const ALL_SERVICE_OPTIONS = ["Siding", "Painting", "Gutters", "Roofing", "Windows", "Doors", "Decks", "Dumpster"];
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!openDropdownJobId) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenDropdownJobId(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [openDropdownJobId]);
+
+  const openEditModal = (job: JobDetail, spId: string): void => {
+    setEditDate(job.contract_signed_at || job.created_at?.slice(0, 10) || "");
+    setEditAmount(String(job.contract_amount || 0));
+    setEditServices([...job.services]);
+    setEditingJob({ job, spId });
+    setOpenDropdownJobId(null);
+  };
+
+  const handleSaveJobEdit = async (): Promise<void> => {
+    if (!editingJob) return;
+    setSavingEdit(true);
+    const { job, spId } = editingJob;
+    try {
+      // 1) Update job record (date + amount)
+      const { error: jobErr } = await supabase.from("jobs").update({
+        contract_signed_at: editDate || null,
+        contract_amount: parseFloat(editAmount) || 0,
+      }).eq("id", job.id);
+      if (jobErr) throw jobErr;
+
+      // 2) Sync services: remove old, add new
+      // Get current job_services
+      const { data: currentSvcs } = await supabase
+        .from("job_services")
+        .select("id, service_type:service_types(name)")
+        .eq("job_id", job.id);
+
+      const currentNames = (currentSvcs || []).map((s: any) => s.service_type?.name).filter(Boolean);
+      const toRemove = (currentSvcs || []).filter((s: any) => {
+        const name = s.service_type?.name;
+        return name && !editServices.includes(name);
+      });
+      const toAdd = editServices.filter((svc) => !currentNames.includes(svc));
+
+      // Remove services not in the new list
+      for (const svc of toRemove) {
+        await supabase.from("job_services").delete().eq("id", svc.id);
+      }
+
+      // Add new services
+      for (const svcName of toAdd) {
+        const { data: stData } = await supabase
+          .from("service_types")
+          .select("id")
+          .ilike("name", svcName)
+          .maybeSingle();
+        if (stData?.id) {
+          await supabase.from("job_services").insert({
+            job_id: job.id,
+            service_type_id: stData.id,
+            scope_of_work: "Standard exterior work",
+          });
+        }
+      }
+
+      // 3) Update local state
+      const updatedJob: JobDetail = {
+        ...job,
+        contract_signed_at: editDate || null,
+        contract_amount: parseFloat(editAmount) || 0,
+        services: [...editServices],
+      };
+      setSpJobs((prev) => ({
+        ...prev,
+        [spId]: (prev[spId] || []).map((j) => (j.id === job.id ? updatedJob : j)),
+      }));
+
+      setEditingJob(null);
+      fetchData(selectedYear, selectedMonth);
+    } catch (e) {
+      console.error("Error saving job edit:", e);
+      alert("Failed to save changes.");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   // ── Summary editing ─────────────────────────────────────────────────────
   const [editingSummary, setEditingSummary] = useState(false);
@@ -888,7 +989,7 @@ export default function ReportsPage() {
                                           {fmtFull(Number(job.contract_amount))}
                                         </span>
 
-                                        <div className="flex justify-end pr-2">
+                                        <div className="flex justify-end pr-2 relative">
                                           {isCancelled ? (
                                              <button
                                                 title="Restaurar Job"
@@ -901,16 +1002,46 @@ export default function ReportsPage() {
                                                 <span className="material-symbols-outlined text-[13px]" translate="no">check_circle</span>
                                              </button>
                                           ) : (
-                                             <button 
-                                                title="Marcar como Abandonado"
-                                                onClick={(e) => {
-                                                   e.stopPropagation();
-                                                   setJobToAbandon({ jobId: job.id, spId: sp.id, title: job.title });
-                                                }}
-                                                className="w-6 h-6 rounded-md bg-[#242624] text-[#808080] hover:text-[#ff7351] hover:bg-[#ff7351]/10 flex items-center justify-center transition-all border border-[#474846]/20 hover:border-[#ff7351]/40 cursor-pointer"
-                                             >
-                                                <span className="material-symbols-outlined text-[13px]" translate="no">block</span>
-                                             </button>
+                                             <>
+                                               <button
+                                                  title="Opções"
+                                                  onClick={(e) => {
+                                                     e.stopPropagation();
+                                                     setOpenDropdownJobId(openDropdownJobId === job.id ? null : job.id);
+                                                  }}
+                                                  className="w-6 h-6 rounded-md bg-[#242624] text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#1e201e] flex items-center justify-center transition-all border border-[#474846]/20 hover:border-[#aeee2a]/40 cursor-pointer"
+                                               >
+                                                  <span className="material-symbols-outlined text-[15px]" translate="no">more_vert</span>
+                                               </button>
+
+                                               {/* Dropdown */}
+                                               {openDropdownJobId === job.id && (
+                                                 <div
+                                                   ref={dropdownRef}
+                                                   className="absolute right-0 top-7 z-50 w-40 py-1 rounded-xl bg-[#1e201e] border border-[#474846]/40 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+                                                   onClick={(e) => e.stopPropagation()}
+                                                 >
+                                                   <button
+                                                     onClick={() => openEditModal(job, sp.id)}
+                                                     className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-[#faf9f5] hover:bg-[#242624] transition-colors"
+                                                   >
+                                                     <span className="material-symbols-outlined text-[14px] text-[#aeee2a]" translate="no">edit</span>
+                                                     Editar
+                                                   </button>
+                                                   <div className="mx-2 border-b border-[#474846]/30" />
+                                                   <button
+                                                     onClick={() => {
+                                                       setOpenDropdownJobId(null);
+                                                       setJobToAbandon({ jobId: job.id, spId: sp.id, title: job.title });
+                                                     }}
+                                                     className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-[#ff7351] hover:bg-[#ff7351]/10 transition-colors"
+                                                   >
+                                                     <span className="material-symbols-outlined text-[14px]" translate="no">block</span>
+                                                     Abandonado
+                                                   </button>
+                                                 </div>
+                                               )}
+                                             </>
                                           )}
                                         </div>
                                       </div>
@@ -1509,6 +1640,108 @@ export default function ReportsPage() {
                   className="flex-1 py-2.5 rounded-xl bg-[#ff7351] text-white text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-[#e05b3d]"
                 >
                   Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Job Modal ────────────────────────────────────────────────────── */}
+      {editingJob && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setEditingJob(null)}>
+          <div
+            className="w-full max-w-md rounded-3xl bg-[#121412] border border-[#aeee2a]/20 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-white/5 bg-[#aeee2a]/5 flex items-center gap-3">
+              <span className="material-symbols-outlined text-[#aeee2a] text-xl" translate="no">edit_note</span>
+              <div>
+                <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                  Editar Job
+                </h3>
+                <p className="text-[11px] text-[#ababa8] mt-0.5">{editingJob.job.customer_name} — {editingJob.job.job_number}</p>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-5">
+              {/* Date */}
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-[#ababa8]">Data (Sold Date)</label>
+                <CustomDatePicker
+                  value={editDate}
+                  onChange={(iso) => setEditDate(iso || "")}
+                  placeholder="Set date"
+                  disableSundays={false}
+                />
+              </div>
+
+              {/* Services */}
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-[#ababa8]">Serviços</label>
+                <div className="flex flex-wrap gap-2">
+                  {ALL_SERVICE_OPTIONS.map((svc) => {
+                    const isActive = editServices.includes(svc);
+                    return (
+                      <button
+                        key={svc}
+                        type="button"
+                        onClick={() => {
+                          setEditServices((prev) =>
+                            isActive ? prev.filter((s) => s !== svc) : [...prev, svc]
+                          );
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                          isActive
+                            ? "bg-[#aeee2a]/15 text-[#aeee2a] border-[#aeee2a]/40"
+                            : "bg-[#1e201e] text-[#474846] border-[#474846]/20 hover:text-[#ababa8] hover:border-[#474846]/40"
+                        }`}
+                      >
+                        {svc}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Amount */}
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-[#ababa8]">Valor (Contract Amount)</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-bold text-[15px]">$</span>
+                  <input
+                    type="text"
+                    value={editAmount}
+                    onChange={(e) => setEditAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                    placeholder="0.00"
+                    className="w-full bg-[#242624] border border-transparent rounded-lg py-3 pl-8 pr-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#aeee2a] focus:ring-1 focus:ring-[#aeee2a] transition-all h-[48px] text-[15px] font-black"
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setEditingJob(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-[#1e201e] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveJobEdit}
+                  disabled={savingEdit}
+                  className="flex-1 py-2.5 rounded-xl bg-[#aeee2a] text-[#1a1c1a] text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-[#c5f74d] disabled:opacity-50 cursor-pointer"
+                >
+                  {savingEdit ? (
+                    <div className="w-4 h-4 border-2 border-[#1a1c1a]/30 border-t-[#1a1c1a] rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[14px]" translate="no">save</span>
+                      Salvar
+                    </>
+                  )}
                 </button>
               </div>
             </div>
