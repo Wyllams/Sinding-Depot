@@ -2605,10 +2605,6 @@ export default function ProjectDetailPage() {
                                     scheduled_end_at = endAt.toISOString();
                                   }
 
-                                  if (SCHEDULING_PAUSED) {
-                                    alert("Scheduling is currently paused. Assignment was not created.");
-                                    return;
-                                  }
                                   const { error } = await supabase.from('service_assignments').insert({
                                     job_service_id: svc.id,
                                     crew_id: crew.id,

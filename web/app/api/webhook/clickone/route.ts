@@ -265,6 +265,21 @@ export async function POST(req: Request) {
     // ── Crew Lead: partner name from ClickOne ──
     const rawCrewLead = nonEmpty(payload["Crew Lead"]) || nonEmpty(cd.Crew_Lead) || nonEmpty(cd.crew_lead);
 
+    // ── Close Date (Sold Date): when the client closed the deal ──
+    const rawCloseDate = nonEmpty(cd.Close_date) || nonEmpty(cd.close_date) || nonEmpty(cd.CloseDate)
+      || nonEmpty(payload["Close_date"]) || nonEmpty(payload["Close Date"]) || nonEmpty(payload["close_date"]);
+    let closeDateIso: string | null = null;
+    if (rawCloseDate) {
+      const parsed = new Date(rawCloseDate);
+      if (!isNaN(parsed.getTime())) {
+        closeDateIso = parsed.toISOString().split('T')[0];
+      }
+    }
+    // Fallback: use today if no close date provided
+    if (!closeDateIso) {
+      closeDateIso = new Date().toISOString().split('T')[0];
+    }
+
     // ── Valor: ClickOne sends as `Job Value`, `lead_value`, or `Valor` header ──
     // ── Valor: customData.Valor, headers, or payload fields ──
     const serviceValue =
@@ -772,24 +787,10 @@ export async function POST(req: Request) {
       const specMatch = (allSpecs || []).find(s => s.code === specCode);
       const specialtyId = specMatch?.id || '26652a43-728d-43c1-935a-c39f1dea4d7d'; // fallback: siding_installation
 
-      // ── Create service_assignment ──
-      // ┌──────────────────────────────────────────────────────┐
-      // │  ⏸️ PAUSED — Service assignment creation disabled     │
-      // │  To reactivate: set SCHEDULING_PAUSED to false below │
-      // └──────────────────────────────────────────────────────┘
-      const SCHEDULING_PAUSED = true; // ← flip to false to re-enable
-      if (!SCHEDULING_PAUSED) {
-        await supabaseAdmin.from('service_assignments').insert({
-          job_service_id: newJs.id,
-          crew_id: crewId,
-          specialty_id: specialtyId,
-          status: 'scheduled',
-          scheduled_start_at: startAt.toISOString(),
-          scheduled_end_at: endAt.toISOString(),
-        });
-      } else {
-        console.log(`⏸️ Scheduling PAUSED — skipped assignment for ${svcCode}`);
-      }
+      // ── Service assignment: NOT created automatically ──
+      // Admins will manually assign partners from the project detail page.
+      // This ensures no automatic crew/partner assignment happens from the webhook.
+      console.log(`⏸️ No auto-assignment for ${svcCode} — admin will assign manually`);
 
       console.log(`✅ Assignment: ${svcCode} → crew=${crewId ? (allCrews?.find(c => c.id === crewId)?.name || crewId) : 'none'} | ${svcStartIso} to ${prevEndpoints[svcCode]}`);
     }
@@ -866,10 +867,10 @@ export async function POST(req: Request) {
       }
     }
 
-    // 6. Set contract_signed_at so period-based queries (Quarter/Year) pick up this job
+    // 6. Set contract_signed_at (Sold Date) from ClickOne Close_date
     await supabaseAdmin
       .from("jobs")
-      .update({ contract_signed_at: new Date().toISOString() })
+      .update({ contract_signed_at: closeDateIso })
       .eq("id", newJob.id);
 
     console.log("✅ ClickOne job successfully registered:", jobNumber);
