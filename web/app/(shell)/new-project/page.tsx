@@ -852,7 +852,7 @@ export default function NewProjectPage() {
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Sold Date</label>
-                  <CustomDatePicker value={soldDate} onChange={(v) => setSoldDate(v || "")} placeholder="Set date" disableSundays={false} />
+                  <CustomDatePicker value={soldDate} onChange={(v) => setSoldDate(v || "")} placeholder="Set date" />
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Start Date</label>
