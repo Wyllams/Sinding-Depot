@@ -517,7 +517,7 @@ export async function POST(req: Request) {
         salesperson_id: spId,
         job_number: jobNumber,
         title: `${rawServices} - ${clientName}`,
-        status: "draft",
+        status: "pending",
         gate_status: "NOT_CONTACTED",
         requested_start_date: startDateIso,
         service_address_line_1: finalAddress,

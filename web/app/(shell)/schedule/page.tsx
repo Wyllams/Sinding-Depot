@@ -107,7 +107,7 @@ const isSundayIso = (iso: string) => fromIso(iso).getDay() === 0;
 
 // ─── Dynamic Status Colors (6.3) ─────────────────
 const STATUS_CONFIG: Record<string, { color: string; label: string; bg: string }> = {
-  tentative:   { color: "#f5a623", label: "Tentative",   bg: "rgba(245,166,35,0.12)" },
+  tentative:   { color: "#f5a623", label: "Pending",     bg: "rgba(245,166,35,0.12)" },
   scheduled:   { color: "#60b8f5", label: "Confirmed",   bg: "rgba(96,184,245,0.12)" },
   in_progress: { color: "#aeee2a", label: "In Progress", bg: "rgba(174,238,42,0.12)" },
   done:        { color: "#22c55e", label: "Done",        bg: "rgba(34,197,94,0.12)" },
@@ -1195,7 +1195,7 @@ export default function SchedulePage() {
         {/* ── Legend ── */}
         <div className="mt-5 flex items-center flex-wrap gap-6 px-1">
           {[
-            { color: "#f5a623", label: "Tentative" },
+            { color: "#f5a623", label: "Pending" },
             { color: "#60b8f5", label: "Confirmed" },
             { color: "#aeee2a", label: "In Progress" },
             { color: "#22c55e", label: "Done" },
@@ -1250,7 +1250,7 @@ export default function SchedulePage() {
                           borderColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.2)" : editJob.jobStartStatus === "draft" ? "rgba(227, 235, 93, 0.2)" : "rgba(255, 115, 81, 0.2)"
                         }}
                       >
-                        {editJob.jobStartStatus === "active" ? "CONFIRMED" : editJob.jobStartStatus === "draft" ? "TENTATIVE" : "PENDING"}
+                        {editJob.jobStartStatus === "active" ? "CONFIRMED" : editJob.jobStartStatus === "draft" ? "PENDING" : "PENDING"}
                       </span>
                     )}
                   </div>
@@ -1290,7 +1290,7 @@ export default function SchedulePage() {
                         onChange={(val) => setEditStatus(val as "active" | "draft" | "on_hold")}
                         options={[
                           { value: "active", label: "Confirmed" },
-                          { value: "draft", label: "Tentative" },
+                          { value: "draft", label: "Pending" },
                           { value: "on_hold", label: "Pending" }
                         ]}
                         className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"

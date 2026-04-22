@@ -31,7 +31,7 @@ const GATE_CONFIG: Record<string, { color: string; icon: string; title: string; 
 // Map job_status → display values (3 values matching calendar popup)
 const STATUS_MAP: Record<string, { label: string; style: string }> = {
   active:  { label: "Confirmed", style: "bg-green-500/10 text-green-400 border border-green-500/20"     },
-  draft:   { label: "Tentative", style: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20"    },
+  draft:   { label: "Pending",   style: "bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20"    },
   on_hold: { label: "Pending",   style: "bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20"     },
 };
 
@@ -332,7 +332,7 @@ export default function ProjectsPage() {
               onChange={(val) => setStatusFilter(val)}
               options={[
                 { value: "active", label: "Confirmed" },
-                { value: "draft", label: "Tentative" },
+                { value: "draft", label: "Pending" },
                 { value: "on_hold", label: "Pending" },
               ]}
               placeholder="All Statuses"
