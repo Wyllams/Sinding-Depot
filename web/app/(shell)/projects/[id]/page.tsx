@@ -497,6 +497,53 @@ export default function ProjectDetailPage() {
     }
   };
 
+  // ─── SQ Update Handler (bidirectional sync with schedule popup) ───
+  const handleSqUpdate = async (newValue: string): Promise<void> => {
+    const raw = newValue.replace(/[^0-9.]/g, '');
+    const num = parseFloat(raw);
+    const sqValue = isNaN(num) ? 0 : num;
+
+    // 1. Save to jobs.sq
+    const { error: jobErr } = await supabase.from("jobs").update({ sq: sqValue }).eq("id", job.id);
+    if (jobErr) console.error("[SQ Sync] jobs.sq update error:", jobErr);
+
+    // 2. Update job_services.quantity and recalculate durations for SQ-based services
+    const sqServiceNames = ["siding", "painting"];
+    for (const svc of (job.services ?? [])) {
+      const svcName: string = (svc as any).service_type?.name?.toLowerCase() ?? "";
+      if (!svcName || !sqServiceNames.includes(svcName)) continue;
+
+      // Update job_services.quantity
+      const { error: jsErr } = await supabase.from("job_services").update({
+        quantity: sqValue,
+        unit_of_measure: "SQ",
+      }).eq("id", svc.id);
+      if (jsErr) console.error("[SQ Sync] job_services update error:", jsErr);
+
+      // Recalculate duration for each service_assignment
+      const assignments: any[] = (svc as any).assignments ?? [];
+      for (const assignment of assignments) {
+        if (!assignment.scheduled_start_at) continue;
+
+        const crewName: string = assignment.crew?.name || "SIDING DEPOT";
+        const newDuration = calculateServiceDuration(crewName, svcName, sqValue);
+
+        // Calculate new end date from start date + new duration
+        const startIso = new Date(assignment.scheduled_start_at).toISOString().split("T")[0];
+        const endAt = new Date(startIso + "T08:00:00");
+        endAt.setDate(endAt.getDate() + newDuration);
+
+        const { error: saErr } = await supabase.from("service_assignments").update({
+          scheduled_end_at: endAt.toISOString(),
+        }).eq("id", assignment.id);
+        if (saErr) console.error("[SQ Sync] service_assignment duration update error:", saErr);
+      }
+    }
+
+    // Re-fetch to update UI
+    fetchJob();
+  };
+
   // Fetch crews whose specialties match this project's services
   const fetchMatchingCrews = useCallback(async () => {
     if (!job) return;
@@ -1277,11 +1324,7 @@ export default function ProjectDetailPage() {
                   <input
                     type="text"
                     defaultValue={job.sq != null ? String(job.sq) : ""}
-                    onBlur={(e) => {
-                      const raw = e.target.value.replace(/[^0-9.]/g, '');
-                      const num = parseFloat(raw);
-                      handleAutoSave("jobs", job.id, "sq", isNaN(num) ? 0 : num);
-                    }}
+                    onBlur={(e) => handleSqUpdate(e.target.value)}
                     placeholder="e.g. 24.5"
                     className={`${detailInputCls} font-black`}
                   />

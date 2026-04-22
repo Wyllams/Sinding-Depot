@@ -242,6 +242,34 @@ export default function SchedulePage() {
     fetchSchedule();
   }, []);
 
+  // ─── Real-time duration recalculation when SQ or crew changes ───
+  useEffect(() => {
+    if (!editJob) return;
+    // Only recalculate for services that use SQ-based duration
+    if (editJob.serviceType !== "siding" && editJob.serviceType !== "paint") return;
+    if (!editSq || isNaN(parseFloat(editSq)) || parseFloat(editSq) <= 0) return;
+
+    const newSq = parseFloat(editSq);
+    const selectedCrewId = editJob.jobServiceIds && editJob.jobServiceIds.length > 0
+      ? selectedCrewIds[editJob.jobServiceIds[0]]
+      : undefined;
+    const crewName = selectedCrewId
+      ? allCrews.find(c => c.id === selectedCrewId)?.name || editJob.partnerName
+      : editJob.partnerName;
+
+    const svcNameMap: Record<string, string> = {
+      siding: "siding",
+      paint: "painting",
+      gutters: "gutters",
+      roofing: "roofing",
+      doors_windows_decks: "doors_windows_decks",
+    };
+    const svcName = svcNameMap[editJob.serviceType] || editJob.serviceType;
+    const newDur = calculateServiceDuration(crewName, svcName, newSq);
+
+    setEditDur(newDur);
+  }, [editSq, editJob, selectedCrewIds, allCrews]);
+
   const fetchSchedule = async () => {
     const { data: assignments, error } = await supabase.from("service_assignments").select(`
       id,
@@ -623,9 +651,29 @@ export default function SchedulePage() {
     try {
       pushUndo(`Rescheduled "${editJob.clientName}"`, [...jobs]);
 
+      // ── Resolve crew and compute duration FIRST (before any DB write) ──
+      const selectedCrewId = editJob.jobServiceIds && editJob.jobServiceIds.length > 0 ? selectedCrewIds[editJob.jobServiceIds[0]] : undefined;
+      const newCrewName = selectedCrewId ? allCrews.find(c => c.id === selectedCrewId)?.name || editJob.partnerName : editJob.partnerName;
+
+      // Automatically compute duration based on partner-specific SQ tables
+      let finalDur = editDur;
+      if (editSq && !isNaN(parseFloat(editSq))) {
+         const newSq = parseFloat(editSq);
+         const svcNameMap: Record<string, string> = {
+           siding: "siding",
+           paint: "painting",
+           gutters: "gutters",
+           roofing: "roofing",
+           doors_windows_decks: "doors_windows_decks",
+         };
+         const svcName = svcNameMap[editJob.serviceType] || editJob.serviceType;
+         finalDur = calculateServiceDuration(newCrewName, svcName, newSq);
+      }
+
+      // ── All DB writes now use finalDur for end date calculation ──
       const startAt = new Date(editDate + "T08:00:00").toISOString();
       const endAt = new Date(editDate + "T08:00:00");
-      endAt.setDate(endAt.getDate() + editDur);
+      endAt.setDate(endAt.getDate() + finalDur);
 
       let anyCrewSelected = false;
 
@@ -671,29 +719,16 @@ export default function SchedulePage() {
         if (sqErr) console.error("SQ update error:", sqErr);
       }
 
+      // Sync SQ to jobs table (bidirectional sync with project detail page)
+      if (editSq !== undefined && editJob.jobId) {
+        const sqVal = parseFloat(editSq);
+        const { error: jobSqErr } = await supabase.from("jobs").update({ sq: isNaN(sqVal) ? null : sqVal }).eq("id", editJob.jobId);
+        if (jobSqErr) console.error("Job SQ sync error:", jobSqErr);
+      }
+
       // Update JOB START STATUS only for Siding (main service controls job status)
       if (editJob.jobId && editJob.serviceType === "siding") {
         await supabase.from("jobs").update({ status: editStatus }).eq("id", editJob.jobId);
-      }
-
-      // ── Cascade Shifting Logic (Siding -> Window -> Paint -> Gutters -> Roofing) ─────────────
-      const selectedCrewId = editJob.jobServiceIds && editJob.jobServiceIds.length > 0 ? selectedCrewIds[editJob.jobServiceIds[0]] : undefined;
-      const newCrewName = selectedCrewId ? allCrews.find(c => c.id === selectedCrewId)?.name || editJob.partnerName : editJob.partnerName;
-
-      // Automatically compute duration based on partner-specific SQ tables
-      let finalDur = editDur;
-      if (editSq && !isNaN(parseFloat(editSq))) {
-         const newSq = parseFloat(editSq);
-         // Map schedule serviceType to service name for the calculator
-         const svcNameMap: Record<string, string> = {
-           siding: "siding",
-           paint: "painting",
-           gutters: "gutters",
-           roofing: "roofing",
-           doors_windows_decks: "doors_windows_decks",
-         };
-         const svcName = svcNameMap[editJob.serviceType] || editJob.serviceType;
-         finalDur = calculateServiceDuration(newCrewName, svcName, newSq);
       }
 
       const newJobs = jobs.map(j => {
