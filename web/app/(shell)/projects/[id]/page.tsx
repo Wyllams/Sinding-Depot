@@ -1184,7 +1184,7 @@ export default function ProjectDetailPage() {
                   <div className="relative">
                     <CustomDropdown
                       value={job.salesperson_id || ""}
-                      onChange={(val) => handleAutoSave("jobs", job.id, "salesperson_id", val)}
+                      onChange={(val) => handleAutoSave("jobs", job.id, "salesperson_id", val || null)}
                       options={allSalespersons.map(s => ({ value: s.id, label: s.full_name }))}
                       placeholder="No Salesperson"
                       className={`${detailInputCls} cursor-pointer flex justify-between items-center`}
