@@ -4,8 +4,10 @@ tags:
   - siding-depot
   - realtime
   - supabase
+  - push
+  - pwa
 created: 2026-04-17
-updated: 2026-04-18
+updated: 2026-04-22
 ---
 
 # 🔔 Notificações em Tempo Real
@@ -14,7 +16,20 @@ updated: 2026-04-18
 
 ---
 
-## Componente: `NotificationBell`
+## Visão Geral
+
+O sistema possui **dois mecanismos** de notificação:
+
+| Tipo | Descrição | Onde aparece |
+|------|-----------|-------------|
+| **In-App** (Realtime) | Notificações no sino da navbar | Browser aberto no site |
+| **Push (PWA)** | Notificações nativas do SO | Tela bloqueada, browser fechado, mobile |
+
+---
+
+## 1. Notificações In-App (Sino)
+
+### Componente: `NotificationBell`
 
 | Feature | Detalhes |
 |---------|----------|
@@ -24,19 +39,7 @@ updated: 2026-04-18
 | **Mark as Read** | Individual ou "Mark All Read" |
 | **Navegação** | Click em notificação navega para o [[Projects|projeto]] relacionado |
 
----
-
-## Tipos de Notificação
-
-| Tipo | Ícone | Cor | Quando é gerada | Gerada por |
-|------|-------|-----|-----------------|------------|
-| `new_job` | `person_add` | `#aeee2a` (Verde) | Novo job via CRM | [[Webhook ClickOne]] |
-| `new_change_order` | `edit_note` | `#e3eb5d` (Amarelo) | Novo CO criado | [[Change Orders]] |
-| `document_signed` | `contract_edit` | `#818cf8` (Roxo) | **Cliente assina documento** | `/api/documents/sign` |
-
----
-
-## Tabela: `notifications`
+### Tabela: `notifications`
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
@@ -44,14 +47,12 @@ updated: 2026-04-18
 | `user_id` | uuid | FK → auth.users (quem recebe) |
 | `title` | text | Título da notificação |
 | `body` | text | Corpo com detalhes |
-| `notification_type` | text | `new_job`, `new_change_order`, `document_signed` |
+| `notification_type` | text | `new_job`, `new_change_order`, `document_signed`, etc. |
 | `read` | boolean | Se já foi lida |
 | `related_entity_id` | uuid | ID da entidade relacionada (job, CO, milestone) |
 | `created_at` | timestamptz | Data de criação |
 
----
-
-## Mecanismo Técnico
+### Mecanismo Técnico
 
 ```
 Supabase Realtime Channel → "public:notifications"
@@ -62,35 +63,133 @@ Event: INSERT
 
 ---
 
-## Geração de Notificações
+## 2. Push Notifications (PWA) — Novo ✅
 
-Notificações são inseridas automaticamente por:
+### Infraestrutura
 
-1. **[[Webhook ClickOne]]** → Quando novo job é criado via CRM
-2. **Database Triggers** → Quando [[Change Orders]] são criadas/atualizadas
-3. **[[Services e Warranty]]** → Alertas de chamados
-4. **`/api/documents/sign`** → Quando cliente assina um documento
+| Arquivo | Função |
+|---------|--------|
+| `lib/send-push.ts` | Helper centralizado: envia push + insere notificação in-app |
+| `api/push/notify/route.ts` | API interna para frontend disparar push server-side |
+| `api/push/send/route.ts` | API que envia push para subscriptions individuais |
+| `api/push/subscribe/route.ts` | API que salva subscriptions de dispositivos |
+| `components/pwa/PushNotificationInit.tsx` | Monta no layout, registra SW + banner de permissão |
+| `components/pwa/PushNotificationManager.tsx` | UI do banner de opt-in |
+| `lib/push-notifications.ts` | Utilitários: registro SW, request permission, subscribe |
+| `public/sw.js` | Service Worker para receber push em background |
 
-### Notificação de Assinatura (novo)
+### Tabela: `push_subscriptions`
 
-Quando um **cliente assina** um documento no [[Customer Portal]]:
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | uuid | PK |
+| `user_id` | uuid | FK → auth.users |
+| `subscription` | jsonb | Objeto PushSubscription do browser |
+| `created_at` | timestamptz | Data de criação |
 
-```typescript
-// Em /api/documents/sign/route.ts (Step 7)
-// 1. Busca nome do cliente (milestone → job → customer)
-// 2. Busca todos os admin users
-// 3. Insere notificação para cada admin:
-{
-  user_id: admin.id,
-  title: "Document Signed",
-  body: 'John Smith signed "Job Start Certificate" — $15,000',
-  notification_type: "document_signed",
-  read: false,
-  related_entity_id: milestone.id  // ID do milestone assinado
-}
+### Fluxo de Ativação
+
+```
+1. Usuário acessa o site
+2. PushNotificationInit → registra Service Worker
+3. Banner "Enable Notifications" aparece
+4. Usuário clica → browser pede permissão
+5. Subscription criada e salva na tabela push_subscriptions
+6. Pronto — recebe push mesmo com tela bloqueada
 ```
 
-> ⚠️ A falha na notificação **não bloqueia** a assinatura (try/catch isolado).
+### Eventos que Disparam Push
+
+| Evento | Título | Disparado por | Arquivo |
+|--------|--------|---------------|---------|
+| 📋 Novo Projeto (webhook) | `"New Project from ClickOne"` | Server-side | `webhook/clickone/route.ts` |
+| ✍️ Documento Assinado | `"Document Signed"` | Server-side | `documents/sign/route.ts` |
+| 📝 Change Order Criada | `"New Change Order"` | Client → API | `change-orders/page.tsx` |
+| 📦 Material Extra Solicitado | `"Extra Material Request"` | Client → API | `field/jobs/[id]/page.tsx` |
+| 🎨 Cores Submetidas | `"New Color Submission"` | Server-side | `colors/submit/route.ts` |
+| 🎨 Edição de Cores | `"Color Edit Request"` | Server-side | `colors/request-edit/route.ts` |
+
+### Helper: `sendPushToAdmins()`
+
+```typescript
+// lib/send-push.ts
+export async function sendPushToAdmins(params: {
+  title: string;
+  body: string;
+  url?: string;
+  tag?: string;
+  notificationType: string;
+  relatedEntityId?: string;
+}): Promise<void>
+```
+
+**O que faz:**
+1. Busca todos os admins (`profiles.role = 'admin'`)
+2. Insere notificação na tabela `notifications` para cada admin
+3. Busca subscriptions de push de cada admin
+4. Envia Web Push via `webpush.sendNotification()` (VAPID)
+5. Falhas são silenciosas — nunca bloqueia o processo principal
+
+### API: `POST /api/push/notify`
+
+Para uso pelo **frontend** (client-side) quando precisa disparar push:
+
+```typescript
+// Exemplo de uso no frontend
+await fetch('/api/push/notify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    title: '📦 Extra Material Request',
+    body: 'Partner requested 5x Vinyl Siding for Johnson',
+    url: '/projects/abc-123',
+    tag: 'extra-material-request',
+    notificationType: 'extra_material_request',
+    relatedEntityId: 'abc-123',
+  }),
+});
+```
+
+**Segurança:** Protegido por `PUSH_API_SECRET` no header.
+
+### Variáveis de Ambiente
+
+| Variável | Onde | Descrição |
+|----------|------|-----------|
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Client + Server | Chave pública VAPID |
+| `VAPID_PRIVATE_KEY` | Server only | Chave privada VAPID |
+| `VAPID_SUBJECT` | Server only | Email de contato (ex: `mailto:admin@sidingdepot.com`) |
+| `PUSH_API_SECRET` | Server only | Segredo para API `/api/push/notify` |
+| `NEXT_PUBLIC_SITE_URL` | Client + Server | URL base do site |
+
+### Compatibilidade por Dispositivo
+
+| Cenário | Funciona? |
+|---------|-----------|
+| Chrome/Edge desktop (aberto) | ✅ |
+| Chrome/Edge desktop (minimizado) | ✅ |
+| Chrome/Edge desktop (fechado) | ✅ (se rodando em background) |
+| Android Chrome (tela bloqueada) | ✅ |
+| Android PWA (Add to Home Screen) | ✅ (recomendado) |
+| iPhone Safari (PWA instalado) | ✅ |
+| iPhone Safari (sem instalar) | ❌ (Apple exige PWA instalado) |
+
+> [!IMPORTANT]
+> No **iPhone**, o site precisa ser **instalado como PWA** (Share → Add to Home Screen) para receber push notifications. Sem isso, Safari não suporta.
+
+---
+
+## Geração de Notificações (Resumo)
+
+| Origem | Mecanismo | Push? | In-App? |
+|--------|-----------|-------|---------|
+| [[Webhook ClickOne]] | `sendPushToAdmins()` server-side | ✅ | ✅ |
+| [[Change Orders]] | Client → `/api/push/notify` | ✅ | ✅ |
+| [[Field App]] (Material Extra) | Client → `/api/push/notify` | ✅ | ✅ |
+| `/api/documents/sign` | `sendPushToAdmins()` server-side | ✅ | ✅ |
+| `/api/colors/submit` | `sendPushToAdmins()` server-side | ✅ | ✅ |
+
+> ⚠️ A falha na notificação (push ou in-app) **nunca bloqueia** o processo principal. Todas as chamadas são envolvidas em `try/catch` isolados.
 
 ---
 
@@ -100,4 +199,6 @@ Quando um **cliente assina** um documento no [[Customer Portal]]:
 - [[Projects]]
 - [[Customer Portal]]
 - [[Documentos e Contratos Digitais]]
+- [[Field App]]
 - [[Design System]]
+- [[Weather Card — Previsão por Projeto]]
