@@ -1019,12 +1019,41 @@ export default function ProjectDetailPage() {
     if (!job) return;
     try {
       // 1. Find the job_service for this service code
-      const jobService = job.services.find(
+      let jobService = job.services.find(
         (s: any) => s.service_type?.name?.toLowerCase() === svcCode
       );
+
+      // If job_service doesn't exist, create it first
       if (!jobService) {
-        console.warn(`[persistPartner] job_service for '${svcCode}' not found`);
-        return;
+        let types = allServiceTypes;
+        if (types.length === 0) {
+          const { data } = await supabase.from("service_types").select("id, name").order("name");
+          types = data || [];
+          setAllServiceTypes(types);
+        }
+        const svcType = types.find((st) => st.name.toLowerCase() === svcCode);
+        if (!svcType) {
+          console.warn(`[persistPartner] service_type for '${svcCode}' not found`);
+          return;
+        }
+        const { data: newSvc, error: insertErr } = await supabase
+          .from("job_services")
+          .insert({
+            job_id: job.id,
+            service_type_id: svcType.id,
+            scope_of_work: "Standard exterior work",
+          })
+          .select("id, service_type:service_types(id, name)")
+          .single();
+        if (insertErr || !newSvc) {
+          console.error("[persistPartner] job_service insert error:", insertErr);
+          return;
+        }
+        // Update local state so subsequent calls find this service
+        const updatedServices = [...job.services, { ...newSvc, assignments: [] }];
+        setJob((prev: any) => prev ? { ...prev, services: updatedServices } : prev);
+        jobService = newSvc;
+        console.log(`[persistPartner] Auto-created job_service for '${svcCode}'`);
       }
 
       // 2. Resolve crew_id from partner name
