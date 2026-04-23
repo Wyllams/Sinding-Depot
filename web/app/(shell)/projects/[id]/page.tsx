@@ -571,10 +571,11 @@ export default function ProjectDetailPage() {
         const crewName: string = assignment.crew?.name || "SIDING DEPOT";
         const newDuration = calculateServiceDuration(crewName, svcName, sqValue);
 
-        // Calculate new end date from start date + new duration
+        // Calculate new end date from start date + new duration (inclusive boundary)
         const startIso = new Date(assignment.scheduled_start_at).toISOString().split("T")[0];
-        const endAt = new Date(startIso + "T08:00:00");
-        endAt.setDate(endAt.getDate() + newDuration);
+        const endAt = new Date(startIso + "T12:00:00");
+        let remDays = newDuration - 1;
+        while (remDays > 0) { endAt.setDate(endAt.getDate() + 1); if (endAt.getDay() !== 0) remDays--; }
 
         const { error: saErr } = await supabase.from("service_assignments").update({
           scheduled_end_at: endAt.toISOString(),
@@ -1129,7 +1130,6 @@ export default function ProjectDetailPage() {
         let rem = duration - 1;
         while (rem > 0) { ed.setDate(ed.getDate() + 1); if (ed.getDay() !== 0) rem--; }
         const endAt = new Date(ed);
-        endAt.setDate(endAt.getDate() + 1);
 
         const { error } = await supabase.from("service_assignments").insert({
           job_service_id: jobService.id,
@@ -2745,7 +2745,6 @@ export default function ProjectDetailPage() {
                                       if (endDay.getDay() !== 0) added++; // Skip Sundays
                                     }
                                     const endAt = new Date(endDay);
-                                    endAt.setDate(endAt.getDate() + 1); // exclusive boundary for calendar
 
                                     scheduled_start_at = startAt.toISOString();
                                     scheduled_end_at = endAt.toISOString();
@@ -3243,7 +3242,6 @@ export default function ProjectDetailPage() {
 
                                       const startAt = new Date(startIso + "T08:00:00");
                                       const endAt = new Date(endIso + "T12:00:00");
-                                      endAt.setDate(endAt.getDate() + 1);
 
                                       // Find crew and specialty
                                       const crewNameMap: Record<string, string> = { windows: "SERGIO", doors: "SERGIO", decks: "SERGIO" };
@@ -3432,7 +3430,6 @@ export default function ProjectDetailPage() {
                               while (remaining > 0) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0) remaining--; }
                               const endIso = d.toISOString().split("T")[0];
                               const endAt = new Date(endIso + "T12:00:00");
-                              endAt.setDate(endAt.getDate() + 1);
 
                               const { error } = await supabase.from("service_assignments")
                                 .update({ scheduled_end_at: endAt.toISOString() })
@@ -3512,13 +3509,10 @@ export default function ProjectDetailPage() {
                               const assignment = decksSvc.assignments[0];
                               const startDate = assignment.scheduled_start_at ? new Date(assignment.scheduled_start_at) : new Date();
                               const startIso = startDate.toISOString().split("T")[0];
-                              // Add working days
-                              const d = new Date(startIso + "T12:00:00");
+                              // Add working days (endAt = last working day, inclusive)
+                              const endAt = new Date(startIso + "T12:00:00");
                               let remaining = newDays - 1;
-                              while (remaining > 0) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0) remaining--; }
-                              const endIso = d.toISOString().split("T")[0];
-                              const endAt = new Date(endIso + "T12:00:00");
-                              endAt.setDate(endAt.getDate() + 1);
+                              while (remaining > 0) { endAt.setDate(endAt.getDate() + 1); if (endAt.getDay() !== 0) remaining--; }
 
                               const { error } = await supabase.from("service_assignments")
                                 .update({ scheduled_end_at: endAt.toISOString() })
