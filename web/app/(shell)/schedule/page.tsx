@@ -352,7 +352,7 @@ export default function SchedulePage() {
                const e = new Date(a.scheduled_end_at);
                let workDays = 0;
                const cur = new Date(s);
-               while (cur < e) {
+               while (cur <= e) {
                  if (cur.getDay() !== 0) workDays++;
                  cur.setDate(cur.getDate() + 1);
                }
@@ -587,8 +587,8 @@ export default function SchedulePage() {
       }
 
       const endAt = new Date(newDate + "T12:00:00");
-      // Skip Sundays when computing end date
-      let daysToAdd = duration || 1;
+      // Skip Sundays when computing end date (inclusive: endAt = last working day)
+      let daysToAdd = Math.max(1, duration || 1) - 1;
       while (daysToAdd > 0) {
         endAt.setDate(endAt.getDate() + 1);
         if (endAt.getDay() !== 0) daysToAdd--;
@@ -742,9 +742,10 @@ export default function SchedulePage() {
       }
 
       // ── All DB writes now use finalDur for end date calculation (skip Sundays) ──
+      // endAt = last working day (inclusive boundary), matching calculateEndDate()
       const startAt = new Date(editDate + "T08:00:00").toISOString();
       const endAt = new Date(editDate + "T08:00:00");
-      let daysToAdd = finalDur;
+      let daysToAdd = Math.max(1, finalDur) - 1;
       while (daysToAdd > 0) {
         endAt.setDate(endAt.getDate() + 1);
         if (endAt.getDay() !== 0) daysToAdd--;
