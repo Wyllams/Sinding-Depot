@@ -6,6 +6,10 @@ import { sendPushToAdmins } from '@/lib/send-push';
 // NOTE: Client is created inside the handler (not at module level)
 // so that env vars are available at request-time, not build-time.
 
+// Aumenta o timeout da Vercel Serverless Function para 60s (max no plano Hobby).
+// O webhook faz 15+ queries sequenciais ao Supabase e ultrapassa os 10s padrão.
+export const maxDuration = 60;
+
 /**
  * Gera um username a partir do full_name.
  * Padrão: FirstName_LastName (sem acentos, underscores para espaços)
@@ -626,14 +630,12 @@ export async function POST(req: Request) {
       decks: 'deck_building',
     };
 
-    // Fetch crews and specialties from DB
-    const { data: allCrews } = await supabaseAdmin.from('crews').select('id, name, code');
-    const { data: allSpecs } = await supabaseAdmin.from('specialties').select('id, code');
-
-    // Fetch crew_specialties to know which services each crew handles
-    const { data: crewSpecLinks } = await supabaseAdmin
-      .from('crew_specialties')
-      .select('crew_id, specialty_id');
+    // Fetch crews, specialties and crew_specialties in parallel
+    const [{ data: allCrews }, { data: allSpecs }, { data: crewSpecLinks }] = await Promise.all([
+      supabaseAdmin.from('crews').select('id, name, code'),
+      supabaseAdmin.from('specialties').select('id, code'),
+      supabaseAdmin.from('crew_specialties').select('crew_id, specialty_id'),
+    ]);
 
     // Build a map: specialty_code → Set of crew_ids that handle it
     // And reverse: crew_id → Set of specialty_codes
@@ -876,19 +878,17 @@ export async function POST(req: Request) {
 
     console.log("✅ ClickOne job successfully registered:", jobNumber);
 
-    // ── Push Notification: Notify admins about new project ──
-    try {
-      await sendPushToAdmins({
-        title: '📋 New Project from ClickOne',
-        body: `${clientName} — ${rawServices} (${jobNumber})`,
-        url: `/projects/${newJob.id}`,
-        tag: 'new-project-webhook',
-        notificationType: 'new_project',
-        relatedEntityId: newJob.id,
-      });
-    } catch (pushErr) {
+    // ── Push Notification: Notify admins about new project (fire-and-forget) ──
+    void sendPushToAdmins({
+      title: '📋 New Project from ClickOne',
+      body: `${clientName} — ${rawServices} (${jobNumber})`,
+      url: `/projects/${newJob.id}`,
+      tag: 'new-project-webhook',
+      notificationType: 'new_project',
+      relatedEntityId: newJob.id,
+    }).catch((pushErr) => {
       console.error('[Webhook] Push notification failed (non-blocking):', pushErr);
-    }
+    });
 
     return NextResponse.json({
       success: true,
