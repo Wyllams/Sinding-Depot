@@ -86,6 +86,8 @@ export default function WindowsTrackerPage() {
   const [filterYear, setFilterYear] = useState<string>(currentYearStr);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ROWS_PER_PAGE = 20;
 
   const [stores, setStores] = useState<Store[]>([]);
 
@@ -283,13 +285,25 @@ export default function WindowsTrackerPage() {
     return true;
   });
 
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
+  const paginatedRows = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, filterMoney, filterMode, filterMonth, filterYear, searchQuery]);
+
   return (
     <>
       <TopBar />
 
-      <main className="px-4 sm:px-6 lg:px-8 pb-20 pt-8 min-h-screen">
+      <main className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
 
         {/* Header */}
+        {/* ── STICKY HEADER SECTION ── */}
+        <div className="shrink-0 px-4 sm:px-6 lg:px-8 pt-8">
+
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1
@@ -418,6 +432,8 @@ export default function WindowsTrackerPage() {
           </div>
         </div>
 
+        </div>{/* end sticky header */}
+
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-16">
@@ -427,8 +443,9 @@ export default function WindowsTrackerPage() {
 
         {/* Table — Reordered: Quote + Money Collected adjacent */}
         {!loading && (
-          <div className="rounded-2xl overflow-hidden border" style={{ background: "rgba(18,20,18,0.8)", borderColor: "rgba(71,72,70,0.2)" }}>
-            <div className="overflow-x-auto">
+          <div className="flex-1 overflow-hidden flex flex-col px-4 sm:px-6 lg:px-8 pb-4">
+          <div className="rounded-2xl overflow-hidden border flex flex-col flex-1 min-h-0" style={{ background: "rgba(18,20,18,0.8)", borderColor: "rgba(71,72,70,0.2)" }}>
+            <div className="overflow-auto flex-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#474846 transparent" }}>
               <table className="w-full text-left border-collapse text-sm min-w-[1000px]">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
@@ -484,11 +501,11 @@ export default function WindowsTrackerPage() {
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((o, i) => (
+                    paginatedRows.map((o, i) => (
                       <tr
                         key={o.id}
                         className="hover:bg-[#1e201e]/50 transition-colors group"
-                        style={{ borderBottom: i < filtered.length - 1 ? "1px solid rgba(71,72,70,0.1)" : "none" }}
+                        style={{ borderBottom: i < paginatedRows.length - 1 ? "1px solid rgba(71,72,70,0.1)" : "none" }}
                       >
                         <td 
                           className="px-4 py-3.5 font-bold text-[#faf9f5] whitespace-nowrap cursor-pointer hover:text-[#aeee2a] transition-colors"
@@ -601,6 +618,56 @@ export default function WindowsTrackerPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* ── PAGINATION ── */}
+              <div className="shrink-0 flex items-center justify-between px-5 py-3 border-t" style={{ borderColor: "rgba(71,72,70,0.2)" }}>
+                <p className="text-xs text-[#ababa8] font-bold">
+                  {filtered.length === 0
+                    ? "No orders"
+                    : `Showing ${((currentPage - 1) * ROWS_PER_PAGE) + 1}–${Math.min(currentPage * ROWS_PER_PAGE, filtered.length)} of ${filtered.length} orders`
+                  }
+                </p>
+                {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                      currentPage === 1
+                        ? "text-[#ababa8]/30 cursor-not-allowed"
+                        : "text-[#faf9f5] hover:bg-[#474846]/40 cursor-pointer"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-sm" translate="no">chevron_left</span>
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-black transition-all ${
+                        page === currentPage
+                          ? "bg-[#aeee2a] text-[#3a5400]"
+                          : "text-[#ababa8] hover:bg-[#474846]/40 hover:text-[#faf9f5]"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                      currentPage === totalPages
+                        ? "text-[#ababa8]/30 cursor-not-allowed"
+                        : "text-[#faf9f5] hover:bg-[#474846]/40 cursor-pointer"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-sm" translate="no">chevron_right</span>
+                  </button>
+                </div>
+                )}
+              </div>
+          </div>
           </div>
         )}
       </main>
