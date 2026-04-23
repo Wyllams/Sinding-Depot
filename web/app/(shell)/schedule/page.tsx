@@ -462,23 +462,63 @@ export default function SchedulePage() {
 
     const jobsToPersist: ScheduledJob[] = [];
 
+    // Helper: get end date ISO string for a job
+    const getJobEnd = (j: ScheduledJob | undefined): string | null => {
+      if (!j) return null;
+      return shiftDate(j.startDate, j.durationDays);
+    };
+
     if (dragJob.serviceType === "siding") {
-       // Doors/Windows stays on the same day as Siding
-       const doorsJob = getJobByService("doors_windows_decks");
-       if (doorsJob) {
-          const idx = updatedJobs.findIndex(j => j.id === doorsJob.id);
-          if (idx >= 0) {
-              updatedJobs[idx] = { ...updatedJobs[idx], startDate: newDate };
-              jobsToPersist.push(updatedJobs[idx]);
-          }
-       }
+       // Decks is INDEPENDENT — do NOT move it when Siding moves
        
        let paintJob = getJobByService("paint");
        let guttersJob = getJobByService("gutters");
        let roofJob = getJobByService("roofing");
 
-       paintJob = shiftJobByReference(paintJob, newDate, dragJob.durationDays);
-       if (paintJob) jobsToPersist.push(paintJob);
+       // Painting starts after MAX(Siding end, Decks end)
+       const decksJob = getJobByService("doors_windows_decks");
+       const sidingEnd = shiftDate(newDate, dragJob.durationDays);
+       const decksEnd = getJobEnd(decksJob);
+       let paintStartDate = sidingEnd;
+       if (decksEnd && decksEnd > paintStartDate) paintStartDate = decksEnd;
+       if (isSundayIso(paintStartDate)) paintStartDate = shiftDate(paintStartDate, 1);
+
+       if (paintJob) {
+         const idx = updatedJobs.findIndex(j => j.id === paintJob!.id);
+         if (idx >= 0) {
+           updatedJobs[idx] = { ...updatedJobs[idx], startDate: paintStartDate };
+           paintJob = updatedJobs[idx];
+         }
+         jobsToPersist.push(paintJob);
+       }
+
+       if (paintJob && guttersJob) guttersJob = shiftJobByReference(guttersJob, paintJob.startDate, paintJob.durationDays);
+       if (guttersJob) jobsToPersist.push(guttersJob);
+
+       if (guttersJob && roofJob) roofJob = shiftJobByReference(roofJob, guttersJob.startDate, guttersJob.durationDays);
+       if (roofJob) jobsToPersist.push(roofJob);
+
+    } else if (dragJob.serviceType === "doors_windows_decks") {
+       // When Decks is dragged, recalculate Painting from MAX(Siding end, Decks end)
+       let paintJob = getJobByService("paint");
+       let guttersJob = getJobByService("gutters");
+       let roofJob = getJobByService("roofing");
+       const sidingJob = getJobByService("siding");
+
+       const sidingEnd = getJobEnd(sidingJob);
+       const decksEnd = shiftDate(newDate, dragJob.durationDays);
+       let paintStartDate = decksEnd;
+       if (sidingEnd && sidingEnd > paintStartDate) paintStartDate = sidingEnd;
+       if (isSundayIso(paintStartDate)) paintStartDate = shiftDate(paintStartDate, 1);
+
+       if (paintJob) {
+         const idx = updatedJobs.findIndex(j => j.id === paintJob!.id);
+         if (idx >= 0) {
+           updatedJobs[idx] = { ...updatedJobs[idx], startDate: paintStartDate };
+           paintJob = updatedJobs[idx];
+         }
+         jobsToPersist.push(paintJob);
+       }
 
        if (paintJob && guttersJob) guttersJob = shiftJobByReference(guttersJob, paintJob.startDate, paintJob.durationDays);
        if (guttersJob) jobsToPersist.push(guttersJob);
@@ -778,14 +818,7 @@ export default function SchedulePage() {
       };
 
       if (editJob.serviceType === "siding") {
-         const doorsJob = getJobBySvc("doors_windows_decks");
-         if (doorsJob) {
-            const idx = newJobs.findIndex(j => j.id === doorsJob.id);
-            if (idx >= 0) {
-                newJobs[idx] = { ...newJobs[idx], startDate: editDate };
-                jobsToUpdate.push(newJobs[idx]);
-            }
-         }
+         // Decks is INDEPENDENT — do NOT move it when Siding is rescheduled
          
          let paintJob = getJobBySvc("paint");
          let guttersJob = getJobBySvc("gutters");
