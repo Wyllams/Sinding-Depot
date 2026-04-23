@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import CustomDatePicker from "../../../components/CustomDatePicker";
+import DateRangePicker from "../../../components/DateRangePicker";
 import { CustomDropdown } from "../../../components/CustomDropdown";
 import { TopBar } from "../../../components/TopBar";
 import { supabase } from "../../../lib/supabase";
@@ -109,14 +109,11 @@ export default function ChangeOrdersPage() {
 
       if (activeFilter === "APPROVED") query = query.eq("status", "approved");
       if (activeFilter === "PENDING")  query = query.in("status", ["draft", "pending_customer_approval"]);
-      if (filterStart) {
-        query = query.gte("requested_at", filterStart);
-      }
+      if (filterStart) query = query.gte("created_at", filterStart);
       if (filterEnd) {
-        // Avançamos 1 dia e usamos < (lt) para envolver TODO o fuso do último dia
         const nextDay = new Date(`${filterEnd}T12:00:00Z`);
         nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-        query = query.lt("requested_at", nextDay.toISOString().split("T")[0]);
+        query = query.lt("created_at", nextDay.toISOString().split("T")[0]);
       }
 
       const { data, error } = await query;
@@ -223,24 +220,16 @@ export default function ChangeOrdersPage() {
           <div className="flex-1" />
 
           {/* Date range */}
-          <div className="flex items-center gap-2">
-            <CustomDatePicker
-              value={filterStart}
-              onChange={setFilterStart}
-              placeholder="Start date"
-              disableSundays={false}
-              className="w-44"
-            />
-            <span className="text-[#ababa8] text-[10px] font-black uppercase tracking-widest px-1">→</span>
-            <CustomDatePicker
-              value={filterEnd}
-              onChange={setFilterEnd}
-              placeholder="End date"
-              disableSundays={false}
-              className="w-44"
-              alignRight
-            />
-          </div>
+          <DateRangePicker
+            startDate={filterStart}
+            endDate={filterEnd}
+            onRangeChange={(start, end) => {
+              setFilterStart(start);
+              setFilterEnd(end);
+            }}
+            placeholder="Filter by Date"
+            alignRight
+          />
 
           {/* Create button */}
           <button
