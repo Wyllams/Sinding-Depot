@@ -328,22 +328,6 @@ export default function SettingsPage() {
             </div>
           </section>
 
-          {/* ══════════════════════════════════════
-              USERS & PERMISSIONS — Moved to /team
-          ══════════════════════════════════════ */}
-          <section className="glass-card rounded-2xl p-6 flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-headline font-bold text-white">Users & Permissions</h3>
-              <p className="text-[#ababa8] text-sm mt-1">Manage your team, invite users, and control RBAC levels.</p>
-            </div>
-            <Link
-              href="/team"
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#aeee2a] text-[#3a5400] text-sm font-bold rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_15px_rgba(174,238,42,0.15)]"
-            >
-              <span className="material-symbols-outlined text-lg" translate="no">admin_panel_settings</span>
-              Manage Team
-            </Link>
-          </section>
 
         </div>
       </main>
