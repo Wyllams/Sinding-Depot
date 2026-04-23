@@ -101,6 +101,9 @@ export async function POST(): Promise<NextResponse> {
 
     if (sq <= 0) continue; // Can't recalculate without SQ
 
+    // ── SKIP Decks/DWD — uses scope-based duration, NOT SQ ──
+    if (svcName === "doors_windows_decks") continue;
+
     const correctDuration = calculateServiceDuration(crewName, svcName, sq);
     const startIso = a.scheduled_start_at.split("T")[0];
     const correctEndIso = calculateEndDate(startIso, correctDuration);
