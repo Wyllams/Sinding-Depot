@@ -626,9 +626,8 @@ export default function NewProjectPage() {
                     `[Cascade] ${svcId}: dur=${duration} start=${startIso} end=${prevEndpoints[svcId]}`
                   );
 
-                  // endAt = exclusive boundary (next calendar day at noon)
+                  // endAt = inclusive last working day
                   endAt = new Date(prevEndpoints[svcId] + "T12:00:00");
-                  endAt.setDate(endAt.getDate() + 1);
                }
 
                const partnerName = assignedPartners[svcId] || (svcId === "painting" ? assignedPartners["siding"] : null) || "Siding Depot";

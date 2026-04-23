@@ -11,4 +11,4 @@
  * When paused, all insert operations on service_assignments will be
  * silently skipped. Existing assignments remain untouched.
  */
-export const SCHEDULING_PAUSED = true;
+export const SCHEDULING_PAUSED = false;
