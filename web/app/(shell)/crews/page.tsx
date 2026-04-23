@@ -826,24 +826,6 @@ export default function CrewsPage() {
             </div>
 
             <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-              {/* Weekly Availability */}
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-3">Weekly Availability</p>
-                <div className="flex items-end gap-1.5 h-12">
-                  {detailCrew.weekCapacity.map((day, idx) => (
-                    <div key={idx} className="flex flex-col items-center flex-1">
-                      <div className="w-full bg-[#1e201e] rounded-sm flex items-end h-full">
-                        <div
-                          className={`w-full rounded-sm ${getBarColor(day.state)}`}
-                          style={{ height: `${Math.max((day.percentage / 100) * 100, 8)}%` }}
-                        />
-                      </div>
-                      <span className="text-[9px] text-[#474846] font-bold mt-1">{day.dayLabel}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* Current Jobs */}
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-3">

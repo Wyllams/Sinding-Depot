@@ -100,7 +100,11 @@ export default function ProjectsPage() {
         `)
         .order("created_at", { ascending: false });
 
-      if (statusFilter)  query = query.eq("status", statusFilter);
+      if (statusFilter === "pending") {
+        query = query.in("status", ["draft", "on_hold"]);
+      } else if (statusFilter) {
+        query = query.eq("status", statusFilter);
+      }
       if (dateFrom)      query = query.gte("requested_start_date", dateFrom);
       if (dateTo)        query = query.lte("requested_start_date", dateTo);
 
@@ -158,6 +162,10 @@ export default function ProjectsPage() {
   }, [fetchJobs]);
 
   // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, serviceFilter, dateFrom, dateTo, search]);
+
   const filtered = (() => {
     const base = jobs.filter((j) => {
       if (!search) return true;
@@ -335,8 +343,7 @@ export default function ProjectsPage() {
               onChange={(val) => setStatusFilter(val)}
               options={[
                 { value: "active", label: "Confirmed" },
-                { value: "draft", label: "Pending" },
-                { value: "on_hold", label: "Pending" },
+                { value: "pending", label: "Pending" },
               ]}
               placeholder="All Statuses"
               className="w-full sm:w-36 bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] hover:border-[#aeee2a]/50 transition-colors flex justify-between items-center"
