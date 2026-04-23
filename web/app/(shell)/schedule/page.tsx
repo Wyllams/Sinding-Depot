@@ -263,6 +263,8 @@ export default function SchedulePage() {
   // ─── Real-time duration recalculation when SQ or crew changes ───
   useEffect(() => {
     if (!editJob) return;
+    // If admin manually changed the duration dropdown, do NOT override it
+    if (durManuallySet) return;
     // Only recalculate for services that use SQ-based duration
     if (editJob.serviceType !== "siding" && editJob.serviceType !== "paint") return;
     if (!editSq || isNaN(parseFloat(editSq)) || parseFloat(editSq) <= 0) return;
@@ -286,7 +288,7 @@ export default function SchedulePage() {
     const newDur = calculateServiceDuration(crewName, svcName, newSq);
 
     setEditDur(newDur);
-  }, [editSq, editJob, selectedCrewIds, allCrews]);
+  }, [editSq, editJob, selectedCrewIds, allCrews, durManuallySet]);
 
   const fetchSchedule = async () => {
     const { data: assignments, error } = await supabase.from("service_assignments").select(`
