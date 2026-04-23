@@ -1005,6 +1005,112 @@ export default function ProjectDetailPage() {
     if (data) setAllServiceTypes(data);
   }
 
+  // ── Persist partner selection to service_assignment ──
+  // Called when the user picks a partner from the service card modal
+  async function persistPartnerToAssignment(svcCode: string, partnerName: string): Promise<void> {
+    if (!job) return;
+    try {
+      // 1. Find the job_service for this service code
+      const jobService = job.services.find(
+        (s: any) => s.service_type?.name?.toLowerCase() === svcCode
+      );
+      if (!jobService) {
+        console.warn(`[persistPartner] job_service for '${svcCode}' not found`);
+        return;
+      }
+
+      // 2. Resolve crew_id from partner name
+      const { data: crewMatch } = await supabase
+        .from("crews")
+        .select("id")
+        .ilike("name", partnerName)
+        .limit(1);
+      const crewId = crewMatch?.[0]?.id || null;
+
+      // 3. Resolve specialty_id
+      const SPEC_CODE_MAP: Record<string, string> = {
+        siding: "siding_installation", painting: "painting",
+        windows: "windows", doors: "doors", decks: "deck_building",
+        gutters: "gutters", roofing: "roofing",
+      };
+      const specCode = SPEC_CODE_MAP[svcCode] || svcCode;
+      const { data: specMatch } = await supabase
+        .from("specialties")
+        .select("id")
+        .eq("code", specCode)
+        .maybeSingle();
+      const specialtyId = specMatch?.id || null;
+
+      // 4. Check if assignment already exists
+      const existingAssignment = (jobService as any).assignments?.[0];
+
+      if (existingAssignment) {
+        // Update existing assignment's crew
+        const { error } = await supabase
+          .from("service_assignments")
+          .update({ crew_id: crewId, specialty_id: specialtyId })
+          .eq("id", existingAssignment.id);
+        if (error) console.error("[persistPartner] update error:", error);
+        else console.log(`[persistPartner] Updated ${svcCode} → ${partnerName}`);
+      } else {
+        // Create new assignment with calculated dates
+        const sq = job.sq ? Number(job.sq) : 0;
+        const duration = calculateServiceDuration(partnerName, svcCode, sq);
+        const todayIso = new Date().toISOString().split("T")[0];
+        const jobStartDate = job.requested_start_date;
+
+        // Cascade logic: find predecessor end date
+        const CASCADE_PREDECESSORS: Record<string, string[]> = {
+          painting: ["siding"], gutters: ["painting", "siding"],
+          roofing: ["gutters", "painting", "siding"],
+        };
+        let startIso = todayIso;
+        if (jobStartDate && todayIso <= jobStartDate) startIso = jobStartDate;
+
+        const predecessors = CASCADE_PREDECESSORS[svcCode] || [];
+        for (const pred of predecessors) {
+          const predSvc = job.services.find(
+            (s: any) => s.service_type?.name?.toLowerCase() === pred
+          );
+          const predAssignment = (predSvc as any)?.assignments?.[0];
+          if (predAssignment?.scheduled_end_at) {
+            const predEnd = new Date(predAssignment.scheduled_end_at);
+            if (predEnd.getDay() === 0) predEnd.setDate(predEnd.getDate() + 1);
+            const nextDay = predEnd.toISOString().split("T")[0];
+            if (nextDay > startIso) startIso = nextDay;
+            break;
+          }
+        }
+
+        // Skip Sunday
+        const sd = new Date(startIso + "T12:00:00");
+        if (sd.getDay() === 0) { sd.setDate(sd.getDate() + 1); startIso = sd.toISOString().split("T")[0]; }
+
+        // Calculate end date
+        const ed = new Date(startIso + "T12:00:00");
+        let rem = duration - 1;
+        while (rem > 0) { ed.setDate(ed.getDate() + 1); if (ed.getDay() !== 0) rem--; }
+        const endAt = new Date(ed);
+        endAt.setDate(endAt.getDate() + 1);
+
+        const { error } = await supabase.from("service_assignments").insert({
+          job_service_id: jobService.id,
+          crew_id: crewId,
+          specialty_id: specialtyId,
+          status: "scheduled",
+          scheduled_start_at: new Date(startIso + "T08:00:00").toISOString(),
+          scheduled_end_at: endAt.toISOString(),
+        });
+        if (error) console.error("[persistPartner] insert error:", error);
+        else console.log(`[persistPartner] Created assignment for ${svcCode} → ${partnerName}`);
+      }
+
+      fetchJob();
+    } catch (err) {
+      console.error("[persistPartner] error:", err);
+    }
+  }
+
   async function handleAddService(overrideTypeId?: string) {
     const effectiveId = overrideTypeId || addingServiceId;
     if (!effectiveId) return;
@@ -2711,6 +2817,8 @@ export default function ProjectDetailPage() {
                                 setWindowsStep("subservices");
                                 return;
                               }
+                              // ── Persist to DB: create/update service_assignment ──
+                              persistPartnerToAssignment(svcId, partner);
                               // Auto-chain: Siding → Painting
                               if (svcId === "siding") {
                                 const p = ALL_SERVICES.find((s) => s.id === "painting");
