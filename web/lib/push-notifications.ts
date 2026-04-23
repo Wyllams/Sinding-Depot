@@ -68,7 +68,7 @@ export async function subscribeToPush(
   registration: ServiceWorkerRegistration
 ): Promise<PushSubscriptionPayload | null> {
   try {
-    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_KEY;
 
     if (!vapidPublicKey) {
       console.error('[PWA] Missing NEXT_PUBLIC_VAPID_PUBLIC_KEY env var.');

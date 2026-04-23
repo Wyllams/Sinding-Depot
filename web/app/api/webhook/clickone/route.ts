@@ -878,17 +878,20 @@ export async function POST(req: Request) {
 
     console.log("✅ ClickOne job successfully registered:", jobNumber);
 
-    // ── Push Notification: Notify admins about new project (fire-and-forget) ──
-    void sendPushToAdmins({
-      title: '📋 New Project from ClickOne',
-      body: `${clientName} — ${rawServices} (${jobNumber})`,
-      url: `/projects/${newJob.id}`,
-      tag: 'new-project-webhook',
-      notificationType: 'new_project',
-      relatedEntityId: newJob.id,
-    }).catch((pushErr) => {
+    // ── Push Notification: Notify admins about new project ──
+    // MUST await — Vercel kills the process after response is sent
+    try {
+      await sendPushToAdmins({
+        title: '📋 New Project from ClickOne',
+        body: `${clientName} — ${rawServices} (${jobNumber})`,
+        url: `/projects/${newJob.id}`,
+        tag: 'new-project-webhook',
+        notificationType: 'new_project',
+        relatedEntityId: newJob.id,
+      });
+    } catch (pushErr) {
       console.error('[Webhook] Push notification failed (non-blocking):', pushErr);
-    });
+    }
 
     return NextResponse.json({
       success: true,

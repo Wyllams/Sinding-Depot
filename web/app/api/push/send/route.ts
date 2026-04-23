@@ -31,7 +31,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // ─── Setup VAPID ────────────────────────────────────────────
-    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_KEY;
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
     const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@sidingdepot.com';
 
