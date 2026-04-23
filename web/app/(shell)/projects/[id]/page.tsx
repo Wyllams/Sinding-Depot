@@ -1096,15 +1096,16 @@ export default function ProjectDetailPage() {
         const todayIso = new Date().toISOString().split("T")[0];
         const jobStartDate = job.requested_start_date;
 
-        // Cascade logic: find predecessor end date
+        // Cascade logic: find the LATEST predecessor end date
         const CASCADE_PREDECESSORS: Record<string, string[]> = {
-          painting: ["siding"], gutters: ["painting", "siding"],
+          painting: ["siding", "decks"], gutters: ["painting", "siding"],
           roofing: ["gutters", "painting", "siding"],
         };
         let startIso = todayIso;
         if (jobStartDate && todayIso <= jobStartDate) startIso = jobStartDate;
 
         const predecessors = CASCADE_PREDECESSORS[svcCode] || [];
+        // Find the MAX end date across ALL predecessors (not just the first found)
         for (const pred of predecessors) {
           const predSvc = job.services.find(
             (s: any) => s.service_type?.name?.toLowerCase() === pred
@@ -1115,7 +1116,7 @@ export default function ProjectDetailPage() {
             if (predEnd.getDay() === 0) predEnd.setDate(predEnd.getDate() + 1);
             const nextDay = predEnd.toISOString().split("T")[0];
             if (nextDay > startIso) startIso = nextDay;
-            break;
+            // Don't break — check ALL predecessors to find the latest
           }
         }
 
@@ -1257,9 +1258,9 @@ export default function ProjectDetailPage() {
         }))
       );
 
-      // Cascade predecessors map
+      // Cascade predecessors map — Painting waits for the LATEST of Siding AND Decks
       const CASCADE_PREDECESSORS: Record<string, string[]> = {
-        painting: ["siding"],
+        painting: ["siding", "decks"],
         gutters:  ["painting", "siding"],
         roofing:  ["gutters", "painting", "siding"],
       };
@@ -1284,7 +1285,7 @@ export default function ProjectDetailPage() {
           }
           // else: today (already default)
         } else {
-          // Cascade: find latest predecessor end date
+          // Cascade: find the LATEST predecessor end date (MAX across all predecessors)
           const predecessors = CASCADE_PREDECESSORS[svcCode] || [];
           for (const pred of predecessors) {
             const predAssign = existingAssignments.find((a: any) => a.code === pred && a.end);
@@ -1292,8 +1293,9 @@ export default function ProjectDetailPage() {
               const predEnd = new Date(predAssign.end + "T12:00:00");
               predEnd.setDate(predEnd.getDate() + 1);
               if (predEnd.getDay() === 0) predEnd.setDate(predEnd.getDate() + 1);
-              startIso = predEnd.toISOString().split("T")[0];
-              break;
+              const nextDay = predEnd.toISOString().split("T")[0];
+              if (nextDay > startIso) startIso = nextDay;
+              // Don't break — check ALL predecessors to find the latest
             }
           }
           // If no predecessor found, use today or job start

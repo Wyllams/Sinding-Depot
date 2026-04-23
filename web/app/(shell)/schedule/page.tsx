@@ -756,6 +756,27 @@ export default function SchedulePage() {
 
       const jobsToUpdate: ScheduledJob[] = [];
 
+      // Helper: compute the latest end date between two jobs (MAX)
+      const getEndDate = (j: ScheduledJob | undefined): string | null => {
+        if (!j) return null;
+        return shiftDate(j.startDate, j.durationDays);
+      };
+
+      // Helper: shift paint job to start after the LATEST of Siding and Decks
+      const computePaintStart = (sidingJob: ScheduledJob | undefined, decksJob: ScheduledJob | undefined): string | null => {
+        const sidingEnd = getEndDate(sidingJob);
+        const decksEnd = getEndDate(decksJob);
+        let latestEnd: string | null = null;
+        if (sidingEnd && decksEnd) {
+          latestEnd = sidingEnd > decksEnd ? sidingEnd : decksEnd;
+        } else {
+          latestEnd = sidingEnd || decksEnd;
+        }
+        if (!latestEnd) return null;
+        if (isSundayIso(latestEnd)) latestEnd = shiftDate(latestEnd, 1);
+        return latestEnd;
+      };
+
       if (editJob.serviceType === "siding") {
          const doorsJob = getJobBySvc("doors_windows_decks");
          if (doorsJob) {
@@ -770,8 +791,43 @@ export default function SchedulePage() {
          let guttersJob = getJobBySvc("gutters");
          let roofJob = getJobBySvc("roofing");
 
-         paintJob = shiftInReschedule(paintJob, editDate, finalDur);
-         if (paintJob) jobsToUpdate.push(paintJob);
+         // Painting starts after the LATEST of Siding and Decks
+         const currentSiding = newJobs.find(j => j.id === editJob.id)!;
+         const currentDecks = getJobBySvc("doors_windows_decks");
+         const paintStart = computePaintStart(currentSiding, currentDecks);
+         if (paintJob && paintStart) {
+            const idx = newJobs.findIndex(j => j.id === paintJob!.id);
+            if (idx >= 0) {
+              newJobs[idx] = { ...newJobs[idx], startDate: paintStart };
+              paintJob = newJobs[idx];
+            }
+            jobsToUpdate.push(paintJob);
+         }
+
+         if (paintJob && guttersJob) guttersJob = shiftInReschedule(guttersJob, paintJob.startDate, paintJob.durationDays);
+         if (guttersJob) jobsToUpdate.push(guttersJob);
+
+         if (guttersJob && roofJob) roofJob = shiftInReschedule(roofJob, guttersJob.startDate, guttersJob.durationDays);
+         if (roofJob) jobsToUpdate.push(roofJob);
+
+      } else if (editJob.serviceType === "doors_windows_decks") {
+         // When Decks is rescheduled, Painting may need to shift too
+         let paintJob = getJobBySvc("paint");
+         let guttersJob = getJobBySvc("gutters");
+         let roofJob = getJobBySvc("roofing");
+         const sidingJob = getJobBySvc("siding");
+
+         // Recalculate paint start from MAX(siding end, decks end)
+         const currentDecks = newJobs.find(j => j.id === editJob.id)!;
+         const paintStart = computePaintStart(sidingJob, currentDecks);
+         if (paintJob && paintStart) {
+            const idx = newJobs.findIndex(j => j.id === paintJob!.id);
+            if (idx >= 0) {
+              newJobs[idx] = { ...newJobs[idx], startDate: paintStart };
+              paintJob = newJobs[idx];
+            }
+            jobsToUpdate.push(paintJob);
+         }
 
          if (paintJob && guttersJob) guttersJob = shiftInReschedule(guttersJob, paintJob.startDate, paintJob.durationDays);
          if (guttersJob) jobsToUpdate.push(guttersJob);
