@@ -279,7 +279,10 @@ export default function ProjectsPage() {
     <>
       <TopBar />
 
-      <main className="px-4 sm:px-6 lg:px-8 pb-12 pt-6 min-h-screen bg-[#0d0f0d]">
+      <main className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#0d0f0d]">
+
+        {/* ── STICKY HEADER + FILTERS ── */}
+        <div className="shrink-0 px-4 sm:px-6 lg:px-8 pt-6">
 
         {/* Page Header */}
         <div className="flex justify-between items-end mb-8">
@@ -375,15 +378,19 @@ export default function ProjectsPage() {
           </div>
         </div>
 
+        </div>{/* end sticky header */}
+
         {/* ── Data Table ── */}
-        <div className="bg-[#121412] rounded-3xl overflow-hidden overflow-x-auto">
+        <div className="flex-1 overflow-hidden flex flex-col px-4 sm:px-6 lg:px-8 pb-4 min-h-0">
+        <div className="bg-[#121412] rounded-3xl overflow-hidden flex flex-col flex-1 min-h-0">
+          <div className="overflow-auto flex-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#474846 transparent" }}>
           <table className="w-full min-w-[1100px] text-left border-collapse">
-            <thead>
-              <tr className="bg-[#1e201e]/50">
+            <thead className="sticky top-0 z-20">
+              <tr style={{ boxShadow: "0 1px 0 rgba(71,72,70,0.2)" }}>
                 {["SP", "Client", "Job", "Services", "Gating / Operational Status", "Job Start Status", ""].map((col) => (
                   <th
                     key={col}
-                    className={`px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#ababa8] ${col === "SP" ? "text-center" : ""}`}
+                    className={`px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#ababa8] bg-[#121412] ${col === "SP" ? "text-center" : ""}`}
                   >
                     {col}
                   </th>
@@ -552,12 +559,12 @@ export default function ProjectsPage() {
               )}
             </tbody>
           </table>
-        </div>
+          </div>
 
         {/* ── Pagination ── */}
         {!loading && filtered.length > 0 && (
-          <div className="mt-6 flex items-center justify-between text-sm text-[#ababa8]">
-            <span>
+          <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t" style={{ borderColor: "rgba(71,72,70,0.2)" }}>
+            <span className="text-sm text-[#ababa8]">
               Showing{" "}
               <span className="text-[#faf9f5] font-bold">
                 {Math.min((currentPage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}
@@ -600,6 +607,8 @@ export default function ProjectsPage() {
             </div>
           </div>
         )}
+        </div>
+        </div>
       </main>
 
       {/* ── Delete Confirmation Modal ── */}
