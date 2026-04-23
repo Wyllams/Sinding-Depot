@@ -622,7 +622,7 @@ export default function SchedulePage() {
     setEditJob(job);
     setEditDate(job.isPending ? "" : job.startDate);
     setEditDur(job.durationDays);
-    setDurManuallySet(false);
+    setDurManuallySet(true);
     // Auto-confirm if start date is today or earlier
     const todayStr = new Date().toISOString().split('T')[0];
     const baseStatus = job.jobStartStatus ?? "active";
@@ -1442,7 +1442,7 @@ export default function SchedulePage() {
                         step="0.01"
                         placeholder="e.g. 50"
                         value={editSq}
-                        onChange={e => setEditSq(e.target.value)}
+                        onChange={e => { setEditSq(e.target.value); setDurManuallySet(false); }}
                         className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors"
                       />
                     </div>
