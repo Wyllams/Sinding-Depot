@@ -1310,7 +1310,6 @@ export default function ProjectDetailPage() {
         const endIso = addWorkingDays(startIso, duration);
         const startAt = new Date(startIso + "T08:00:00");
         const endAt = new Date(endIso + "T12:00:00");
-        endAt.setDate(endAt.getDate() + 1);
 
         const defaultCrew = crewNameMap[svcCode] || "";
         const { data: crewMatch } = defaultCrew
@@ -3133,6 +3132,8 @@ export default function ProjectDetailPage() {
                             // Persist all selected sub-service assignments to DB
                             const partnerName = assignedPartners[openPartnerModal.id] || "";
                             for (const subId of selectedSubSvcs) {
+                              // Skip decks — handleAddService already created the assignment above
+                              if (subId === "decks") continue;
                               await persistPartnerToAssignment(subId, partnerName);
                             }
                             setWindowsStep("partner");
