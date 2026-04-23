@@ -806,8 +806,8 @@ export default function SchedulePage() {
         if (jobSqErr) console.error("Job SQ sync error:", jobSqErr);
       }
 
-      // Update JOB START STATUS only for Siding (main service controls job status)
-      if (editJob.jobId && editJob.serviceType === "siding") {
+      // Update JOB START STATUS (persists Confirmed/Tentative/Pending to jobs table)
+      if (editJob.jobId) {
         await supabase.from("jobs").update({ status: editStatus }).eq("id", editJob.jobId);
       }
 
