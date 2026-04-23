@@ -194,6 +194,7 @@ export default function SchedulePage() {
   const [editJob,     setEditJob]     = useState<ScheduledJob | null>(null);
   const [editDate,    setEditDate]    = useState<string>("");
   const [editDur,     setEditDur]     = useState<number>(1);
+  const [durManuallySet, setDurManuallySet] = useState(false);
   const [editStatus,  setEditStatus]  = useState<"active" | "draft" | "on_hold">("active");
   const [editSq,      setEditSq]      = useState<string>("");
   const [selectedCrewIds, setSelectedCrewIds] = useState<Record<string, string>>({});
@@ -547,6 +548,7 @@ export default function SchedulePage() {
     setEditJob(job);
     setEditDate(job.isPending ? "" : job.startDate);
     setEditDur(job.durationDays);
+    setDurManuallySet(false);
     // Auto-confirm if start date is today or earlier
     const todayStr = new Date().toISOString().split('T')[0];
     const baseStatus = job.jobStartStatus ?? "active";
@@ -656,8 +658,9 @@ export default function SchedulePage() {
       const newCrewName = selectedCrewId ? allCrews.find(c => c.id === selectedCrewId)?.name || editJob.partnerName : editJob.partnerName;
 
       // Automatically compute duration based on partner-specific SQ tables
+      // Use admin's manual duration if they changed it, otherwise auto-compute from SQ
       let finalDur = editDur;
-      if (editSq && !isNaN(parseFloat(editSq))) {
+      if (!durManuallySet && editSq && !isNaN(parseFloat(editSq))) {
          const newSq = parseFloat(editSq);
          const svcNameMap: Record<string, string> = {
            siding: "siding",
@@ -1322,9 +1325,9 @@ export default function SchedulePage() {
                     </label>
                     <div className="relative z-50">
                       <CustomDropdown
-                        value={editDur.toString()}
-                        onChange={(val) => setEditDur(Number(val))}
-                        options={[1, 2, 3, 4, 5, 6].map(d => ({ value: d.toString(), label: `${d} day${d > 1 ? "s" : ""}` }))}
+                      value={editDur.toString()}
+                        onChange={(val) => { setEditDur(Number(val)); setDurManuallySet(true); }}
+                        options={Array.from({ length: 30 }, (_, i) => i + 1).map(d => ({ value: d.toString(), label: `${d} day${d > 1 ? "s" : ""}` }))}
                         className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
                       />
                     </div>
