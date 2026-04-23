@@ -584,14 +584,15 @@ export default function NewProjectPage() {
                   // Each service starts the NEXT WORKING DAY after its
                   // predecessor ends. Falls back to earlier predecessors
                   // if the immediate one wasn't selected.
-                  // Windows/Doors run in parallel with Siding (no cascade).
+                  // Windows/Doors/Decks run in parallel with Siding (no cascade).
+                  // Painting waits for the LATEST of Siding AND Decks.
                   const CASCADE_PREDECESSORS: Record<string, string[]> = {
-                     painting: ["siding"],
+                     painting: ["siding", "decks"],
                      gutters:  ["painting", "siding"],
                      roofing:  ["gutters", "painting", "siding"],
                   };
 
-                   if (svcId === "windows" || svcId === "doors") {
+                   if (svcId === "windows" || svcId === "doors" || svcId === "decks") {
                       // Late addition: if project already started, use today
                       const todayIso = new Date().toISOString().split("T")[0];
                       if (todayIso > startDate) {

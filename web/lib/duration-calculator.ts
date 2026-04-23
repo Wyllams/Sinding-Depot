@@ -72,7 +72,7 @@ const OSVIN_PAINTING: PartnerDurationConfig = {
   ranges: [
     { max: 14, days: 1 },
     { max: 21, days: 2 },
-    { max: 29, days: 3 },
+    { max: 28, days: 3 },
     { max: 40, days: 4 },
   ],
   formula: { perDay: 13, rounding: "ceil" },
