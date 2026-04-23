@@ -3,8 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
-const navItems = [
+interface NavItem {
+  href: string;
+  icon: string;
+  label: string;
+  filled?: boolean;
+  adminOnly?: boolean;
+}
+
+const navItems: NavItem[] = [
   { href: "/", icon: "dashboard", label: "Dashboard", filled: true },
   { href: "/projects", icon: "engineering", label: "Projects" },
   { href: "/crews", icon: "groups", label: "Crews" },
@@ -14,11 +24,26 @@ const navItems = [
   { href: "/services", icon: "warning", label: "Services" },
   { href: "/schedule", icon: "calendar_today", label: "Job Schedule" },
   { href: "/sales-reports", icon: "assessment", label: "Sales" },
+  { href: "/team", icon: "admin_panel_settings", label: "Users & Permissions", adminOnly: true },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { isOpen, close } = useSidebar();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+        if (data) setUserRole(data.role);
+      }
+    })();
+  }, []);
+
+  // Filter nav items based on role
+  const visibleItems = navItems.filter(item => !item.adminOnly || userRole === "admin");
 
   const sidebarContent = (
     <aside className="bg-[#121412] h-full w-64 flex flex-col z-50 overflow-y-auto shrink-0">
@@ -44,7 +69,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 px-4 pt-4 pb-6">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive =
             item.href !== "#" &&
             (pathname === item.href ||

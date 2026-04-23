@@ -7,18 +7,15 @@ import { CustomDropdown } from "@/components/CustomDropdown";
 import { supabase } from "@/lib/supabase";
 
 // ─── Types ────────────────────────────────────────────
-interface Profile {
+interface MyProfile {
   id: string;
   email: string;
   full_name: string;
   role: string;
   phone: string | null;
   avatar_url: string | null;
-  is_active: boolean;
-  created_at: string;
 }
 
-// ─── Helpers ──────────────────────────────────────────
 const ROLE_LABELS: Record<string, string> = {
   admin:       "Admin",
   salesperson: "Salesperson",
@@ -37,44 +34,14 @@ const getRoleBadgeColor = (role: string) => {
 
 // ─── Main Page ────────────────────────────────────────
 export default function SettingsPage() {
-  // ── All Users (team management) ──────────────────
-  const [profiles, setProfiles]           = useState<Profile[]>([]);
-  const [loading, setLoading]             = useState(true);
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [updatingId, setUpdatingId]       = useState<string | null>(null);
-
-  // ── Invite form state ──────────────────────────
-  const [inviteName, setInviteName]       = useState("");
-  const [inviteEmail, setInviteEmail]     = useState("");
-  const [inviteRole, setInviteRole]       = useState("admin");
-  const [sendingInvite, setSendingInvite] = useState(false);
-  const [inviteError, setInviteError]     = useState<string | null>(null);
-  const [inviteSuccess, setInviteSuccess] = useState(false);
-
-  // ── Delete confirmation modal ──────────────────
-  const [deleteTarget, setDeleteTarget]   = useState<Profile | null>(null);
-  const [deleting, setDeleting]           = useState(false);
-
   // ── My Profile ───────────────────────────────────
-  const [myProfile, setMyProfile]         = useState<Profile | null>(null);
+  const [myProfile, setMyProfile]         = useState<MyProfile | null>(null);
   const [editName, setEditName]           = useState("");
   const [editPhone, setEditPhone]         = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profileSaved, setProfileSaved]   = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-
-  // ── Fetch all profiles ────────────────────────────
-  const fetchProfiles = useCallback(async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (!error && data) setProfiles(data as Profile[]);
-    setLoading(false);
-  }, []);
 
   // ── Fetch MY profile ──────────────────────────────
   const fetchMyProfile = useCallback(async () => {
@@ -88,7 +55,7 @@ export default function SettingsPage() {
       .single();
 
     if (data) {
-      const p = data as Profile;
+      const p = data as MyProfile;
       setMyProfile(p);
       setEditName(p.full_name || "");
       setEditPhone(p.phone || "");
@@ -96,9 +63,8 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    fetchProfiles();
     fetchMyProfile();
-  }, [fetchProfiles, fetchMyProfile]);
+  }, [fetchMyProfile]);
 
   // ── Avatar Upload ──────────────────────────────────
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,7 +114,6 @@ export default function SettingsPage() {
     }
   };
 
-
   // ── Save Profile ─────────────────────────────────
   const handleSaveProfile = async () => {
     if (!myProfile) return;
@@ -171,75 +136,6 @@ export default function SettingsPage() {
       alert(`Failed to save profile: ${err?.message || "Please try again."}`);
     } finally {
       setSavingProfile(false);
-    }
-  };
-
-
-  // ── Role change (team) ────────────────────────────
-  const handleRoleChange = async (id: string, newRole: string) => {
-    setUpdatingId(id);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ role: newRole })
-      .eq("id", id);
-
-    if (!error) {
-      setProfiles(prev => prev.map(p => p.id === id ? { ...p, role: newRole } : p));
-    } else {
-      alert("Error updating role");
-    }
-    setUpdatingId(null);
-  };
-
-  // ── Toggle Active (deactivate / reactivate user) ──
-  const handleToggleActive = async (user: Profile) => {
-    if (user.id === myProfile?.id) return; // Protege contra auto-inativação
-    const newStatus = !user.is_active;
-    setUpdatingId(user.id);
-
-    try {
-      const res = await fetch(`/api/users/${user.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: newStatus }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to update');
-      }
-
-      setProfiles(prev => prev.map(p => p.id === user.id ? { ...p, is_active: newStatus } : p));
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
-      alert(`Error: ${msg}`);
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  // ── Delete user ────────────────────────────────────
-  const handleDeleteUser = async () => {
-    if (!deleteTarget) return;
-    setDeleting(true);
-
-    try {
-      const res = await fetch(`/api/users/${deleteTarget.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to delete');
-      }
-
-      setProfiles(prev => prev.filter(p => p.id !== deleteTarget.id));
-      setDeleteTarget(null);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
-      alert(`Error: ${msg}`);
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -418,7 +314,7 @@ export default function SettingsPage() {
                 <div className="space-y-2 relative z-50">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Timezone</label>
                   <CustomDropdown
-                    value="GMT-6:00 Central Time (Dallas)" // Mock value for static showcase
+                    value="GMT-6:00 Central Time (Dallas)"
                     onChange={() => {}}
                     options={[
                       "GMT-6:00 Central Time (Dallas)",
@@ -433,341 +329,24 @@ export default function SettingsPage() {
           </section>
 
           {/* ══════════════════════════════════════
-              USERS & PERMISSIONS
+              USERS & PERMISSIONS — Moved to /team
           ══════════════════════════════════════ */}
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
+          <section className="glass-card rounded-2xl p-6 flex items-center justify-between">
+            <div>
               <h3 className="text-xl font-headline font-bold text-white">Users & Permissions</h3>
-              <p className="text-[#ababa8] text-sm mt-2 leading-relaxed">Manage your team, invite users, and control their Role-Based Access Control (RBAC) levels.</p>
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-[#242624] text-[#aeee2a] text-[10px] font-bold uppercase tracking-widest rounded-full">
-                  {profiles.length} Members
-                </span>
-              </div>
-
-              <div className="mt-6 space-y-3">
-                <button
-                  onClick={() => setInviteModalOpen(true)}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-[#aeee2a] text-[#1a2e00] text-sm font-bold rounded-xl hover:scale-[1.02] shadow-[0_4px_20px_rgb(174,238,42,0.15)] transition-all"
-                >
-                  <span className="material-symbols-outlined text-lg" translate="no">person_add</span>
-                  Invite User
-                </button>
-                <Link
-                  href="/settings/role/new"
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-[#181a18] text-[#ababa8] text-sm font-semibold rounded-xl border border-dashed border-[#474846]/50 hover:border-[#faf9f5] transition-all"
-                >
-                  <span className="material-symbols-outlined text-lg" translate="no">admin_panel_settings</span>
-                  Role Matrix
-                </Link>
-              </div>
+              <p className="text-[#ababa8] text-sm mt-1">Manage your team, invite users, and control RBAC levels.</p>
             </div>
-
-            <div className="lg:col-span-2">
-              <div className="bg-[#121412] rounded-2xl overflow-hidden border border-white/5">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-[#474846]/10">
-                        <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">User Details</th>
-                        <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Assigned Role</th>
-                        <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-[#ababa8] text-center">Access Status</th>
-                        <th className="px-4 py-5 text-[10px] font-bold uppercase tracking-widest text-[#ababa8] text-center w-16"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#474846]/5">
-                      {loading ? (
-                        <tr>
-                          <td colSpan={4} className="px-6 py-12 text-center text-[#ababa8]">
-                            <div className="animate-spin w-8 h-8 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full mx-auto mb-4" />
-                            Loading users...
-                          </td>
-                        </tr>
-                      ) : profiles.map((user) => (
-                        <tr key={user.id} className="hover:bg-[#181a18]/50 transition-colors group">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              {user.avatar_url ? (
-                                <img src={user.avatar_url} alt={user.full_name} className="w-10 h-10 rounded-full object-cover border border-white/10" />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-[#242624] flex items-center justify-center border border-white/5 text-[#faf9f5] font-bold text-xs uppercase">
-                                  {user.full_name?.substring(0, 2) || "U"}
-                                </div>
-                              )}
-                              <div>
-                                <p className="text-sm font-semibold text-[#faf9f5]">{user.full_name}</p>
-                                <p className="text-[11px] text-[#ababa8] mt-0.5">{user.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <CustomDropdown
-                                value={user.role || ""}
-                                onChange={(val) => handleRoleChange(user.id, val)}
-                                options={[
-                                  { value: "admin", label: "Admin" },
-                                  { value: "salesperson", label: "Salesperson" },
-                                  { value: "partner", label: "Partner / Crew" },
-                                  { value: "customer", label: "Customer" }
-                                ]}
-                                inline={true}
-                                className={`bg-[#242624] border border-transparent rounded-lg py-1.5 px-3 text-xs font-semibold hover:ring-1 hover:ring-[#aeee2a] outline-none transition-all cursor-pointer ${updatingId === user.id ? "opacity-50 pointer-events-none" : ""}`}
-                              />
-                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${getRoleBadgeColor(user.role)}`}>
-                                {user.role}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex flex-col items-center">
-                              <button
-                                onClick={() => handleToggleActive(user)}
-                                disabled={updatingId === user.id || user.id === myProfile?.id}
-                                className={`relative inline-flex h-5 w-10 shrink-0 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-                                  user.is_active ? 'bg-[#aeee2a] shadow-[0_0_15px_-3px_rgba(174,238,42,0.4)]' : 'bg-[#3a3a3a]'
-                                }`}
-                                title={user.id === myProfile?.id ? 'Cannot deactivate yourself' : (user.is_active ? 'Deactivate user' : 'Activate user')}
-                              >
-                                <span
-                                  className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-lg transform transition-transform duration-200 ${user.is_active ? 'translate-x-5' : 'translate-x-0.5'} mt-0.5`}
-                                />
-                              </button>
-                              <p className={`text-[9px] mt-1 font-medium ${user.is_active ? 'text-[#aeee2a]' : 'text-[#ff7351]'}`}>
-                                {user.is_active ? 'Active' : 'Inactive'}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 text-center">
-                            {user.id !== myProfile?.id ? (
-                              <button
-                                onClick={() => setDeleteTarget(user)}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#ff7351]/10 text-[#474846] hover:text-[#ff7351] transition-all mx-auto"
-                                title="Delete user"
-                              >
-                                <span className="material-symbols-outlined text-[18px]" translate="no">delete</span>
-                              </button>
-                            ) : (
-                              <span className="text-[9px] text-[#474846]">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <Link
+              href="/team"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#aeee2a] text-[#3a5400] text-sm font-bold rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_15px_rgba(174,238,42,0.15)]"
+            >
+              <span className="material-symbols-outlined text-lg" translate="no">admin_panel_settings</span>
+              Manage Team
+            </Link>
           </section>
 
         </div>
       </main>
-
-      {/* ─── Invite Modal ──────────────────────────── */}
-      {inviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#121412] w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-white/5 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-[#faf9f5]">Invite New User</h2>
-                <p className="text-[#ababa8] text-xs mt-1">Send an invitation to join Siding Depot.</p>
-              </div>
-              <button
-                onClick={() => { setInviteModalOpen(false); setInviteError(null); setInviteSuccess(false); }}
-                disabled={sendingInvite}
-                className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-[#242624] text-[#ababa8] transition-colors disabled:opacity-50"
-              >
-                <span className="material-symbols-outlined text-lg" translate="no">close</span>
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              {/* Success message */}
-              {inviteSuccess && (
-                <div className="flex items-center gap-3 bg-[#aeee2a]/10 border border-[#aeee2a]/30 rounded-xl p-3">
-                  <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">check_circle</span>
-                  <p className="text-xs text-[#aeee2a] font-medium">Invitation sent successfully! The user will receive an email with instructions.</p>
-                </div>
-              )}
-
-              {/* Error message */}
-              {inviteError && (
-                <div className="flex items-center gap-3 bg-[#ff7351]/10 border border-[#ff7351]/30 rounded-xl p-3">
-                  <span className="material-symbols-outlined text-[#ff7351] text-lg" translate="no">error</span>
-                  <p className="text-xs text-[#ff7351] font-medium">{inviteError}</p>
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Full Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. John Doe"
-                  value={inviteName}
-                  onChange={e => setInviteName(e.target.value)}
-                  disabled={sendingInvite}
-                  className="w-full bg-[#181a18] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#aeee2a] transition-colors disabled:opacity-50"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Email Address</label>
-                <input
-                  type="email"
-                  placeholder="john@example.com"
-                  value={inviteEmail}
-                  onChange={e => setInviteEmail(e.target.value)}
-                  disabled={sendingInvite}
-                  className="w-full bg-[#181a18] border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#aeee2a] transition-colors disabled:opacity-50"
-                />
-              </div>
-              <div className="space-y-1.5 relative z-40">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Role</label>
-                <CustomDropdown
-                  value={inviteRole}
-                  onChange={(val) => setInviteRole(val)}
-                  options={[
-                    { value: "admin", label: "Admin" },
-                    { value: "salesperson", label: "Salesperson" },
-                    { value: "partner", label: "Partner / Crew" },
-                    { value: "customer", label: "Customer" }
-                  ]}
-                  className="w-full bg-[#181a18] border border-white/5 rounded-xl px-4 py-3 text-sm text-white hover:border-[#aeee2a] transition-colors flex justify-between items-center"
-                />
-              </div>
-            </div>
-
-            <div className="p-4 bg-[#181a18] border-t border-white/5 flex gap-3 justify-end">
-              <button
-                onClick={() => { setInviteModalOpen(false); setInviteError(null); setInviteSuccess(false); }}
-                disabled={sendingInvite}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-[#faf9f5] hover:bg-[#242624] transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  setInviteError(null);
-                  setInviteSuccess(false);
-
-                  if (!inviteName.trim()) { setInviteError('Please enter the full name.'); return; }
-                  if (!inviteEmail.trim()) { setInviteError('Please enter the email address.'); return; }
-
-                  setSendingInvite(true);
-                  try {
-                    const res = await fetch('/api/users/invite', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        email: inviteEmail.trim(),
-                        full_name: inviteName.trim(),
-                        role: inviteRole,
-                      }),
-                    });
-
-                    const data = await res.json();
-
-                    if (!res.ok) {
-                      throw new Error(data.error || 'Failed to send invitation');
-                    }
-
-                    setInviteSuccess(true);
-                    setInviteName('');
-                    setInviteEmail('');
-                    setInviteRole('admin');
-
-                    // Refresh user list after short delay
-                    setTimeout(() => {
-                      fetchProfiles();
-                      setInviteModalOpen(false);
-                      setInviteSuccess(false);
-                    }, 2000);
-                  } catch (err: unknown) {
-                    const msg = err instanceof Error ? err.message : 'Unknown error';
-                    setInviteError(msg);
-                  } finally {
-                    setSendingInvite(false);
-                  }
-                }}
-                disabled={sendingInvite || inviteSuccess}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#aeee2a] text-[#1a2e00] hover:scale-105 transition-transform disabled:opacity-60 flex items-center gap-2"
-              >
-                {sendingInvite ? (
-                  <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />
-                ) : inviteSuccess ? (
-                  <span className="material-symbols-outlined text-sm" translate="no">check_circle</span>
-                ) : (
-                  <span className="material-symbols-outlined text-sm" translate="no">send</span>
-                )}
-                {sendingInvite ? 'Sending...' : inviteSuccess ? 'Sent!' : 'Send Invitation'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Confirm Delete Modal ──────────────────── */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#121412] w-full max-w-md rounded-2xl border border-[#ff7351]/20 shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-white/5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-[#ff7351]/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[#ff7351] text-xl" translate="no">warning</span>
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-[#faf9f5]">Delete User</h2>
-                  <p className="text-[#ababa8] text-xs mt-0.5">This action cannot be undone</p>
-                </div>
-              </div>
-
-              <div className="bg-[#181a18] rounded-xl p-4 space-y-2">
-                <div className="flex items-center gap-3">
-                  {deleteTarget.avatar_url ? (
-                    <img src={deleteTarget.avatar_url} alt={deleteTarget.full_name} className="w-10 h-10 rounded-full object-cover border border-white/10" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-[#242624] flex items-center justify-center border border-white/5 text-[#faf9f5] font-bold text-xs uppercase">
-                      {deleteTarget.full_name?.substring(0, 2) || "U"}
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-semibold text-[#faf9f5]">{deleteTarget.full_name}</p>
-                    <p className="text-[11px] text-[#ababa8]">{deleteTarget.email}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 bg-[#ff7351]/5 border border-[#ff7351]/15 rounded-xl p-3">
-                <p className="text-xs text-[#ff7351] leading-relaxed">
-                  <strong>Warning:</strong> This will permanently delete this user account, remove their login access, and clean up all associated data (notifications, push subscriptions, etc.).
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-[#181a18] border-t border-white/5 flex gap-3 justify-end">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                disabled={deleting}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-[#faf9f5] hover:bg-[#242624] transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteUser}
-                disabled={deleting}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#ff7351] text-white hover:bg-[#e5623f] transition-all disabled:opacity-50 flex items-center gap-2"
-              >
-                {deleting ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <span className="material-symbols-outlined text-sm" translate="no">delete_forever</span>
-                )}
-                {deleting ? 'Deleting...' : 'Delete Permanently'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

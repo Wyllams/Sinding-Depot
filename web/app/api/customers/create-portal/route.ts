@@ -143,6 +143,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         profile_id: authUser.user.id,
         username: finalUsername,
         portal_email: portalEmail,
+        portal_password: password,
       })
       .eq("id", body.customerId);
 

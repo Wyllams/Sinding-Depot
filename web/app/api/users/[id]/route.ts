@@ -63,6 +63,59 @@ export async function PATCH(
     }
 
     const body = await request.json();
+    let didUpdate = false;
+
+    // ── Handle username change (customer portal) ──
+    if (body.username && typeof body.username === 'string') {
+      const newUsername = body.username.trim();
+      const newPortalEmail = `${newUsername.toLowerCase()}@customer.sidingdepot.app`;
+
+      // Update customers table
+      const { error: custErr } = await supabase
+        .from('customers')
+        .update({ username: newUsername, portal_email: newPortalEmail })
+        .eq('profile_id', id);
+
+      if (custErr) {
+        console.error('[Users] Customer username update failed:', custErr);
+        return NextResponse.json(
+          { error: `Failed to update username: ${custErr.message}` },
+          { status: 500 }
+        );
+      }
+
+      // Sync new portal email to Auth + profiles
+      const { error: authEmailErr } = await supabase.auth.admin.updateUserById(id, {
+        email: newPortalEmail,
+      });
+      if (authEmailErr) console.error('[Users] Auth email sync failed:', authEmailErr);
+
+      await supabase.from('profiles').update({ email: newPortalEmail }).eq('id', id);
+      didUpdate = true;
+    }
+
+    // ── Handle password change (Supabase Auth + customers.portal_password) ──
+    if (body.password && typeof body.password === 'string') {
+      const { error: authPwErr } = await supabase.auth.admin.updateUserById(id, {
+        password: body.password,
+      });
+      if (authPwErr) {
+        console.error('[Users] Auth password update failed:', authPwErr);
+        return NextResponse.json(
+          { error: `Failed to update password: ${authPwErr.message}` },
+          { status: 500 }
+        );
+      }
+      // Sync portal_password in entity tables (customers, salespersons, crews)
+      await Promise.all([
+        supabase.from('customers').update({ portal_password: body.password }).eq('profile_id', id),
+        supabase.from('salespersons').update({ portal_password: body.password }).eq('profile_id', id),
+        supabase.from('crews').update({ portal_password: body.password }).eq('profile_id', id),
+      ]);
+      didUpdate = true;
+    }
+
+    // ── Handle profile field updates (is_active) ──
     const allowedFields = ['is_active'];
     const updates: Record<string, unknown> = {};
 
@@ -72,39 +125,39 @@ export async function PATCH(
       }
     }
 
-    if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
-    }
+    if (Object.keys(updates).length > 0) {
+      const { error, status, statusText } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', id);
 
-    const { error, status, statusText } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', id);
-
-    if (error) {
-      console.error('[Users] Update failed:', { error, status, statusText });
-      return NextResponse.json(
-        { error: `Failed to update profile: ${error.message} (${error.code})` },
-        { status: 500 }
-      );
+      if (error) {
+        console.error('[Users] Update failed:', { error, status, statusText });
+        return NextResponse.json(
+          { error: `Failed to update profile: ${error.message} (${error.code})` },
+          { status: 500 }
+        );
+      }
     }
 
     // Se está desativando, também bane o user no Supabase Auth
-    // para invalidar sessões ativas imediatamente
     if ('is_active' in updates) {
       if (!updates.is_active) {
-        // Ban user — invalida todas as sessões
         const { error: banErr } = await supabase.auth.admin.updateUserById(id, {
-          ban_duration: '876600h', // ~100 anos (efetivamente permanente)
+          ban_duration: '876600h',
         });
         if (banErr) console.error('[Users] Ban failed:', banErr);
       } else {
-        // Unban user — reativa
         const { error: unbanErr } = await supabase.auth.admin.updateUserById(id, {
           ban_duration: 'none',
         });
         if (unbanErr) console.error('[Users] Unban failed:', unbanErr);
       }
+    }
+
+    // Se nenhuma alteração foi feita
+    if (!didUpdate && Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
     return NextResponse.json({ success: true });
