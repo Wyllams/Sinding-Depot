@@ -602,15 +602,23 @@ export default function ProjectDetailPage() {
         return;
       }
 
-      // Get specialty IDs that match our service types (by code or partial name match)
+      // Map service_type names to specialty codes (explicit mapping)
+      const SVC_TO_SPEC: Record<string, string[]> = {
+        siding: ["siding_installation"],
+        painting: ["painting"],
+        gutters: ["gutters"],
+        roofing: ["roofing"],
+        doors: ["doors"],
+        windows: ["windows"],
+        decks: ["deck_building"],
+      };
+      const specCodesToSearch = svcCodes.flatMap(c => SVC_TO_SPEC[c] || [c, `${c}_installation`, `${c}_building`]);
+
+      // Get specialty IDs that match our service types
       const { data: matchedSpecs } = await supabase
         .from("specialties")
         .select("id, code, name")
-        .in("code", [
-          ...svcCodes,
-          ...svcCodes.map(c => `${c}_installation`),
-          ...svcCodes.map(c => `${c}_building`),
-        ]);
+        .in("code", specCodesToSearch);
 
       if (!matchedSpecs || matchedSpecs.length === 0) {
         setAvailableCrews([]);
@@ -2904,6 +2912,7 @@ export default function ProjectDetailPage() {
                               const { data } = await supabase.from("service_types").select("id, name").order("name");
                               types = data || []; setAllServiceTypes(types);
                             }
+                            const partnerName = assignedPartners[openPartnerModal.id] || "";
                             for (const subId of selectedSubSvcs) {
                               // Skip decks here — it will be created in the deckscope step
                               if (subId === "decks") continue;
@@ -2912,6 +2921,8 @@ export default function ProjectDetailPage() {
                                 const match = types.find((st) => st.name.toLowerCase() === subId);
                                 if (match) await handleAddService(match.id);
                               }
+                              // Persist partner assignment to DB
+                              await persistPartnerToAssignment(subId, partnerName);
                             }
                             // Remove sub-services that were deselected
                             const allSubIds = openPartnerModal.subServices!.map((s) => s.id);
@@ -2925,6 +2936,10 @@ export default function ProjectDetailPage() {
                             if (selectedSubSvcs.includes("windows")) { setWindowsStep("config"); return; }
                             // If only decks is selected (no windows), go to deckscope
                             if (selectedSubSvcs.includes("decks")) { setWindowsStep("deckscope"); return; }
+                            // For doors only — close and persist
+                            for (const subId of selectedSubSvcs) {
+                              await persistPartnerToAssignment(subId, partnerName);
+                            }
                             setOpenPartnerModal(null);
                           }}
                           className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
@@ -2972,9 +2987,18 @@ export default function ProjectDetailPage() {
                       <div className="flex gap-3 pt-2">
                         <button type="button" onClick={() => setWindowsStep("subservices")} className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all">Back</button>
                         <button type="button" disabled={!windowCount || !windowTrim}
-                          onClick={() => { 
+                          onClick={async () => { 
+                            // Persist windows assignment with count/trim config
+                            const partnerName = assignedPartners[openPartnerModal.id] || "";
+                            await persistPartnerToAssignment("windows", partnerName);
                             // If decks is also selected, go to deckscope next
                             if (selectedSubSvcs.includes("decks")) { setWindowsStep("deckscope"); return; }
+                            // Persist all other selected sub-services too
+                            for (const subId of selectedSubSvcs) {
+                              if (subId !== "windows" && subId !== "decks") {
+                                await persistPartnerToAssignment(subId, partnerName);
+                              }
+                            }
                             setWindowsStep("partner"); setOpenPartnerModal(null); 
                           }}
                           className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed">Confirm</button>
@@ -3075,6 +3099,11 @@ export default function ProjectDetailPage() {
                             if (!decksExists) {
                               const match = types.find((st) => st.name.toLowerCase() === "decks");
                               if (match) await handleAddService(match.id);
+                            }
+                            // Persist all selected sub-service assignments to DB
+                            const partnerName = assignedPartners[openPartnerModal.id] || "";
+                            for (const subId of selectedSubSvcs) {
+                              await persistPartnerToAssignment(subId, partnerName);
                             }
                             setWindowsStep("partner");
                             setOpenPartnerModal(null);
