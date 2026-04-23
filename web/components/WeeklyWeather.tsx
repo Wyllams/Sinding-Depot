@@ -87,10 +87,28 @@ async function fetchFromNWS(lat: number, lon: number): Promise<WeatherDay[]> {
   }> = forecastData.properties?.periods ?? [];
 
   const days: WeatherDay[] = [];
+
+  // If first period is nighttime ("Tonight"), today's daytime has passed.
+  // Still include today using the night period data so today always appears.
+  if (periods.length > 0 && !periods[0].isDaytime) {
+    const tonight = periods[0];
+    const todayDate = tonight.startTime.slice(0, 10);
+    days.push({
+      date: todayDate,
+      maxTemp: tonight.temperature + 12, // Night temp + estimate for max
+      minTemp: tonight.temperature,
+      precipProb: tonight.probabilityOfPrecipitation?.value ?? 0,
+      weatherCode: nwsForecastToWmoCode(tonight.shortForecast),
+      shortForecast: tonight.shortForecast,
+    });
+  }
+
   for (let i = 0; i < periods.length; i++) {
     const p = periods[i];
     if (!p.isDaytime) continue;
     const dateStr = p.startTime.slice(0, 10);
+    // Skip if we already added today from the night period above
+    if (days.length > 0 && days[0].date === dateStr) continue;
     const nightP = periods[i + 1];
     days.push({
       date: dateStr,
