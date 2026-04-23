@@ -522,7 +522,7 @@ export async function POST(req: Request) {
         salesperson_id: spId,
         job_number: jobNumber,
         title: `${rawServices} - ${clientName}`,
-        status: "pending",
+        status: "draft",
         gate_status: "NOT_CONTACTED",
         requested_start_date: startDateIso,
         service_address_line_1: finalAddress,
@@ -900,9 +900,23 @@ export async function POST(req: Request) {
     });
 
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("❌ ClickOne Webhook Error:", msg);
-    return NextResponse.json({ error: msg || "Internal Error" }, { status: 500 });
+    // PostgrestError do Supabase é um objeto plano { message, details, hint, code },
+    // NÃO é instância de Error. String(obj) retorna "[object Object]".
+    let msg = 'Internal Error';
+    if (err instanceof Error) {
+      msg = err.message;
+    } else if (err && typeof err === 'object' && 'message' in err) {
+      const supaErr = err as { message?: string; details?: string; hint?: string; code?: string };
+      msg = supaErr.message || JSON.stringify(err);
+      if (supaErr.details) msg += ` | Details: ${supaErr.details}`;
+      if (supaErr.code) msg += ` | Code: ${supaErr.code}`;
+    } else if (typeof err === 'string') {
+      msg = err;
+    } else {
+      msg = JSON.stringify(err);
+    }
+    console.error("❌ ClickOne Webhook Error:", msg, err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
