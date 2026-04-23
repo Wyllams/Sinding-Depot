@@ -105,6 +105,19 @@ const shiftDate = (iso: string, delta: number): string => {
 
 const isSundayIso = (iso: string) => fromIso(iso).getDay() === 0;
 
+// Convert working days (no Sundays) → calendar days from a start date
+const workToCalDays = (startIso: string, workDays: number): number => {
+  const s = fromIso(startIso);
+  let rem = workDays;
+  let cal = 0;
+  while (rem > 0) {
+    if (s.getDay() !== 0) rem--;
+    s.setDate(s.getDate() + 1);
+    cal++;
+  }
+  return cal;
+};
+
 // ─── Dynamic Status Colors (6.3) ─────────────────
 const STATUS_CONFIG: Record<string, { color: string; label: string; bg: string }> = {
   tentative:   { color: "#ef4444", label: "Pending",     bg: "rgba(239,68,68,0.12)" },
@@ -334,7 +347,17 @@ export default function SchedulePage() {
         salesperson: jb?.salespersons?.full_name || "Not assigned",
         startDate: startIso,
         durationDays: a.scheduled_end_at && a.scheduled_start_at
-           ? Math.max(1, Math.round((new Date(a.scheduled_end_at).getTime() - new Date(a.scheduled_start_at).getTime()) / MS_DAY))
+           ? (() => {
+               const s = new Date(a.scheduled_start_at);
+               const e = new Date(a.scheduled_end_at);
+               let workDays = 0;
+               const cur = new Date(s);
+               while (cur < e) {
+                 if (cur.getDay() !== 0) workDays++;
+                 cur.setDate(cur.getDate() + 1);
+               }
+               return Math.max(1, workDays);
+             })()
            : 1,
         status: (a.status === 'in_progress' ? 'in_progress' : a.status === 'completed' ? 'done' : 'scheduled') as ScheduledJob["status"],
         jobStartStatus: autoConfirmedStatus,
@@ -564,7 +587,12 @@ export default function SchedulePage() {
       }
 
       const endAt = new Date(newDate + "T12:00:00");
-      endAt.setDate(endAt.getDate() + (duration || 1));
+      // Skip Sundays when computing end date
+      let daysToAdd = duration || 1;
+      while (daysToAdd > 0) {
+        endAt.setDate(endAt.getDate() + 1);
+        if (endAt.getDay() !== 0) daysToAdd--;
+      }
       const startAt = new Date(newDate + "T08:00:00");
       
       const payload: any = {
@@ -713,10 +741,14 @@ export default function SchedulePage() {
          finalDur = calculateServiceDuration(newCrewName, svcName, newSq);
       }
 
-      // ── All DB writes now use finalDur for end date calculation ──
+      // ── All DB writes now use finalDur for end date calculation (skip Sundays) ──
       const startAt = new Date(editDate + "T08:00:00").toISOString();
       const endAt = new Date(editDate + "T08:00:00");
-      endAt.setDate(endAt.getDate() + finalDur);
+      let daysToAdd = finalDur;
+      while (daysToAdd > 0) {
+        endAt.setDate(endAt.getDate() + 1);
+        if (endAt.getDay() !== 0) daysToAdd--;
+      }
 
       let anyCrewSelected = false;
 
@@ -917,7 +949,8 @@ export default function SchedulePage() {
   // ── Gantt card position ──
   const cardStyle = (job: ScheduledJob): { left: string; width: string } | null => {
     const idx = dayIndex(job, weekBase);
-    const dur = job.durationDays;
+    // Convert working days → calendar days (including Sundays in between)
+    const dur = workToCalDays(job.startDate, job.durationDays);
     const end = idx + dur;
     if (end <= 0 || idx >= 7) return null;
     if (idx === 6) return null;
@@ -1124,10 +1157,10 @@ export default function SchedulePage() {
                   let maxOverlap = 1;
                   for (const job of visiblePJobs) {
                     const jStart = dayIndex(job, weekBase);
-                    const jEnd = jStart + job.durationDays;
+                    const jEnd = jStart + workToCalDays(job.startDate, job.durationDays);
                     const count = visiblePJobs.filter(o => {
                       const oS = dayIndex(o, weekBase);
-                      const oE = oS + o.durationDays;
+                      const oE = oS + workToCalDays(o.startDate, o.durationDays);
                       return oS < jEnd && oE > jStart;
                     }).length;
                     if (count > maxOverlap) maxOverlap = count;
@@ -1188,10 +1221,10 @@ export default function SchedulePage() {
                           const visibleJobs = pJobs.filter(j => cardStyle(j) !== null);
                           const getOverlapSlot = (job: ScheduledJob) => {
                             const jStart = dayIndex(job, weekBase);
-                            const jEnd = jStart + job.durationDays;
+                            const jEnd = jStart + workToCalDays(job.startDate, job.durationDays);
                             const overlapping = visibleJobs.filter(other => {
                               const oStart = dayIndex(other, weekBase);
-                              const oEnd = oStart + other.durationDays;
+                              const oEnd = oStart + workToCalDays(other.startDate, other.durationDays);
                               return oStart < jEnd && oEnd > jStart;
                             });
                             const slotIdx = overlapping.findIndex(o => o.id === job.id);
