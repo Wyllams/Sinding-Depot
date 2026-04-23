@@ -20,6 +20,8 @@ interface Props {
   className?: string;
   alignRight?: boolean;    // abrir dropdown alinhado à direita (evita overflow)
   variant?: "default" | "ghost";
+  minDate?: string;        // "YYYY-MM-DD" — dias antes disso ficam desabilitados
+  maxDate?: string;        // "YYYY-MM-DD" — dias depois disso ficam desabilitados
 }
 
 const MONTH_NAMES = [
@@ -76,6 +78,8 @@ export default function CustomDatePicker({
   className = "",
   alignRight = false,
   variant = "default",
+  minDate,
+  maxDate,
 }: Props) {
   const today = new Date();
   today.setHours(12, 0, 0, 0);
@@ -241,7 +245,9 @@ export default function CustomDatePicker({
           const isSelected     = selectedTs !== null && ts === selectedTs;
           const isToday        = ts === todayTs;
           const isSunday       = d.getDay() === 0;
-          const isDisabled     = disableSundays && isSunday;
+          const isBefore       = minDate ? ts < fromIso(minDate).setHours(12,0,0,0) : false;
+          const isAfter        = maxDate ? ts > fromIso(maxDate).setHours(12,0,0,0) : false;
+          const isDisabled     = (disableSundays && isSunday) || isBefore || isAfter;
 
           return (
             <button

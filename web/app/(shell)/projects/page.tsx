@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, Fragment } from "react";
 import { TopBar } from "../../../components/TopBar";
-import CustomDatePicker from "../../../components/CustomDatePicker";
+import DateRangePicker from "../../../components/DateRangePicker";
 import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
 import { useUndo } from "../../../components/UndoContext";
@@ -88,6 +88,7 @@ export default function ProjectsPage() {
           city,
           state,
           requested_start_date,
+          contract_signed_at,
           customer:customers (full_name),
           salesperson:salespersons (full_name),
           services:job_services (
@@ -98,15 +99,15 @@ export default function ProjectsPage() {
             status
           )
         `)
-        .order("created_at", { ascending: false });
+        .order("contract_signed_at", { ascending: false, nullsFirst: false });
 
       if (statusFilter === "pending") {
         query = query.in("status", ["draft", "on_hold"]);
       } else if (statusFilter) {
         query = query.eq("status", statusFilter);
       }
-      if (dateFrom)      query = query.gte("requested_start_date", dateFrom);
-      if (dateTo)        query = query.lte("requested_start_date", dateTo);
+      if (dateFrom)      query = query.gte("contract_signed_at", dateFrom);
+      if (dateTo)        query = query.lte("contract_signed_at", dateTo);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -371,17 +372,18 @@ export default function ProjectsPage() {
           </div>
 
           {/* Date Range */}
-          <div className="flex flex-1 sm:flex-none items-end justify-between sm:justify-start gap-3 mt-2 sm:mt-0 sm:ml-auto w-full sm:w-auto">
-            <div className="flex-1 sm:flex-none">
-              <CustomDatePicker value={dateFrom} onChange={setDateFrom} placeholder="Start" disableSundays={false} className="w-full sm:w-36" />
-            </div>
-            <div className="flex flex-col items-center gap-1.5 pb-2">
-              <span className="text-[#ababa8] text-sm font-black hidden sm:block">→</span>
-              <span className="text-[#ababa8] text-[10px] font-black sm:hidden tracking-widest uppercase">To</span>
-            </div>
-            <div className="flex-1 sm:flex-none">
-              <CustomDatePicker value={dateTo} onChange={setDateTo} placeholder="End" disableSundays={false} className="w-full sm:w-36" alignRight />
-            </div>
+          <div className="flex flex-1 sm:flex-none items-end justify-end sm:ml-auto w-full sm:w-auto">
+            <DateRangePicker
+              startDate={dateFrom}
+              endDate={dateTo}
+              onRangeChange={(start, end) => {
+                setDateFrom(start);
+                setDateTo(end);
+              }}
+              placeholder="Filter by Sold Date"
+              className="w-full sm:w-auto"
+              alignRight
+            />
           </div>
         </div>
 
