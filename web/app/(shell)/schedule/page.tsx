@@ -1371,12 +1371,12 @@ export default function SchedulePage() {
                       <span
                         className="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-md border"
                         style={{
-                          backgroundColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                          color: editJob.jobStartStatus === "active" ? "#22c55e" : "#ef4444",
-                          borderColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.2)" : "rgba(239, 68, 68, 0.2)"
+                          backgroundColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.1)" : editJob.jobStartStatus === "draft" ? "rgba(245, 166, 35, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                          color: editJob.jobStartStatus === "active" ? "#22c55e" : editJob.jobStartStatus === "draft" ? "#f5a623" : "#ef4444",
+                          borderColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.2)" : editJob.jobStartStatus === "draft" ? "rgba(245, 166, 35, 0.2)" : "rgba(239, 68, 68, 0.2)"
                         }}
                       >
-                        {editJob.jobStartStatus === "active" ? "CONFIRMED" : editJob.jobStartStatus === "draft" ? "PENDING" : "PENDING"}
+                        {editJob.jobStartStatus === "active" ? "CONFIRMED" : editJob.jobStartStatus === "draft" ? "TENTATIVE" : "PENDING"}
                       </span>
                     )}
                   </div>
@@ -1416,7 +1416,7 @@ export default function SchedulePage() {
                         onChange={(val) => setEditStatus(val as "active" | "draft" | "on_hold")}
                         options={[
                           { value: "active", label: "Confirmed" },
-                          { value: "draft", label: "Pending" },
+                          { value: "draft", label: "Tentative" },
                           { value: "on_hold", label: "Pending" }
                         ]}
                         className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
