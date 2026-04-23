@@ -120,7 +120,8 @@ const workToCalDays = (startIso: string, workDays: number): number => {
 
 // ─── Dynamic Status Colors (6.3) ─────────────────
 const STATUS_CONFIG: Record<string, { color: string; label: string; bg: string }> = {
-  tentative:   { color: "#ef4444", label: "Pending",     bg: "rgba(239,68,68,0.12)" },
+  pending:     { color: "#ef4444", label: "Pending",     bg: "rgba(239,68,68,0.12)" },
+  tentative:   { color: "#f5a623", label: "Tentative",   bg: "rgba(245,166,35,0.12)" },
   scheduled:   { color: "#60b8f5", label: "Confirmed",   bg: "rgba(96,184,245,0.12)" },
   in_progress: { color: "#aeee2a", label: "In Progress", bg: "rgba(174,238,42,0.12)" },
   done:        { color: "#22c55e", label: "Done",        bg: "rgba(34,197,94,0.12)" },
@@ -147,8 +148,11 @@ const getJobEndDate = (startDateIso: string, durationDays: number): Date => {
   return endDay;
 };
 
-const getVisualStatus = (job: ScheduledJob): "tentative" | "scheduled" | "in_progress" | "done" => {
+const getVisualStatus = (job: ScheduledJob): "pending" | "tentative" | "scheduled" | "in_progress" | "done" => {
   if (job.status === "done") return "done";
+
+  // Pending: job is on hold — always red regardless of date
+  if (job.jobStartStatus === "on_hold") return "pending";
 
   // Tentative: job not yet confirmed (draft status) — always orange regardless of date
   if (job.jobStartStatus === "draft") return "tentative";
@@ -1322,6 +1326,7 @@ export default function SchedulePage() {
         <div className="mt-5 flex items-center flex-wrap gap-6 px-1">
           {[
             { color: "#ef4444", label: "Pending" },
+            { color: "#f5a623", label: "Tentative" },
             { color: "#60b8f5", label: "Confirmed" },
             { color: "#aeee2a", label: "In Progress" },
             { color: "#22c55e", label: "Done" },
