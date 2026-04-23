@@ -3518,7 +3518,7 @@ export default function ProjectDetailPage() {
                                 .update({ scheduled_end_at: endAt.toISOString() })
                                 .eq("id", assignment.id);
                               if (error) console.error("[EditDeckScope] update error:", error);
-                              else console.log("[EditDeckScope] Updated decks:", startIso, "->", endIso, `(${newDays} days)`);
+                              else console.log("[EditDeckScope] Updated decks:", startIso, "->", endAt.toISOString().split("T")[0], `(${newDays} days)`);
                             }
                             // Re-fetch job data using the full mapping
                             await fetchJob();
