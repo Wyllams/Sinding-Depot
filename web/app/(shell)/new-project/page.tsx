@@ -346,7 +346,12 @@ export default function NewProjectPage() {
   // ── Windows service config ──
   const [windowCount, setWindowCount] = useState("");
   const [windowTrim, setWindowTrim] = useState<"yes" | "no" | "">("");
+  const [windowPrice, setWindowPrice] = useState("");
   const [windowsStep, setWindowsStep] = useState<"partner" | "config">("partner");
+
+  // ── Doors service config ──
+  const [doorsPrice, setDoorsPrice] = useState("");
+  const [doorsStep, setDoorsStep] = useState<"partner" | "config">("partner");
 
   // ── Decks service config ──
   const DECK_SCOPE_OPTIONS = [
@@ -564,12 +569,17 @@ export default function NewProjectPage() {
         }
 
         if (serviceTypeId) {
+            let contractedAmount: number | null = null;
+            if (svcId === "windows" && windowPrice) contractedAmount = parseFloat(windowPrice);
+            if (svcId === "doors" && doorsPrice) contractedAmount = parseFloat(doorsPrice);
+
             const { data: newJs } = await supabase.from("job_services").insert({
               job_id: newJob.id,
               service_type_id: serviceTypeId,
               scope_of_work: "Standard exterior work",
               quantity: sq ? parseFloat(sq) : null,
-              unit_of_measure: "SQ"
+              unit_of_measure: "SQ",
+              contracted_amount: contractedAmount
             }).select("id").single();
 
             if (newJs) {
@@ -1237,7 +1247,7 @@ export default function NewProjectPage() {
                 <div className="grid grid-cols-1 gap-3 max-h-[50vh] overflow-y-auto pr-2" style={{ scrollbarWidth: "none" }}>
 
                   {/* ── STEP 1: Select Partner ── */}
-                  {(openPartnerModal.id !== "windows" || windowsStep === "partner") && (openPartnerModal.id !== "decks" || decksStep === "partner") && (
+                  {(openPartnerModal.id !== "windows" || windowsStep === "partner") && (openPartnerModal.id !== "doors" || doorsStep === "partner") && (openPartnerModal.id !== "decks" || decksStep === "partner") && (
                     <>
                       {openPartnerModal.partners?.map((partner) => {
                         const isSelected = assignedPartners[openPartnerModal.id] === partner;
@@ -1269,6 +1279,12 @@ export default function NewProjectPage() {
                               // If Windows → go to config step
                               if (openPartnerModal.id === "windows") {
                                 setWindowsStep("config");
+                                return;
+                              }
+
+                              // If Doors → go to config step
+                              if (openPartnerModal.id === "doors") {
+                                setDoorsStep("config");
                                 return;
                               }
 
@@ -1315,7 +1331,12 @@ export default function NewProjectPage() {
                               if (openPartnerModal.id === "windows") {
                                 setWindowCount("");
                                 setWindowTrim("");
+                                setWindowPrice("");
                                 setWindowsStep("partner");
+                              }
+                              if (openPartnerModal.id === "doors") {
+                                setDoorsPrice("");
+                                setDoorsStep("partner");
                               }
                               if (openPartnerModal.id === "decks") {
                                 setDeckScope("");
@@ -1355,19 +1376,38 @@ export default function NewProjectPage() {
                         Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners["windows"]}</span>. Now configure the windows for this project.
                       </p>
 
-                      {/* Window Count */}
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                          How many windows in the contract?
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={windowCount}
-                          onChange={(e) => setWindowCount(e.target.value)}
-                          placeholder="e.g. 42"
-                          className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]"
-                        />
+                      {/* Window Count & Price */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                            Quantity
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={windowCount}
+                            onChange={(e) => setWindowCount(e.target.value)}
+                            placeholder="e.g. 42"
+                            className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                            Price / Value
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-outline">$</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={windowPrice}
+                              onChange={(e) => setWindowPrice(e.target.value)}
+                              placeholder="e.g. 4500.00"
+                              className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 pl-8 pr-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]"
+                            />
+                          </div>
+                        </div>
                       </div>
 
                       {/* Trim? */}
@@ -1407,7 +1447,6 @@ export default function NewProjectPage() {
                         </div>
                       )}
 
-                      {/* Actions */}
                       <div className="flex gap-3 pt-2">
                         <button
                           type="button"
@@ -1418,9 +1457,76 @@ export default function NewProjectPage() {
                         </button>
                         <button
                           type="button"
-                          disabled={!windowCount || !windowTrim}
+                          disabled={!windowCount || !windowTrim || !windowPrice}
                           onClick={() => {
                             setWindowsStep("partner");
+                            setOpenPartnerModal(null);
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#4da8e5] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 2: Doors Config (price) ── */}
+                  {openPartnerModal.id === "doors" && doorsStep === "config" && (
+                    <div className="space-y-6">
+                      {/* Step indicator */}
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Partner</span>
+                        </div>
+                        <div className="w-8 h-px bg-outline-variant"></div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center">
+                            <span className="text-[10px] font-black text-[#f5a623]">2</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider">Doors Config</span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-on-surface-variant">
+                        Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners["doors"]}</span>. Now configure the doors for this project.
+                      </p>
+
+                      {/* Doors Price */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                          Price / Value
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-outline">$</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={doorsPrice}
+                            onChange={(e) => setDoorsPrice(e.target.value)}
+                            placeholder="e.g. 2500.00"
+                            className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 pl-8 pr-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setDoorsStep("partner")}
+                          className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!doorsPrice}
+                          onClick={() => {
+                            setDoorsStep("partner");
                             setOpenPartnerModal(null);
                           }}
                           className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#4da8e5] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
