@@ -487,9 +487,10 @@ export default function ReportsPage() {
       if (j.status === "cancelled") return;
       const dateStr = j.contract_signed_at || j.created_at;
       if (!dateStr) return;
-      const d = new Date(dateStr);
-      if (d.getFullYear() !== year) return;
-      report[j.salesperson_id][d.getMonth()] += Number(j.contract_amount);
+      const jobYear = parseInt(dateStr.slice(0, 4), 10);
+      const jobMonth = parseInt(dateStr.slice(5, 7), 10) - 1;
+      if (jobYear !== year) return;
+      report[j.salesperson_id][jobMonth] += Number(j.contract_amount);
     });
 
     setAnnualData(report);
@@ -621,13 +622,15 @@ export default function ReportsPage() {
   // Helper: find salesperson job count by keyword match on name
   const getSpJobCount = (keyword: string): number => {
     if (!data) return 0;
-    const sp = data.salespeople.find((s) => s.full_name.toLowerCase().includes(keyword.toLowerCase()));
+    const searchStr = keyword.toLowerCase() === 'matt' ? 'matheus' : keyword.toLowerCase();
+    const sp = data.salespeople.find((s) => s.full_name.toLowerCase().includes(searchStr) || s.full_name.toLowerCase().includes(keyword.toLowerCase()));
     return sp?.jobs_sold_count ?? 0;
   };
 
   const getSpRevenue = (keyword: string): string => {
     if (!data) return fmt(0);
-    const sp = data.salespeople.find((s) => s.full_name.toLowerCase().includes(keyword.toLowerCase()));
+    const searchStr = keyword.toLowerCase() === 'matt' ? 'matheus' : keyword.toLowerCase();
+    const sp = data.salespeople.find((s) => s.full_name.toLowerCase().includes(searchStr) || s.full_name.toLowerCase().includes(keyword.toLowerCase()));
     return fmt(sp?.total_revenue ?? 0);
   };
 
