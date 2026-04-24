@@ -254,7 +254,7 @@ export async function POST(req: Request) {
     }
 
     // ── Agendamento: appointment start date from customData ──
-    const rawAgendamento = nonEmpty(cd.Agendamento) || nonEmpty(cd.agendamento) || nonEmpty(payload["Close Date"]);
+    const rawAgendamento = nonEmpty(cd.Agendamento) || nonEmpty(cd.agendamento) || nonEmpty(payload.Agendamento) || nonEmpty(payload.agendamento) || nonEmpty(payload["Close Date"]);
     let startDateIso: string | null = null;
     if (rawAgendamento) {
       // ClickOne sends dates like "April 22, 2026" or "2026-04-22"
