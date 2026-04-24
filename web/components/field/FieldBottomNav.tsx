@@ -9,7 +9,7 @@ export function FieldBottomNav() {
   const navItems = [
     { label: "HOME", href: "/field", icon: "home", isActive: pathname === "/field" },
     { label: "MY JOBS", href: "/field/jobs", icon: "handyman", isActive: pathname.startsWith("/field/jobs") },
-    { label: "ALERTS", href: "/field/alerts", icon: "notifications", isActive: pathname.startsWith("/field/alerts") },
+    { label: "SERVICES", href: "/field/services", icon: "warning", isActive: pathname.startsWith("/field/services") },
     { label: "PROFILE", href: "/field/profile", icon: "person", isActive: pathname.startsWith("/field/profile") },
   ];
 

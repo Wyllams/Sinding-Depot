@@ -33,6 +33,14 @@ export async function POST(req: Request) {
 
     if (updateSrvErr) throw updateSrvErr;
 
+    // 1.b Marcar a atribuição (service_assignments) como 'done'
+    const { error: updateAssignErr } = await supabaseAdmin
+      .from("service_assignments")
+      .update({ status: "done" })
+      .eq("job_service_id", job_service_id);
+
+    if (updateAssignErr) throw updateAssignErr;
+
     // 2. Fetch Job & Customer details to populate the Certificate
     const { data: serviceData, error: srvErr } = await supabaseAdmin
       .from("job_services")
@@ -89,35 +97,30 @@ export async function POST(req: Request) {
     const today = `${(_now.getMonth() + 1).toString().padStart(2, '0')}/${_now.getDate().toString().padStart(2, '0')}/${_now.getFullYear()}`;
     parsedBody = parsedBody.replace(/{{date_today}}/g, today);
 
-    // 5. Create the Document in the Database
-    const { data: docData, error: docErr } = await supabaseAdmin
-      .from("documents")
-      .insert({
-        job_id: serviceData.job_id,
-        job_service_id: job_service_id,
-        document_type: "completion_certificate",
-        status: "draft",
-        title: templateData.title,
-        visible_to_customer: true,
-        metadata: {
-          body: parsedBody,
-          signature: null,
-          signed_at: null,
-          signed_by_ip: null,
-        },
+    // 5. Create or Update the COC Milestone in the Database
+    // Normally, the milestone is generated at job creation in new-project/page.tsx
+    // Let's update it to 'pending_signature' so the customer can see it
+    const { data: milestoneData, error: milestoneErr } = await supabaseAdmin
+      .from("project_payment_milestones")
+      .update({
+        status: "pending_signature",
       })
+      .eq("job_service_id", job_service_id)
+      .eq("document_type", "completion_certificate")
       .select("id")
-      .single();
+      .maybeSingle();
 
-    if (docErr) throw docErr;
+    // If for some reason it didn't exist, we could insert it here, but it should exist.
+    if (!milestoneData) {
+      console.warn("No existing milestone found for this service to mark as pending_signature.");
+    }
 
-    // TODO: Send Email to the customer with Deep link -> /projects/[jobId]/coc/[docId]
-    console.log(`Email notification logic goes here -> Link: /projects/${serviceData.job_id}/coc/${docData.id}`);
+    // TODO: Send Email to the customer -> /customer/documents
+    console.log(`Email notification sent to customer for job_service_id: ${job_service_id}`);
 
     return NextResponse.json({
       success: true,
-      message: "Certificate generated successfully.",
-      document_id: docData.id,
+      message: "Service marked as completed. Customer notified to sign COC.",
       job_id: serviceData.job_id,
     });
 

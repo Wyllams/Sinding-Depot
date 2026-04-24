@@ -10,18 +10,18 @@ const PUBLIC_CONTRACT_REGEX = /^\/projects\/[^/]+\/contract(\/[^/]+)?/;
 // Define quais rotas cada role pode acessar.
 // Rotas não listadas aqui são consideradas restritas a admin.
 const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
-  admin:       ['*'],                                    // Admin acessa TUDO
-  salesperson: ['/sales', '/api'],                       // Vendedor só acessa /sales
-  partner:     ['/field', '/api'],                       // Parceiro só acessa /field
-  crew:        ['/field', '/api'],                       // Alias para partner
-  customer:    ['/customer', '/api'],                    // Cliente só acessa /customer
-  client:      ['/customer', '/api'],                    // Alias para customer
+  admin:       ['*'],
+  salesperson: ['/mobile/sales', '/sales', '/projects', '/change-orders', '/sales-reports', '/schedule', '/api', '/'],
+  partner:     ['/field', '/projects', '/change-orders', '/schedule', '/api', '/'],
+  crew:        ['/field', '/projects', '/change-orders', '/schedule', '/api', '/'],
+  customer:    ['/customer', '/api'],
+  client:      ['/customer', '/api'],
 };
 
 // ─── Rota padrão por role (redirect após login) ─────────────────
 const ROLE_HOME: Record<string, string> = {
   admin:       '/',
-  salesperson: '/sales',
+  salesperson: '/mobile/sales',
   partner:     '/field',
   crew:        '/field',
   customer:    '/customer',

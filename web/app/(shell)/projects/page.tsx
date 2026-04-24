@@ -28,11 +28,12 @@ const GATE_CONFIG: Record<string, { color: string; icon: string; title: string; 
   PERMIT:        { color: "#747673", icon: "contract",        title: "Pending Permit",       desc: "Waiting on city or county permit clearance."              },
 };
 
-// Map job_status → display values (3 values matching calendar popup)
 const STATUS_MAP: Record<string, { label: string; style: string }> = {
-  active:  { label: "Confirmed", style: "bg-green-500/10 text-green-400 border border-green-500/20"     },
-  draft:   { label: "Pending",   style: "bg-red-500/10 text-red-400 border border-red-500/20"          },
-  on_hold: { label: "Pending",   style: "bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20"     },
+  pending:     { label: "Pending",     style: "bg-[#ef4444]/10 text-[#ef4444] border border-[#ef4444]/20" },
+  tentative:   { label: "Tentative",   style: "bg-[#f5a623]/10 text-[#f5a623] border border-[#f5a623]/20" },
+  scheduled:   { label: "Confirmed",   style: "bg-[#60b8f5]/10 text-[#60b8f5] border border-[#60b8f5]/20" },
+  in_progress: { label: "In Progress", style: "bg-[#aeee2a]/10 text-[#aeee2a] border border-[#aeee2a]/20" },
+  done:        { label: "Done",        style: "bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20" },
 };
 
 // SP color by salesperson name (first name prefix match)
@@ -101,9 +102,7 @@ export default function ProjectsPage() {
         `)
         .order("contract_signed_at", { ascending: false, nullsFirst: false });
 
-      if (statusFilter === "pending") {
-        query = query.in("status", ["draft", "on_hold"]);
-      } else if (statusFilter) {
+      if (statusFilter) {
         query = query.eq("status", statusFilter);
       }
       if (dateFrom)      query = query.gte("contract_signed_at", dateFrom);
@@ -127,7 +126,7 @@ export default function ProjectsPage() {
             else if (t === "WEATHER")  gate = "OTHER_REPAIRS";
             else if (t === "CREW")     gate = "NO_ANSWER";
             else                       gate = "OTHER_REPAIRS";
-          } else if (j.status === "active") {
+          } else if (j.status === "scheduled" || j.status === "in_progress" || j.status === "done") {
             gate = "READY";
           } else {
             gate = "NOT_CONTACTED";
@@ -266,7 +265,7 @@ export default function ProjectsPage() {
 
   async function handleGateChange(jobId: string, gate: string) {
     // Sync Job Start Status: READY → Active (Confirmed), anything else → Pending
-    const newJobStatus = gate === "READY" ? "active" : "on_hold";
+    const newJobStatus = gate === "READY" ? "scheduled" : "pending";
 
     // Optimistic update (gate fields + status)
     setJobs((prev) =>
@@ -343,8 +342,11 @@ export default function ProjectsPage() {
               value={statusFilter}
               onChange={(val) => setStatusFilter(val)}
               options={[
-                { value: "active", label: "Confirmed" },
                 { value: "pending", label: "Pending" },
+                { value: "tentative", label: "Tentative" },
+                { value: "scheduled", label: "Confirmed" },
+                { value: "in_progress", label: "In Progress" },
+                { value: "done", label: "Done" },
               ]}
               placeholder="All Statuses"
               className="w-full sm:w-36 bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] hover:border-[#aeee2a]/50 transition-colors flex justify-between items-center"
@@ -432,7 +434,7 @@ export default function ProjectsPage() {
                 paginated.map((job) => {
                   const gate = job.blocker_type ?? "READY";
                   const gateConf = GATE_CONFIG[gate] ?? GATE_CONFIG.READY;
-                  const statusConf = STATUS_MAP[job.status] ?? STATUS_MAP.draft;
+                  const statusConf = STATUS_MAP[job.status] ?? STATUS_MAP.tentative;
                   const spName = job.salesperson?.full_name ?? "?";
                   const spInitial = spName.charAt(0).toUpperCase();
                   const spCol = spColor(spName);

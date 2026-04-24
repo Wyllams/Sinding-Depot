@@ -41,7 +41,7 @@ interface ScheduledJob {
   startDate: string;
   durationDays: number;
   status: "tentative" | "scheduled" | "in_progress" | "done";
-  jobStartStatus?: "active" | "draft" | "on_hold";
+  jobStartStatus?: "pending" | "tentative" | "scheduled" | "in_progress" | "done";
   address?: string;
   contract_amount?: number;
   phone?: string;
@@ -152,10 +152,10 @@ const getVisualStatus = (job: ScheduledJob): "pending" | "tentative" | "schedule
   if (job.status === "done") return "done";
 
   // Pending: job is on hold — always red regardless of date
-  if (job.jobStartStatus === "on_hold") return "pending";
-
-  // Tentative: job not yet confirmed (draft status) — always orange regardless of date
-  if (job.jobStartStatus === "draft") return "tentative";
+  if (job.jobStartStatus === "pending") return "pending";
+  if (job.jobStartStatus === "tentative") return "tentative";
+  if (job.jobStartStatus === "in_progress") return "in_progress";
+  if (job.jobStartStatus === "scheduled") return "scheduled";
 
   try {
     const end = getJobEndDate(job.startDate, job.durationDays);
@@ -212,7 +212,7 @@ export default function SchedulePage() {
   const [editDate,    setEditDate]    = useState<string>("");
   const [editDur,     setEditDur]     = useState<number>(1);
   const [durManuallySet, setDurManuallySet] = useState(false);
-  const [editStatus,  setEditStatus]  = useState<"active" | "draft" | "on_hold">("active");
+  const [editStatus,  setEditStatus]  = useState<"pending" | "tentative" | "scheduled" | "in_progress" | "done">("scheduled");
   const [editSq,      setEditSq]      = useState<string>("");
   const [selectedCrewIds, setSelectedCrewIds] = useState<Record<string, string>>({});
   const [serviceCrewOptions, setServiceCrewOptions] = useState<{
@@ -340,9 +340,9 @@ export default function SchedulePage() {
       const startIso = a.scheduled_start_at ? a.scheduled_start_at.split('T')[0] : shiftDate(toIso(new Date()), 1);
 
       // Auto-confirm: if today >= start date, status becomes active (Confirmed)
-      const rawJobStatus = (jb?.status === "active" || jb?.status === "on_hold" || jb?.status === "draft") ? jb.status : "active";
+      const rawJobStatus = (jb?.status === "pending" || jb?.status === "tentative" || jb?.status === "scheduled" || jb?.status === "in_progress" || jb?.status === "done") ? jb.status : "scheduled";
       const todayIso = new Date().toISOString().split('T')[0];
-      const autoConfirmedStatus = (rawJobStatus === "draft" && startIso <= todayIso) ? "active" as const : rawJobStatus;
+      const autoConfirmedStatus = (rawJobStatus === "tentative" && startIso <= todayIso) ? "scheduled" as const : rawJobStatus;
 
       return {
         id: a.id,
@@ -625,9 +625,9 @@ export default function SchedulePage() {
     setDurManuallySet(true);
     // Auto-confirm if start date is today or earlier
     const todayStr = new Date().toISOString().split('T')[0];
-    const baseStatus = job.jobStartStatus ?? "active";
-    const confirmedStatus = (baseStatus === "draft" && job.startDate <= todayStr) ? "active" : baseStatus;
-    setEditStatus(confirmedStatus as "active" | "draft" | "on_hold");
+    const baseStatus = job.jobStartStatus ?? "scheduled";
+    const confirmedStatus = (baseStatus === "tentative" && job.startDate <= todayStr) ? "scheduled" : baseStatus;
+    setEditStatus(confirmedStatus as "pending" | "tentative" | "scheduled" | "in_progress" | "done");
     setEditSq(job.sq != null ? String(job.sq) : "");
     setSelectedCrewIds(
       job.jobServiceIds && job.jobServiceIds.length > 0 && job.crewId 
@@ -1378,12 +1378,12 @@ export default function SchedulePage() {
                       <span
                         className="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-md border"
                         style={{
-                          backgroundColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.1)" : editJob.jobStartStatus === "draft" ? "rgba(245, 166, 35, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                          color: editJob.jobStartStatus === "active" ? "#22c55e" : editJob.jobStartStatus === "draft" ? "#f5a623" : "#ef4444",
-                          borderColor: editJob.jobStartStatus === "active" ? "rgba(34, 197, 94, 0.2)" : editJob.jobStartStatus === "draft" ? "rgba(245, 166, 35, 0.2)" : "rgba(239, 68, 68, 0.2)"
+                          backgroundColor: editJob.jobStartStatus === "done" ? "rgba(34, 197, 94, 0.1)" : editJob.jobStartStatus === "in_progress" ? "rgba(174, 238, 42, 0.1)" : editJob.jobStartStatus === "scheduled" ? "rgba(96, 184, 245, 0.1)" : editJob.jobStartStatus === "tentative" ? "rgba(245, 166, 35, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                          color: editJob.jobStartStatus === "done" ? "#22c55e" : editJob.jobStartStatus === "in_progress" ? "#aeee2a" : editJob.jobStartStatus === "scheduled" ? "#60b8f5" : editJob.jobStartStatus === "tentative" ? "#f5a623" : "#ef4444",
+                          borderColor: editJob.jobStartStatus === "done" ? "rgba(34, 197, 94, 0.2)" : editJob.jobStartStatus === "in_progress" ? "rgba(174, 238, 42, 0.2)" : editJob.jobStartStatus === "scheduled" ? "rgba(96, 184, 245, 0.2)" : editJob.jobStartStatus === "tentative" ? "rgba(245, 166, 35, 0.2)" : "rgba(239, 68, 68, 0.2)"
                         }}
                       >
-                        {editJob.jobStartStatus === "active" ? "CONFIRMED" : editJob.jobStartStatus === "draft" ? "TENTATIVE" : "PENDING"}
+                        {editJob.jobStartStatus === "scheduled" ? "CONFIRMED" : editJob.jobStartStatus === "tentative" ? "TENTATIVE" : editJob.jobStartStatus === "in_progress" ? "IN PROGRESS" : editJob.jobStartStatus === "done" ? "DONE" : "PENDING"}
                       </span>
                     )}
                   </div>
@@ -1420,11 +1420,13 @@ export default function SchedulePage() {
                     <div className="relative z-[60]">
                       <CustomDropdown
                         value={editStatus}
-                        onChange={(val) => setEditStatus(val as "active" | "draft" | "on_hold")}
+                        onChange={(val) => setEditStatus(val as "pending" | "tentative" | "scheduled" | "in_progress" | "done")}
                         options={[
-                          { value: "active", label: "Confirmed" },
-                          { value: "draft", label: "Tentative" },
-                          { value: "on_hold", label: "Pending" }
+                          { value: "pending", label: "Pending" },
+                          { value: "tentative", label: "Tentative" },
+                          { value: "scheduled", label: "Confirmed" },
+                          { value: "in_progress", label: "In Progress" },
+                          { value: "done", label: "Done" }
                         ]}
                         className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
                       />

@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { compressImage } from "@/lib/compressImage";
+import { CustomDropdown } from "@/components/CustomDropdown";
 
 interface FieldChangeOrderModalProps {
   jobId: string;
@@ -17,6 +18,7 @@ export function FieldChangeOrderModal({
   onClose,
   onSaved,
 }: FieldChangeOrderModalProps) {
+  const [location, setLocation] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -56,6 +58,10 @@ export function FieldChangeOrderModal({
 
   // ---------- Submit ----------
   async function handleSubmit(): Promise<void> {
+    if (!location) {
+      setError("Please select a location on the house.");
+      return;
+    }
     if (!title.trim() || !description.trim()) return;
 
     setSaving(true);
@@ -69,13 +75,15 @@ export function FieldChangeOrderModal({
 
       if (!user) throw new Error("Not authenticated");
 
+      const finalDescription = `Location: ${location}\n\n${description.trim()}`;
+
       const { data: co, error: insertErr } = await supabase
         .from("change_orders")
         .insert({
           job_id: jobId,
           job_service_id: serviceId || null,
           title: title.trim(),
-          description: description.trim(),
+          description: finalDescription,
           proposed_amount: null, // Parceiro NUNCA coloca preço
           status: "draft",
           requested_by_profile_id: user.id,
@@ -193,6 +201,20 @@ export function FieldChangeOrderModal({
               </span>{" "}
               will add pricing and send to the customer for approval.
             </p>
+          </div>
+
+          {/* Location */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest">
+              Location on House *
+            </label>
+            <CustomDropdown
+              value={location}
+              onChange={setLocation}
+              options={["Front", "Back", "Right", "Left", "Deck", "Porch"]}
+              placeholder="Select a location..."
+              className="w-full bg-[#1e201e] border border-white/5 hover:border-[#aeee2a]/50 rounded-2xl py-4 px-4 text-[#faf9f5] font-bold text-[15px] transition-colors flex justify-between items-center"
+            />
           </div>
 
           {/* Title */}

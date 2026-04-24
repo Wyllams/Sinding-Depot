@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { MobileWeatherWidget } from "@/components/field/MobileWeatherWidget";
 
 export default function FieldHome() {
   const [profile, setProfile] = useState<{ full_name: string } | null>(null);
@@ -81,28 +82,19 @@ export default function FieldHome() {
           </div>
         </Link>
 
-        <Link href="/field/alerts" className="bg-[#151515] rounded-3xl p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform">
-          <div className="w-10 h-10 rounded-full bg-[#ff7351]/10 flex items-center justify-center">
-            <span className="material-symbols-outlined text-[#ff7351]" translate="no">warning</span>
+        <Link href="/field/services" className="bg-[#151515] rounded-3xl p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform">
+          <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-[#aeee2a]" translate="no">warning</span>
           </div>
           <div>
             <p className="text-3xl font-black font-headline text-white tracking-tighter">{issueCount}</p>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Issues</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Services</p>
           </div>
         </Link>
       </div>
 
       {/* Weather Widget */}
-      <div className="bg-[#151515] border border-[var(--color-siding-green)]/20 rounded-3xl p-5 relative overflow-hidden">
-        <div className="absolute top-5 right-5 opacity-10">
-          <span className="material-symbols-outlined text-6xl text-[var(--color-siding-green)]" translate="no">wb_sunny</span>
-        </div>
-        <h2 className="text-[11px] font-bold text-[var(--color-siding-green)] uppercase tracking-widest mb-1">Weather Check</h2>
-        <p className="text-xl font-bold font-headline text-white mb-2">Clear Sky, 72°F</p>
-        <p className="text-xs text-zinc-400 font-medium leading-relaxed pr-8">
-          Perfect conditions for exterior siding installation today.
-        </p>
-      </div>
+      <MobileWeatherWidget />
     </div>
   );
 }

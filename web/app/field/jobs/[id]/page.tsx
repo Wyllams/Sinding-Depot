@@ -1,7 +1,10 @@
 "use client";
 
 import { FieldChangeOrderModal } from "@/components/field/FieldChangeOrderModal";
-import { useState, useEffect, use } from "react";
+import { FieldDailyLogModal } from "@/components/field/FieldDailyLogModal";
+import FieldCOCModal from "@/components/field/FieldCOCModal";
+import { CustomDropdown } from "@/components/CustomDropdown";
+import { useState, useEffect, use, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -11,14 +14,16 @@ import { supabase } from "@/lib/supabase";
 
 interface JobDetail {
   jobId: string;
-  title: string;
+  jobTitle: string;
   address: string;
   city: string;
   state: string;
-  serviceType: string;
+  customerName: string;
+  salespersonName: string;
   assignmentStatus: string;
   scheduledStart: string | null;
   scheduledEnd: string | null;
+  totalDays: number;
 }
 
 /* ────────────────────────────────────────────────── */
@@ -45,14 +50,66 @@ export default function FieldJobDetail({
   const [showCOModal, setShowCOModal] = useState(false);
   const [coSuccess, setCOSuccess] = useState(false);
 
+  // Daily Logs
+  const [showDailyLogModal, setShowDailyLogModal] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(1);
+  const [logSuccess, setLogSuccess] = useState(false);
+  const [pendingDailyLogFiles, setPendingDailyLogFiles] = useState<File[]>([]);
+  const [pendingDailyLogExistingUrls, setPendingDailyLogExistingUrls] = useState<string[]>([]);
+  const hiddenDailyLogInputRef = useRef<HTMLInputElement>(null);
+  const [dailyLogs, setDailyLogs] = useState<any[]>([]);
+
+  const loadDailyLogs = async () => {
+    if (!serviceId) return;
+    const { data } = await supabase
+      .from("daily_logs")
+      .select("day_number, images")
+      .eq("job_service_id", serviceId);
+    if (data) setDailyLogs(data);
+  };
+
+  useEffect(() => {
+    loadDailyLogs();
+  }, [serviceId]);
+
   // Extra Material modal
+  type ExtraMaterialItem = { name: string; qty: string; size: string; notes: string };
   const [showMaterialModal, setShowMaterialModal] = useState(false);
-  const [materialName, setMaterialName] = useState("");
-  const [materialQty, setMaterialQty] = useState("1");
-  const [materialSize, setMaterialSize] = useState("");
-  const [materialNotes, setMaterialNotes] = useState("");
+  const [materialItems, setMaterialItems] = useState<ExtraMaterialItem[]>([{ name: "", qty: "1", size: "", notes: "" }]);
   const [submittingMaterial, setSubmittingMaterial] = useState(false);
   const [materialSuccess, setMaterialSuccess] = useState(false);
+
+  const addMaterialItem = () => {
+    setMaterialItems([...materialItems, { name: "", qty: "1", size: "", notes: "" }]);
+  };
+
+  const removeMaterialItem = (index: number) => {
+    setMaterialItems(materialItems.filter((_, i) => i !== index));
+  };
+
+  const updateMaterialItem = (index: number, field: keyof ExtraMaterialItem, value: string) => {
+    const newItems = [...materialItems];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setMaterialItems(newItems);
+  };
+
+  // COC (Certificate of Completion)
+  const [showCOCModal, setShowCOCModal] = useState(false);
+
+  const handleGlobalFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setPendingDailyLogFiles(Array.from(e.target.files));
+      setShowDailyLogModal(true);
+    }
+    // Reset so same selection triggers again
+    if (hiddenDailyLogInputRef.current) hiddenDailyLogInputRef.current.value = "";
+  };
+
+  // Paint Colors
+  const [showPaintModal, setShowPaintModal] = useState(false);
+  const [paintColors, setPaintColors] = useState<any[]>([]);
+  const [serviceTypeCode, setServiceTypeCode] = useState("");
+
 
   // ─── Load real job data ──────────────────────────
   useEffect(() => {
@@ -62,34 +119,36 @@ export default function FieldJobDetail({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Get job details
+        // Get job details + customer + salesperson
         const { data: jobData } = await supabase
           .from("jobs")
-          .select("id, title, service_address_line_1, city, state")
+          .select(`
+            id, 
+            title, 
+            service_address_line_1, 
+            city, 
+            state,
+            customers ( full_name ),
+            salespersons ( full_name )
+          `)
           .eq("id", jobId)
           .single();
 
         if (!jobData) { setLoadingJob(false); return; }
 
-        // Get service type + assignment status
-        let serviceType = "Service";
+        const custRaw = jobData.customers;
+        const customer = Array.isArray(custRaw) ? custRaw[0] : custRaw;
+        
+        const salesRaw = jobData.salespersons;
+        const salesperson = Array.isArray(salesRaw) ? salesRaw[0] : salesRaw;
+
+        // Get assignment status
         let assignmentStatus = "scheduled";
         let scheduledStart: string | null = null;
         let scheduledEnd: string | null = null;
+        let sTypeCode = "";
 
         if (serviceId) {
-          const { data: jsData } = await supabase
-            .from("job_services")
-            .select("id, service_types ( name )")
-            .eq("id", serviceId)
-            .single();
-
-          if (jsData) {
-            const stRaw = jsData.service_types;
-            const st = Array.isArray(stRaw) ? stRaw[0] : stRaw;
-            serviceType = st?.name ?? "Service";
-          }
-
           // Get crew to find crew_id
           const { data: crew } = await supabase
             .from("crews")
@@ -111,18 +170,59 @@ export default function FieldJobDetail({
               scheduledEnd = sa.scheduled_end_at;
             }
           }
+
+          // Fetch the service type code (e.g. "painting")
+          const { data: js } = await supabase
+            .from("job_services")
+            .select("service_types(code)")
+            .eq("id", serviceId)
+            .maybeSingle();
+
+          if (js && js.service_types && !Array.isArray(js.service_types)) {
+            sTypeCode = (js.service_types as any).code;
+            setServiceTypeCode(sTypeCode);
+          }
+        }
+
+        // If it's a painting service, fetch the color selections
+        if (sTypeCode === "painting") {
+          const { data: colors } = await supabase
+            .from("job_color_selections")
+            .select("*")
+            .eq("job_id", jobId);
+          if (colors) {
+            setPaintColors(colors);
+          }
+        }
+
+        // Calculate total days excluding Sundays
+        let totalDays = 1;
+        if (scheduledStart && scheduledEnd) {
+          const start = new Date(scheduledStart);
+          const end = new Date(scheduledEnd);
+          if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+            let days = 0;
+            let curr = new Date(start);
+            while (curr <= end) {
+              if (curr.getDay() !== 0) days++; // Skip Sundays
+              curr.setDate(curr.getDate() + 1);
+            }
+            totalDays = Math.max(1, days);
+          }
         }
 
         setJob({
           jobId: jobData.id,
-          title: jobData.title,
+          jobTitle: jobData.title,
           address: jobData.service_address_line_1,
           city: jobData.city,
           state: jobData.state,
-          serviceType,
+          customerName: customer?.full_name ?? "Unknown Customer",
+          salespersonName: salesperson?.full_name ?? "Unknown Rep",
           assignmentStatus,
           scheduledStart,
           scheduledEnd,
+          totalDays,
         });
       } catch {
         // silent
@@ -131,6 +231,58 @@ export default function FieldJobDetail({
     };
     loadJob();
   }, [jobId, serviceId]);
+
+  // ─── Handle Duration Change ───────────────────
+  const [updatingDuration, setUpdatingDuration] = useState(false);
+
+  const handleDurationChange = async (newDaysStr: string) => {
+    if (!serviceId || !job?.scheduledStart) return;
+    const newDays = parseInt(newDaysStr, 10);
+    if (isNaN(newDays) || newDays < 1) return;
+
+    setUpdatingDuration(true);
+    
+    // Add newDays - 1 working days to scheduledStart to get new scheduledEnd
+    const startObj = new Date(job.scheduledStart);
+    let added = 0;
+    while (added < newDays - 1) {
+      startObj.setDate(startObj.getDate() + 1);
+      if (startObj.getDay() !== 0) added++; // Skip Sundays
+    }
+    
+    // Preserve standard time by forcing T12:00:00.000Z or similar if needed,
+    // but typically we can just keep the time of scheduledStart or use the date part
+    const newEndIso = startObj.toISOString().split("T")[0] + "T12:00:00.000Z";
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if(!user) throw new Error("No user");
+        
+        const { data: crew } = await supabase
+            .from("crews")
+            .select("id")
+            .eq("profile_id", user.id)
+            .maybeSingle();
+
+        if(!crew) throw new Error("No crew found");
+
+        const { error } = await supabase
+          .from("service_assignments")
+          .update({ scheduled_end_at: newEndIso })
+          .eq("job_service_id", serviceId)
+          .eq("crew_id", crew.id);
+
+        if (error) throw error;
+        
+        // Optimistic update
+        setJob({ ...job, scheduledEnd: newEndIso, totalDays: newDays });
+    } catch (err) {
+        console.error("Failed to update duration", err);
+        alert("Failed to update duration.");
+    } finally {
+        setUpdatingDuration(false);
+    }
+  };
 
   // ─── Handle Complete ──────────────────────────
   const handleComplete = async (): Promise<void> => {
@@ -156,7 +308,11 @@ export default function FieldJobDetail({
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || "Failed to complete service");
 
-      alert(`Success! The Certificate of Completion was drafted and the customer has been notified. Check-out confirmed.`);
+      alert(`Success! Service marked as completed. The Certificate of Completion was drafted and sent to the customer for signature.`);
+      
+      // Update optimistic state
+      setJob(prev => prev ? { ...prev, assignmentStatus: "done" } : null);
+      
       router.push("/field/jobs");
 
     } catch (e: unknown) {
@@ -168,8 +324,12 @@ export default function FieldJobDetail({
 
   // ─── Handle Extra Material Request ─────────────
   const handleSubmitMaterial = async (): Promise<void> => {
-    if (!materialName.trim()) { alert("Enter the material name."); return; }
-    if (!materialQty || Number(materialQty) < 1) { alert("Enter a valid quantity."); return; }
+    const validItems = materialItems.filter(item => item.name.trim() !== "" && Number(item.qty) > 0);
+    
+    if (validItems.length === 0) { 
+      alert("Please enter at least one valid material with a quantity greater than 0."); 
+      return; 
+    }
 
     setSubmittingMaterial(true);
     try {
@@ -182,28 +342,31 @@ export default function FieldJobDetail({
         .eq("id", user.id)
         .single();
 
-      const { error } = await supabase.from("extra_materials").insert({
+      const itemsToInsert = validItems.map(item => ({
         job_id: jobId,
-        material_name: materialName.trim(),
-        quantity: Number(materialQty),
-        piece_size: materialSize.trim(),
-        notes: materialNotes.trim() || null,
-        customer_name: job?.title ?? "",
+        material_name: item.name.trim(),
+        quantity: Number(item.qty),
+        piece_size: item.size.trim(),
+        notes: item.notes.trim() || null,
+        customer_name: job?.jobTitle ?? "",
         status: "pending",
         requested_by: user.id,
         requested_by_name: profile?.full_name ?? "Partner",
-      });
+      }));
+
+      const { error } = await supabase.from("extra_materials").insert(itemsToInsert);
 
       if (error) throw new Error(error.message);
 
       // Push notification to admins
       try {
+        const itemSummary = validItems.map(i => `${i.qty}x ${i.name}`).join(", ");
         await fetch('/api/push/notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: '📦 Extra Material Request',
-            body: `${profile?.full_name ?? 'Partner'} requested ${Number(materialQty)}x ${materialName.trim()} for ${job?.title || 'a project'}`,
+            body: `${profile?.full_name ?? 'Partner'} requested: ${itemSummary} for ${job?.jobTitle || 'a project'}`,
             url: `/projects/${jobId}`,
             tag: 'extra-material-request',
             notificationType: 'extra_material_request',
@@ -214,10 +377,7 @@ export default function FieldJobDetail({
 
       // Success
       setShowMaterialModal(false);
-      setMaterialName("");
-      setMaterialQty("1");
-      setMaterialSize("");
-      setMaterialNotes("");
+      setMaterialItems([{ name: "", qty: "1", size: "", notes: "" }]);
       setMaterialSuccess(true);
       setTimeout(() => setMaterialSuccess(false), 8000);
     } catch (e: unknown) {
@@ -239,6 +399,7 @@ export default function FieldJobDetail({
       case "in_progress": return { label: "In Progress", color: "#aeee2a", pulse: true };
       case "scheduled":   return { label: "Scheduled", color: "#60a5fa", pulse: false };
       case "completed":   return { label: "Completed", color: "#6b7280", pulse: false };
+      case "done":        return { label: "Done", color: "#16a34a", pulse: false }; // Verde escuro
       case "assigned":    return { label: "Assigned", color: "#f59e0b", pulse: false };
       default: return { label: status.replace(/_/g, " "), color: "#6b7280", pulse: false };
     }
@@ -290,28 +451,63 @@ export default function FieldJobDetail({
 
           <div className="mt-6 flex items-center justify-between border-t border-dashed border-white/5 pt-4">
              <div className="flex flex-col">
-               <span className="text-[10px] font-bold text-[#474846] uppercase tracking-widest mb-1">Service</span>
-               <span className="text-[#faf9f5] font-medium text-sm">{job?.serviceType ?? "Service"}</span>
+               <span className="text-[10px] font-bold text-[var(--color-siding-green)] uppercase tracking-widest mb-1">Rep</span>
+               <span className="text-[#faf9f5] font-medium text-sm flex items-center gap-1.5">
+                 <span className="material-symbols-outlined text-[14px]" translate="no">person</span>
+                 {job?.salespersonName ?? "—"}
+               </span>
              </div>
              <div className="flex flex-col text-right">
                <span className="text-[10px] font-bold text-[#474846] uppercase tracking-widest mb-1">Customer</span>
-               <span className="text-[#faf9f5] font-medium text-sm">{job?.title ?? "—"}</span>
+               <span className="text-[#faf9f5] font-medium text-sm">{job?.customerName ?? "—"}</span>
              </div>
           </div>
 
-          {/* Dates */}
+          {/* Start Date */}
           {job?.scheduledStart && (
-            <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2 text-zinc-500 text-xs">
-              <span className="material-symbols-outlined text-[14px]" translate="no">calendar_month</span>
-              <span>
-                {formatDateShort(job.scheduledStart)}
-                {job.scheduledEnd ? ` → ${formatDateShort(job.scheduledEnd)}` : ""}
-              </span>
+            <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between gap-2 text-zinc-500 font-medium text-xs">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[14px]" translate="no">calendar_month</span>
+                <span>Start: {formatDateShort(job.scheduledStart)}</span>
+              </div>
             </div>
           )}
         </div>
 
+        {/* Duration Dropdown */}
+        <div className="pt-2">
+          <h3 className="text-[#ababa8] text-xs font-bold uppercase tracking-widest mb-2 pl-1 flex items-center gap-2">
+            Duration (Days)
+            {updatingDuration && <span className="w-3 h-3 border border-t-[var(--color-siding-green)] rounded-full animate-spin ml-2"></span>}
+          </h3>
+          <CustomDropdown
+            value={job ? String(job.totalDays) : "1"}
+            onChange={handleDurationChange}
+            options={Array.from({ length: 30 }).map((_, i) => ({
+              value: String(i + 1),
+              label: `${i + 1} day${i === 0 ? '' : 's'}`
+            }))}
+            className="w-full bg-[#1e201e] border border-white/5 rounded-2xl pl-5 pr-4 py-4 text-sm font-bold text-[#faf9f5] flex justify-between items-center transition-colors hover:bg-[#252825]"
+            disabled={updatingDuration || !job}
+          />
+        </div>
+
         {/* Success feedbacks */}
+        {logSuccess && (
+          <div className="flex items-center gap-3 bg-[#1a2e00] border border-[#aeee2a]/20 rounded-3xl p-4 animate-in slide-in-from-bottom duration-300">
+            <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[#aeee2a]" translate="no">check_circle</span>
+            </div>
+            <div>
+              <p className="text-[#faf9f5] font-bold text-sm">Daily Log Saved!</p>
+              <p className="text-[#ababa8] text-xs mt-0.5">The office has been notified.</p>
+            </div>
+            <button onClick={() => setLogSuccess(false)} className="ml-auto text-[#474846] active:text-[#ababa8] transition-colors shrink-0">
+              <span className="material-symbols-outlined text-lg" translate="no">close</span>
+            </button>
+          </div>
+        )}
+
         {coSuccess && (
           <div className="flex items-center gap-3 bg-[#1a2e00] border border-[#aeee2a]/20 rounded-3xl p-4 animate-in slide-in-from-bottom duration-300">
             <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
@@ -342,19 +538,55 @@ export default function FieldJobDetail({
           </div>
         )}
 
-        {/* Camera & Notes */}
-        <div className="flex gap-4">
-          <button className="flex-1 bg-[#1e201e] border border-white/5 p-4 rounded-3xl flex flex-col items-center shadow-lg active:scale-95 transition-transform">
-             <span className="material-symbols-outlined text-3xl text-[#aeee2a] mb-2" translate="no">photo_camera</span>
-             <span className="text-[#faf9f5] font-bold text-sm">Add Photos</span>
-             <span className="text-[#474846] text-[10px] font-bold uppercase tracking-widest mt-1">0 Uploads</span>
-          </button>
-          
-          <button className="flex-1 bg-[#1e201e] border border-white/5 p-4 rounded-3xl flex flex-col items-center shadow-lg active:scale-95 transition-transform">
-             <span className="material-symbols-outlined text-3xl text-[#aeee2a] mb-2" translate="no">edit_document</span>
-             <span className="text-[#faf9f5] font-bold text-sm">Field Notes</span>
-             <span className="text-[#474846] text-[10px] font-bold uppercase tracking-widest mt-1">2 Notes</span>
-          </button>
+
+
+        {/* Daily Logs */}
+        <div className="pt-2 pb-2">
+          <h3 className="text-[#ababa8] text-xs font-bold uppercase tracking-widest mb-2 pl-1">Daily Logs</h3>
+          <div className="flex overflow-x-auto gap-3 pt-2 pb-2 px-1 -mx-1 scrollbar-hide">
+            {Array.from({ length: job?.totalDays || 1 }).map((_, i) => {
+              const dayNum = i + 1;
+              const logForDay = dailyLogs.find(l => l.day_number === dayNum);
+              const photoCount = logForDay?.images?.length || 0;
+
+              return (
+                <div key={i} className="relative flex-shrink-0">
+                  {photoCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-[#aeee2a] text-[#1a1a00] text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-[#121412] z-10 shadow-sm">
+                      {photoCount}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => { 
+                      setSelectedDay(dayNum);
+                      const existingPhotos = logForDay?.images || [];
+                      setPendingDailyLogExistingUrls(existingPhotos);
+                      
+                      if (existingPhotos.length === 0) {
+                        hiddenDailyLogInputRef.current?.click();
+                      } else {
+                        setPendingDailyLogFiles([]);
+                        setShowDailyLogModal(true);
+                      }
+                    }}
+                    className="w-full h-full bg-[#1e201e] border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center min-w-[100px] active:scale-95 transition-transform shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-[#aeee2a] text-2xl mb-1" translate="no">event_note</span>
+                    <span className="text-[#faf9f5] font-bold text-sm">Day {dayNum}</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            capture="environment"
+            className="hidden"
+            ref={hiddenDailyLogInputRef}
+            onChange={handleGlobalFileChange}
+          />
         </div>
 
         {/* Change Orders & Extra Material Request */}
@@ -385,9 +617,42 @@ export default function FieldJobDetail({
                </span>
                <span className="text-[#ababa8] text-xs mt-1">Need extra supplies? Send a request to the office.</span>
             </div>
-            <span className="material-symbols-outlined text-[#474846]" translate="no">add_circle</span>
-          </button>
-        </div>
+               <span className="material-symbols-outlined text-[#474846]" translate="no">add_circle</span>
+            </button>
+
+            {/* Paint Colors (Visible Only for Painters) */}
+            {serviceTypeCode === 'painting' && (
+              <button 
+                onClick={() => setShowPaintModal(true)}
+                className="w-full bg-[#121412] border border-dashed border-white/10 p-5 rounded-3xl flex items-center justify-between active:bg-white/5 transition-colors"
+              >
+                <div className="flex flex-col items-start">
+                   <span className="text-[#faf9f5] font-bold text-sm flex items-center gap-2">
+                     <span className="material-symbols-outlined text-[#3b82f6] text-lg" translate="no">palette</span>
+                     View Paint Colors
+                   </span>
+                   <span className="text-[#ababa8] text-xs mt-1">Check the colors selected by the customer</span>
+                </div>
+                <span className="material-symbols-outlined text-[#474846]" translate="no">chevron_right</span>
+              </button>
+            )}
+
+            {/* COC Button */}
+            <button 
+              onClick={() => setShowCOCModal(true)}
+              className="w-full bg-[#1e201e] border border-white/5 p-5 rounded-3xl flex items-center justify-between active:scale-[0.98] transition-transform"
+            >
+               <div className="flex items-center gap-4">
+                  <span className="material-symbols-outlined text-3xl text-[#aeee2a]" translate="no">verified</span>
+                  <div className="text-left">
+                    <h4 className="text-[#faf9f5] font-bold text-base">Certificate of Completion</h4>
+                    <p className="text-zinc-500 text-xs mt-1">Submit the signed COC for {job?.jobTitle || 'this service'}</p>
+                  </div>
+               </div>
+               <span className="material-symbols-outlined text-[#474846]" translate="no">chevron_right</span>
+            </button>
+            
+          </div>
 
         {/* COMPLETE BUTTON */}
         <div className="pt-8 pb-32">
@@ -413,7 +678,7 @@ export default function FieldJobDetail({
       </div>
 
       {/* Modal de Change Order */}
-      {showCOModal && (
+      {showCOModal && serviceId && (
         <FieldChangeOrderModal
           jobId={jobId}
           serviceId={serviceId}
@@ -422,6 +687,43 @@ export default function FieldJobDetail({
             setShowCOModal(false);
             setCOSuccess(true);
             setTimeout(() => setCOSuccess(false), 8000);
+          }}
+        />
+      )}
+
+      {/* Modal de Daily Log */}
+      {showDailyLogModal && serviceId && (
+        <FieldDailyLogModal
+          jobId={jobId}
+          serviceId={serviceId as string}
+          dayNumber={selectedDay}
+          initialFiles={pendingDailyLogFiles}
+          existingUrls={pendingDailyLogExistingUrls}
+          onClose={() => {
+            setShowDailyLogModal(false);
+            setPendingDailyLogFiles([]);
+            setPendingDailyLogExistingUrls([]);
+          }}
+          onSaved={() => {
+            setShowDailyLogModal(false);
+            setPendingDailyLogFiles([]);
+            setPendingDailyLogExistingUrls([]);
+            setLogSuccess(true);
+            setTimeout(() => setLogSuccess(false), 8000);
+            loadDailyLogs();
+          }}
+        />
+      )}
+
+      {/* Modal de COC */}
+      {showCOCModal && serviceId && (
+        <FieldCOCModal
+          jobId={jobId}
+          serviceId={serviceId as string}
+          serviceName={job?.jobTitle || 'Service'}
+          onClose={() => setShowCOCModal(false)}
+          onSaved={() => {
+            setShowCOCModal(false);
           }}
         />
       )}
@@ -454,68 +756,89 @@ export default function FieldJobDetail({
             </div>
 
             {/* Form */}
-            <div className="space-y-4">
-              {/* Material Name */}
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
-                  Material Name
-                </label>
-                <input
-                  type="text"
-                  value={materialName}
-                  onChange={(e) => setMaterialName(e.target.value)}
-                  placeholder="e.g. J-Channel, Corner Post, Vinyl Siding..."
-                  className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all"
-                />
-              </div>
+            <div className="space-y-4 max-h-[65dvh] overflow-y-auto pb-4 custom-scrollbar">
+              {materialItems.map((item, index) => (
+                <div key={index} className="bg-[#1e201e] border border-white/5 rounded-2xl p-4 relative space-y-4">
+                  {materialItems.length > 1 && (
+                    <button 
+                      onClick={() => removeMaterialItem(index)}
+                      className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 rounded-full hover:bg-red-500/20 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
+                    </button>
+                  )}
+                  {/* Material Name */}
+                  <div className={materialItems.length > 1 ? "pr-8" : ""}>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+                      Material Name {materialItems.length > 1 ? `#${index + 1}` : ""}
+                    </label>
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={(e) => updateMaterialItem(index, 'name', e.target.value)}
+                      placeholder="e.g. J-Channel, Vinyl Siding..."
+                      className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all"
+                    />
+                  </div>
 
-              {/* Qty + Piece Size row */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={materialQty}
-                    onChange={(e) => setMaterialQty(e.target.value)}
-                    placeholder="1"
-                    className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
-                    Piece Size
-                  </label>
-                  <input
-                    type="text"
-                    value={materialSize}
-                    onChange={(e) => setMaterialSize(e.target.value)}
-                    placeholder={`e.g. 12' x 6"`}
-                    className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all"
-                  />
-                </div>
-              </div>
+                  {/* Qty + Piece Size row */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+                        Quantity
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.qty}
+                        onChange={(e) => updateMaterialItem(index, 'qty', e.target.value)}
+                        placeholder="1"
+                        className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+                        Piece Size
+                      </label>
+                      <input
+                        type="text"
+                        value={item.size}
+                        onChange={(e) => updateMaterialItem(index, 'size', e.target.value)}
+                        placeholder={`e.g. 12' x 6"`}
+                        className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all"
+                      />
+                    </div>
+                  </div>
 
-              {/* Notes */}
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
-                  Notes
-                </label>
-                <textarea
-                  value={materialNotes}
-                  onChange={(e) => setMaterialNotes(e.target.value)}
-                  placeholder="Explain the purpose: what is it for, where will it be used..."
-                  rows={3}
-                  className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all resize-none"
-                />
-              </div>
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+                      Notes
+                    </label>
+                    <textarea
+                      value={item.notes}
+                      onChange={(e) => updateMaterialItem(index, 'notes', e.target.value)}
+                      placeholder="Explain the purpose..."
+                      rows={2}
+                      className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all resize-none"
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {/* Add More Button */}
+              <button
+                onClick={addMaterialItem}
+                className="w-full bg-[#0a0a0a] border border-dashed border-[#f59e0b]/30 text-[#f59e0b] rounded-xl py-3.5 font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#f59e0b]/10 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px]" translate="no">add</span>
+                Add Another Item
+              </button>
 
               {/* Submit Button */}
               <button
                 onClick={handleSubmitMaterial}
-                disabled={submittingMaterial || !materialName.trim()}
+                disabled={submittingMaterial || materialItems.every(i => !i.name.trim())}
                 className="w-full mt-2 bg-[#f59e0b] text-[#1a1a00] rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-50 transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2"
               >
                 {submittingMaterial ? (
@@ -523,7 +846,7 @@ export default function FieldJobDetail({
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-lg" translate="no">send</span>
-                    Send Request
+                    Send Request ({materialItems.filter(i => i.name.trim()).length} items)
                   </>
                 )}
               </button>
@@ -531,6 +854,58 @@ export default function FieldJobDetail({
           </div>
         </div>
       )}
+
+      {/* PAINT COLORS MODAL */}
+      {showPaintModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6 pb-0 sm:pb-6 bg-[#000000]/80 backdrop-blur-sm transition-opacity">
+          <div className="bg-[#121412] w-full max-w-md rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-white/10 animate-in slide-in-from-bottom flex flex-col max-h-[90dvh]">
+            
+            {/* Header */}
+            <div className="sticky top-0 bg-[#121412] px-6 pt-6 pb-4 border-b border-white/5 flex items-center justify-between shrink-0 z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#3b82f6]/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[#3b82f6]" translate="no">palette</span>
+                </div>
+                <div>
+                  <h3 className="text-[#faf9f5] font-black text-lg">Paint Colors</h3>
+                  <p className="text-[#ababa8] text-xs">Customer Selections</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowPaintModal(false)}
+                className="w-10 h-10 rounded-full bg-[#1e201e] flex items-center justify-center text-[#ababa8] hover:text-white transition-colors"
+              >
+                <span className="material-symbols-outlined" translate="no">close</span>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 pb-28 overflow-y-auto space-y-4">
+              {paintColors.length === 0 ? (
+                <div className="text-center py-10">
+                  <span className="material-symbols-outlined text-4xl text-zinc-600 mb-2" translate="no">format_paint</span>
+                  <p className="text-zinc-400 text-sm">No paint colors selected yet.</p>
+                </div>
+              ) : (
+                <div className="bg-[#1e201e] border border-white/5 rounded-2xl p-5 space-y-4">
+                  {paintColors.map((color) => (
+                    <div key={color.id} className="flex justify-between items-center border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                      <span className="text-[#ababa8] font-medium text-sm">{color.surface_area}:</span>
+                      <div className="text-right">
+                        <span className="text-[#faf9f5] font-bold text-sm">
+                          {color.brand === 'Sherwin-Williams' ? 'SW' : color.brand} {color.color_code} {color.color_name ? `(${color.color_name})` : ''}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
     </>
+
   );
 }

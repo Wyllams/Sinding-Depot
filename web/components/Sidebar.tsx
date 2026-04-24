@@ -11,20 +11,20 @@ interface NavItem {
   icon: string;
   label: string;
   filled?: boolean;
-  adminOnly?: boolean;
+  roles?: string[];
 }
 
 const navItems: NavItem[] = [
-  { href: "/", icon: "dashboard", label: "Dashboard", filled: true },
-  { href: "/projects", icon: "engineering", label: "Projects" },
-  { href: "/crews", icon: "groups", label: "Crews" },
-  { href: "/change-orders", icon: "request_quote", label: "Change Orders" },
-  { href: "/cash-payments", icon: "payments", label: "Cash Payments" },
-  { href: "/windows-tracker", icon: "window", label: "Windows Tracker" },
-  { href: "/services", icon: "warning", label: "Services" },
-  { href: "/schedule", icon: "calendar_today", label: "Job Schedule" },
-  { href: "/sales-reports", icon: "assessment", label: "Sales" },
-  { href: "/team", icon: "admin_panel_settings", label: "Users & Permissions", adminOnly: true },
+  { href: "/", icon: "dashboard", label: "Dashboard", filled: true, roles: ["admin"] },
+  { href: "/projects", icon: "engineering", label: "Projects", roles: ["admin", "salesperson", "partner", "crew"] },
+  { href: "/crews", icon: "groups", label: "Crews", roles: ["admin"] },
+  { href: "/change-orders", icon: "request_quote", label: "Change Orders", roles: ["admin", "salesperson", "partner", "crew"] },
+  { href: "/cash-payments", icon: "payments", label: "Cash Payments", roles: ["admin"] },
+  { href: "/windows-tracker", icon: "window", label: "Windows Tracker", roles: ["admin"] },
+  { href: "/services", icon: "warning", label: "Services", roles: ["admin"] },
+  { href: "/schedule", icon: "calendar_today", label: "Job Schedule", roles: ["admin", "salesperson", "partner", "crew"] },
+  { href: "/sales-reports", icon: "assessment", label: "Sales", roles: ["admin", "salesperson"] },
+  { href: "/team", icon: "admin_panel_settings", label: "Users & Permissions", roles: ["admin"] },
 ];
 
 export function Sidebar() {
@@ -43,7 +43,11 @@ export function Sidebar() {
   }, []);
 
   // Filter nav items based on role
-  const visibleItems = navItems.filter(item => !item.adminOnly || userRole === "admin");
+  const visibleItems = navItems.filter(item => {
+    if (!userRole) return false;
+    if (userRole === "admin") return true;
+    return item.roles?.includes(userRole);
+  });
 
   const sidebarContent = (
     <aside className="bg-[#121412] h-full w-64 flex flex-col z-50 overflow-y-auto shrink-0">

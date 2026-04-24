@@ -442,7 +442,7 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
     supabase
       .from("jobs")
       .select("id, job_number, customer:customers (full_name)")
-      .in("status", ["active", "draft", "on_hold"])
+      .in("status", ["pending", "tentative", "scheduled", "in_progress", "done"])
       .order("created_at", { ascending: false })
       .limit(50)
       .then(({ data }: { data: any[] | null }) => {
@@ -588,6 +588,7 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
                   onChange={(val) => setJobId(val)}
                   options={jobs.map(j => ({ value: j.id, label: `${j.job_number} — ${j.customer_name}` }))}
                   placeholder="Select a Project..."
+                  searchable
                   className="w-full bg-[#242624] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-3.5 text-[15px] font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
                 />
               </div>

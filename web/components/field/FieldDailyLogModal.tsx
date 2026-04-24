@@ -1,0 +1,223 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+
+export function FieldDailyLogModal({
+  jobId,
+  serviceId,
+  dayNumber,
+  initialFiles = [],
+  existingUrls = [],
+  onClose,
+  onSaved,
+}: {
+  jobId: string;
+  serviceId: string;
+  dayNumber: number;
+  initialFiles?: File[];
+  existingUrls?: string[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingImages, setExistingImages] = useState<string[]>(existingUrls);
+  const [newFiles, setNewFiles] = useState<File[]>(initialFiles);
+  const [newFileUrls, setNewFileUrls] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialFiles.length > 0) {
+      setNewFileUrls(initialFiles.map(f => URL.createObjectURL(f)));
+    }
+  }, [initialFiles]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setNewFiles((prev) => [...prev, ...filesArray]);
+      const urls = filesArray.map((f) => URL.createObjectURL(f));
+      setNewFileUrls((prev) => [...prev, ...urls]);
+    }
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeNewImage = (index: number) => {
+    setNewFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewFileUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
+    if (existingImages.length === 0 && newFiles.length === 0) {
+      alert("Por favor, adicione pelo menos uma foto.");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: crew } = await supabase
+        .from("crews")
+        .select("id")
+        .eq("profile_id", user.id)
+        .single();
+
+      if (!crew) throw new Error("Crew not found for this user");
+
+      // 1. Upload New Images
+      const uploadedUrls: string[] = [];
+      for (const file of newFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("folder", `daily_logs/${jobId}/day_${dayNumber}`);
+
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to upload image");
+        }
+
+        const data = await res.json();
+        if (data.url) {
+          uploadedUrls.push(data.url);
+        }
+      }
+
+      // 2. Insert/Update daily_log
+      const finalImages = [...existingImages, ...uploadedUrls];
+
+      const { error } = await supabase.from("daily_logs").upsert(
+        {
+          job_id: jobId,
+          job_service_id: serviceId,
+          crew_id: crew.id,
+          day_number: dayNumber,
+          notes: null,
+          images: finalImages,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'job_service_id, day_number' }
+      );
+
+      if (error) throw new Error(error.message);
+
+      onSaved();
+    } catch (e: any) {
+      alert("Error saving daily log: " + e.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const totalPhotos = existingImages.length + newFiles.length;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center">
+      <div 
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      <div className="relative w-full max-w-md bg-[#121412] border-t border-white/10 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-bottom duration-300">
+        <div className="flex justify-center mb-5">
+          <div className="w-10 h-1 bg-zinc-700 rounded-full" />
+        </div>
+
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[#aeee2a]" translate="no">photo_camera</span>
+            </div>
+            <div>
+              <h3 className="text-[#faf9f5] font-bold text-lg">Daily Log - Day {dayNumber}</h3>
+              <p className="text-zinc-500 text-xs">Save progress for the office</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-[#474846] active:text-[#ababa8]">
+             <span className="material-symbols-outlined text-xl" translate="no">close</span>
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          
+          {/* Image Upload */}
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-3 pl-1">
+              Photos ({totalPhotos})
+            </label>
+            
+            <div className="flex flex-wrap gap-3">
+              {/* Existing Images */}
+              {existingImages.map((url, i) => (
+                <div key={`existing-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 group shadow-sm">
+                  <img src={url} alt={`Existing ${i}`} className="w-full h-full object-cover" />
+                  <button 
+                    onClick={() => removeExistingImage(i)}
+                    className="absolute top-1 right-1 bg-black/60 w-7 h-7 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-95 transition-transform"
+                  >
+                    <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
+                  </button>
+                </div>
+              ))}
+
+              {/* New File Previews */}
+              {newFileUrls.map((url, i) => (
+                <div key={`new-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border border-[#aeee2a]/30 group shadow-sm">
+                  <img src={url} alt={`Preview ${i}`} className="w-full h-full object-cover" />
+                  <button 
+                    onClick={() => removeNewImage(i)}
+                    className="absolute top-1 right-1 bg-black/60 w-7 h-7 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-95 transition-transform"
+                  >
+                    <span className="material-symbols-outlined text-[16px]" translate="no">close</span>
+                  </button>
+                </div>
+              ))}
+              
+              {/* Add More Button */}
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-24 h-24 rounded-xl border-2 border-dashed border-[#474846] flex flex-col items-center justify-center text-[#ababa8] bg-[#1e201e] hover:bg-[#242624] active:scale-95 active:border-[#aeee2a] active:text-[#aeee2a] transition-all shadow-sm"
+              >
+                <span className="material-symbols-outlined text-3xl mb-1" translate="no">add_photo_alternate</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest">Add</span>
+              </button>
+            </div>
+            
+            <input 
+              type="file" 
+              accept="image/*" 
+              multiple 
+              capture="environment"
+              className="hidden" 
+              ref={fileInputRef}
+              onChange={handleImageSelect}
+            />
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || totalPhotos === 0}
+            className="w-full mt-4 bg-[#aeee2a] text-[#1a1a00] rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-50 transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              <div className="w-5 h-5 border-2 border-[#1a1a00]/30 border-t-[#1a1a00] rounded-full animate-spin" />
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-lg" translate="no">cloud_upload</span>
+                Save Daily Log
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

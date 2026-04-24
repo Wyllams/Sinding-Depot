@@ -13,6 +13,8 @@ export interface CustomDropdownProps {
   inline?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  searchable?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -26,11 +28,15 @@ export function CustomDropdown({
   placeholder = "—",
   inline = false,
   className = "",
-  style
+  style,
+  searchable = false,
+  disabled = false
 }: CustomDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
 
   useEffect(() => {
@@ -54,6 +60,12 @@ export function CustomDropdown({
     if (open) {
       document.addEventListener("mousedown", handleClick);
       window.addEventListener("scroll", handleScroll, true);
+      
+      if (searchable && searchInputRef.current) {
+        setTimeout(() => {
+          searchInputRef.current?.focus();
+        }, 50);
+      }
     }
     
     return () => {
@@ -71,6 +83,9 @@ export function CustomDropdown({
         width: inline ? 140 : Math.max(rect.width, 140)
       });
     }
+    if (open) {
+      setSearchQuery("");
+    }
     setOpen(!open);
   };
 
@@ -79,6 +94,15 @@ export function CustomDropdown({
     if (!selectedOpt) return value || placeholder;
     return typeof selectedOpt === 'string' ? selectedOpt : selectedOpt.label;
   }, [value, options, placeholder]);
+
+  const filteredOptions = useMemo(() => {
+    if (!searchable || !searchQuery) return options;
+    const lowerQuery = searchQuery.toLowerCase();
+    return options.filter(opt => {
+      const optLabel = typeof opt === 'string' ? opt : opt.label;
+      return optLabel.toLowerCase().includes(lowerQuery);
+    });
+  }, [options, searchable, searchQuery]);
 
   const menuContent = open ? (
     <div 
@@ -91,14 +115,28 @@ export function CustomDropdown({
         minWidth: inline ? 'auto' : coords.width
       }}
     >
+      {searchable && (
+        <div className="px-3 py-2 sticky top-0 bg-[#1a1c1a] border-b border-[#474846]/30 mb-1 z-10">
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="w-full bg-[#242624] border border-[#474846]/30 rounded-lg px-3 py-2 text-xs text-[#faf9f5] focus:outline-none focus:border-[#aeee2a] placeholder-[#ababa8]"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
       <button
         type="button"
         className={`w-full ${inline ? "text-center" : "text-left"} px-4 py-2.5 text-[11px] uppercase tracking-widest text-[#ababa8] hover:bg-[#aeee2a] hover:text-[#1a1c1a] font-black transition-colors`}
-        onClick={() => { onChange(""); setOpen(false); }}
+        onClick={() => { onChange(""); setOpen(false); setSearchQuery(""); }}
       >
         {placeholder}
       </button>
-      {options.map(opt => {
+      {filteredOptions.map(opt => {
         const optValue = typeof opt === 'string' ? opt : opt.value;
         const optLabel = typeof opt === 'string' ? opt : opt.label;
         return (
@@ -106,12 +144,17 @@ export function CustomDropdown({
             type="button"
             key={optValue}
             className={`w-full ${inline ? "text-center" : "text-left"} px-4 py-2.5 text-xs text-[#faf9f5] hover:bg-[#aeee2a] hover:text-[#1a1c1a] font-extrabold tracking-wider transition-colors`}
-            onClick={() => { onChange(optValue); setOpen(false); }}
+            onClick={() => { onChange(optValue); setOpen(false); setSearchQuery(""); }}
           >
             {optLabel}
           </button>
         );
       })}
+      {searchable && filteredOptions.length === 0 && (
+        <div className="px-4 py-3 text-xs text-[#ababa8] text-center font-medium">
+          No results found
+        </div>
+      )}
     </div>
   ) : null;
 

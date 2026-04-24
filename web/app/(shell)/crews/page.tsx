@@ -471,7 +471,7 @@ export default function CrewsPage() {
         else disc = rawCode;
 
         const crewJobs = crewJobMap.get(c.id) ?? [];
-        const activeJobs = crewJobs.filter((j: any) => j.status === "active" || j.status === "draft");
+        const activeJobs = crewJobs.filter((j: any) => j.status === "scheduled" || j.status === "tentative" || j.status === "in_progress");
         const load = Math.min(100, activeJobs.length * 50);
 
         const crewUI: CrewUI = {
@@ -488,7 +488,7 @@ export default function CrewsPage() {
             job_number: j.job_number,
             client: j.customer?.full_name ?? "—",
             city: j.city ?? "",
-            status: j.status === "active" ? "Active" as const : "Scheduled" as const,
+            status: (j.status === "scheduled" || j.status === "in_progress") ? "Active" as const : "Scheduled" as const,
           })),
           contact_phone: c.phone,
           inactivationReason: c.inactivation_reason,
@@ -527,7 +527,7 @@ export default function CrewsPage() {
     const { data } = await supabase
       .from("jobs")
       .select("id, job_number, city, customer:customers (full_name)")
-      .in("status", ["active", "draft", "on_hold"])
+      .in("status", ["pending", "tentative", "scheduled", "in_progress", "done"])
       .order("created_at", { ascending: false })
       .limit(50);
 

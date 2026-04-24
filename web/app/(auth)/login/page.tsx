@@ -126,7 +126,7 @@ function LoginFormContent() {
 
   return (
     <div className="w-full">
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" suppressHydrationWarning>
 
         {/* Error Banner */}
         {error && (
@@ -159,6 +159,7 @@ function LoginFormContent() {
               required
               autoComplete={isCustomerMode ? "username" : "email"}
               className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/50 focus:bg-[#121412] transition-all"
+              suppressHydrationWarning
             />
           </div>
         </div>
@@ -195,6 +196,7 @@ function LoginFormContent() {
               required
               autoComplete="current-password"
               className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl pl-12 pr-12 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/50 focus:bg-[#121412] transition-all"
+              suppressHydrationWarning
             />
             <button
               type="button"

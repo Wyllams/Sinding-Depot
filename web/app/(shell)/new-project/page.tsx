@@ -37,11 +37,12 @@ type SellerConfigKey = keyof typeof SELLER_CONFIG;
 
 const services = [
   { id: "siding",   icon: "view_day",       label: "Siding",   color: "#aeee2a", partners: ["SIDING DEPOT", "XICARA", "XICARA 02", "WILMAR", "WILMAR 02", "SULA", "LUIS"] },
-  { id: "gutters",  icon: "horizontal_rule", label: "Gutters",  color: "#c084fc", partners: ["SIDING DEPOT", "LEANDRO"] },
-  { id: "painting", icon: "format_paint",   label: "Painting", color: "#60b8f5", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
+  { id: "doors",    icon: "door_front",     label: "Doors",    color: "#f5a623", partners: ["SIDING DEPOT", "SERGIO"] },
   { id: "windows",  icon: "window",         label: "Windows",  color: "#f5a623", partners: ["SIDING DEPOT", "SERGIO"] },
   { id: "decks",    icon: "deck",           label: "Decks",    color: "#f5a623", partners: ["SIDING DEPOT", "SERGIO"] },
+  { id: "painting", icon: "format_paint",   label: "Painting", color: "#60b8f5", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
   { id: "roofing",  icon: "roofing",        label: "Roofing",  color: "#ef4444", partners: ["SIDING DEPOT", "JOSUE"] },
+  { id: "gutters",  icon: "horizontal_rule", label: "Gutters",  color: "#c084fc", partners: ["SIDING DEPOT", "LEANDRO"] },
   { id: "dumpster", icon: "delete",         label: "Dumpster", color: "#64748b", partners: ["SIDING DEPOT"] },
 ];
 

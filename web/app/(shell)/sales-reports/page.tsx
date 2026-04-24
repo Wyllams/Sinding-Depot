@@ -357,7 +357,7 @@ export default function ReportsPage() {
       .from("jobs")
       .select("id, title, contract_amount, contract_signed_at, city, job_number, created_at, status, customer:customers(full_name), job_services:job_services(service_type:service_types(name))")
       .eq("salesperson_id", spId)
-      .in("status", ["active", "on_hold", "completed", "pending_scheduling", "draft", "cancelled"]);
+      .in("status", ["pending", "tentative", "scheduled", "in_progress", "done", "completed", "cancelled"]);
 
     if (err) {
       console.error("Error loading jobs:", err);
@@ -402,11 +402,11 @@ export default function ReportsPage() {
 
   const handleRestoreJob = async (jobId: string, spId: string): Promise<void> => {
     try {
-      const { error } = await supabase.from("jobs").update({ status: "active" }).eq("id", jobId);
+      const { error } = await supabase.from("jobs").update({ status: "scheduled" }).eq("id", jobId);
       if (error) throw error;
       setSpJobs((prev) => ({
         ...prev,
-        [spId]: (prev[spId] || []).map(j => j.id === jobId ? { ...j, status: "active" } : j)
+        [spId]: (prev[spId] || []).map(j => j.id === jobId ? { ...j, status: "scheduled" } : j)
       }));
       fetchData(selectedYear, selectedMonth);
     } catch (e) {
@@ -467,7 +467,7 @@ export default function ReportsPage() {
     const { data: jobsData } = await supabase
       .from("jobs")
       .select("salesperson_id, contract_amount, contract_signed_at, created_at, status")
-      .in("status", ["active", "on_hold", "completed", "pending_scheduling", "draft", "cancelled"]);
+      .in("status", ["pending", "tentative", "scheduled", "in_progress", "done", "completed", "cancelled"]);
 
     const report: Record<string, number[]> = {};
     const spList = spData
@@ -515,7 +515,7 @@ export default function ReportsPage() {
       const { data: jobsData, error: jobsErr } = await supabase
         .from("jobs")
         .select("salesperson_id, contract_amount, contract_signed_at, created_at, status")
-        .in("status", ["active", "on_hold", "completed", "pending_scheduling", "draft", "cancelled"]);
+        .in("status", ["pending", "tentative", "scheduled", "in_progress", "done", "completed", "cancelled"]);
       if (jobsErr) throw jobsErr;
 
       (jobsData || []).forEach((j) => {

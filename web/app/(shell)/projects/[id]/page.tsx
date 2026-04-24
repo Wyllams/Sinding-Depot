@@ -34,10 +34,10 @@ const DWD_SUB_SERVICES: SubServiceDef[] = [
 
 const ALL_SERVICES: ServiceDef[] = [
   { id: "siding",   icon: "view_day",       label: "Siding",   color: "#aeee2a", partners: ["SIDING DEPOT", "XICARA", "XICARA 02", "WILMAR", "WILMAR 02", "SULA", "LUIS"] },
-  { id: "gutters",  icon: "horizontal_rule", label: "Gutters",  color: "#c084fc", partners: ["SIDING DEPOT", "LEANDRO"] },
-  { id: "painting", icon: "format_paint",   label: "Painting", color: "#60b8f5", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
   { id: "doors_windows_decks", icon: "window", label: "Doors / Windows / Decks", color: "#f5a623", partners: ["SIDING DEPOT", "SERGIO"], subServices: DWD_SUB_SERVICES },
+  { id: "painting", icon: "format_paint",   label: "Painting", color: "#60b8f5", partners: ["SIDING DEPOT", "OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
   { id: "roofing",  icon: "roofing",        label: "Roofing",  color: "#ef4444", partners: ["SIDING DEPOT", "JOSUE"] },
+  { id: "gutters",  icon: "horizontal_rule", label: "Gutters",  color: "#c084fc", partners: ["SIDING DEPOT", "LEANDRO"] },
   { id: "dumpster", icon: "delete",         label: "Dumpster", color: "#64748b", partners: ["SIDING DEPOT"] },
 ];
 
@@ -257,9 +257,11 @@ interface JobDetail {
 
 // ─── Status Map (3 values matching calendar popup) ─────────────────────
 const STATUS_MAP: Record<string, { label: string; style: string }> = {
-  active:  { label: "Confirmed", style: "bg-[#aeee2a] text-[#3a5400]"           },
-  draft:   { label: "Tentative", style: "bg-[#e3eb5d]/20 text-[#e3eb5d]"        },
-  on_hold: { label: "Pending",   style: "bg-[#ff7351]/20 text-[#ff7351]"        },
+  pending:     { label: "Pending",     style: "bg-[#ef4444]/20 text-[#ef4444]" },
+  tentative:   { label: "Tentative",   style: "bg-[#f5a623]/20 text-[#f5a623]" },
+  scheduled:   { label: "Confirmed",   style: "bg-[#60b8f5]/20 text-[#60b8f5]" },
+  in_progress: { label: "In Progress", style: "bg-[#aeee2a]/20 text-[#aeee2a]" },
+  done:        { label: "Done",        style: "bg-[#22c55e]/20 text-[#22c55e]" },
 };
 
 const BLOCKER_ICON: Record<string, string> = {
@@ -778,7 +780,7 @@ export default function ProjectDetailPage() {
           else if (t === "CUSTOMER") setGateStatus("NOT_CONTACTED");
           else setGateStatus("OTHER_REPAIRS");
         } else {
-          setGateStatus(mapped.status === "active" ? "READY" : "NOT_CONTACTED");
+          setGateStatus((mapped.status === "scheduled" || mapped.status === "in_progress" || mapped.status === "done") ? "READY" : "NOT_CONTACTED");
         }
       }
     } catch (err) {
@@ -993,7 +995,7 @@ export default function ProjectDetailPage() {
   async function handleGateChange(gate: string) {
     setGateStatus(gate);
     // Sync Job Start Status: READY → Active (Confirmed), anything else → Pending
-    const newJobStatus = gate === "READY" ? "active" : "on_hold";
+    const newJobStatus = gate === "READY" ? "scheduled" : "pending";
     await supabase
       .from("jobs")
       .update({ gate_status: gate, status: newJobStatus })
@@ -1434,7 +1436,7 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const statusConf = STATUS_MAP[job.status] ?? STATUS_MAP.draft;
+  const statusConf = STATUS_MAP[job.status] ?? STATUS_MAP.tentative;
   const fullAddress = job.address && job.address !== "Pendente" 
     ? job.address 
     : [job.city, job.state, job.zip_code].filter(Boolean).join(", ");
@@ -1514,9 +1516,13 @@ export default function ProjectDetailPage() {
               value: job.estimated_end_date, // Note o field chama target_completion_date e é salvo assim, vamos ver.
               icon: "event_busy" 
             },
-            { label: "Open Blockers",  value: String(openBlockers.length),             icon: "warning", danger: openBlockers.length > 0 },
+            { label: "Sold Date",      
+              key: "contract_signed_at",
+              value: job.contract_signed_at,
+              icon: "handshake" 
+            },
             { label: "Pending COs",    value: pendingCOs.length > 0 ? `${pendingCOs.length} · $${pendingValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "None", icon: "request_quote" },
-          ].map((kpi) => (
+          ].map((kpi: any) => (
             <div key={kpi.label} className="bg-[#121412] rounded-2xl p-4 border border-[#474846]/15 group">
               <div className="flex items-center gap-2 mb-2">
                 <span
@@ -1536,6 +1542,7 @@ export default function ProjectDetailPage() {
                   variant="ghost"
                   placeholder="Set date"
                   className="text-sm font-black -ml-1 pl-1 py-1 rounded hover:bg-[#242624] focus-within:bg-[#1e201e] transition-colors"
+                  disableSundays={kpi.key !== "contract_signed_at"}
                 />
               ) : (
                 <p className={`text-sm font-black ${kpi.danger ? "text-[#ff7351]" : "text-[#faf9f5]"}`}>{kpi.value}</p>
@@ -1694,15 +1701,7 @@ export default function ProjectDetailPage() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className={detailLabelCls}>Sold Date</label>
-                  <CustomDatePicker
-                    value={job.contract_signed_at ?? ''}
-                    onChange={(iso) => handleAutoSave("jobs", job.id, "contract_signed_at", iso || null)}
-                    placeholder="Set date"
-                    disableSundays={false}
-                  />
-                </div>
+
                 <div className="space-y-2">
                   <label className={detailLabelCls}>SQ (Square)</label>
                   <input

@@ -12,10 +12,9 @@ interface MyJob {
   assignmentId: string;
   assignmentStatus: string;
   scheduledStart: string | null;
-  scheduledEnd: string | null;
-  serviceType: string;
   jobId: string;
-  jobTitle: string;
+  customerName: string;
+  salespersonName: string;
   address: string;
   city: string;
   state: string;
@@ -95,7 +94,6 @@ export default function FieldJobsList() {
             id,
             status,
             scheduled_start_at,
-            scheduled_end_at,
             job_service_id
           `)
           .eq("crew_id", crew.id)
@@ -117,11 +115,15 @@ export default function FieldJobsList() {
           .from("job_services")
           .select(`
             id,
-            status,
-            service_type_id,
             job_id,
-            service_types ( name, code ),
-            jobs ( id, title, service_address_line_1, city, state )
+            jobs ( 
+              id, 
+              service_address_line_1, 
+              city, 
+              state,
+              customers ( full_name ),
+              salespersons ( full_name )
+            )
           `)
           .in("id", jsIds);
 
@@ -140,19 +142,22 @@ export default function FieldJobsList() {
             // Handle both single and array returns from Supabase
             const jobRaw = js.jobs;
             const job = Array.isArray(jobRaw) ? jobRaw[0] : jobRaw;
-            const stRaw = js.service_types;
-            const st = Array.isArray(stRaw) ? stRaw[0] : stRaw;
 
             if (!job) return null;
+
+            const custRaw = job.customers;
+            const customer = Array.isArray(custRaw) ? custRaw[0] : custRaw;
+            
+            const salesRaw = job.salespersons;
+            const salesperson = Array.isArray(salesRaw) ? salesRaw[0] : salesRaw;
 
             return {
               assignmentId: sa.id,
               assignmentStatus: sa.status,
               scheduledStart: sa.scheduled_start_at,
-              scheduledEnd: sa.scheduled_end_at,
-              serviceType: st?.name ?? "Service",
               jobId: job.id,
-              jobTitle: job.title,
+              customerName: customer?.full_name ?? "Unknown Customer",
+              salespersonName: salesperson?.full_name ?? "Unknown Rep",
               address: job.service_address_line_1,
               city: job.city,
               state: job.state,
@@ -221,8 +226,8 @@ export default function FieldJobsList() {
             href={`/field/jobs/${job.jobId}?service_id=${job.jobServiceId}`}
             className="block bg-[#151515] border border-zinc-800/50 rounded-3xl p-5 active:scale-[0.98] transition-transform"
           >
-            {/* Status & Service Type */}
-            <div className="flex justify-between items-start mb-3">
+            {/* Status */}
+            <div className="flex justify-between items-start mb-4">
               <div
                 className="px-3 py-1 rounded-full flex items-center gap-1.5"
                 style={{
@@ -241,32 +246,32 @@ export default function FieldJobsList() {
                   {badge.label}
                 </span>
               </div>
-              <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider border border-zinc-800 px-2 py-1 rounded">
-                {job.serviceType}
-              </span>
             </div>
 
-            {/* Customer Name */}
-            <h3 className="text-white font-headline text-lg font-bold tracking-tight leading-tight mb-0.5">
-              {job.jobTitle}
-            </h3>
+            {/* Customer & Salesperson */}
+            <div className="mb-4">
+              <h3 className="text-white font-headline text-xl font-bold tracking-tight leading-tight mb-1.5">
+                {job.customerName}
+              </h3>
+              <div className="flex items-center gap-1.5 text-[var(--color-siding-green)] font-medium text-xs">
+                <span className="material-symbols-outlined text-[14px]" translate="no">person</span>
+                <span>Rep: {job.salespersonName}</span>
+              </div>
+            </div>
 
             {/* Address */}
             <p className="text-zinc-500 text-sm">
               {job.address}
             </p>
-            <p className="text-zinc-600 text-xs">
+            <p className="text-zinc-600 text-xs mb-3">
               {job.city}, {job.state}
             </p>
 
-            {/* Dates */}
+            {/* Start Date */}
             {job.scheduledStart && (
-              <div className="mt-3 flex items-center gap-2 text-zinc-600 text-xs">
+              <div className="mt-3 pt-3 border-t border-zinc-800/50 flex items-center gap-2 text-zinc-400 font-medium text-xs">
                 <span className="material-symbols-outlined text-[14px]" translate="no">calendar_month</span>
-                <span>
-                  {formatDateShort(job.scheduledStart)}
-                  {job.scheduledEnd ? ` → ${formatDateShort(job.scheduledEnd)}` : ""}
-                </span>
+                <span>Start: {formatDateShort(job.scheduledStart)}</span>
               </div>
             )}
 
