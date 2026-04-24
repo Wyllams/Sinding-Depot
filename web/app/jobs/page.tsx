@@ -22,7 +22,7 @@ export default function JobsList() {
     <main className="h-full overflow-y-auto">
       
       {/* PREMIUM TOPBAR */}
-      <header className="sticky top-0 z-20 flex justify-between items-center px-6 py-3 bg-[#050505]/80 backdrop-blur-md border-b border-zinc-800/30">
+      <header className="sticky top-0 z-20 flex justify-between items-center px-6 py-3 bg-mobile-frame/80 backdrop-blur-md border-b border-zinc-800/30">
         <div>
           <h1 className="text-lg font-bold tracking-tight text-white mb-0.5">Active Projects</h1>
           <p className="text-[12px] text-zinc-400">Manage all your ongoing construction jobs.</p>

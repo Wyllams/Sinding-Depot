@@ -38,9 +38,9 @@ interface ChangeOrder {
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string; border: string }> = {
   draft:                      { label: "Draft",    bg: "bg-[#fff7cf]/10", text: "text-[#fff7cf]", dot: "bg-[#fff7cf]", border: "border-[#fff7cf]/20" },
   pending_customer_approval:  { label: "Pending",  bg: "bg-[#e3eb5d]/10", text: "text-[#e3eb5d]", dot: "bg-[#e3eb5d]", border: "border-[#e3eb5d]/20" },
-  approved:                   { label: "Approved", bg: "bg-[#aeee2a]/20", text: "text-[#aeee2a]", dot: "bg-[#aeee2a]", border: "border-[#aeee2a]/30" },
-  rejected:                   { label: "Rejected", bg: "bg-[#ff7351]/10", text: "text-[#ff7351]", dot: "bg-[#ff7351]", border: "border-[#ff7351]/20" },
-  cancelled:                  { label: "Cancelled",bg: "bg-[#474846]/20", text: "text-[#ababa8]", dot: "bg-[#747673]", border: "border-[#474846]/30" },
+  approved:                   { label: "Approved", bg: "bg-primary/20", text: "text-primary", dot: "bg-primary", border: "border-primary/30" },
+  rejected:                   { label: "Rejected", bg: "bg-error/10", text: "text-error", dot: "bg-error", border: "border-error/20" },
+  cancelled:                  { label: "Cancelled",bg: "bg-outline-variant/20", text: "text-on-surface-variant", dot: "bg-outline", border: "border-outline-variant/30" },
 };
 
 function formatCurrency(v: number | null) {
@@ -106,16 +106,16 @@ export default function SalesOrderDetailsPage({ params }: { params: Promise<{ id
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-[100dvh] bg-[#0d0f0d] p-4 pt-12">
+      <div className="flex flex-col min-h-[100dvh] bg-background p-4 pt-12">
         <div className="flex items-center gap-3">
-           <button onClick={() => router.back()} className="w-10 h-10 rounded-full bg-[#1e201e] border border-[#474846]/30 flex items-center justify-center shrink-0 active:scale-95 transition-transform shadow-lg">
-              <span className="material-symbols-outlined text-[#faf9f5]">arrow_back</span>
+           <button onClick={() => router.back()} className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shrink-0 active:scale-95 transition-transform shadow-lg">
+              <span className="material-symbols-outlined text-on-surface">arrow_back</span>
            </button>
-           <span className="text-xl font-black text-[#faf9f5]">Loading...</span>
+           <span className="text-xl font-black text-on-surface">Loading...</span>
         </div>
         <div className="flex flex-col mt-32 items-center justify-center gap-4">
-           <span className="material-symbols-outlined text-[#aeee2a] text-4xl animate-spin">progress_activity</span>
-           <p className="text-[#ababa8] font-bold text-sm tracking-widest uppercase">Loading details...</p>
+           <span className="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
+           <p className="text-on-surface-variant font-bold text-sm tracking-widest uppercase">Loading details...</p>
         </div>
       </div>
     );
@@ -123,17 +123,17 @@ export default function SalesOrderDetailsPage({ params }: { params: Promise<{ id
 
   if (!order) {
     return (
-      <div className="flex flex-col min-h-[100dvh] bg-[#0d0f0d] p-4 pt-12">
+      <div className="flex flex-col min-h-[100dvh] bg-background p-4 pt-12">
         <div className="flex items-center gap-3">
-           <button onClick={() => router.back()} className="w-10 h-10 rounded-full bg-[#1e201e] border border-[#474846]/30 flex items-center justify-center shrink-0 active:scale-95 transition-transform shadow-lg">
-              <span className="material-symbols-outlined text-[#faf9f5]">arrow_back</span>
+           <button onClick={() => router.back()} className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shrink-0 active:scale-95 transition-transform shadow-lg">
+              <span className="material-symbols-outlined text-on-surface">arrow_back</span>
            </button>
-           <span className="text-xl font-black text-[#faf9f5]">Not Found</span>
+           <span className="text-xl font-black text-on-surface">Not Found</span>
         </div>
         <div className="flex flex-col mt-32 items-center justify-center gap-4 text-center px-6">
-           <span className="material-symbols-outlined text-[#ff7351] text-5xl">warning</span>
-           <h2 className="text-[#faf9f5] font-black text-2xl">Order not found</h2>
-           <p className="text-[#ababa8] text-sm">We couldn't find the change order you are looking for.</p>
+           <span className="material-symbols-outlined text-error text-5xl">warning</span>
+           <h2 className="text-on-surface font-black text-2xl">Order not found</h2>
+           <p className="text-on-surface-variant text-sm">We couldn't find the change order you are looking for.</p>
         </div>
       </div>
     );
@@ -144,15 +144,15 @@ export default function SalesOrderDetailsPage({ params }: { params: Promise<{ id
   const amount = isApproved ? order.approved_amount : order.proposed_amount;
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-[#0d0f0d]">
+    <div className="flex flex-col min-h-[100dvh] bg-background">
       <div className="px-4 pt-12 pb-2">
         <div className="flex items-center gap-3">
-           <button onClick={() => router.push("/mobile/sales/orders")} className="w-10 h-10 rounded-full bg-[#1e201e] border border-[#474846]/30 flex items-center justify-center shrink-0 active:scale-95 transition-transform shadow-lg">
-              <span className="material-symbols-outlined text-[#faf9f5]">arrow_back</span>
+           <button onClick={() => router.push("/mobile/sales/orders")} className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shrink-0 active:scale-95 transition-transform shadow-lg">
+              <span className="material-symbols-outlined text-on-surface">arrow_back</span>
            </button>
            <div className="flex flex-col ml-1">
-              <span className="text-[#aeee2a] text-[10px] uppercase font-bold tracking-widest pl-1">Change Order</span>
-              <h1 className="text-2xl font-black tracking-tight text-[#faf9f5]">CO {order.job?.job_number || "—"}</h1>
+              <span className="text-primary text-[10px] uppercase font-bold tracking-widest pl-1">Change Order</span>
+              <h1 className="text-2xl font-black tracking-tight text-on-surface">CO {order.job?.job_number || "—"}</h1>
            </div>
         </div>
       </div>
@@ -165,20 +165,20 @@ export default function SalesOrderDetailsPage({ params }: { params: Promise<{ id
                <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
                <span className="text-[10px] font-black uppercase tracking-widest">{cfg.label}</span>
            </div>
-           <h1 className="text-2xl font-black text-[#faf9f5] leading-tight">{order.title}</h1>
-           <p className="text-sm text-[#ababa8] font-medium flex items-center gap-1.5 mt-1">
+           <h1 className="text-2xl font-black text-on-surface leading-tight">{order.title}</h1>
+           <p className="text-sm text-on-surface-variant font-medium flex items-center gap-1.5 mt-1">
              <span className="material-symbols-outlined text-[16px]">schedule</span>
              Requested on {formatDate(order.requested_at)}
            </p>
         </div>
 
         {/* Amount Card */}
-        <div className="bg-[#121412] rounded-2xl p-5 border border-[#474846]/20 shadow-lg flex items-center justify-between">
+        <div className="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/20 shadow-lg flex items-center justify-between">
             <div className="flex flex-col gap-1">
-               <span className={`text-[10px] font-bold uppercase tracking-widest ${isApproved ? 'text-[#aeee2a]' : 'text-[#ababa8]'}`}>
+               <span className={`text-[10px] font-bold uppercase tracking-widest ${isApproved ? 'text-primary' : 'text-on-surface-variant'}`}>
                  {isApproved ? "Approved Total" : "Proposed Total"}
                </span>
-               <span className={`text-4xl font-black ${isApproved ? 'text-[#aeee2a]' : 'text-[#faf9f5]'}`}>
+               <span className={`text-4xl font-black ${isApproved ? 'text-primary' : 'text-on-surface'}`}>
                   {formatCurrency(amount)}
                </span>
             </div>
@@ -190,20 +190,20 @@ export default function SalesOrderDetailsPage({ params }: { params: Promise<{ id
         </div>
 
         {/* Project & Client Card */}
-        <div className="bg-[#121412] rounded-2xl p-5 border border-[#474846]/30 shadow-lg flex flex-col gap-4">
+        <div className="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/30 shadow-lg flex flex-col gap-4">
            <div className="flex items-center gap-2 mb-1">
-               <span className="material-symbols-outlined text-[18px] text-[#aeee2a]">business_center</span>
-               <h2 className="text-[#ababa8] font-bold text-[11px] tracking-widest uppercase">Project & Client</h2>
+               <span className="material-symbols-outlined text-[18px] text-primary">business_center</span>
+               <h2 className="text-on-surface-variant font-bold text-[11px] tracking-widest uppercase">Project & Client</h2>
            </div>
            
            <div className="flex flex-col gap-1">
               <span className="text-[10px] uppercase text-[#7B7B78] font-bold tracking-wider">Project No.</span>
-              <span className="text-sm font-bold text-[#faf9f5]">{order.job?.job_number || "—"}</span>
+              <span className="text-sm font-bold text-on-surface">{order.job?.job_number || "—"}</span>
            </div>
            
            <div className="flex flex-col gap-1">
               <span className="text-[10px] uppercase text-[#7B7B78] font-bold tracking-wider">Client Info</span>
-              <span className="text-sm font-bold text-[#faf9f5]">{order.job?.customer?.full_name || "—"}</span>
+              <span className="text-sm font-bold text-on-surface">{order.job?.customer?.full_name || "—"}</span>
               {order.job?.customer?.phone && (
                  <a href={`tel:${order.job.customer.phone}`} className="text-sm font-medium text-[#60b8f5] mt-0.5">{order.job.customer.phone}</a>
               )}
@@ -211,24 +211,24 @@ export default function SalesOrderDetailsPage({ params }: { params: Promise<{ id
 
            <div className="flex flex-col gap-1">
               <span className="text-[10px] uppercase text-[#7B7B78] font-bold tracking-wider">Location</span>
-              <span className="text-sm font-medium text-[#ababa8]">{order.job?.address}, {order.job?.city}</span>
+              <span className="text-sm font-medium text-on-surface-variant">{order.job?.address}, {order.job?.city}</span>
            </div>
         </div>
 
         {/* Service & Requestor */}
         <div className="grid grid-cols-2 gap-4">
-           <div className="bg-[#121412] rounded-2xl p-4 border border-[#474846]/30 shadow-lg flex flex-col gap-2">
-               <span className="material-symbols-outlined text-[18px] text-[#ff7351]">construction</span>
+           <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/30 shadow-lg flex flex-col gap-2">
+               <span className="material-symbols-outlined text-[18px] text-error">construction</span>
                <div>
                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#7B7B78]">Service</h3>
-                  <p className="text-sm font-bold text-[#faf9f5] mt-1">{order.job_service?.service_type?.name || "General"}</p>
+                  <p className="text-sm font-bold text-on-surface mt-1">{order.job_service?.service_type?.name || "General"}</p>
                </div>
            </div>
-           <div className="bg-[#121412] rounded-2xl p-4 border border-[#474846]/30 shadow-lg flex flex-col gap-2">
+           <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/30 shadow-lg flex flex-col gap-2">
                <span className="material-symbols-outlined text-[18px] text-[#f5a623]">group</span>
                <div>
                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#7B7B78]">Requested By</h3>
-                  <p className="text-sm font-bold text-[#faf9f5] mt-1 truncate">{order.requested_by_profile?.full_name || "Internal"}</p>
+                  <p className="text-sm font-bold text-on-surface mt-1 truncate">{order.requested_by_profile?.full_name || "Internal"}</p>
                </div>
            </div>
         </div>
@@ -237,11 +237,11 @@ export default function SalesOrderDetailsPage({ params }: { params: Promise<{ id
         {order.description && (
           <div className="flex flex-col gap-3">
              <div className="flex items-center gap-2 px-1">
-                 <span className="material-symbols-outlined text-[18px] text-[#aeee2a]">description</span>
-                 <h2 className="text-[#ababa8] font-bold text-[11px] tracking-widest uppercase">Description</h2>
+                 <span className="material-symbols-outlined text-[18px] text-primary">description</span>
+                 <h2 className="text-on-surface-variant font-bold text-[11px] tracking-widest uppercase">Description</h2>
              </div>
-             <div className="bg-[#121412] rounded-2xl p-5 border border-[#474846]/20">
-                 <p className="text-sm font-medium text-[#faf9f5] leading-relaxed whitespace-pre-wrap">{order.description}</p>
+             <div className="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/20">
+                 <p className="text-sm font-medium text-on-surface leading-relaxed whitespace-pre-wrap">{order.description}</p>
              </div>
           </div>
         )}

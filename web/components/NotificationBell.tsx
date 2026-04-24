@@ -117,7 +117,7 @@ export function NotificationBell() {
     type === "new_job" ? "person_add" : "edit_note";
 
   const colorFor = (type: string) =>
-    type === "new_job" ? "text-[#aeee2a]" : "text-[#e3eb5d]";
+    type === "new_job" ? "text-primary" : "text-[#e3eb5d]";
 
   // ─────────────────────────────────────────────────────────
   return (
@@ -125,7 +125,7 @@ export function NotificationBell() {
       {/* Bell button */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 text-[#ababa8] hover:text-[#faf9f5] transition-colors rounded-full hover:bg-[#242624]"
+        className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 text-on-surface-variant hover:text-on-surface transition-colors rounded-full hover:bg-surface-container-highest"
         aria-label="Notifications"
       >
         <span className="material-symbols-outlined text-[22px]" translate="no">
@@ -134,7 +134,7 @@ export function NotificationBell() {
 
         {/* Badge */}
         {unread > 0 && (
-          <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-[#ff7351] rounded-full flex items-center justify-center text-[9px] font-black text-white leading-none">
+          <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-error rounded-full flex items-center justify-center text-[9px] font-black text-white leading-none">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
@@ -142,16 +142,16 @@ export function NotificationBell() {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 mt-3 w-80 bg-[#181a18] rounded-2xl shadow-2xl border border-white/5 overflow-hidden z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute right-0 mt-3 w-80 bg-surface-container rounded-2xl shadow-2xl border border-white/5 overflow-hidden z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-            <p className="text-sm font-black text-[#faf9f5] uppercase tracking-widest">
+            <p className="text-sm font-black text-on-surface uppercase tracking-widest">
               Notifications
             </p>
             {unread > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-[10px] font-bold text-[#aeee2a] hover:text-white transition-colors uppercase tracking-widest"
+                className="text-[10px] font-bold text-primary hover:text-white transition-colors uppercase tracking-widest"
               >
                 Mark all read
               </button>
@@ -161,7 +161,7 @@ export function NotificationBell() {
           {/* List */}
           <div className="max-h-[360px] overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 gap-2 text-[#474846]">
+              <div className="flex flex-col items-center justify-center py-10 gap-2 text-outline-variant">
                 <span className="material-symbols-outlined text-4xl" translate="no">
                   notifications_off
                 </span>
@@ -172,8 +172,8 @@ export function NotificationBell() {
                 <button
                   key={n.id}
                   onClick={() => handleClick(n)}
-                  className={`w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-[#242624] transition-colors border-b border-white/5 last:border-0 ${
-                    !n.read ? "bg-[#aeee2a]/5" : ""
+                  className={`w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-surface-container-highest transition-colors border-b border-white/5 last:border-0 ${
+                    !n.read ? "bg-primary/5" : ""
                   }`}
                 >
                   {/* Icon */}
@@ -185,16 +185,16 @@ export function NotificationBell() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-bold truncate ${!n.read ? "text-[#faf9f5]" : "text-[#ababa8]"}`}>
+                    <p className={`text-sm font-bold truncate ${!n.read ? "text-on-surface" : "text-on-surface-variant"}`}>
                       {n.title}
                     </p>
-                    <p className="text-xs text-[#747673] truncate mt-0.5">{n.body}</p>
-                    <p className="text-[10px] text-[#474846] mt-1">{timeAgo(n.created_at)}</p>
+                    <p className="text-xs text-outline truncate mt-0.5">{n.body}</p>
+                    <p className="text-[10px] text-outline-variant mt-1">{timeAgo(n.created_at)}</p>
                   </div>
 
                   {/* Unread dot */}
                   {!n.read && (
-                    <div className="shrink-0 mt-2 w-2 h-2 rounded-full bg-[#aeee2a]" />
+                    <div className="shrink-0 mt-2 w-2 h-2 rounded-full bg-primary" />
                   )}
                 </button>
               ))

@@ -25,10 +25,10 @@ const ROLE_LABELS: Record<string, string> = {
 
 const getRoleBadgeColor = (role: string) => {
   switch (role) {
-    case "admin":       return "text-[#aeee2a] bg-[#aeee2a]/10 border-[#aeee2a]/30";
+    case "admin":       return "text-primary bg-primary/10 border-primary/30";
     case "salesperson": return "text-[#38bdf8] bg-[#38bdf8]/10 border-[#38bdf8]/30";
     case "partner":     return "text-[#a855f7] bg-[#a855f7]/10 border-[#a855f7]/30";
-    default:            return "text-[#faf9f5] bg-[#242624] border-white/10";
+    default:            return "text-on-surface bg-surface-container-highest border-white/10";
   }
 };
 
@@ -152,7 +152,7 @@ export default function SettingsPage() {
     <>
       <TopBar />
 
-      <main className="px-4 sm:px-6 lg:px-8 pb-20 pt-8 min-h-screen bg-[#0d0f0d]">
+      <main className="px-4 sm:px-6 lg:px-8 pb-20 pt-8 min-h-screen bg-background">
         <div className="max-w-7xl mx-auto space-y-12">
 
           {/* ══════════════════════════════════════
@@ -161,13 +161,13 @@ export default function SettingsPage() {
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
               <h3 className="text-xl font-headline font-bold text-white">My Profile</h3>
-              <p className="text-[#ababa8] text-sm mt-2 leading-relaxed">
+              <p className="text-on-surface-variant text-sm mt-2 leading-relaxed">
                 Update your personal information and profile photo. Changes are reflected across the entire platform.
               </p>
             </div>
 
             <div className="lg:col-span-2">
-              <div className="bg-[#121412] p-8 rounded-2xl space-y-6 border border-white/5">
+              <div className="bg-surface-container-low p-8 rounded-2xl space-y-6 border border-white/5">
 
                 {/* Avatar section */}
                 <div className="flex items-center gap-6">
@@ -177,11 +177,11 @@ export default function SettingsPage() {
                       <img
                         src={myProfile.avatar_url}
                         alt={editName}
-                        className="w-20 h-20 rounded-full object-cover border-2 border-[#aeee2a]"
+                        className="w-20 h-20 rounded-full object-cover border-2 border-primary"
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded-full bg-[#aeee2a]/15 border-2 border-[#aeee2a]/40 flex items-center justify-center">
-                        <span className="text-[#aeee2a] text-2xl font-black">{initials}</span>
+                      <div className="w-20 h-20 rounded-full bg-primary/15 border-2 border-primary/40 flex items-center justify-center">
+                        <span className="text-primary text-2xl font-black">{initials}</span>
                       </div>
                     )}
 
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => avatarInputRef.current?.click()}
                       disabled={uploadingAvatar}
-                      className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#aeee2a] flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-50"
+                      className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-50"
                       title="Upload photo"
                     >
                       {uploadingAvatar ? (
@@ -208,11 +208,11 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <p className="text-sm font-bold text-[#faf9f5]">{editName || "Your Name"}</p>
-                    <p className="text-xs text-[#ababa8] mt-1">{ROLE_LABELS[myProfile?.role || ""] || myProfile?.role}</p>
+                    <p className="text-sm font-bold text-on-surface">{editName || "Your Name"}</p>
+                    <p className="text-xs text-on-surface-variant mt-1">{ROLE_LABELS[myProfile?.role || ""] || myProfile?.role}</p>
                     <button
                       onClick={() => avatarInputRef.current?.click()}
-                      className="mt-2 text-xs font-bold text-[#aeee2a] hover:underline"
+                      className="mt-2 text-xs font-bold text-primary hover:underline"
                     >
                       Change photo
                     </button>
@@ -222,43 +222,43 @@ export default function SettingsPage() {
                 {/* Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Full Name</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Full Name</label>
                     <input
                       type="text"
                       value={editName}
                       onChange={e => setEditName(e.target.value)}
                       placeholder="Your full name"
-                      className="w-full bg-[#181a18] border border-white/5 rounded-xl py-3 px-4 text-[#faf9f5] font-medium focus:ring-1 focus:ring-[#aeee2a] focus:border-transparent outline-none transition-all"
+                      className="w-full bg-surface-container border border-white/5 rounded-xl py-3 px-4 text-on-surface font-medium focus:ring-1 focus:ring-primary focus:border-transparent outline-none transition-all"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Phone</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Phone</label>
                     <input
                       type="tel"
                       value={editPhone}
                       onChange={e => setEditPhone(e.target.value)}
                       placeholder="+1 (555) 000-0000"
-                      className="w-full bg-[#181a18] border border-white/5 rounded-xl py-3 px-4 text-[#faf9f5] font-medium focus:ring-1 focus:ring-[#aeee2a] focus:border-transparent outline-none transition-all"
+                      className="w-full bg-surface-container border border-white/5 rounded-xl py-3 px-4 text-on-surface font-medium focus:ring-1 focus:ring-primary focus:border-transparent outline-none transition-all"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Email</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Email</label>
                     <input
                       type="email"
                       value={myProfile?.email || ""}
                       readOnly
-                      className="w-full bg-[#0d0f0d] border border-white/5 rounded-xl py-3 px-4 text-[#ababa8] font-medium outline-none cursor-not-allowed"
+                      className="w-full bg-background border border-white/5 rounded-xl py-3 px-4 text-on-surface-variant font-medium outline-none cursor-not-allowed"
                     />
-                    <p className="text-[10px] text-[#474846]">Email cannot be changed here</p>
+                    <p className="text-[10px] text-outline-variant">Email cannot be changed here</p>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Role</label>
-                    <div className="w-full bg-[#0d0f0d] border border-white/5 rounded-xl py-3 px-4 flex items-center gap-2 cursor-not-allowed">
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Role</label>
+                    <div className="w-full bg-background border border-white/5 rounded-xl py-3 px-4 flex items-center gap-2 cursor-not-allowed">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${getRoleBadgeColor(myProfile?.role || "")}`}>
                         {ROLE_LABELS[myProfile?.role || ""] || myProfile?.role || "—"}
                       </span>
                     </div>
-                    <p className="text-[10px] text-[#474846]">Contact an admin to change your role</p>
+                    <p className="text-[10px] text-outline-variant">Contact an admin to change your role</p>
                   </div>
                 </div>
 
@@ -267,7 +267,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveProfile}
                     disabled={savingProfile}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-[#aeee2a] text-[#1a2e00] text-sm font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_4px_20px_rgb(174,238,42,0.15)] disabled:opacity-60"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-[#1a2e00] text-sm font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_4px_20px_rgb(174,238,42,0.15)] disabled:opacity-60"
                     style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
                   >
                     {savingProfile ? (
@@ -289,30 +289,30 @@ export default function SettingsPage() {
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
               <h3 className="text-xl font-headline font-bold text-white">Organization Profile</h3>
-              <p className="text-[#ababa8] text-sm mt-2 leading-relaxed">Update your company's core identity, branding, and operational timezone.</p>
+              <p className="text-on-surface-variant text-sm mt-2 leading-relaxed">Update your company's core identity, branding, and operational timezone.</p>
             </div>
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-[#121412] p-8 rounded-2xl space-y-6 border border-white/5">
+              <div className="bg-surface-container-low p-8 rounded-2xl space-y-6 border border-white/5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Legal Name</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Legal Name</label>
                     <input
-                      className="w-full bg-[#181a18] border-none rounded-xl py-3 px-4 text-[#faf9f5] font-medium focus:ring-1 focus:ring-[#aeee2a] outline-none transition-all"
+                      className="w-full bg-surface-container border-none rounded-xl py-3 px-4 text-on-surface font-medium focus:ring-1 focus:ring-primary outline-none transition-all"
                       type="text"
                       defaultValue="Siding Depot"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Tax ID</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Tax ID</label>
                     <input
-                      className="w-full bg-[#181a18] border-none rounded-xl py-3 px-4 text-[#faf9f5] font-medium focus:ring-1 focus:ring-[#aeee2a] outline-none transition-all"
+                      className="w-full bg-surface-container border-none rounded-xl py-3 px-4 text-on-surface font-medium focus:ring-1 focus:ring-primary outline-none transition-all"
                       type="text"
                       defaultValue="12-3456789"
                     />
                   </div>
                 </div>
                 <div className="space-y-2 relative z-50">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Timezone</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Timezone</label>
                   <CustomDropdown
                     value="GMT-6:00 Central Time (Dallas)"
                     onChange={() => {}}
@@ -321,7 +321,7 @@ export default function SettingsPage() {
                       "GMT-8:00 Pacific Time",
                       "GMT-5:00 Eastern Time"
                     ]}
-                    className="w-full bg-[#181a18] border-none rounded-xl py-3 px-4 text-[#faf9f5] font-medium hover:ring-1 hover:ring-[#aeee2a] outline-none transition-all flex justify-between items-center"
+                    className="w-full bg-surface-container border-none rounded-xl py-3 px-4 text-on-surface font-medium hover:ring-1 hover:ring-primary outline-none transition-all flex justify-between items-center"
                   />
                 </div>
               </div>

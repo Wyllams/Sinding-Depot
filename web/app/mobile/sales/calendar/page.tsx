@@ -155,16 +155,16 @@ export default function SalesMobileCalendar() {
     <div className="flex flex-col h-[100dvh] bg-[#080808] overflow-hidden">
       
       {/* Top Fixed Header area */}
-      <div className="z-40 bg-[#080808] border-b border-[#474846]/30 px-4 pt-12 pb-4 shrink-0 flex flex-col gap-4">
+      <div className="z-40 bg-[#080808] border-b border-outline-variant/30 px-4 pt-12 pb-4 shrink-0 flex flex-col gap-4">
         {/* Standard Header */}
         <div className="flex justify-between items-center mb-1 relative">
           {/* Left side: Hamburger Menu */}
           <div className="relative z-50">
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-10 h-10 rounded-full bg-[#1e201e] border border-[#474846]/30 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+              className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
             >
-              <span className="material-symbols-outlined text-[#faf9f5]">menu</span>
+              <span className="material-symbols-outlined text-on-surface">menu</span>
             </button>
             
             {/* Dropdown Menu */}
@@ -174,16 +174,16 @@ export default function SalesMobileCalendar() {
                   className="fixed inset-0 z-40" 
                   onClick={() => setIsMenuOpen(false)}
                 />
-                <div className="absolute top-12 left-0 w-48 bg-[#1e201e] border border-[#474846]/30 rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="absolute top-12 left-0 w-48 bg-surface-container-high border border-outline-variant/30 rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
                   <Link 
                     href="/mobile/sales/profile"
-                    className="flex items-center gap-3 px-4 py-4 hover:bg-[#aeee2a]/10 text-[#faf9f5] transition-colors"
+                    className="flex items-center gap-3 px-4 py-4 hover:bg-primary/10 text-on-surface transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <span className="material-symbols-outlined text-[20px]">person</span>
                     <span className="font-semibold text-sm">My Profile</span>
                   </Link>
-                  <div className="h-[1px] bg-[#474846]/30 w-full" />
+                  <div className="h-[1px] bg-outline-variant/30 w-full" />
                   <button 
                     onClick={handleSignOut}
                     className="flex items-center gap-3 px-4 py-4 hover:bg-red-500/10 text-red-400 transition-colors text-left"
@@ -197,32 +197,32 @@ export default function SalesMobileCalendar() {
           </div>
 
           {/* Center: Title */}
-          <h1 className="text-lg font-black tracking-widest uppercase text-[#faf9f5] absolute left-1/2 -translate-x-1/2 min-w-max text-center">
+          <h1 className="text-lg font-black tracking-widest uppercase text-on-surface absolute left-1/2 -translate-x-1/2 min-w-max text-center">
             SCHEDULE
           </h1>
 
           {/* Right side: Avatar */}
-          <Link href="/mobile/sales/profile" className="w-10 h-10 rounded-full bg-[#1e201e] border border-[#474846]/30 shadow-lg flex items-center justify-center overflow-hidden active:scale-95 transition-transform shrink-0 z-10">
+          <Link href="/mobile/sales/profile" className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/30 shadow-lg flex items-center justify-center overflow-hidden active:scale-95 transition-transform shrink-0 z-10">
             <img src="https://ui-avatars.com/api/?name=SD&background=aeee2a&color=080808&bold=true" alt="Profile" className="w-full h-full object-cover" />
           </Link>
         </div>
         
         {/* Navigation Wrapper */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 bg-[#121412] p-1 rounded-xl border border-[#474846]/30">
-            <button onClick={prevWeek} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[#1e201e] active:scale-95 transition-all text-[#faf9f5]">
+          <div className="flex items-center gap-1 bg-surface-container-low p-1 rounded-xl border border-outline-variant/30">
+            <button onClick={prevWeek} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container-high active:scale-95 transition-all text-on-surface">
               <span className="material-symbols-outlined" translate="no">chevron_left</span>
             </button>
-            <button onClick={goToday} className="px-3 h-10 flex items-center justify-center rounded-lg hover:bg-[#1e201e] active:scale-95 transition-all">
-              <span className="text-[#faf9f5] font-bold text-sm tracking-wide">TODAY</span>
+            <button onClick={goToday} className="px-3 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container-high active:scale-95 transition-all">
+              <span className="text-on-surface font-bold text-sm tracking-wide">TODAY</span>
             </button>
-            <button onClick={nextWeek} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[#1e201e] active:scale-95 transition-all text-[#faf9f5]">
+            <button onClick={nextWeek} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container-high active:scale-95 transition-all text-on-surface">
               <span className="material-symbols-outlined" translate="no">chevron_right</span>
             </button>
           </div>
           
           <div className="flex flex-col items-end">
-            <span className="text-[#aeee2a] font-bold text-xs uppercase tracking-wider">
+            <span className="text-primary font-bold text-xs uppercase tracking-wider">
               {new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }).format(weekDates[0])}
             </span>
           </div>
@@ -234,19 +234,19 @@ export default function SalesMobileCalendar() {
         <div className="min-w-[840px] flex flex-col pt-2 pb-32">
           
           {/* Timeline Header (Sticky Top) */}
-          <div className="sticky top-0 z-30 flex bg-[#080808]/90 backdrop-blur-md rounded-b-2xl border-b border-[#474846]/30 shadow-lg">
+          <div className="sticky top-0 z-30 flex bg-[#080808]/90 backdrop-blur-md rounded-b-2xl border-b border-outline-variant/30 shadow-lg">
             {weekDates.map((date, i) => {
                const isToday = new Date().toDateString() === date.toDateString();
                const dayLabel = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' }).format(date);
                const dayNum = new Intl.DateTimeFormat('en-US', { day: '2-digit', timeZone: 'UTC' }).format(date);
                
                return (
-                 <div key={i} className="flex-1 min-w-[120px] max-w-[120px] flex flex-col items-center justify-center py-3 border-r border-[#474846]/20 last:border-0 relative">
+                 <div key={i} className="flex-1 min-w-[120px] max-w-[120px] flex flex-col items-center justify-center py-3 border-r border-outline-variant/20 last:border-0 relative">
                    {isToday && (
-                     <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#aeee2a] shadow-[0_0_8px_#aeee2a]" />
+                     <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_#aeee2a]" />
                    )}
-                   <span className="text-[#ababa8] text-[10px] font-bold tracking-widest uppercase">{dayLabel}</span>
-                   <span className={`text-lg font-black mt-0.5 ${isToday ? "text-[#aeee2a]" : "text-[#faf9f5]"}`}>{dayNum}</span>
+                   <span className="text-on-surface-variant text-[10px] font-bold tracking-widest uppercase">{dayLabel}</span>
+                   <span className={`text-lg font-black mt-0.5 ${isToday ? "text-primary" : "text-on-surface"}`}>{dayNum}</span>
                  </div>
                );
             })}
@@ -257,18 +257,18 @@ export default function SalesMobileCalendar() {
             {/* Background vertical guides */}
             <div className="absolute inset-0 flex pointer-events-none z-0">
                {weekDates.map((_, i) => (
-                 <div key={i} className="flex-1 min-w-[120px] max-w-[120px] border-r border-[#474846]/10 last:border-0" />
+                 <div key={i} className="flex-1 min-w-[120px] max-w-[120px] border-r border-outline-variant/10 last:border-0" />
                ))}
             </div>
 
             {loading ? (
               <div className="h-40 flex items-center justify-center w-full relative z-10">
-                <span className="material-symbols-outlined text-4xl animate-spin text-[#aeee2a]" translate="no">progress_activity</span>
+                <span className="material-symbols-outlined text-4xl animate-spin text-primary" translate="no">progress_activity</span>
               </div>
             ) : visibleTasks.length === 0 ? (
               <div className="h-40 flex flex-col items-center justify-center w-full relative z-10">
                 <span className="material-symbols-outlined text-[#7B7B78] text-[32px] mb-2" translate="no">event_busy</span>
-                <span className="text-[#ababa8] font-bold text-sm tracking-widest uppercase">No Services This Week</span>
+                <span className="text-on-surface-variant font-bold text-sm tracking-widest uppercase">No Services This Week</span>
               </div>
             ) : (
               <div className="flex flex-col gap-3 py-4 relative z-10 px-1">
@@ -288,18 +288,18 @@ export default function SalesMobileCalendar() {
                    if (widthDays <= 0) return null;
 
                    // UI Colors based on status
-                   let bgColor = "bg-[#1e201e]";
-                   let borderColor = "border-[#474846]/40";
-                   let barColor = "bg-[#474846]";
+                   let bgColor = "bg-surface-container-high";
+                   let borderColor = "border-outline-variant/40";
+                   let barColor = "bg-outline-variant";
 
                    if (task.status === "in_progress") {
-                     bgColor = "bg-[#ff7351]/10";
-                     borderColor = "border-[#ff7351]/40";
-                     barColor = "bg-[#ff7351]";
+                     bgColor = "bg-error/10";
+                     borderColor = "border-error/40";
+                     barColor = "bg-error";
                    } else if (task.status === "completed") {
-                     bgColor = "bg-[#aeee2a]/10";
-                     borderColor = "border-[#aeee2a]/40";
-                     barColor = "bg-[#aeee2a]";
+                     bgColor = "bg-primary/10";
+                     borderColor = "border-primary/40";
+                     barColor = "bg-primary";
                    }
                     return (
                       <div key={task.id} className="relative h-[72px] w-[840px]">
@@ -313,9 +313,9 @@ export default function SalesMobileCalendar() {
                        >
                          <div className={`w-1.5 h-full ${barColor} shrink-0`} />
                          <div className="flex flex-col p-2 min-w-0 flex-1 relative">
-                            <span className="text-[#faf9f5] font-black text-xs truncate leading-tight">{task.jobTitle}</span>
-                            <span className="text-[#aeee2a] font-bold text-[9px] uppercase tracking-wider mt-0.5 truncate">{task.serviceName}</span>
-                            <div className="flex items-center gap-1 mt-auto text-[#ababa8]">
+                            <span className="text-on-surface font-black text-xs truncate leading-tight">{task.jobTitle}</span>
+                            <span className="text-primary font-bold text-[9px] uppercase tracking-wider mt-0.5 truncate">{task.serviceName}</span>
+                            <div className="flex items-center gap-1 mt-auto text-on-surface-variant">
                               <span className="material-symbols-outlined text-[12px]">groups</span>
                               <span className="text-[10px] font-semibold truncate">{task.crewName}</span>
                             </div>
@@ -333,15 +333,15 @@ export default function SalesMobileCalendar() {
       {selectedTask && (
         <>
           <div className="fixed inset-0 bg-[#080808]/80 backdrop-blur-sm z-[60] transition-opacity" onClick={() => setSelectedTask(null)} />
-          <div className="fixed bottom-0 left-0 right-0 bg-[#121412] border-t border-[#474846]/30 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-[60] p-6 pb-12 flex flex-col gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto">
+          <div className="fixed bottom-0 left-0 right-0 bg-surface-container-low border-t border-outline-variant/30 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-[60] p-6 pb-12 flex flex-col gap-6 animate-in slide-in-from-bottom duration-300 pointer-events-auto">
             {/* Header */}
             <div className="flex justify-between items-start">
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold tracking-widest uppercase text-[#aeee2a]">Service Info</span>
-                <h2 className="text-xl font-black text-[#faf9f5] mt-1 pr-4">{selectedTask.serviceName}</h2>
-                <span className="text-[#ababa8] font-bold text-xs mt-0.5">{selectedTask.jobNumber} - {selectedTask.jobTitle}</span>
+                <span className="text-[10px] font-bold tracking-widest uppercase text-primary">Service Info</span>
+                <h2 className="text-xl font-black text-on-surface mt-1 pr-4">{selectedTask.serviceName}</h2>
+                <span className="text-on-surface-variant font-bold text-xs mt-0.5">{selectedTask.jobNumber} - {selectedTask.jobTitle}</span>
               </div>
-              <button onClick={() => setSelectedTask(null)} className="w-8 h-8 shrink-0 rounded-full bg-[#1e201e] border border-[#474846]/30 flex items-center justify-center text-[#faf9f5]">
+              <button onClick={() => setSelectedTask(null)} className="w-8 h-8 shrink-0 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center text-on-surface">
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
@@ -351,8 +351,8 @@ export default function SalesMobileCalendar() {
               {/* Status */}
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase tracking-widest font-bold text-[#7B7B78] mb-1">Status</span>
-                <div className="bg-[#1e201e] h-11 px-3 rounded-xl border border-[#474846]/20 flex items-center justify-center">
-                   <span className={`text-xs font-black uppercase tracking-widest ${selectedTask.status === 'in_progress' ? 'text-[#ff7351]' : selectedTask.status === 'completed' ? 'text-[#aeee2a]' : 'text-[#faf9f5]'}`}>
+                <div className="bg-surface-container-high h-11 px-3 rounded-xl border border-outline-variant/20 flex items-center justify-center">
+                   <span className={`text-xs font-black uppercase tracking-widest ${selectedTask.status === 'in_progress' ? 'text-error' : selectedTask.status === 'completed' ? 'text-primary' : 'text-on-surface'}`}>
                      {selectedTask.status.replace('_', ' ')}
                    </span>
                 </div>
@@ -360,45 +360,45 @@ export default function SalesMobileCalendar() {
               {/* Crew */}
               <div className="flex flex-col overflow-hidden">
                  <span className="text-[10px] uppercase tracking-widest font-bold text-[#7B7B78] mb-1">Crew</span>
-                 <div className="bg-[#1e201e] h-11 px-3 rounded-xl border border-[#474846]/20 flex items-center gap-2">
-                   <span className="material-symbols-outlined text-[14px] text-[#faf9f5] shrink-0">engineering</span>
-                   <span className="text-xs font-bold text-[#faf9f5] truncate leading-none mt-0.5">{selectedTask.crewName}</span>
+                 <div className="bg-surface-container-high h-11 px-3 rounded-xl border border-outline-variant/20 flex items-center gap-2">
+                   <span className="material-symbols-outlined text-[14px] text-on-surface shrink-0">engineering</span>
+                   <span className="text-xs font-bold text-on-surface truncate leading-none mt-0.5">{selectedTask.crewName}</span>
                  </div>
               </div>
             </div>
 
-            <div className="h-[1px] w-full bg-[#474846]/20" />
+            <div className="h-[1px] w-full bg-outline-variant/20" />
 
             {/* Client Info */}
             <div className="flex flex-col gap-3">
                <div className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[#aeee2a] text-[18px] shrink-0">person</span>
+                 <span className="material-symbols-outlined text-primary text-[18px] shrink-0">person</span>
                  <div className="flex flex-col">
-                   <span className="text-[#faf9f5] font-bold text-sm">{selectedTask.customerName}</span>
-                   <span className="text-[#ababa8] font-medium text-xs mt-0.5">{selectedTask.customerPhone}</span>
+                   <span className="text-on-surface font-bold text-sm">{selectedTask.customerName}</span>
+                   <span className="text-on-surface-variant font-medium text-xs mt-0.5">{selectedTask.customerPhone}</span>
                  </div>
                </div>
                <div className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[#aeee2a] text-[18px] shrink-0">location_on</span>
+                 <span className="material-symbols-outlined text-primary text-[18px] shrink-0">location_on</span>
                  <div className="flex flex-col">
-                   <span className="text-[#faf9f5] font-bold text-sm">{selectedTask.street}</span>
-                   <span className="text-[#ababa8] font-medium text-xs mt-0.5">{selectedTask.location} {selectedTask.zip}</span>
+                   <span className="text-on-surface font-bold text-sm">{selectedTask.street}</span>
+                   <span className="text-on-surface-variant font-medium text-xs mt-0.5">{selectedTask.location} {selectedTask.zip}</span>
                  </div>
                </div>
                
                <div className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[#aeee2a] text-[18px] shrink-0">event</span>
+                 <span className="material-symbols-outlined text-primary text-[18px] shrink-0">event</span>
                  <div className="flex flex-col">
-                   <span className="text-[#faf9f5] font-bold text-sm">
+                   <span className="text-on-surface font-bold text-sm">
                      {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(new Date(selectedTask.startDateIso))}
                    </span>
-                   <span className="text-[#ababa8] font-medium text-xs mt-0.5">{selectedTask.durationDays} {selectedTask.durationDays === 1 ? 'Day' : 'Days'} Duration</span>
+                   <span className="text-on-surface-variant font-medium text-xs mt-0.5">{selectedTask.durationDays} {selectedTask.durationDays === 1 ? 'Day' : 'Days'} Duration</span>
                  </div>
                </div>
             </div>
 
             {/* Link to Job Details */}
-            <Link href={`/mobile/sales/projects/${selectedTask.jobId}`} className="w-full bg-[#aeee2a] text-[#080808] font-black text-sm uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 mt-2 active:scale-[0.98] transition-transform shadow-[0_0_20px_rgba(174,238,42,0.15)]">
+            <Link href={`/mobile/sales/projects/${selectedTask.jobId}`} className="w-full bg-primary text-[#080808] font-black text-sm uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 mt-2 active:scale-[0.98] transition-transform shadow-[0_0_20px_rgba(174,238,42,0.15)]">
               View Full Project
               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </Link>

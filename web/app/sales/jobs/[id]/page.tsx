@@ -10,10 +10,10 @@ export default function SalesJobDetail({ params }: { params: Promise<{ id: strin
   const jobId = resolvedParams.id;
 
   return (
-    <main className="h-full bg-[#000000] min-h-[100dvh] pb-24">
+    <main className="h-full bg-layout-bg min-h-[100dvh] pb-24">
       
       {/* HEADER */}
-      <header className="sticky top-0 z-20 px-4 py-4 bg-[#050505]/95 backdrop-blur-md border-b border-zinc-900">
+      <header className="sticky top-0 z-20 px-4 py-4 bg-mobile-frame/95 backdrop-blur-md border-b border-zinc-900">
         <Link href="/sales/jobs" className="inline-flex items-center gap-2 text-[var(--color-siding-green)] mb-3 hover:text-white transition-colors">
           <ArrowLeft size={16} />
           <span className="text-[12px] font-bold uppercase tracking-widest">Back to Deals</span>

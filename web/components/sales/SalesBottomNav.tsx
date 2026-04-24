@@ -18,7 +18,7 @@ export default function SalesBottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#050505]/95 backdrop-blur-md border-t border-zinc-800 px-6 py-3 z-50 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-mobile-frame/95 backdrop-blur-md border-t border-zinc-800 px-6 py-3 z-50 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
       <ul className="flex justify-between items-center">
         {navItems.map((item) => (
           <li key={item.label} className="w-1/3">

@@ -20,12 +20,12 @@ export default function Dashboard() {
         {/* Page Title */}
         <div className="mb-8">
           <h2
-            className="text-2xl sm:text-4xl font-extrabold tracking-tighter text-[#faf9f5]"
+            className="text-2xl sm:text-4xl font-extrabold tracking-tighter text-on-surface"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
           >
             Dashboard
           </h2>
-          <p className="text-[#ababa8]">Global project metrics and operational health.</p>
+          <p className="text-on-surface-variant">Global project metrics and operational health.</p>
         </div>
 
         {/* ── Bento Grid Metrics ── */}
@@ -34,10 +34,10 @@ export default function Dashboard() {
           {/* Card 1: Active Projects */}
           <div className="col-span-12 lg:col-span-4 glass-card rounded-2xl p-6 border-t border-white/5">
             <div className="flex justify-between items-start mb-6">
-              <span className="text-[11px] font-bold tracking-[0.2em] text-[#ababa8] uppercase">
+              <span className="text-[11px] font-bold tracking-[0.2em] text-on-surface-variant uppercase">
                 Active Projects
               </span>
-              <span className="material-symbols-outlined text-[#aeee2a]" translate="no">analytics</span>
+              <span className="material-symbols-outlined text-primary" translate="no">analytics</span>
             </div>
             <div className="flex items-baseline gap-2 mb-4">
               <span
@@ -46,11 +46,11 @@ export default function Dashboard() {
               >
                 24
               </span>
-              <span className="text-[#ababa8] font-medium">projects</span>
+              <span className="text-on-surface-variant font-medium">projects</span>
             </div>
 
             {/* Mini Bar Chart */}
-            <div className="relative h-[80px] w-full mb-4 overflow-hidden rounded-lg bg-[#181a18]">
+            <div className="relative h-[80px] w-full mb-4 overflow-hidden rounded-lg bg-surface-container">
               <div
                 className="absolute inset-0 opacity-20"
                 style={{
@@ -60,14 +60,14 @@ export default function Dashboard() {
                 }}
               />
               <div className="absolute bottom-0 left-0 w-full h-[60%] flex items-end px-2 gap-1">
-                <div className="bg-[#aeee2a]/20 w-full h-[40%] rounded-t-sm" />
-                <div className="bg-[#aeee2a]/40 w-full h-[70%] rounded-t-sm" />
-                <div className="bg-[#aeee2a] w-full h-[55%] rounded-t-sm" />
-                <div className="bg-[#aeee2a] w-full h-[90%] rounded-t-sm" />
-                <div className="bg-[#aeee2a]/60 w-full h-[45%] rounded-t-sm" />
-                <div className="bg-[#aeee2a] w-full h-[75%] rounded-t-sm" />
+                <div className="bg-primary/20 w-full h-[40%] rounded-t-sm" />
+                <div className="bg-primary/40 w-full h-[70%] rounded-t-sm" />
+                <div className="bg-primary w-full h-[55%] rounded-t-sm" />
+                <div className="bg-primary w-full h-[90%] rounded-t-sm" />
+                <div className="bg-primary/60 w-full h-[45%] rounded-t-sm" />
+                <div className="bg-primary w-full h-[75%] rounded-t-sm" />
                 <div
-                  className="bg-[#aeee2a] w-full h-[100%] rounded-t-sm"
+                  className="bg-primary w-full h-[100%] rounded-t-sm"
                   style={{ boxShadow: "0 0 15px rgba(174,238,42,0.5)" }}
                 />
               </div>
@@ -76,12 +76,12 @@ export default function Dashboard() {
             {/* Progress bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <span className="text-[#ababa8]">Fleet Utilization</span>
-                <span className="text-[#aeee2a] font-bold">88%</span>
+                <span className="text-on-surface-variant">Fleet Utilization</span>
+                <span className="text-primary font-bold">88%</span>
               </div>
-              <div className="h-1.5 w-full bg-[#242624] rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#aeee2a] w-[88%]"
+                  className="h-full bg-primary w-[88%]"
                   style={{ boxShadow: "0 0 8px rgba(174,238,42,0.6)" }}
                 />
               </div>
@@ -91,7 +91,7 @@ export default function Dashboard() {
           {/* Card 2: Pending Change Orders */}
           <div className="col-span-12 lg:col-span-5 glass-card rounded-2xl p-6 border-t border-white/5 relative overflow-hidden">
             <div className="flex justify-between items-start mb-6">
-              <span className="text-[11px] font-bold tracking-[0.2em] text-[#ababa8] uppercase">
+              <span className="text-[11px] font-bold tracking-[0.2em] text-on-surface-variant uppercase">
                 Pending Change Orders
               </span>
               <span className="px-3 py-1 bg-[#5e6300] text-[#f9ff8b] text-[10px] font-bold rounded-full">
@@ -106,19 +106,19 @@ export default function Dashboard() {
                 >
                   17
                 </span>
-                <span className="text-[#ababa8] font-medium">orders</span>
+                <span className="text-on-surface-variant font-medium">orders</span>
               </div>
               <span
-                className="text-[#aeee2a] text-2xl font-bold"
+                className="text-primary text-2xl font-bold"
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
               >
                 $89,450
               </span>
-              <span className="text-xs text-[#ababa8]">Total Value Pending Approval</span>
+              <span className="text-xs text-on-surface-variant">Total Value Pending Approval</span>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-[#1e201e] rounded-xl">
-                <p className="text-[10px] text-[#ababa8] uppercase font-bold mb-1">Average Wait</p>
+              <div className="p-4 bg-surface-container-high rounded-xl">
+                <p className="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Average Wait</p>
                 <p
                   className="text-lg font-bold"
                   style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
@@ -126,8 +126,8 @@ export default function Dashboard() {
                   4.2 Days
                 </p>
               </div>
-              <div className="p-4 bg-[#1e201e] rounded-xl">
-                <p className="text-[10px] text-[#ababa8] uppercase font-bold mb-1">Impact Risk</p>
+              <div className="p-4 bg-surface-container-high rounded-xl">
+                <p className="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Impact Risk</p>
                 <p
                   className="text-lg font-bold text-[#e3eb5d]"
                   style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
@@ -141,11 +141,11 @@ export default function Dashboard() {
           {/* Card 3: Blocking Issues */}
           <div className="col-span-12 lg:col-span-3 glass-card rounded-2xl p-6 border-t border-white/5">
             <div className="flex justify-between items-start mb-4">
-              <span className="text-[11px] font-bold tracking-[0.2em] text-[#ababa8] uppercase">
+              <span className="text-[11px] font-bold tracking-[0.2em] text-on-surface-variant uppercase">
                 Blocking Issues
               </span>
               <span
-                className="material-symbols-outlined text-[#ff7351]"
+                className="material-symbols-outlined text-error"
                 translate="no"
                 style={{ fontVariationSettings: "'FILL' 1" }}
               >
@@ -154,12 +154,12 @@ export default function Dashboard() {
             </div>
             <div className="flex items-baseline gap-2 mb-6">
               <span
-                className="text-4xl font-extrabold text-[#ff7351]"
+                className="text-4xl font-extrabold text-error"
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
               >
                 9
               </span>
-              <span className="text-[#ababa8] font-medium">critical issues</span>
+              <span className="text-on-surface-variant font-medium">critical issues</span>
             </div>
             <div className="space-y-4">
               {[
@@ -168,9 +168,9 @@ export default function Dashboard() {
                 { icon: "electric_bolt", label: "Grid Systems", width: "25%", green: true },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#242624] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center">
                     <span
-                      className="material-symbols-outlined text-sm text-[#ababa8]"
+                      className="material-symbols-outlined text-sm text-on-surface-variant"
                       translate="no"
                     >
                       {item.icon}
@@ -178,9 +178,9 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1">
                     <p className="text-xs font-bold">{item.label}</p>
-                    <div className="h-1 w-full bg-[#242624] rounded-full mt-1">
+                    <div className="h-1 w-full bg-surface-container-highest rounded-full mt-1">
                       <div
-                        className={`h-full rounded-full ${item.green ? "bg-[#aeee2a]" : "bg-[#ff7351]"}`}
+                        className={`h-full rounded-full ${item.green ? "bg-primary" : "bg-error"}`}
                         style={{ width: item.width }}
                       />
                     </div>

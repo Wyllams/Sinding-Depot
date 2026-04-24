@@ -43,14 +43,14 @@ const ALL_SERVICES: ServiceDef[] = [
 
 // ─── Input classes (matches Create Job) ──────────────────────────
 const detailInputCls =
-  "w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#aeee2a] focus:ring-1 focus:ring-[#aeee2a] transition-all h-[48px] text-[15px]";
-const detailLabelCls = "text-xs uppercase tracking-wider text-[#ababa8] font-bold";
+  "w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all h-[48px] text-[15px]";
+const detailLabelCls = "text-xs uppercase tracking-wider text-on-surface-variant font-bold";
 
 // ─── SectionHeader (matches Create Job) ──────────────────────────
 function SectionHeader({ icon, title }: { icon: string; title: string }) {
   return (
     <div className="flex items-center gap-3 mb-6">
-      <span className="material-symbols-outlined text-[#aeee2a]" translate="no">
+      <span className="material-symbols-outlined text-primary" translate="no">
         {icon}
       </span>
       <h2 className="text-xl font-bold" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
@@ -87,7 +87,7 @@ function DetailServicesCarousel({
       <button
         type="button"
         onClick={() => scroll("left")}
-        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 rounded-full bg-[#242624] border border-[#474846]/40 text-[#ababa8] hover:text-[#aeee2a] hover:border-[#aeee2a]/40 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover/carousel:opacity-100 cursor-pointer"
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 rounded-full bg-surface-container-highest border border-outline-variant/40 text-on-surface-variant hover:text-primary hover:border-primary/40 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover/carousel:opacity-100 cursor-pointer"
       >
         <span className="material-symbols-outlined text-[20px]" translate="no">chevron_left</span>
       </button>
@@ -123,8 +123,8 @@ function DetailServicesCarousel({
                 hasSubs ? "w-[calc(40%-12px)] min-w-[240px]" : "w-[calc(25%-12px)] min-w-[140px]"
               } ${
                 on
-                  ? "bg-[#121412] border-2"
-                  : "bg-[#121412] border border-[#474846]/15 hover:bg-[#1e201e]"
+                  ? "bg-surface-container-low border-2"
+                  : "bg-surface-container-low border border-outline-variant/15 hover:bg-surface-container-high"
               }`}
               style={on ? { borderColor: svc.color, boxShadow: `0 0 15px ${svc.color}1A` } : {}}
             >
@@ -139,15 +139,15 @@ function DetailServicesCarousel({
                           <span
                             className={`material-symbols-outlined text-2xl transition-colors ${
                               on
-                                ? (subOn ? "" : "text-[#faf9f5]/60")
-                                : "text-[#ababa8]"
+                                ? (subOn ? "" : "text-on-surface/60")
+                                : "text-on-surface-variant"
                             }`}
                             style={on && subOn ? { color: svc.color } : {}}
                             translate="no"
                           >
                             {sub.icon}
                           </span>
-                          <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors text-[#faf9f5]`}>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors text-on-surface`}>
                             {sub.label}
                           </span>
                         </div>
@@ -160,14 +160,14 @@ function DetailServicesCarousel({
                 <div className="flex flex-col items-center text-center gap-2">
                   <span
                     className={`material-symbols-outlined text-3xl transition-colors ${
-                      !on ? "text-[#ababa8]" : ""
+                      !on ? "text-on-surface-variant" : ""
                     }`}
                     style={on ? { color: svc.color } : {}}
                     translate="no"
                   >
                     {svc.icon}
                   </span>
-                  <span className="font-bold tracking-tight text-sm text-[#faf9f5]">{svc.label}</span>
+                  <span className="font-bold tracking-tight text-sm text-on-surface">{svc.label}</span>
                 </div>
               )}
 
@@ -175,9 +175,9 @@ function DetailServicesCarousel({
               {on && hasPartnersList && (
                 <div className="mt-3 flex justify-center w-full">
                    {partner ? (
-                       <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider px-2.5 py-1 rounded-md border" style={{ backgroundColor: `${svc.color}33`, borderColor: svc.color }}>{partner}</span>
+                       <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider px-2.5 py-1 rounded-md border" style={{ backgroundColor: `${svc.color}33`, borderColor: svc.color }}>{partner}</span>
                    ) : (
-                       <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider border px-2.5 py-1 rounded-full transition-colors" style={{ backgroundColor: `${svc.color}1A`, borderColor: `${svc.color}80` }}>Assign Partner</span>
+                       <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider border px-2.5 py-1 rounded-full transition-colors" style={{ backgroundColor: `${svc.color}1A`, borderColor: `${svc.color}80` }}>Assign Partner</span>
                    )}
                 </div>
               )}
@@ -190,7 +190,7 @@ function DetailServicesCarousel({
                     e.stopPropagation();
                     onToggle(svc.id);
                   }}
-                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-[#1a1c1a] border border-[#ff7351]/50 text-[#ff7351] hover:bg-[#ff7351] hover:text-[#121412] transition-colors shadow-md z-10 cursor-pointer"
+                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-surface-container-high border border-error/50 text-error hover:bg-error hover:text-surface-container-low transition-colors shadow-md z-10 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[14px]" translate="no">close</span>
                 </button>
@@ -204,7 +204,7 @@ function DetailServicesCarousel({
       <button
         type="button"
         onClick={() => scroll("right")}
-        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-9 h-9 rounded-full bg-[#242624] border border-[#474846]/40 text-[#ababa8] hover:text-[#aeee2a] hover:border-[#aeee2a]/40 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover/carousel:opacity-100 cursor-pointer"
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-9 h-9 rounded-full bg-surface-container-highest border border-outline-variant/40 text-on-surface-variant hover:text-primary hover:border-primary/40 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover/carousel:opacity-100 cursor-pointer"
       >
         <span className="material-symbols-outlined text-[20px]" translate="no">chevron_right</span>
       </button>
@@ -260,7 +260,7 @@ const STATUS_MAP: Record<string, { label: string; style: string }> = {
   pending:     { label: "Pending",     style: "bg-[#ef4444]/20 text-[#ef4444]" },
   tentative:   { label: "Tentative",   style: "bg-[#f5a623]/20 text-[#f5a623]" },
   scheduled:   { label: "Confirmed",   style: "bg-[#60b8f5]/20 text-[#60b8f5]" },
-  in_progress: { label: "In Progress", style: "bg-[#aeee2a]/20 text-[#aeee2a]" },
+  in_progress: { label: "In Progress", style: "bg-primary/20 text-primary" },
   done:        { label: "Done",        style: "bg-[#22c55e]/20 text-[#22c55e]" },
 };
 
@@ -371,16 +371,16 @@ function PaintColorsCard({ jobId }: { jobId: string }) {
   const visibleColors = colors.filter((c) => c.color_code !== "NOT_PAINTED");
 
   return (
-    <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
+    <div className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/15">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] flex items-center gap-2">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
           <span className="material-symbols-outlined text-[14px] text-[#f5a623]" translate="no">format_paint</span>
           Paint Colors
         </h3>
         {isLocked && (
           <div className="flex items-center gap-2">
             {overrideActive ? (
-              <span className="text-[10px] font-bold text-[#aeee2a] bg-[#aeee2a]/10 px-2 py-1 rounded-full">✓ Edit Allowed</span>
+              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">✓ Edit Allowed</span>
             ) : (
               <button
                 onClick={handleOverride}
@@ -397,7 +397,7 @@ function PaintColorsCard({ jobId }: { jobId: string }) {
                 )}
               </button>
             )}
-            <span className="text-[10px] font-bold text-[#ff7351] bg-[#ff7351]/10 px-2 py-1 rounded-full flex items-center gap-1">
+            <span className="text-[10px] font-bold text-error bg-error/10 px-2 py-1 rounded-full flex items-center gap-1">
               <span className="material-symbols-outlined text-[10px]" translate="no">lock</span>
               Locked
             </span>
@@ -407,13 +407,13 @@ function PaintColorsCard({ jobId }: { jobId: string }) {
 
       {loadingColors ? (
         <div className="flex justify-center py-4">
-          <div className="w-5 h-5 border-2 border-[#474846] border-t-[#aeee2a] rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-outline-variant border-t-primary rounded-full animate-spin" />
         </div>
       ) : visibleColors.length === 0 ? (
         <div className="text-center py-6">
-          <p className="text-xs text-[#474846]">No colors submitted yet</p>
+          <p className="text-xs text-outline-variant">No colors submitted yet</p>
           {paintDate && (
-            <p className="text-[10px] text-[#ababa8] mt-1">
+            <p className="text-[10px] text-on-surface-variant mt-1">
               Paint scheduled: {(() => { const _d = new Date(paintDate); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}
             </p>
           )}
@@ -421,12 +421,12 @@ function PaintColorsCard({ jobId }: { jobId: string }) {
       ) : (
         <div className="space-y-0">
           {visibleColors.map((c) => (
-            <div key={c.surface_area} className="flex items-center justify-between py-2.5 border-b border-[#474846]/15 last:border-0">
-              <span className="text-xs text-[#ababa8] capitalize">{c.surface_area.replace(/_/g, " ")}</span>
+            <div key={c.surface_area} className="flex items-center justify-between py-2.5 border-b border-outline-variant/15 last:border-0">
+              <span className="text-xs text-on-surface-variant capitalize">{c.surface_area.replace(/_/g, " ")}</span>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-[#faf9f5] font-mono">{c.color_code}</span>
+                <span className="text-xs font-black text-on-surface font-mono">{c.color_code}</span>
                 <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                  c.status === "approved" ? "bg-[#aeee2a]/20 text-[#aeee2a]" : "bg-[#f5a623]/20 text-[#f5a623]"
+                  c.status === "approved" ? "bg-primary/20 text-primary" : "bg-[#f5a623]/20 text-[#f5a623]"
                 }`}>
                   {c.status}
                 </span>
@@ -434,8 +434,8 @@ function PaintColorsCard({ jobId }: { jobId: string }) {
             </div>
           ))}
           {paintDate && (
-            <div className="pt-3 mt-2 border-t border-[#474846]/30">
-              <p className="text-[10px] text-[#ababa8] flex items-center gap-1">
+            <div className="pt-3 mt-2 border-t border-outline-variant/30">
+              <p className="text-[10px] text-on-surface-variant flex items-center gap-1">
                 <span className="material-symbols-outlined text-[12px]" translate="no">event</span>
                 Paint: {(() => { const _d = new Date(paintDate); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}
               </p>
@@ -1408,7 +1408,7 @@ export default function ProjectDetailPage() {
       <>
         <TopBar />
         <main className="flex items-center justify-center min-h-[60vh]">
-          <div className="flex flex-col items-center gap-4 text-[#ababa8]">
+          <div className="flex flex-col items-center gap-4 text-on-surface-variant">
             <span className="material-symbols-outlined text-5xl animate-spin" translate="no">progress_activity</span>
             <p className="text-base font-bold">Loading project...</p>
           </div>
@@ -1422,12 +1422,12 @@ export default function ProjectDetailPage() {
       <>
         <TopBar />
         <main className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <div className="w-16 h-16 rounded-full bg-[#1e201e] flex items-center justify-center">
-            <span className="material-symbols-outlined text-2xl text-[#ff7351]" translate="no">error</span>
+          <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center">
+            <span className="material-symbols-outlined text-2xl text-error" translate="no">error</span>
           </div>
-          <p className="text-lg font-bold text-[#faf9f5]">Project not found</p>
+          <p className="text-lg font-bold text-on-surface">Project not found</p>
           <Link href="/projects">
-            <button className="px-6 py-2.5 bg-[#aeee2a] text-[#3a5400] font-bold rounded-xl hover:bg-[#a0df14] transition-colors">
+            <button className="px-6 py-2.5 bg-primary text-[#3a5400] font-bold rounded-xl hover:bg-[#a0df14] transition-colors">
               Back to Projects
             </button>
           </Link>
@@ -1453,25 +1453,25 @@ export default function ProjectDetailPage() {
 
         {/* ── Back + Hero ── */}
         <div className="mb-8">
-          <Link href="/projects" className="inline-flex items-center gap-2 text-[#ababa8] hover:text-[#aeee2a] transition-colors mb-5 font-bold text-xs tracking-widest uppercase">
+          <Link href="/projects" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors mb-5 font-bold text-xs tracking-widest uppercase">
             <span className="material-symbols-outlined text-[16px]" translate="no">arrow_back</span>
             All Projects
           </Link>
 
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl sm:text-5xl font-extrabold text-[#faf9f5] tracking-tighter leading-none mb-3" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+              <h1 className="text-3xl sm:text-5xl font-extrabold text-on-surface tracking-tighter leading-none mb-3" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                 {job.customer?.full_name ?? job.title}
               </h1>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`px-4 py-1.5 text-xs font-bold rounded-full tracking-wider ${statusConf.style}`}>
                   {statusConf.label}
                 </span>
-                <span className="text-[#ababa8] text-sm font-mono">{job.job_number}</span>
+                <span className="text-on-surface-variant text-sm font-mono">{job.job_number}</span>
                 {fullAddress && (
                   <button
                     onClick={handleCopyAddress}
-                    className="flex items-center gap-1.5 text-[#ababa8] hover:text-[#aeee2a] transition-colors text-sm"
+                    className="flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors text-sm"
                   >
                     <span className="material-symbols-outlined text-[14px]" translate="no">location_on</span>
                     {fullAddress}
@@ -1489,7 +1489,7 @@ export default function ProjectDetailPage() {
                 value={gateStatus}
                 onChange={(val) => handleGateChange(val)}
                 options={Object.entries(GATE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }))}
-                className="w-full bg-[#121412] border border-[#474846] rounded-xl pl-8 pr-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                className="w-full bg-surface-container-low border border-outline-variant rounded-xl pl-8 pr-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-on-surface hover:border-primary transition-colors flex justify-between items-center"
               />
               <div
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center pointer-events-none z-10"
@@ -1523,7 +1523,7 @@ export default function ProjectDetailPage() {
             },
             { label: "Pending COs",    value: pendingCOs.length > 0 ? `${pendingCOs.length} · $${pendingValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "None", icon: "request_quote" },
           ].map((kpi: any) => (
-            <div key={kpi.label} className="bg-[#121412] rounded-2xl p-4 border border-[#474846]/15 group">
+            <div key={kpi.label} className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/15 group">
               <div className="flex items-center gap-2 mb-2">
                 <span
                   className="material-symbols-outlined text-[16px]"
@@ -1532,7 +1532,7 @@ export default function ProjectDetailPage() {
                 >
                   {kpi.icon}
                 </span>
-                <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest">{kpi.label}</p>
+                <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{kpi.label}</p>
               </div>
               
               {kpi.label.includes("Date") ? (
@@ -1541,11 +1541,11 @@ export default function ProjectDetailPage() {
                   onChange={(iso) => handleAutoSave("jobs", job.id, kpi.key === "estimated_end_date" ? "target_completion_date" : (kpi.key as string), iso || null)}
                   variant="ghost"
                   placeholder="Set date"
-                  className="text-sm font-black -ml-1 pl-1 py-1 rounded hover:bg-[#242624] focus-within:bg-[#1e201e] transition-colors"
+                  className="text-sm font-black -ml-1 pl-1 py-1 rounded hover:bg-surface-container-highest focus-within:bg-surface-container-high transition-colors"
                   disableSundays={kpi.key !== "contract_signed_at"}
                 />
               ) : (
-                <p className={`text-sm font-black ${kpi.danger ? "text-[#ff7351]" : "text-[#faf9f5]"}`}>{kpi.value}</p>
+                <p className={`text-sm font-black ${kpi.danger ? "text-error" : "text-on-surface"}`}>{kpi.value}</p>
               )}
             </div>
           ))}
@@ -1555,7 +1555,7 @@ export default function ProjectDetailPage() {
         <ProjectWeatherCard city={job.city ?? ""} state={job.state ?? ""} />
 
         {/* ── Tabs ── */}
-        <div className="flex bg-[#121412] p-1 rounded-xl w-fit max-w-full overflow-x-auto gap-0.5 mb-8">
+        <div className="flex bg-surface-container-low p-1 rounded-xl w-fit max-w-full overflow-x-auto gap-0.5 mb-8">
           {[
             { key: "overview",        label: "Overview",        icon: "dashboard" },
             { key: "crews",           label: "Crews",           icon: "groups" },
@@ -1567,8 +1567,8 @@ export default function ProjectDetailPage() {
               onClick={() => setActiveTab(tab.key as typeof activeTab)}
               className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors ${
                 activeTab === tab.key
-                  ? "bg-[#242624] text-[#aeee2a]"
-                  : "text-[#ababa8] hover:text-[#faf9f5]"
+                  ? "bg-surface-container-highest text-primary"
+                  : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
               <span className="material-symbols-outlined text-[15px]" translate="no">{tab.icon}</span>
@@ -1586,7 +1586,7 @@ export default function ProjectDetailPage() {
             {/* ── Section: Client Information ── */}
             <section>
               <SectionHeader icon="person_add" title="Client Information" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
                 <div className="space-y-2">
                   <label className={detailLabelCls}>Client Name *</label>
                   <input
@@ -1635,7 +1635,7 @@ export default function ProjectDetailPage() {
             {/* ── Section: Project Address ── */}
             <section>
               <SectionHeader icon="location_on" title="Project Address" />
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
                 <div className="md:col-span-4 space-y-2">
                   <label className={detailLabelCls}>Street Address *</label>
                   <input
@@ -1683,11 +1683,11 @@ export default function ProjectDetailPage() {
             {/* ── Section: Job Details ── */}
             <section>
               <SectionHeader icon="architecture" title="Job Details" />
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
                 <div className="space-y-2">
                   <label className={detailLabelCls}>Contract Value</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-bold text-[15px]">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-bold text-[15px]">$</span>
                     <input
                       type="text"
                       defaultValue={job.contract_amount != null ? job.contract_amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ""}
@@ -1714,7 +1714,7 @@ export default function ProjectDetailPage() {
                 </div>
                 <div className="space-y-2">
                   <label className={detailLabelCls}>Job Number</label>
-                  <div className={`${detailInputCls} flex items-center text-[#ababa8] cursor-default`}>
+                  <div className={`${detailInputCls} flex items-center text-on-surface-variant cursor-default`}>
                     {job.job_number}
                   </div>
                 </div>
@@ -1772,7 +1772,7 @@ export default function ProjectDetailPage() {
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8">
               <div className="flex flex-col">
                 <SectionHeader icon="traffic" title="Operational Status" />
-                <div className="p-6 sm:p-8 rounded-xl bg-[#121412] border border-[#474846]/15 h-full">
+                <div className="p-6 sm:p-8 rounded-xl bg-surface-container-low border border-outline-variant/15 h-full">
                   <div className="space-y-4">
                     <label className={detailLabelCls}>Current Gate Status</label>
                     <div className="relative group w-full">
@@ -1780,7 +1780,7 @@ export default function ProjectDetailPage() {
                         value={gateStatus}
                         onChange={(val) => handleGateChange(val)}
                         options={Object.entries(GATE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }))}
-                        className="w-full bg-[#0a0a0a] border border-[#474846] rounded-xl pl-12 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-[#faf9f5] shadow-inner transition-colors flex justify-between items-center hover:border-[#aeee2a]/50"
+                        className="w-full bg-[#0a0a0a] border border-outline-variant rounded-xl pl-12 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-on-surface shadow-inner transition-colors flex justify-between items-center hover:border-primary/50"
                       />
                       <div
                         className="absolute left-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 pointer-events-none"
@@ -1808,7 +1808,7 @@ export default function ProjectDetailPage() {
             {/* ── Section: Internal Notes ── */}
             <section>
               <SectionHeader icon="description" title="Internal Notes" />
-              <div className="p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+              <div className="p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
                 <div className="space-y-2">
                   <label className={detailLabelCls}>Project Notes</label>
                   <textarea
@@ -1827,12 +1827,12 @@ export default function ProjectDetailPage() {
               <div className="flex items-center justify-between">
                 <SectionHeader icon="request_quote" title="Change Orders" />
                 <Link href="/change-orders">
-                  <button className="text-[#aeee2a] text-xs font-bold uppercase hover:underline tracking-widest mb-6">View All →</button>
+                  <button className="text-primary text-xs font-bold uppercase hover:underline tracking-widest mb-6">View All →</button>
                 </Link>
               </div>
-              <div className="p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+              <div className="p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
                 {job.change_orders.length === 0 ? (
-                  <p className="text-sm text-[#474846] text-center py-4">No change orders for this project</p>
+                  <p className="text-sm text-outline-variant text-center py-4">No change orders for this project</p>
                 ) : (
                   <div className="space-y-3">
                     {job.change_orders.map((co: any) => {
@@ -1845,9 +1845,9 @@ export default function ProjectDetailPage() {
                       };
                       const c = coColors[co.status] ?? "#ababa8";
                       return (
-                        <div key={co.id} className="flex items-center justify-between p-4 bg-[#242624] rounded-xl border border-[#474846]/15 hover:border-[#474846]/40 transition-colors">
+                        <div key={co.id} className="flex items-center justify-between p-4 bg-surface-container-highest rounded-xl border border-outline-variant/15 hover:border-outline-variant/40 transition-colors">
                           <div>
-                            <p className="text-sm font-bold text-[#faf9f5]">{co.title}</p>
+                            <p className="text-sm font-bold text-on-surface">{co.title}</p>
                             <span
                               className="text-[10px] font-black uppercase"
                               style={{ color: c }}
@@ -1855,7 +1855,7 @@ export default function ProjectDetailPage() {
                               {co.status.replace(/_/g, " ")}
                             </span>
                           </div>
-                          <p className="text-sm font-black text-[#faf9f5]">
+                          <p className="text-sm font-black text-on-surface">
                             {co.proposed_amount != null ? `$${co.proposed_amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "—"}
                           </p>
                         </div>
@@ -1873,24 +1873,24 @@ export default function ProjectDetailPage() {
             TAB 2: CREWS
         ══════════════════════════════════════════════════ */}
         {activeTab === "crews" && (
-          <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
+          <div className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/15">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Assigned Crews & Partners</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Assigned Crews & Partners</h3>
               <Link href="/crews">
-                <button className="text-[#aeee2a] text-xs font-bold hover:underline">Manage Crews →</button>
+                <button className="text-primary text-xs font-bold hover:underline">Manage Crews →</button>
               </Link>
             </div>
 
             {job.crews.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 py-12 text-[#ababa8]">
-                <div className="w-14 h-14 rounded-full bg-[#1e201e] flex items-center justify-center">
-                  <span className="material-symbols-outlined text-2xl text-[#aeee2a]" translate="no">groups</span>
+              <div className="flex flex-col items-center gap-3 py-12 text-on-surface-variant">
+                <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center">
+                  <span className="material-symbols-outlined text-2xl text-primary" translate="no">groups</span>
                 </div>
-                <p className="text-sm font-bold text-[#faf9f5]">No crews assigned yet</p>
+                <p className="text-sm font-bold text-on-surface">No crews assigned yet</p>
                 <p className="text-xs">Browse available crews that match this project's services.</p>
                 <button
                   onClick={() => { setCrewPopupOpen(true); fetchMatchingCrews(); }}
-                  className="mt-2 px-5 py-2 bg-[#aeee2a] text-[#3a5400] font-bold text-xs rounded-xl hover:bg-[#a0df14] transition-colors cursor-pointer"
+                  className="mt-2 px-5 py-2 bg-primary text-[#3a5400] font-bold text-xs rounded-xl hover:bg-[#a0df14] transition-colors cursor-pointer"
                 >
                   Browse Crews
                 </button>
@@ -1901,7 +1901,7 @@ export default function ProjectDetailPage() {
                   const discKey = (jc.crew?.discipline ?? "").toLowerCase();
                   const cVis = DISCIPLINE_VIS[discKey] ?? { icon: "construction", color: "#ababa8" };
                   return (
-                    <div key={idx} className="bg-[#1e201e] rounded-xl p-5 border border-[#474846]/20 hover:border-[#474846]/40 transition-colors">
+                    <div key={idx} className="bg-surface-container-high rounded-xl p-5 border border-outline-variant/20 hover:border-outline-variant/40 transition-colors">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <div
@@ -1911,7 +1911,7 @@ export default function ProjectDetailPage() {
                             <span className="material-symbols-outlined" style={{ color: cVis.color }} translate="no">{cVis.icon}</span>
                           </div>
                           <div>
-                            <p className="font-black text-[#faf9f5] text-sm uppercase tracking-wide">{jc.crew?.name ?? "—"}</p>
+                            <p className="font-black text-on-surface text-sm uppercase tracking-wide">{jc.crew?.name ?? "—"}</p>
                             <p className="text-[10px] uppercase font-bold" style={{ color: cVis.color }}>{jc.crew?.discipline ?? "—"}</p>
                           </div>
                         </div>
@@ -1925,16 +1925,16 @@ export default function ProjectDetailPage() {
                             setCrewPopupOpen(true);
                             fetchMatchingCrews();
                           }}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-[#ababa8] hover:text-[#faf9f5] bg-[#242624] hover:bg-[#323632] border border-[#474846]/30 transition-all cursor-pointer"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-on-surface-variant hover:text-on-surface bg-surface-container-highest hover:bg-[#323632] border border-outline-variant/30 transition-all cursor-pointer"
                         >
                           <span className="material-symbols-outlined text-[13px]" translate="no">swap_horiz</span>
                           Change
                         </button>
                       </div>
-                      <div className="space-y-1 text-xs text-[#ababa8]">
-                        {jc.start_date && <p>Start: <span className="text-[#faf9f5] font-bold">{fmt(jc.start_date)}</span></p>}
-                        {jc.end_date && <p>End: <span className="text-[#faf9f5] font-bold">{fmt(jc.end_date)}</span></p>}
-                        {!jc.start_date && !jc.end_date && <p className="text-[#474846] italic">No schedule set</p>}
+                      <div className="space-y-1 text-xs text-on-surface-variant">
+                        {jc.start_date && <p>Start: <span className="text-on-surface font-bold">{fmt(jc.start_date)}</span></p>}
+                        {jc.end_date && <p>End: <span className="text-on-surface font-bold">{fmt(jc.end_date)}</span></p>}
+                        {!jc.start_date && !jc.end_date && <p className="text-outline-variant italic">No schedule set</p>}
                       </div>
                     </div>
                   );
@@ -1943,12 +1943,12 @@ export default function ProjectDetailPage() {
                 {/* Add Crew Button Card */}
                 <button 
                   onClick={() => { setCrewPopupOpen(true); fetchMatchingCrews(); }}
-                  className="bg-[#1e201e]/30 border-2 border-dashed border-[#474846]/40 rounded-xl p-5 flex flex-col items-center justify-center min-h-[140px] hover:border-[#aeee2a]/50 hover:bg-[#aeee2a]/5 transition-colors cursor-pointer group"
+                  className="bg-surface-container-high/30 border-2 border-dashed border-outline-variant/40 rounded-xl p-5 flex flex-col items-center justify-center min-h-[140px] hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer group"
                 >
-                  <div className="w-10 h-10 rounded-full bg-[#242624] group-hover:bg-[#aeee2a]/20 flex items-center justify-center mb-3 transition-colors">
-                    <span className="material-symbols-outlined text-[#474846] group-hover:text-[#aeee2a] transition-colors" translate="no">add</span>
+                  <div className="w-10 h-10 rounded-full bg-surface-container-highest group-hover:bg-primary/20 flex items-center justify-center mb-3 transition-colors">
+                    <span className="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" translate="no">add</span>
                   </div>
-                  <span className="text-xs font-bold text-[#ababa8] group-hover:text-[#faf9f5] transition-colors">Assign Another Crew</span>
+                  <span className="text-xs font-bold text-on-surface-variant group-hover:text-on-surface transition-colors">Assign Another Crew</span>
                 </button>
               </div>
             )}
@@ -1963,25 +1963,25 @@ export default function ProjectDetailPage() {
 
             {/* Vault Header */}
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-[#faf9f5]">Project Vault</h3>
-              <p className="text-xs text-[#ababa8]">Documents, photos, and media files for {job.job_number}</p>
+              <h3 className="text-sm font-bold text-on-surface">Project Vault</h3>
+              <p className="text-xs text-on-surface-variant">Documents, photos, and media files for {job.job_number}</p>
             </div>
 
             {/* ── Signing Documents (Milestones) ── */}
-            <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15">
+            <div className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/15">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#6366f1]/10 border border-[#6366f1]/20 flex items-center justify-center">
                     <span className="material-symbols-outlined text-[#818cf8]" translate="no">contract_edit</span>
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-[#faf9f5]">Signing Documents</h4>
-                    <p className="text-[10px] text-[#ababa8]">Job Start Certificate & Certificates of Completion</p>
+                    <h4 className="text-sm font-black text-on-surface">Signing Documents</h4>
+                    <p className="text-[10px] text-on-surface-variant">Job Start Certificate & Certificates of Completion</p>
                   </div>
                 </div>
                 <button
                   onClick={fetchMilestones}
-                  className="text-[10px] text-[#aeee2a] font-bold uppercase tracking-wider hover:underline cursor-pointer"
+                  className="text-[10px] text-primary font-bold uppercase tracking-wider hover:underline cursor-pointer"
                 >
                   Refresh
                 </button>
@@ -1989,15 +1989,15 @@ export default function ProjectDetailPage() {
 
               {loadingMilestones ? (
                 <div className="flex justify-center py-8">
-                  <span className="material-symbols-outlined text-2xl text-[#ababa8] animate-spin" translate="no">progress_activity</span>
+                  <span className="material-symbols-outlined text-2xl text-on-surface-variant animate-spin" translate="no">progress_activity</span>
                 </div>
               ) : milestones.length === 0 ? (
-                <p className="text-xs text-[#474846] py-4 text-center">No signing documents generated yet. They are created automatically when a new project is submitted.</p>
+                <p className="text-xs text-outline-variant py-4 text-center">No signing documents generated yet. They are created automatically when a new project is submitted.</p>
               ) : (
                 <div className="space-y-3">
                   {milestones.map((ms: any) => {
                     const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-                      draft:             { bg: "bg-[#474846]/15", text: "text-[#ababa8]", label: "Draft" },
+                      draft:             { bg: "bg-outline-variant/15", text: "text-on-surface-variant", label: "Draft" },
                       pending_signature: { bg: "bg-[#f59e0b]/10", text: "text-[#f59e0b]", label: "Awaiting Signature" },
                       signed:            { bg: "bg-[#22c55e]/10", text: "text-[#22c55e]", label: "Signed" },
                       paid:              { bg: "bg-[#818cf8]/10", text: "text-[#818cf8]", label: "Paid" },
@@ -2009,15 +2009,15 @@ export default function ProjectDetailPage() {
                     const signingUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/projects/${jobId}/contract/${ms.id}`;
 
                     return (
-                      <div key={ms.id} className="bg-[#1e201e] rounded-xl p-4 border border-[#474846]/15">
+                      <div key={ms.id} className="bg-surface-container-high rounded-xl p-4 border border-outline-variant/15">
                         <div className="flex items-center justify-between gap-3 flex-wrap">
                           <div className="flex items-center gap-3 min-w-0">
                             <span className="material-symbols-outlined text-[20px] text-[#818cf8] shrink-0" translate="no">
                               {ms.document_type === "job_start" ? "play_circle" : "verified"}
                             </span>
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-[#faf9f5] truncate">{ms.title}</p>
-                              <p className="text-[10px] text-[#ababa8]">
+                              <p className="text-sm font-bold text-on-surface truncate">{ms.title}</p>
+                              <p className="text-[10px] text-on-surface-variant">
                                 {ms.amount > 0 ? `$${ms.amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "No value set"}
                                 {ms.signed_at && ` · Signed ${fmt(ms.signed_at)}`}
                               </p>
@@ -2035,7 +2035,7 @@ export default function ProjectDetailPage() {
                                   await supabase.from("project_payment_milestones").update({ status: "pending_signature" }).eq("id", ms.id);
                                   fetchMilestones();
                                 }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#aeee2a] text-[#3a5400] text-[10px] font-black uppercase rounded-lg hover:bg-[#a0df14] transition-colors cursor-pointer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-[#3a5400] text-[10px] font-black uppercase rounded-lg hover:bg-[#a0df14] transition-colors cursor-pointer"
                               >
                                 <span className="material-symbols-outlined text-[14px]" translate="no">send</span>
                                 Send to Client
@@ -2072,7 +2072,7 @@ export default function ProjectDetailPage() {
                                   setCopiedLink(ms.id);
                                   setTimeout(() => setCopiedLink(null), 2000);
                                 }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#242624] text-[#faf9f5] text-[10px] font-bold rounded-lg hover:bg-[#323632] transition-colors cursor-pointer border border-[#474846]/30"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-highest text-on-surface text-[10px] font-bold rounded-lg hover:bg-[#323632] transition-colors cursor-pointer border border-outline-variant/30"
                               >
                                 <span className="material-symbols-outlined text-[14px]" translate="no">
                                   {copiedLink === ms.id ? "check" : "link"}
@@ -2093,71 +2093,71 @@ export default function ProjectDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               {/* Block 1: Contracts & Documents */}
-              <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15 flex flex-col">
+              <div className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/15 flex flex-col">
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-[#aeee2a]/10 border border-[#aeee2a]/20 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[#aeee2a]" translate="no">description</span>
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary" translate="no">description</span>
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-[#faf9f5]">Contracts & Docs</h4>
-                    <p className="text-[10px] text-[#ababa8]">Permits, contracts, quotes</p>
+                    <h4 className="text-sm font-black text-on-surface">Contracts & Docs</h4>
+                    <p className="text-[10px] text-on-surface-variant">Permits, contracts, quotes</p>
                   </div>
                 </div>
-                <div className="flex-1 border-2 border-dashed border-[#474846]/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-[#0d0f0d] hover:border-[#aeee2a]/40 hover:bg-[#aeee2a]/5 transition-colors cursor-pointer group">
-                  <span className="material-symbols-outlined text-3xl text-[#474846] group-hover:text-[#aeee2a] mb-2 transition-colors" translate="no">upload_file</span>
-                  <p className="text-xs font-bold text-[#faf9f5]">Drop files here</p>
-                  <p className="text-[10px] text-[#ababa8] mt-1">PDF, DOCX up to 20MB</p>
+                <div className="flex-1 border-2 border-dashed border-outline-variant/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-background hover:border-primary/40 hover:bg-primary/5 transition-colors cursor-pointer group">
+                  <span className="material-symbols-outlined text-3xl text-outline-variant group-hover:text-primary mb-2 transition-colors" translate="no">upload_file</span>
+                  <p className="text-xs font-bold text-on-surface">Drop files here</p>
+                  <p className="text-[10px] text-on-surface-variant mt-1">PDF, DOCX up to 20MB</p>
                 </div>
-                <p className="text-[10px] text-[#474846] text-center mt-3">No documents yet</p>
+                <p className="text-[10px] text-outline-variant text-center mt-3">No documents yet</p>
               </div>
 
               {/* Block 2: Photos */}
-              <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15 flex flex-col">
+              <div className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/15 flex flex-col">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 rounded-xl bg-[#60b8f5]/10 border border-[#60b8f5]/20 flex items-center justify-center">
                     <span className="material-symbols-outlined text-[#60b8f5]" translate="no">photo_library</span>
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-[#faf9f5]">Site Photos</h4>
-                    <p className="text-[10px] text-[#ababa8]">Before, during, after</p>
+                    <h4 className="text-sm font-black text-on-surface">Site Photos</h4>
+                    <p className="text-[10px] text-on-surface-variant">Before, during, after</p>
                   </div>
                 </div>
-                <div className="flex-1 border-2 border-dashed border-[#474846]/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-[#0d0f0d] hover:border-[#60b8f5]/40 hover:bg-[#60b8f5]/5 transition-colors cursor-pointer group">
-                  <span className="material-symbols-outlined text-3xl text-[#474846] group-hover:text-[#60b8f5] mb-2 transition-colors" translate="no">add_photo_alternate</span>
-                  <p className="text-xs font-bold text-[#faf9f5]">Upload photos</p>
-                  <p className="text-[10px] text-[#ababa8] mt-1">JPG, PNG, HEIC up to 20MB</p>
+                <div className="flex-1 border-2 border-dashed border-outline-variant/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-background hover:border-[#60b8f5]/40 hover:bg-[#60b8f5]/5 transition-colors cursor-pointer group">
+                  <span className="material-symbols-outlined text-3xl text-outline-variant group-hover:text-[#60b8f5] mb-2 transition-colors" translate="no">add_photo_alternate</span>
+                  <p className="text-xs font-bold text-on-surface">Upload photos</p>
+                  <p className="text-[10px] text-on-surface-variant mt-1">JPG, PNG, HEIC up to 20MB</p>
                 </div>
-                <p className="text-[10px] text-[#474846] text-center mt-3">No photos yet</p>
+                <p className="text-[10px] text-outline-variant text-center mt-3">No photos yet</p>
               </div>
 
               {/* Block 3: Videos */}
-              <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15 flex flex-col">
+              <div className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/15 flex flex-col">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20 flex items-center justify-center">
                     <span className="material-symbols-outlined text-[#f5a623]" translate="no">videocam</span>
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-[#faf9f5]">Video Reports</h4>
-                    <p className="text-[10px] text-[#ababa8]">Walkthroughs, inspections</p>
+                    <h4 className="text-sm font-black text-on-surface">Video Reports</h4>
+                    <p className="text-[10px] text-on-surface-variant">Walkthroughs, inspections</p>
                   </div>
                 </div>
-                <div className="flex-1 border-2 border-dashed border-[#474846]/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-[#0d0f0d] hover:border-[#f5a623]/40 hover:bg-[#f5a623]/5 transition-colors cursor-pointer group">
-                  <span className="material-symbols-outlined text-3xl text-[#474846] group-hover:text-[#f5a623] mb-2 transition-colors" translate="no">video_library</span>
-                  <p className="text-xs font-bold text-[#faf9f5]">Drop videos here</p>
-                  <p className="text-[10px] text-[#ababa8] mt-1">MP4, MOV up to 200MB</p>
+                <div className="flex-1 border-2 border-dashed border-outline-variant/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-background hover:border-[#f5a623]/40 hover:bg-[#f5a623]/5 transition-colors cursor-pointer group">
+                  <span className="material-symbols-outlined text-3xl text-outline-variant group-hover:text-[#f5a623] mb-2 transition-colors" translate="no">video_library</span>
+                  <p className="text-xs font-bold text-on-surface">Drop videos here</p>
+                  <p className="text-[10px] text-on-surface-variant mt-1">MP4, MOV up to 200MB</p>
                 </div>
-                <p className="text-[10px] text-[#474846] text-center mt-3">No videos yet</p>
+                <p className="text-[10px] text-outline-variant text-center mt-3">No videos yet</p>
               </div>
 
               {/* Block 4: Dumpster Photos (FUNCTIONAL) */}
-              <div className="bg-[#121412] rounded-2xl p-6 border border-[#474846]/15 flex flex-col">
+              <div className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/15 flex flex-col">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 rounded-xl bg-[#64748b]/10 border border-[#64748b]/20 flex items-center justify-center">
                     <span className="material-symbols-outlined text-[#64748b]" translate="no">delete</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-sm font-black text-[#faf9f5]">Dumpster</h4>
-                    <p className="text-[10px] text-[#ababa8]">Dumpster delivery & pickup photos</p>
+                    <h4 className="text-sm font-black text-on-surface">Dumpster</h4>
+                    <p className="text-[10px] text-on-surface-variant">Dumpster delivery & pickup photos</p>
                   </div>
                   {dumpsterPhotos.length > 0 && (
                     <span className="text-[10px] font-bold text-[#64748b] bg-[#64748b]/10 px-2 py-1 rounded-lg">
@@ -2180,18 +2180,18 @@ export default function ProjectDetailPage() {
                   onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-[#64748b]", "bg-[#64748b]/10"); }}
                   onDragLeave={(e) => { e.currentTarget.classList.remove("border-[#64748b]", "bg-[#64748b]/10"); }}
                   onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-[#64748b]", "bg-[#64748b]/10"); handleDumpsterUpload(e.dataTransfer.files); }}
-                  className="border-2 border-dashed border-[#474846]/40 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-[#0d0f0d] hover:border-[#64748b]/40 hover:bg-[#64748b]/5 transition-colors cursor-pointer group"
+                  className="border-2 border-dashed border-outline-variant/40 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-background hover:border-[#64748b]/40 hover:bg-[#64748b]/5 transition-colors cursor-pointer group"
                 >
                   {uploadingDumpster ? (
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 border-2 border-[#64748b]/30 border-t-[#64748b] rounded-full animate-spin" />
-                      <span className="text-xs text-[#ababa8] font-bold">Uploading...</span>
+                      <span className="text-xs text-on-surface-variant font-bold">Uploading...</span>
                     </div>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined text-2xl text-[#474846] group-hover:text-[#64748b] mb-1 transition-colors" translate="no">add_a_photo</span>
-                      <p className="text-xs font-bold text-[#faf9f5]">Upload dumpster photos</p>
-                      <p className="text-[10px] text-[#ababa8] mt-0.5">JPG, PNG, HEIC up to 20MB</p>
+                      <span className="material-symbols-outlined text-2xl text-outline-variant group-hover:text-[#64748b] mb-1 transition-colors" translate="no">add_a_photo</span>
+                      <p className="text-xs font-bold text-on-surface">Upload dumpster photos</p>
+                      <p className="text-[10px] text-on-surface-variant mt-0.5">JPG, PNG, HEIC up to 20MB</p>
                     </>
                   )}
                 </div>
@@ -2202,11 +2202,11 @@ export default function ProjectDetailPage() {
                     <div className="w-5 h-5 border-2 border-[#64748b]/30 border-t-[#64748b] rounded-full animate-spin" />
                   </div>
                 ) : dumpsterPhotos.length === 0 ? (
-                  <p className="text-[10px] text-[#474846] text-center mt-3">No dumpster photos yet</p>
+                  <p className="text-[10px] text-outline-variant text-center mt-3">No dumpster photos yet</p>
                 ) : (
                   <div className="grid grid-cols-3 gap-2 mt-3">
                     {dumpsterPhotos.map((photo) => (
-                      <div key={photo.id} className="relative group/photo rounded-lg overflow-hidden aspect-square bg-[#0d0f0d] border border-[#474846]/20">
+                      <div key={photo.id} className="relative group/photo rounded-lg overflow-hidden aspect-square bg-background border border-outline-variant/20">
                         <img
                           src={photo.url}
                           alt={photo.file_name || "Dumpster photo"}
@@ -2231,9 +2231,9 @@ export default function ProjectDetailPage() {
             </div>
 
             {/* Vault note */}
-            <div className="flex items-start gap-3 bg-[#121412] rounded-xl p-4 border border-[#474846]/15">
-              <span className="material-symbols-outlined text-[#aeee2a] shrink-0 text-[18px]" translate="no">info</span>
-              <p className="text-xs text-[#ababa8] leading-relaxed">
+            <div className="flex items-start gap-3 bg-surface-container-low rounded-xl p-4 border border-outline-variant/15">
+              <span className="material-symbols-outlined text-primary shrink-0 text-[18px]" translate="no">info</span>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
                 File storage integration with Supabase Storage is in the next sprint. Documents uploaded here will be securely stored and accessible to your team and client portal.
               </p>
             </div>
@@ -2249,11 +2249,11 @@ export default function ProjectDetailPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-black tracking-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Extra Material Requests</h3>
-                <p className="text-xs text-[#ababa8]">Purchase requests for extra materials needed on this project</p>
+                <p className="text-xs text-on-surface-variant">Purchase requests for extra materials needed on this project</p>
               </div>
               <button
                 onClick={() => setShowAddExtraMat(true)}
-                className="bg-[#aeee2a] hover:bg-[#a0df14] text-[#3a5400] font-bold px-5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-2 cursor-pointer text-xs"
+                className="bg-primary hover:bg-[#a0df14] text-[#3a5400] font-bold px-5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-2 cursor-pointer text-xs"
               >
                 <span className="material-symbols-outlined text-[16px]" translate="no">add_circle</span>
                 New Request
@@ -2261,20 +2261,20 @@ export default function ProjectDetailPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-[#121412] rounded-2xl overflow-hidden border border-[#474846]/15">
+            <div className="bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/15">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#1e201e]/50">
+                  <tr className="bg-surface-container-high/50">
                     {["Date", "Material", "Qty", "Piece Size", "Document", "Status", ""].map((col) => (
-                      <th key={col} className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#ababa8]">{col}</th>
+                      <th key={col} className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-on-surface-variant">{col}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#474846]/10">
+                <tbody className="divide-y divide-outline-variant/10">
                   {loadingExtraMat ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center gap-2 text-[#ababa8]">
+                        <div className="flex flex-col items-center gap-2 text-on-surface-variant">
                           <span className="material-symbols-outlined text-2xl animate-spin" translate="no">progress_activity</span>
                           <p className="text-xs font-bold">Loading requests...</p>
                         </div>
@@ -2283,11 +2283,11 @@ export default function ProjectDetailPage() {
                   ) : extraMaterials.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center gap-2 text-[#ababa8]">
-                          <div className="w-12 h-12 rounded-full bg-[#1e201e] flex items-center justify-center">
-                            <span className="material-symbols-outlined text-xl text-[#aeee2a]" translate="no">inventory_2</span>
+                        <div className="flex flex-col items-center gap-2 text-on-surface-variant">
+                          <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center">
+                            <span className="material-symbols-outlined text-xl text-primary" translate="no">inventory_2</span>
                           </div>
-                          <p className="text-sm font-bold text-[#faf9f5]">No requests yet</p>
+                          <p className="text-sm font-bold text-on-surface">No requests yet</p>
                           <p className="text-xs">Click &quot;New Request&quot; to add an extra material order.</p>
                         </div>
                       </td>
@@ -2297,22 +2297,22 @@ export default function ProjectDetailPage() {
                       const statusColors: Record<string, string> = {
                         pending: "bg-[#f5a623]/15 text-[#f5a623]",
                         ordered: "bg-[#60b8f5]/15 text-[#60b8f5]",
-                        delivered: "bg-[#aeee2a]/15 text-[#aeee2a]",
-                        cancelled: "bg-[#ff7351]/15 text-[#ff7351]",
+                        delivered: "bg-primary/15 text-primary",
+                        cancelled: "bg-error/15 text-error",
                       };
                       const isEditing = editingMatId === mat.id;
                       return (
-                        <tr key={mat.id} className={`transition-colors group ${isEditing ? "bg-[#aeee2a]/[0.04]" : "hover:bg-[#1e201e]"}`}>
-                          <td className="px-5 py-4 text-xs text-[#ababa8]">{fmt(mat.created_at)}</td>
+                        <tr key={mat.id} className={`transition-colors group ${isEditing ? "bg-primary/[0.04]" : "hover:bg-surface-container-high"}`}>
+                          <td className="px-5 py-4 text-xs text-on-surface-variant">{fmt(mat.created_at)}</td>
                           <td className="px-5 py-4">
                             {isEditing ? (
                               <input
                                 value={editMatFields.material_name}
                                 onChange={(e) => setEditMatFields((p) => ({ ...p, material_name: e.target.value }))}
-                                className="bg-[#1e201e] border border-[#474846]/40 rounded-lg px-3 py-1.5 text-sm text-[#faf9f5] w-full outline-none focus:border-[#aeee2a]/50"
+                                className="bg-surface-container-high border border-outline-variant/40 rounded-lg px-3 py-1.5 text-sm text-on-surface w-full outline-none focus:border-primary/50"
                               />
                             ) : (
-                              <span className="text-sm text-[#faf9f5] font-medium">{mat.material_name || "—"}</span>
+                              <span className="text-sm text-on-surface font-medium">{mat.material_name || "—"}</span>
                             )}
                           </td>
                           <td className="px-5 py-4">
@@ -2321,10 +2321,10 @@ export default function ProjectDetailPage() {
                                 type="number" min="1"
                                 value={editMatFields.quantity}
                                 onChange={(e) => setEditMatFields((p) => ({ ...p, quantity: e.target.value }))}
-                                className="bg-[#1e201e] border border-[#474846]/40 rounded-lg px-3 py-1.5 text-xs text-[#faf9f5] w-20 outline-none focus:border-[#aeee2a]/50"
+                                className="bg-surface-container-high border border-outline-variant/40 rounded-lg px-3 py-1.5 text-xs text-on-surface w-20 outline-none focus:border-primary/50"
                               />
                             ) : (
-                              <span className="bg-[#242624] px-3 py-1 rounded-lg text-xs font-bold text-[#faf9f5]">{mat.quantity}</span>
+                              <span className="bg-surface-container-highest px-3 py-1 rounded-lg text-xs font-bold text-on-surface">{mat.quantity}</span>
                             )}
                           </td>
                           <td className="px-5 py-4">
@@ -2332,10 +2332,10 @@ export default function ProjectDetailPage() {
                               <input
                                 value={editMatFields.piece_size}
                                 onChange={(e) => setEditMatFields((p) => ({ ...p, piece_size: e.target.value }))}
-                                className="bg-[#1e201e] border border-[#474846]/40 rounded-lg px-3 py-1.5 text-sm text-[#faf9f5] w-full outline-none focus:border-[#aeee2a]/50"
+                                className="bg-surface-container-high border border-outline-variant/40 rounded-lg px-3 py-1.5 text-sm text-on-surface w-full outline-none focus:border-primary/50"
                               />
                             ) : (
-                              <span className="text-sm text-[#ababa8]">{mat.piece_size}</span>
+                              <span className="text-sm text-on-surface-variant">{mat.piece_size}</span>
                             )}
                           </td>
                           <td className="px-5 py-4">
@@ -2344,9 +2344,9 @@ export default function ProjectDetailPage() {
                                 <input ref={editMatDocRef} type="file" className="hidden" onChange={(e) => handleEditMatDocUpload(e.target.files)} />
                                 {editMatFields.document_url ? (
                                   <div className="flex items-center gap-1.5">
-                                    <span className="material-symbols-outlined text-[14px] text-[#aeee2a]" translate="no">check_circle</span>
-                                    <span className="text-xs text-[#faf9f5] truncate max-w-[100px]">{editMatFields.document_name}</span>
-                                    <button onClick={() => setEditMatFields((p) => ({ ...p, document_url: null, document_name: null }))} className="text-[#ababa8] hover:text-[#ff7351] cursor-pointer">
+                                    <span className="material-symbols-outlined text-[14px] text-primary" translate="no">check_circle</span>
+                                    <span className="text-xs text-on-surface truncate max-w-[100px]">{editMatFields.document_name}</span>
+                                    <button onClick={() => setEditMatFields((p) => ({ ...p, document_url: null, document_name: null }))} className="text-on-surface-variant hover:text-error cursor-pointer">
                                       <span className="material-symbols-outlined text-[14px]" translate="no">close</span>
                                     </button>
                                   </div>
@@ -2354,10 +2354,10 @@ export default function ProjectDetailPage() {
                                   <button
                                     onClick={() => editMatDocRef.current?.click()}
                                     disabled={uploadingEditDoc}
-                                    className="text-xs text-[#ababa8] hover:text-[#aeee2a] transition-colors cursor-pointer flex items-center gap-1"
+                                    className="text-xs text-on-surface-variant hover:text-primary transition-colors cursor-pointer flex items-center gap-1"
                                   >
                                     {uploadingEditDoc ? (
-                                      <div className="w-3 h-3 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
+                                      <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                                     ) : (
                                       <span className="material-symbols-outlined text-[14px]" translate="no">upload_file</span>
                                     )}
@@ -2370,14 +2370,14 @@ export default function ProjectDetailPage() {
                                 href={mat.document_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#60b8f5] hover:text-[#aeee2a] transition-colors"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#60b8f5] hover:text-primary transition-colors"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <span className="material-symbols-outlined text-[14px]" translate="no">attach_file</span>
                                 {mat.document_name || "View"}
                               </a>
                             ) : (
-                              <span className="text-xs text-[#474846]">—</span>
+                              <span className="text-xs text-outline-variant">—</span>
                             )}
                           </td>
                           <td className="px-5 py-4">
@@ -2388,16 +2388,16 @@ export default function ProjectDetailPage() {
                               className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border-none outline-none cursor-pointer ${statusColors[mat.status] || statusColors.pending}`}
                               style={{ background: "transparent" }}
                             >
-                              <option value="pending" className="bg-[#121412] text-[#faf9f5]">Pending</option>
-                              <option value="ordered" className="bg-[#121412] text-[#faf9f5]">Ordered</option>
-                              <option value="delivered" className="bg-[#121412] text-[#faf9f5]">Delivered</option>
-                              <option value="cancelled" className="bg-[#121412] text-[#faf9f5]">Cancelled</option>
+                              <option value="pending" className="bg-surface-container-low text-on-surface">Pending</option>
+                              <option value="ordered" className="bg-surface-container-low text-on-surface">Ordered</option>
+                              <option value="delivered" className="bg-surface-container-low text-on-surface">Delivered</option>
+                              <option value="cancelled" className="bg-surface-container-low text-on-surface">Cancelled</option>
                             </select>
                           </td>
                           <td className="px-5 py-4 text-right">
                             <button
                               onClick={() => handleDeleteExtraMat(mat.id)}
-                              className="p-1.5 rounded-lg text-[#ababa8] hover:text-[#ff7351] hover:bg-[#ff7351]/10 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                              className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
                             >
                               <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
                             </button>
@@ -2413,51 +2413,51 @@ export default function ProjectDetailPage() {
             {/* Add Request Modal */}
             {showAddExtraMat && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowAddExtraMat(false)}>
-                <div className="bg-[#181a18] border border-[#474846]/30 rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()} style={{ animation: "fadeInScale 0.2s ease-out" }}>
+                <div className="bg-surface-container border border-outline-variant/30 rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()} style={{ animation: "fadeInScale 0.2s ease-out" }}>
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[#aeee2a]" translate="no">inventory_2</span>
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary" translate="no">inventory_2</span>
                     </div>
                     <div>
-                      <h3 className="text-base font-black text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>New Extra Material Request</h3>
-                      <p className="text-[10px] text-[#ababa8]">Fill in the details for the material order</p>
+                      <h3 className="text-base font-black text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>New Extra Material Request</h3>
+                      <p className="text-[10px] text-on-surface-variant">Fill in the details for the material order</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     {/* Material Name */}
                     <div>
-                      <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold block mb-1.5">Material Name</label>
+                      <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block mb-1.5">Material Name</label>
                       <input value={emMaterialName} onChange={(e) => setEmMaterialName(e.target.value)} className={detailInputCls} placeholder="e.g. J-Channel, Soffit, Fascia..." />
                     </div>
 
                     {/* Qty + Size row */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold block mb-1.5">Quantity (pcs)</label>
+                        <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block mb-1.5">Quantity (pcs)</label>
                         <input type="number" min="1" value={emQty} onChange={(e) => setEmQty(e.target.value)} className={detailInputCls} />
                       </div>
                       <div>
-                        <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold block mb-1.5">Piece Size</label>
+                        <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block mb-1.5">Piece Size</label>
                         <input value={emSize} onChange={(e) => setEmSize(e.target.value)} className={detailInputCls} placeholder={'e.g. 12ft, 4x8, 10"'} />
                       </div>
                     </div>
 
                     {/* Notes */}
                     <div>
-                      <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold block mb-1.5">Notes (optional)</label>
+                      <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block mb-1.5">Notes (optional)</label>
                       <input value={emNotes} onChange={(e) => setEmNotes(e.target.value)} className={detailInputCls} placeholder="Additional details..." />
                     </div>
 
                     {/* Document */}
                     <div>
-                      <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold block mb-1.5">Document (optional)</label>
+                      <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block mb-1.5">Document (optional)</label>
                       <input ref={extraMatDocRef} type="file" className="hidden" onChange={(e) => handleExtraMatDocUpload(e.target.files)} />
                       {emDocUrl ? (
-                        <div className="flex items-center gap-2 bg-[#242624] rounded-lg px-4 py-3">
-                          <span className="material-symbols-outlined text-[#aeee2a] text-[16px]" translate="no">check_circle</span>
-                          <span className="text-xs text-[#faf9f5] font-medium truncate flex-1">{emDocName}</span>
-                          <button onClick={() => { setEmDocUrl(null); setEmDocName(null); }} className="text-[#ababa8] hover:text-[#ff7351] transition-colors cursor-pointer">
+                        <div className="flex items-center gap-2 bg-surface-container-highest rounded-lg px-4 py-3">
+                          <span className="material-symbols-outlined text-primary text-[16px]" translate="no">check_circle</span>
+                          <span className="text-xs text-on-surface font-medium truncate flex-1">{emDocName}</span>
+                          <button onClick={() => { setEmDocUrl(null); setEmDocName(null); }} className="text-on-surface-variant hover:text-error transition-colors cursor-pointer">
                             <span className="material-symbols-outlined text-[16px]" translate="no">close</span>
                           </button>
                         </div>
@@ -2465,10 +2465,10 @@ export default function ProjectDetailPage() {
                         <button
                           onClick={() => extraMatDocRef.current?.click()}
                           disabled={uploadingExtraDoc}
-                          className="w-full border-2 border-dashed border-[#474846]/40 rounded-lg py-3 flex items-center justify-center gap-2 text-xs text-[#ababa8] hover:border-[#aeee2a]/40 hover:text-[#faf9f5] transition-colors cursor-pointer disabled:opacity-50"
+                          className="w-full border-2 border-dashed border-outline-variant/40 rounded-lg py-3 flex items-center justify-center gap-2 text-xs text-on-surface-variant hover:border-primary/40 hover:text-on-surface transition-colors cursor-pointer disabled:opacity-50"
                         >
                           {uploadingExtraDoc ? (
-                            <><div className="w-4 h-4 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" /> Uploading...</>
+                            <><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> Uploading...</>
                           ) : (
                             <><span className="material-symbols-outlined text-[16px]" translate="no">upload_file</span> Attach document</>
                           )}
@@ -2481,12 +2481,12 @@ export default function ProjectDetailPage() {
                   <div className="flex gap-3 mt-6 justify-end">
                     <button
                       onClick={() => setShowAddExtraMat(false)}
-                      className="px-5 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] font-bold text-xs hover:bg-[#242624] transition-all cursor-pointer"
+                      className="px-5 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant font-bold text-xs hover:bg-surface-container-highest transition-all cursor-pointer"
                     >Cancel</button>
                     <button
                       onClick={handleAddExtraMaterial}
                       disabled={!emMaterialName.trim() || !emSize.trim()}
-                      className="px-5 py-2.5 rounded-xl bg-[#aeee2a] text-[#3a5400] font-bold text-xs hover:bg-[#a0df14] transition-all cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="px-5 py-2.5 rounded-xl bg-primary text-[#3a5400] font-bold text-xs hover:bg-[#a0df14] transition-all cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                     >Add Request</button>
                   </div>
                 </div>
@@ -2510,16 +2510,16 @@ export default function ProjectDetailPage() {
           {/* Modal */}
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-2xl bg-[#121412] border border-[#474846]/30 rounded-2xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-2xl bg-surface-container-low border border-outline-variant/30 rounded-2xl shadow-2xl overflow-hidden"
             style={{ animation: "fadeInScale 0.2s ease-out" }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[#474846]/20">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/20">
               <div>
-                <h2 className="text-lg font-black text-[#faf9f5] tracking-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                <h2 className="text-lg font-black text-on-surface tracking-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                   {swapTarget ? "Change Crew" : "Available Crews"}
                 </h2>
-                <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest mt-1">
+                <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">
                   {swapTarget
                     ? `Swapping crew for: ${swapTarget.serviceName}`
                     : `Matching: ${job.services.map((s: any) => s.service_type?.name).filter(Boolean).join(", ") || "All Services"}`
@@ -2528,14 +2528,14 @@ export default function ProjectDetailPage() {
               </div>
               <button
                 onClick={() => { setCrewPopupOpen(false); setSwapTarget(null); }}
-                className="w-8 h-8 rounded-lg bg-[#1e201e] flex items-center justify-center text-[#ababa8] hover:text-[#faf9f5] hover:bg-[#242624] transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
               </button>
             </div>
 
             {/* Service Tags */}
-            <div className="px-6 py-3 border-b border-[#474846]/10 flex flex-wrap gap-2">
+            <div className="px-6 py-3 border-b border-outline-variant/10 flex flex-wrap gap-2">
               {job.services.map((s: any, i: number) => {
                 const svcKey = s.service_type?.name?.toLowerCase() ?? "";
                 const vis = DISCIPLINE_VIS[svcKey] ?? { icon: "construction", color: "#ababa8" };
@@ -2555,19 +2555,19 @@ export default function ProjectDetailPage() {
             {/* Body */}
             <div className="px-6 py-5 max-h-[400px] overflow-y-auto space-y-3" style={{ scrollbarWidth: "thin", scrollbarColor: "#474846 transparent" }}>
               {loadingCrews ? (
-                <div className="flex flex-col items-center gap-3 py-12 text-[#ababa8]">
+                <div className="flex flex-col items-center gap-3 py-12 text-on-surface-variant">
                   <span className="material-symbols-outlined text-3xl animate-spin" translate="no">progress_activity</span>
                   <p className="text-sm font-bold">Finding matching crews...</p>
                 </div>
               ) : availableCrews.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 py-12 text-[#ababa8]">
-                  <div className="w-14 h-14 rounded-full bg-[#1e201e] flex items-center justify-center">
-                    <span className="material-symbols-outlined text-2xl text-[#ff7351]" translate="no">group_off</span>
+                <div className="flex flex-col items-center gap-3 py-12 text-on-surface-variant">
+                  <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center">
+                    <span className="material-symbols-outlined text-2xl text-error" translate="no">group_off</span>
                   </div>
-                  <p className="text-sm font-bold text-[#faf9f5]">No crews found</p>
+                  <p className="text-sm font-bold text-on-surface">No crews found</p>
                   <p className="text-xs text-center">
                     No registered crews match the services for this project.<br />
-                    Register crews in the <Link href="/crews" className="text-[#aeee2a] hover:underline font-bold">Crews & Partners</Link> module first.
+                    Register crews in the <Link href="/crews" className="text-primary hover:underline font-bold">Crews & Partners</Link> module first.
                   </p>
                 </div>
               ) : (() => {
@@ -2621,7 +2621,7 @@ export default function ProjectDetailPage() {
                         <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: vis.color }}>
                           {specName}
                         </span>
-                        <span className="ml-auto flex items-center gap-3 text-[10px] text-[#474846] font-bold">
+                        <span className="ml-auto flex items-center gap-3 text-[10px] text-outline-variant font-bold">
                           {crews.length} crew{crews.length !== 1 ? "s" : ""}
                           <span 
                             className="material-symbols-outlined text-[16px] transition-transform duration-200"
@@ -2639,7 +2639,7 @@ export default function ProjectDetailPage() {
                           {crews.map((crew) => (
                           <div
                             key={crew.id}
-                            className="flex items-center gap-4 p-4 bg-[#1a1c1a] rounded-xl border border-[#474846]/20 hover:border-opacity-50 transition-all duration-200 group"
+                            className="flex items-center gap-4 p-4 bg-surface-container-high rounded-xl border border-outline-variant/20 hover:border-opacity-50 transition-all duration-200 group"
                             style={{ ["--accent" as string]: vis.color }}
                             onMouseEnter={(e) => (e.currentTarget.style.borderColor = `${vis.color}40`)}
                             onMouseLeave={(e) => (e.currentTarget.style.borderColor = "")}
@@ -2656,7 +2656,7 @@ export default function ProjectDetailPage() {
 
                             {/* Info */}
                             <div className="flex-1 min-w-0">
-                              <p className="font-black text-[#faf9f5] text-sm uppercase tracking-wide truncate">{crew.name}</p>
+                              <p className="font-black text-on-surface text-sm uppercase tracking-wide truncate">{crew.name}</p>
                               <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                 {crew.matchedSpecialties.map((s, i) => {
                                   const sKey = s.toLowerCase().replace(/ (installation|building)$/, "");
@@ -2676,7 +2676,7 @@ export default function ProjectDetailPage() {
 
                             {/* Phone */}
                             {crew.phone && (
-                              <span className="text-xs text-[#ababa8] font-mono shrink-0">{crew.phone}</span>
+                              <span className="text-xs text-on-surface-variant font-mono shrink-0">{crew.phone}</span>
                             )}
 
                             {/* Action */}
@@ -2793,13 +2793,13 @@ export default function ProjectDetailPage() {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-[#474846]/20 flex items-center justify-between">
-              <Link href="/crews" className="text-[#aeee2a] text-xs font-bold hover:underline">
+            <div className="px-6 py-4 border-t border-outline-variant/20 flex items-center justify-between">
+              <Link href="/crews" className="text-primary text-xs font-bold hover:underline">
                 Manage All Crews →
               </Link>
               <button
                 onClick={() => { setCrewPopupOpen(false); setSwapTarget(null); }}
-                className="px-4 py-2 bg-[#242624] text-[#faf9f5] text-xs font-bold rounded-xl hover:bg-[#2e302e] transition-colors cursor-pointer"
+                className="px-4 py-2 bg-surface-container-highest text-on-surface text-xs font-bold rounded-xl hover:bg-[#2e302e] transition-colors cursor-pointer"
               >
                 Close
               </button>
@@ -2817,7 +2817,7 @@ export default function ProjectDetailPage() {
       {/* ═══════ MODAL — ASSIGN PARTNER ═══════ */}
       {openPartnerModal && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setOpenPartnerModal(null)}>
-            <div className="bg-[#181a18] border border-[#474846]/40 rounded-2xl shadow-2xl w-full max-w-lg p-8" onClick={(e) => e.stopPropagation()} style={{ animation: "fadeInScale .2s ease" }}>
+            <div className="bg-surface-container border border-outline-variant/40 rounded-2xl shadow-2xl w-full max-w-lg p-8" onClick={(e) => e.stopPropagation()} style={{ animation: "fadeInScale .2s ease" }}>
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-4">
@@ -2826,12 +2826,12 @@ export default function ProjectDetailPage() {
                     </div>
                     <div>
                       <h2 className="text-xl font-black text-white uppercase tracking-tight">{openPartnerModal.label}</h2>
-                      <p className="text-xs text-[#ababa8] mt-1 font-medium">
+                      <p className="text-xs text-on-surface-variant mt-1 font-medium">
                         {windowsStep === "partner" ? "Select a partner" : windowsStep === "subservices" ? "Select services" : windowsStep === "config" ? "Configure windows" : windowsStep === "deckscope" ? "Configure deck scope" : windowsStep === "edit_menu" ? "Edit configuration" : windowsStep === "edit_windows" ? "Edit windows config" : windowsStep === "edit_deckscope" ? "Edit deck scope" : ""}
                       </p>
                     </div>
                   </div>
-                  <button onClick={() => setOpenPartnerModal(null)} type="button" className="w-8 h-8 rounded-full bg-[#242624] flex items-center justify-center hover:bg-[#aeee2a] hover:text-[#3a5400] transition-colors">
+                  <button onClick={() => setOpenPartnerModal(null)} type="button" className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center hover:bg-primary hover:text-[#3a5400] transition-colors">
                     <span className="material-symbols-outlined text-sm" translate="no">close</span>
                   </button>
                 </div>
@@ -2867,15 +2867,15 @@ export default function ProjectDetailPage() {
                               }
                               setOpenPartnerModal(null);
                             }}
-                            className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isSelected ? '' : 'bg-[#181a18] border-[#474846]/40 hover:bg-[#242624] hover:border-[#747673]'}`}
+                            className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isSelected ? '' : 'bg-surface-container border-outline-variant/40 hover:bg-surface-container-highest hover:border-outline'}`}
                             style={isSelected ? { backgroundColor: `${openPartnerModal.color}1A`, borderColor: openPartnerModal.color } : {}}
                           >
                             <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isSelected ? '' : 'bg-[#242624] text-[#ababa8]'}`}
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isSelected ? '' : 'bg-surface-container-highest text-on-surface-variant'}`}
                                    style={isSelected ? { backgroundColor: openPartnerModal.color, color: '#000' } : {}}>
                                 {partner.charAt(0)}
                               </div>
-                              <span className={`text-sm font-bold tracking-wide uppercase ${isSelected ? '' : 'text-[#faf9f5]'}`} style={isSelected ? { color: openPartnerModal.color } : {}}>{partner}</span>
+                              <span className={`text-sm font-bold tracking-wide uppercase ${isSelected ? '' : 'text-on-surface'}`} style={isSelected ? { color: openPartnerModal.color } : {}}>{partner}</span>
                             </div>
                             {isSelected && <span className="material-symbols-outlined" style={{ color: openPartnerModal.color }} translate="no">check_circle</span>}
                           </button>
@@ -2902,15 +2902,15 @@ export default function ProjectDetailPage() {
                           </div>
                           <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Partner</span>
                         </div>
-                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="w-8 h-px bg-outline-variant"></div>
                         <div className="flex items-center gap-1.5">
                           <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center">
                             <span className="text-[10px] font-black text-[#f5a623]">2</span>
                           </div>
-                          <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Select Services</span>
+                          <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider">Select Services</span>
                         </div>
                       </div>
-                      <p className="text-xs text-[#ababa8]">
+                      <p className="text-xs text-on-surface-variant">
                         Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Select which services to include:
                       </p>
                       {openPartnerModal.subServices.map((sub) => {
@@ -2918,20 +2918,20 @@ export default function ProjectDetailPage() {
                         return (
                           <button key={sub.id} type="button"
                             onClick={() => setSelectedSubSvcs((prev) => checked ? prev.filter((x) => x !== sub.id) : [...prev, sub.id])}
-                            className={`flex items-center gap-4 w-full p-4 rounded-xl border transition-all ${checked ? '' : 'bg-[#181a18] border-[#474846]/40 hover:bg-[#242624]'}`}
+                            className={`flex items-center gap-4 w-full p-4 rounded-xl border transition-all ${checked ? '' : 'bg-surface-container border-outline-variant/40 hover:bg-surface-container-highest'}`}
                             style={checked ? { backgroundColor: `${openPartnerModal.color}1A`, borderColor: openPartnerModal.color } : {}}
                           >
-                            <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-all ${checked ? '' : 'border-[#474846]'}`}
+                            <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-all ${checked ? '' : 'border-outline-variant'}`}
                                  style={checked ? { backgroundColor: openPartnerModal.color, borderColor: openPartnerModal.color } : {}}>
                               {checked && <span className="material-symbols-outlined text-[16px] text-[#000]" translate="no">check</span>}
                             </div>
                             <span className="material-symbols-outlined text-xl" style={{ color: checked ? openPartnerModal.color : '#747673' }} translate="no">{sub.icon}</span>
-                            <span className={`text-sm font-bold uppercase tracking-wide ${checked ? 'text-[#faf9f5]' : 'text-[#ababa8]'}`}>{sub.label}</span>
+                            <span className={`text-sm font-bold uppercase tracking-wide ${checked ? 'text-on-surface' : 'text-on-surface-variant'}`}>{sub.label}</span>
                           </button>
                         );
                       })}
                       <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={() => setWindowsStep("partner")} className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all">Back</button>
+                        <button type="button" onClick={() => setWindowsStep("partner")} className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all">Back</button>
                         <button type="button" disabled={selectedSubSvcs.length === 0}
                           onClick={async () => {
                             // Add each selected sub-service to DB
@@ -2981,39 +2981,39 @@ export default function ProjectDetailPage() {
                     <div className="space-y-6">
                       <div className="flex items-center gap-2 pb-4 border-b border-white/5">
                         <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center"><span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span></div>
-                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="w-8 h-px bg-outline-variant"></div>
                         <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center"><span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span></div>
-                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="w-8 h-px bg-outline-variant"></div>
                         <div className="flex items-center gap-1.5">
                           <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center"><span className="text-[10px] font-black text-[#f5a623]">3</span></div>
-                          <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Windows Config</span>
+                          <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider">Windows Config</span>
                         </div>
                       </div>
-                      <p className="text-xs text-[#ababa8]">Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Configure windows:</p>
+                      <p className="text-xs text-on-surface-variant">Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Configure windows:</p>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">How many windows?</label>
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">How many windows?</label>
                         <input type="number" min="1" value={windowCount} onChange={(e) => setWindowCount(e.target.value)} placeholder="e.g. 42"
-                          className="w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
+                          className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">Trim?</label>
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Trim?</label>
                         <CustomDropdown value={windowTrim} onChange={(val) => setWindowTrim(val as "yes" | "no")}
                           options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} placeholder="Select..."
-                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center" />
+                          className="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-3 text-[15px] text-on-surface hover:border-[#f5a623]/50 transition-colors flex justify-between items-center" />
                       </div>
                       {windowCount && windowTrim && (
                         <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
                           <div className="flex items-center gap-3">
                             <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
                             <div>
-                              <p className="text-sm font-bold text-[#faf9f5]">Duration: <span className="text-[#f5a623]">{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}</span></p>
-                              <p className="text-[10px] text-[#ababa8] mt-0.5">{parseInt(windowCount)} windows ÷ {windowTrim === "yes" ? "12" : "20"}/day</p>
+                              <p className="text-sm font-bold text-on-surface">Duration: <span className="text-[#f5a623]">{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}</span></p>
+                              <p className="text-[10px] text-on-surface-variant mt-0.5">{parseInt(windowCount)} windows ÷ {windowTrim === "yes" ? "12" : "20"}/day</p>
                             </div>
                           </div>
                         </div>
                       )}
                       <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={() => setWindowsStep("subservices")} className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all">Back</button>
+                        <button type="button" onClick={() => setWindowsStep("subservices")} className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all">Back</button>
                         <button type="button" disabled={!windowCount || !windowTrim}
                           onClick={async () => { 
                             // Persist windows assignment with count/trim config
@@ -3045,22 +3045,22 @@ export default function ProjectDetailPage() {
                           </div>
                           <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Previous</span>
                         </div>
-                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="w-8 h-px bg-outline-variant"></div>
                         <div className="flex items-center gap-1.5">
                           <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center">
                             <span className="material-symbols-outlined text-[14px] text-[#f5a623]" translate="no">deck</span>
                           </div>
-                          <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Deck Scope</span>
+                          <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider">Deck Scope</span>
                         </div>
                       </div>
 
-                      <p className="text-xs text-[#ababa8]">
+                      <p className="text-xs text-on-surface-variant">
                         Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Select the scope of work for the deck:
                       </p>
 
                       {/* Scope Dropdown */}
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                           Scope
                         </label>
                         <CustomDropdown
@@ -3071,7 +3071,7 @@ export default function ProjectDetailPage() {
                             label: `${o.label} — ${o.days >= 7 ? `${Math.round(o.days / 5)} weeks` : `${o.days} day${o.days !== 1 ? "s" : ""}`}`,
                           }))}
                           placeholder="Select scope..."
-                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
+                          className="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-3 text-[15px] text-on-surface hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
                         />
                       </div>
 
@@ -3087,11 +3087,11 @@ export default function ProjectDetailPage() {
                             <div className="flex items-center gap-3">
                               <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
                               <div>
-                                <p className="text-sm font-bold text-[#faf9f5]">
+                                <p className="text-sm font-bold text-on-surface">
                                   Estimated Duration:{" "}
                                   <span className="text-[#f5a623]">{durationLabel}</span>
                                 </p>
-                                <p className="text-[10px] text-[#ababa8] mt-0.5">
+                                <p className="text-[10px] text-on-surface-variant mt-0.5">
                                   {opt.label} scope selected
                                 </p>
                               </div>
@@ -3109,7 +3109,7 @@ export default function ProjectDetailPage() {
                             if (selectedSubSvcs.includes("windows")) { setWindowsStep("config"); }
                             else { setWindowsStep("subservices"); }
                           }}
-                          className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                          className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all"
                         >
                           Back
                         </button>
@@ -3158,13 +3158,13 @@ export default function ProjectDetailPage() {
                           <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Edit Configuration</span>
                         </div>
                       </div>
-                      <p className="text-xs text-[#ababa8]">
+                      <p className="text-xs text-on-surface-variant">
                         Partner: <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Choose what to edit:
                       </p>
 
                       {/* ── Sub-Services Toggle (Mark / Unmark) ── */}
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-[#747673]">Services</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-outline">Services</label>
                         <div className="space-y-1.5">
                           {(openPartnerModal.subServices ?? []).map((sub: { id: string; label: string; icon: string }) => {
                             const isActive = job.services.some((s: any) => s.service_type?.name?.toLowerCase() === sub.id);
@@ -3298,16 +3298,16 @@ export default function ProjectDetailPage() {
                                     }
                                   }
                                 }}
-                                className={`flex items-center justify-between w-full p-3 rounded-xl border transition-all ${isActive ? 'border-[#f5a623]/30 bg-[#f5a623]/5 hover:bg-[#f5a623]/10' : 'border-[#474846]/20 bg-[#181a18] hover:bg-[#242624] hover:border-[#f5a623]/20'}`}
+                                className={`flex items-center justify-between w-full p-3 rounded-xl border transition-all ${isActive ? 'border-[#f5a623]/30 bg-[#f5a623]/5 hover:bg-[#f5a623]/10' : 'border-outline-variant/20 bg-surface-container hover:bg-surface-container-highest hover:border-[#f5a623]/20'}`}
                               >
                                 <div className="flex items-center gap-3">
-                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-[#f5a623]/20' : 'bg-[#242624]'}`}>
-                                    <span className={`material-symbols-outlined text-[18px] ${isActive ? 'text-[#f5a623]' : 'text-[#747673]'}`} translate="no">{sub.icon}</span>
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-[#f5a623]/20' : 'bg-surface-container-highest'}`}>
+                                    <span className={`material-symbols-outlined text-[18px] ${isActive ? 'text-[#f5a623]' : 'text-outline'}`} translate="no">{sub.icon}</span>
                                   </div>
-                                  <span className={`text-sm font-bold uppercase tracking-wide ${isActive ? 'text-[#faf9f5]' : 'text-[#747673]'}`}>{sub.label}</span>
+                                  <span className={`text-sm font-bold uppercase tracking-wide ${isActive ? 'text-on-surface' : 'text-outline'}`}>{sub.label}</span>
                                 </div>
-                                <div className={`w-10 h-6 rounded-full flex items-center transition-all ${isActive ? 'bg-[#f5a623] justify-end' : 'bg-[#474846]/40 justify-start'}`}>
-                                  <div className={`w-4 h-4 rounded-full mx-1 transition-all ${isActive ? 'bg-[#000]' : 'bg-[#747673]'}`} />
+                                <div className={`w-10 h-6 rounded-full flex items-center transition-all ${isActive ? 'bg-[#f5a623] justify-end' : 'bg-outline-variant/40 justify-start'}`}>
+                                  <div className={`w-4 h-4 rounded-full mx-1 transition-all ${isActive ? 'bg-[#000]' : 'bg-outline'}`} />
                                 </div>
                               </button>
                             );
@@ -3326,8 +3326,8 @@ export default function ProjectDetailPage() {
                             <span className="material-symbols-outlined text-[#f5a623]" translate="no">window</span>
                           </div>
                           <div className="text-left">
-                            <p className="text-sm font-bold text-[#faf9f5]">Windows Config</p>
-                            <p className="text-[10px] text-[#ababa8]">Change window count and trim settings</p>
+                            <p className="text-sm font-bold text-on-surface">Windows Config</p>
+                            <p className="text-[10px] text-on-surface-variant">Change window count and trim settings</p>
                           </div>
                           <span className="material-symbols-outlined text-[#f5a623] ml-auto" translate="no">chevron_right</span>
                         </button>
@@ -3344,8 +3344,8 @@ export default function ProjectDetailPage() {
                             <span className="material-symbols-outlined text-[#f5a623]" translate="no">deck</span>
                           </div>
                           <div className="text-left">
-                            <p className="text-sm font-bold text-[#faf9f5]">Deck Scope</p>
-                            <p className="text-[10px] text-[#ababa8]">Change deck scope and duration</p>
+                            <p className="text-sm font-bold text-on-surface">Deck Scope</p>
+                            <p className="text-[10px] text-on-surface-variant">Change deck scope and duration</p>
                           </div>
                           <span className="material-symbols-outlined text-[#f5a623] ml-auto" translate="no">chevron_right</span>
                         </button>
@@ -3355,22 +3355,22 @@ export default function ProjectDetailPage() {
                       <button
                         type="button"
                         onClick={() => setWindowsStep("partner")}
-                        className="flex items-center gap-4 w-full p-4 rounded-xl border border-[#474846]/40 bg-[#181a18] hover:bg-[#242624] transition-all"
+                        className="flex items-center gap-4 w-full p-4 rounded-xl border border-outline-variant/40 bg-surface-container hover:bg-surface-container-highest transition-all"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-[#242624] flex items-center justify-center">
-                          <span className="material-symbols-outlined text-[#ababa8]" translate="no">group</span>
+                        <div className="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center">
+                          <span className="material-symbols-outlined text-on-surface-variant" translate="no">group</span>
                         </div>
                         <div className="text-left">
-                          <p className="text-sm font-bold text-[#faf9f5]">Change Partner / Services</p>
-                          <p className="text-[10px] text-[#ababa8]">Reassign partner or change sub-services</p>
+                          <p className="text-sm font-bold text-on-surface">Change Partner / Services</p>
+                          <p className="text-[10px] text-on-surface-variant">Reassign partner or change sub-services</p>
                         </div>
-                        <span className="material-symbols-outlined text-[#ababa8] ml-auto" translate="no">chevron_right</span>
+                        <span className="material-symbols-outlined text-on-surface-variant ml-auto" translate="no">chevron_right</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setOpenPartnerModal(null)}
-                        className="w-full py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                        className="w-full py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all"
                       >
                         Close
                       </button>
@@ -3388,33 +3388,33 @@ export default function ProjectDetailPage() {
                           <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Edit Windows Config</span>
                         </div>
                       </div>
-                      <p className="text-xs text-[#ababa8]">
+                      <p className="text-xs text-on-surface-variant">
                         Update the windows configuration. Changes will be reflected in the calendar.
                       </p>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">How many windows?</label>
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">How many windows?</label>
                         <input type="number" min="1" value={windowCount} onChange={(e) => setWindowCount(e.target.value)} placeholder="e.g. 42"
-                          className="w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
+                          className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">Trim?</label>
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Trim?</label>
                         <CustomDropdown value={windowTrim} onChange={(val) => setWindowTrim(val as "yes" | "no")}
                           options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} placeholder="Select..."
-                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center" />
+                          className="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-3 text-[15px] text-on-surface hover:border-[#f5a623]/50 transition-colors flex justify-between items-center" />
                       </div>
                       {windowCount && windowTrim && (
                         <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
                           <div className="flex items-center gap-3">
                             <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
                             <div>
-                              <p className="text-sm font-bold text-[#faf9f5]">New Duration: <span className="text-[#f5a623]">{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}</span></p>
-                              <p className="text-[10px] text-[#ababa8] mt-0.5">{parseInt(windowCount)} windows ÷ {windowTrim === "yes" ? "12" : "20"}/day</p>
+                              <p className="text-sm font-bold text-on-surface">New Duration: <span className="text-[#f5a623]">{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}</span></p>
+                              <p className="text-[10px] text-on-surface-variant mt-0.5">{parseInt(windowCount)} windows ÷ {windowTrim === "yes" ? "12" : "20"}/day</p>
                             </div>
                           </div>
                         </div>
                       )}
                       <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={() => setWindowsStep("edit_menu")} className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all">Back</button>
+                        <button type="button" onClick={() => setWindowsStep("edit_menu")} className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all">Back</button>
                         <button type="button" disabled={!windowCount || !windowTrim}
                           onClick={async () => {
                             // Recalculate and update windows assignment in DB
@@ -3457,12 +3457,12 @@ export default function ProjectDetailPage() {
                           <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Edit Deck Scope</span>
                         </div>
                       </div>
-                      <p className="text-xs text-[#ababa8]">
+                      <p className="text-xs text-on-surface-variant">
                         Update the deck scope. Changes will be reflected in the calendar.
                       </p>
 
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">Scope</label>
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Scope</label>
                         <CustomDropdown
                           value={deckScope}
                           onChange={(val) => setDeckScope(val)}
@@ -3471,7 +3471,7 @@ export default function ProjectDetailPage() {
                             label: `${o.label} — ${o.days >= 7 ? `${Math.round(o.days / 5)} weeks` : `${o.days} day${o.days !== 1 ? "s" : ""}`}`,
                           }))}
                           placeholder="Select scope..."
-                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
+                          className="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-3 text-[15px] text-on-surface hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
                         />
                       </div>
 
@@ -3486,10 +3486,10 @@ export default function ProjectDetailPage() {
                             <div className="flex items-center gap-3">
                               <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
                               <div>
-                                <p className="text-sm font-bold text-[#faf9f5]">
+                                <p className="text-sm font-bold text-on-surface">
                                   New Duration: <span className="text-[#f5a623]">{durationLabel}</span>
                                 </p>
-                                <p className="text-[10px] text-[#ababa8] mt-0.5">{opt.label} scope selected</p>
+                                <p className="text-[10px] text-on-surface-variant mt-0.5">{opt.label} scope selected</p>
                               </div>
                             </div>
                           </div>
@@ -3497,7 +3497,7 @@ export default function ProjectDetailPage() {
                       })()}
 
                       <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={() => setWindowsStep("edit_menu")} className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all">Back</button>
+                        <button type="button" onClick={() => setWindowsStep("edit_menu")} className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all">Back</button>
                         <button type="button" disabled={!deckScope}
                           onClick={async () => {
                             // Recalculate and update decks assignment in DB
@@ -3543,7 +3543,7 @@ export default function ProjectDetailPage() {
         >
           <button
             onClick={() => setDumpsterPreview(null)}
-            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-[#1e201e]/80 flex items-center justify-center text-white hover:bg-[#ff7351] transition-colors cursor-pointer z-10"
+            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-surface-container-high/80 flex items-center justify-center text-white hover:bg-error transition-colors cursor-pointer z-10"
           >
             <span className="material-symbols-outlined" translate="no">close</span>
           </button>

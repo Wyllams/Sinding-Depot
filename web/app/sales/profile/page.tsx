@@ -81,7 +81,7 @@ export default function SalesProfile() {
   };
 
   return (
-    <div className="p-5 space-y-8 bg-[#050505] min-h-full">
+    <div className="p-5 space-y-8 bg-mobile-frame min-h-full">
       {/* Profile Header */}
       <section className="flex flex-col items-center pt-4">
         {/* Avatar with Upload */}
@@ -97,7 +97,7 @@ export default function SalesProfile() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-[#aeee2a] shadow-[0_0_20px_rgba(174,238,42,0.15)] transition-transform active:scale-95"
+            className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-primary shadow-[0_0_20px_rgba(174,238,42,0.15)] transition-transform active:scale-95"
           >
             {profile?.avatar_url ? (
               <img
@@ -106,8 +106,8 @@ export default function SalesProfile() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-[#181a18] flex items-center justify-center">
-                <span className="material-symbols-outlined text-[48px] text-[#faf9f5]" translate="no">person</span>
+              <div className="w-full h-full bg-surface-container flex items-center justify-center">
+                <span className="material-symbols-outlined text-[48px] text-on-surface" translate="no">person</span>
               </div>
             )}
 
@@ -120,45 +120,45 @@ export default function SalesProfile() {
           {/* Upload spinner */}
           {uploading && (
             <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center">
-              <div className="w-6 h-6 border-2 border-[#474846] border-t-[#aeee2a] rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-outline-variant border-t-primary rounded-full animate-spin" />
             </div>
           )}
 
           {/* Camera badge */}
-          <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#aeee2a] rounded-full flex items-center justify-center shadow-lg border-2 border-[#050505]">
+          <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary rounded-full flex items-center justify-center shadow-lg border-2 border-mobile-frame">
             <span className="material-symbols-outlined text-[14px] text-[#0a0a0a]" translate="no">photo_camera</span>
           </div>
         </div>
 
-        <h2 className="text-[#faf9f5] font-headline text-2xl font-bold tracking-tight">
+        <h2 className="text-on-surface font-headline text-2xl font-bold tracking-tight">
           {profile?.full_name ?? "..."}
         </h2>
-        <p className="text-[#aeee2a] text-xs font-bold uppercase tracking-widest mt-1">Sales Rep</p>
-        <p className="text-[#ababa8] text-xs mt-0.5">{profile?.email ?? ""}</p>
+        <p className="text-primary text-xs font-bold uppercase tracking-widest mt-1">Sales Rep</p>
+        <p className="text-on-surface-variant text-xs mt-0.5">{profile?.email ?? ""}</p>
       </section>
 
       {/* Menu Options */}
       <div className="space-y-3">
-        <div className="bg-[#181a18] border border-white/5 rounded-2xl overflow-hidden">
-          <button className="w-full px-5 py-4 flex items-center gap-4 hover:bg-[#242624] transition-colors">
-            <span className="material-symbols-outlined text-[#ababa8]" translate="no">person</span>
-            <span className="text-[#faf9f5] font-bold text-sm flex-1 text-left">Edit Profile</span>
-            <span className="material-symbols-outlined text-[#474846] text-lg" translate="no">chevron_right</span>
+        <div className="bg-surface-container border border-white/5 rounded-2xl overflow-hidden">
+          <button className="w-full px-5 py-4 flex items-center gap-4 hover:bg-surface-container-highest transition-colors">
+            <span className="material-symbols-outlined text-on-surface-variant" translate="no">person</span>
+            <span className="text-on-surface font-bold text-sm flex-1 text-left">Edit Profile</span>
+            <span className="material-symbols-outlined text-outline-variant text-lg" translate="no">chevron_right</span>
           </button>
           <div className="h-px bg-white/5" />
           <Link
             href="/sales/profile/settings"
-            className="w-full px-5 py-4 flex items-center gap-4 hover:bg-[#242624] transition-colors"
+            className="w-full px-5 py-4 flex items-center gap-4 hover:bg-surface-container-highest transition-colors"
           >
-            <span className="material-symbols-outlined text-[#ababa8]" translate="no">settings</span>
-            <span className="text-[#faf9f5] font-bold text-sm flex-1 text-left">Account Settings</span>
-            <span className="material-symbols-outlined text-[#474846] text-lg" translate="no">chevron_right</span>
+            <span className="material-symbols-outlined text-on-surface-variant" translate="no">settings</span>
+            <span className="text-on-surface font-bold text-sm flex-1 text-left">Account Settings</span>
+            <span className="material-symbols-outlined text-outline-variant text-lg" translate="no">chevron_right</span>
           </Link>
         </div>
       </div>
 
       {/* App version */}
-      <p className="text-center text-[#474846] text-[10px] font-bold uppercase tracking-widest">
+      <p className="text-center text-outline-variant text-[10px] font-bold uppercase tracking-widest">
         Siding Depot v1.0 • Sales Edition
       </p>
     </div>

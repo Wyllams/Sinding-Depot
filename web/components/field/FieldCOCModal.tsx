@@ -210,7 +210,7 @@ export default function FieldCOCModal({ jobId, serviceId, serviceName, onClose, 
       />
       
       {/* Modal Content - White Paper Style for Contract */}
-      <div className="relative w-full max-w-2xl bg-[#faf9f5] sm:rounded-3xl rounded-t-3xl h-[90vh] sm:h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
+      <div className="relative w-full max-w-2xl bg-on-surface sm:rounded-3xl rounded-t-3xl h-[90vh] sm:h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
         
         {/* Handle bar (Mobile) */}
         <div className="flex sm:hidden justify-center pt-3 pb-1 shrink-0">
@@ -227,7 +227,7 @@ export default function FieldCOCModal({ jobId, serviceId, serviceName, onClose, 
 
         {loading ? (
           <div className="flex-1 flex flex-col items-center justify-center text-zinc-400">
-            <div className="w-8 h-8 border-4 border-zinc-200 border-t-[#aeee2a] rounded-full animate-spin mb-4" />
+            <div className="w-8 h-8 border-4 border-zinc-200 border-t-primary rounded-full animate-spin mb-4" />
             <p>Loading document details...</p>
           </div>
         ) : (
@@ -283,7 +283,7 @@ export default function FieldCOCModal({ jobId, serviceId, serviceName, onClose, 
                    value={customerComments}
                    onChange={(e) => setCustomerComments(e.target.value)}
                    placeholder="Any final notes regarding the installation..."
-                   className="w-full bg-white border border-zinc-300 rounded-xl p-4 text-zinc-900 text-sm placeholder:text-zinc-400 focus:outline-none focus:border-[#aeee2a] focus:ring-2 focus:ring-[#aeee2a]/20 resize-none h-24 transition-all"
+                   className="w-full bg-white border border-zinc-300 rounded-xl p-4 text-zinc-900 text-sm placeholder:text-zinc-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none h-24 transition-all"
                  />
               </div>
 
@@ -295,7 +295,7 @@ export default function FieldCOCModal({ jobId, serviceId, serviceName, onClose, 
                        type="checkbox" 
                        checked={consent}
                        onChange={(e) => setConsent(e.target.checked)}
-                       className="peer appearance-none w-6 h-6 border-2 border-zinc-400 rounded-md checked:bg-[#aeee2a] checked:border-[#aeee2a] transition-all cursor-pointer bg-white"
+                       className="peer appearance-none w-6 h-6 border-2 border-zinc-400 rounded-md checked:bg-primary checked:border-primary transition-all cursor-pointer bg-white"
                      />
                      <span className="material-symbols-outlined absolute text-[#1a2e00] text-lg opacity-0 peer-checked:opacity-100 pointer-events-none font-bold" translate="no">check</span>
                    </div>

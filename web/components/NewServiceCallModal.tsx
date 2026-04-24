@@ -146,15 +146,15 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#121412] rounded-2xl w-full max-w-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-surface-container-low rounded-2xl w-full max-w-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
 
         {/* Header */}
-        <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center bg-[#181a18]">
+        <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center bg-surface-container">
           <div>
-            <h3 className="text-xl font-extrabold text-[#faf9f5]">New Service Call</h3>
-            <p className="text-sm text-[#ababa8] mt-1">Open a new service request or block.</p>
+            <h3 className="text-xl font-extrabold text-on-surface">New Service Call</h3>
+            <p className="text-sm text-on-surface-variant mt-1">Open a new service request or block.</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[#242624] rounded-full text-[#ababa8] transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-surface-container-highest rounded-full text-on-surface-variant transition-colors">
             <span className="material-symbols-outlined" translate="no">close</span>
           </button>
         </div>
@@ -162,7 +162,7 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
         {/* Form Body */}
         <div className="p-6 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
           {error && (
-            <div className="mb-6 p-4 bg-[#b92902]/20 border border-[#b92902] text-[#ff7351] rounded-xl text-sm font-semibold">
+            <div className="mb-6 p-4 bg-[#b92902]/20 border border-[#b92902] text-error rounded-xl text-sm font-semibold">
               {error}
             </div>
           )}
@@ -171,8 +171,8 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {/* Project Select */}
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#ababa8] uppercase tracking-widest">
-                  Project <span className="text-[#aeee2a]">*</span>
+                <label className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">
+                  Project <span className="text-primary">*</span>
                 </label>
                 <CustomDropdown
                   value={formData.job_id}
@@ -181,14 +181,14 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                     { value: "", label: "Select Project" },
                     ...jobs.map((job) => ({ value: job.id, label: `${job.job_number} - ${job.title}` }))
                   ]}
-                  className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                  className="w-full bg-surface-container border border-white/10 rounded-xl px-4 py-3 text-sm text-on-surface hover:border-primary transition-colors flex justify-between items-center"
                 />
               </div>
 
               {/* Service Type */}
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#ababa8] uppercase tracking-widest">
-                  Discipline / Type <span className="text-[#aeee2a]">*</span>
+                <label className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">
+                  Discipline / Type <span className="text-primary">*</span>
                 </label>
                 <CustomDropdown
                   value={formData.type}
@@ -202,7 +202,7 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                     { value: "gutters", label: "Gutters" },
                     { value: "roofing", label: "Roofing" }
                   ]}
-                  className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                  className="w-full bg-surface-container border border-white/10 rounded-xl px-4 py-3 text-sm text-on-surface hover:border-primary transition-colors flex justify-between items-center"
                 />
               </div>
 
@@ -215,7 +215,7 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
 
               {/* Assigned Crew */}
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#ababa8] uppercase tracking-widest">
+                <label className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">
                   Assigned Crew
                 </label>
                 <div className="relative z-[70]">
@@ -238,7 +238,7 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                         return displayCrews.map((c) => ({ value: c.id, label: c.name }));
                       })()
                     ]}
-                    className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                    className="w-full bg-surface-container border border-white/10 rounded-xl px-4 py-3 text-sm text-on-surface hover:border-primary transition-colors flex justify-between items-center"
                   />
                 </div>
               </div>
@@ -246,8 +246,8 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
 
             {/* Title */}
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#ababa8] uppercase tracking-widest">
-                Title <span className="text-[#aeee2a]">*</span>
+              <label className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">
+                Title <span className="text-primary">*</span>
               </label>
               <input
                 type="text"
@@ -255,13 +255,13 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                 placeholder="Brief title of the issue"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] focus:outline-none focus:border-[#aeee2a] transition-colors"
+                className="w-full bg-surface-container border border-white/10 rounded-xl px-4 py-3 text-sm text-on-surface focus:outline-none focus:border-primary transition-colors"
               />
             </div>
 
             {/* Description */}
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#ababa8] uppercase tracking-widest">
+              <label className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">
                 Notes &amp; Description
               </label>
               <textarea
@@ -269,13 +269,13 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                 placeholder="Detailed explanation of the required service..."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full bg-[#181a18] border border-white/10 rounded-xl px-4 py-3 text-sm text-[#faf9f5] focus:outline-none focus:border-[#aeee2a] transition-colors resize-none"
+                className="w-full bg-surface-container border border-white/10 rounded-xl px-4 py-3 text-sm text-on-surface focus:outline-none focus:border-primary transition-colors resize-none"
               />
             </div>
 
             {/* File Upload */}
             <div className="space-y-3">
-              <label className="text-[11px] font-bold text-[#ababa8] uppercase tracking-widest">
+              <label className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">
                 Attachments — Images, Videos, Docs
               </label>
 
@@ -283,10 +283,10 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full p-5 rounded-xl border-2 border-dashed border-[#474846] bg-[#0d0f0d] hover:border-[#aeee2a]/50 hover:bg-[#aeee2a]/3 transition-all flex flex-col items-center gap-2 text-[#ababa8] group"
+                className="w-full p-5 rounded-xl border-2 border-dashed border-outline-variant bg-background hover:border-primary/50 hover:bg-primary/3 transition-all flex flex-col items-center gap-2 text-on-surface-variant group"
               >
-                <span className="material-symbols-outlined text-3xl group-hover:text-[#aeee2a] transition-colors" translate="no">cloud_upload</span>
-                <span className="text-sm font-semibold group-hover:text-[#faf9f5] transition-colors">Click to add files</span>
+                <span className="material-symbols-outlined text-3xl group-hover:text-primary transition-colors" translate="no">cloud_upload</span>
+                <span className="text-sm font-semibold group-hover:text-on-surface transition-colors">Click to add files</span>
                 <span className="text-[11px]">Images • Videos • PDFs • Documents</span>
               </button>
               <input
@@ -302,16 +302,16 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
               {files.length > 0 && (
                 <div className="space-y-2">
                   {files.map((file, idx) => (
-                    <div key={idx} className="flex items-center gap-3 bg-[#181a18] border border-white/10 rounded-xl px-4 py-2.5">
-                      <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">{getFileIcon(file)}</span>
+                    <div key={idx} className="flex items-center gap-3 bg-surface-container border border-white/10 rounded-xl px-4 py-2.5">
+                      <span className="material-symbols-outlined text-primary text-lg" translate="no">{getFileIcon(file)}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[#faf9f5] font-medium truncate">{file.name}</p>
-                        <p className="text-[10px] text-[#ababa8]">{formatBytes(file.size)}</p>
+                        <p className="text-sm text-on-surface font-medium truncate">{file.name}</p>
+                        <p className="text-[10px] text-on-surface-variant">{formatBytes(file.size)}</p>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeFile(idx)}
-                        className="text-[#ababa8] hover:text-[#ff7351] transition-colors flex-shrink-0"
+                        className="text-on-surface-variant hover:text-error transition-colors flex-shrink-0"
                       >
                         <span className="material-symbols-outlined text-lg" translate="no">close</span>
                       </button>
@@ -324,11 +324,11 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-white/5 bg-[#181a18] flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-white/5 bg-surface-container flex justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#faf9f5] hover:bg-[#242624] transition-colors"
+            className="px-5 py-2.5 rounded-xl text-sm font-bold text-on-surface hover:bg-surface-container-highest transition-colors"
             disabled={isLoading}
           >
             Cancel
@@ -337,7 +337,7 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
             type="submit"
             form="new-service-form"
             disabled={isLoading}
-            className="px-6 py-2.5 bg-[#aeee2a] text-[#3a5400] text-sm font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
+            className="px-6 py-2.5 bg-primary text-[#3a5400] text-sm font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
           >
             {isLoading && <span className="material-symbols-outlined animate-spin text-sm" translate="no">sync</span>}
             {files.length > 0 ? `Save & Upload ${files.length} file${files.length > 1 ? "s" : ""}` : "Save Service Call"}

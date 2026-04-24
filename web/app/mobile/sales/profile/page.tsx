@@ -125,46 +125,46 @@ export default function SalesMobileProfilePage() {
     .toUpperCase() || "SD";
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-[#0d0f0d] relative overflow-hidden">
+    <div className="flex flex-col min-h-[100dvh] bg-background relative overflow-hidden">
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-[#aeee2a]/10 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/4"></div>
+      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/4"></div>
 
       <div className="px-4 pt-14 pb-4">
-        <h1 className="text-2xl font-black text-[#faf9f5]">My Profile</h1>
+        <h1 className="text-2xl font-black text-on-surface">My Profile</h1>
       </div>
 
       <main className="flex-1 overflow-y-auto px-4 pb-28">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-             <span className="material-symbols-outlined text-[#aeee2a] text-3xl animate-spin">progress_activity</span>
-             <p className="text-[#ababa8] text-sm font-medium">Loading profile...</p>
+             <span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>
+             <p className="text-on-surface-variant text-sm font-medium">Loading profile...</p>
           </div>
         ) : profile ? (
           <div className="flex flex-col gap-6">
             
             {/* Avatar Section */}
-            <div className="bg-[#121412] rounded-3xl p-6 flex flex-col items-center gap-4 shadow-xl border border-[#474846]/20 relative overflow-hidden">
+            <div className="bg-surface-container-low rounded-3xl p-6 flex flex-col items-center gap-4 shadow-xl border border-outline-variant/20 relative overflow-hidden">
                <div className="relative">
                  {profile?.avatar_url ? (
                    <img
                      src={profile.avatar_url}
                      alt={editName}
-                     className="w-24 h-24 rounded-full object-cover border-4 border-[#aeee2a] shadow-[0_0_20px_rgba(174,238,42,0.3)]"
+                     className="w-24 h-24 rounded-full object-cover border-4 border-primary shadow-[0_0_20px_rgba(174,238,42,0.3)]"
                    />
                  ) : (
-                   <div className="w-24 h-24 rounded-full bg-[#1e201e] border-4 border-[#aeee2a] shadow-[0_0_20px_rgba(174,238,42,0.3)] flex items-center justify-center">
-                     <span className="text-[#aeee2a] text-3xl font-black">{initials}</span>
+                   <div className="w-24 h-24 rounded-full bg-surface-container-high border-4 border-primary shadow-[0_0_20px_rgba(174,238,42,0.3)] flex items-center justify-center">
+                     <span className="text-primary text-3xl font-black">{initials}</span>
                    </div>
                  )}
                  <button
                    onClick={() => avatarInputRef.current?.click()}
                    disabled={uploadingAvatar}
-                   className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#faf9f5] flex items-center justify-center shadow-lg active:scale-90 transition-transform disabled:opacity-50"
+                   className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-on-surface flex items-center justify-center shadow-lg active:scale-90 transition-transform disabled:opacity-50"
                  >
                    {uploadingAvatar ? (
-                     <div className="w-4 h-4 border-2 border-[#121412]/30 border-t-[#121412] rounded-full animate-spin" />
+                     <div className="w-4 h-4 border-2 border-surface-container-low/30 border-t-surface-container-low rounded-full animate-spin" />
                    ) : (
-                     <span className="material-symbols-outlined text-[#121412] text-[16px]">photo_camera</span>
+                     <span className="material-symbols-outlined text-surface-container-low text-[16px]">photo_camera</span>
                    )}
                  </button>
                  <input
@@ -177,8 +177,8 @@ export default function SalesMobileProfilePage() {
                </div>
                
                <div className="text-center">
-                 <h2 className="text-[#faf9f5] font-black text-lg">{profile.full_name || "Sales Rep"}</h2>
-                 <p className="text-[#aeee2a] font-bold text-[10px] uppercase tracking-widest mt-0.5 px-2 py-0.5 bg-[#aeee2a]/10 rounded-full inline-block border border-[#aeee2a]/20">
+                 <h2 className="text-on-surface font-black text-lg">{profile.full_name || "Sales Rep"}</h2>
+                 <p className="text-primary font-bold text-[10px] uppercase tracking-widest mt-0.5 px-2 py-0.5 bg-primary/10 rounded-full inline-block border border-primary/20">
                     {profile.role.toUpperCase()}
                  </p>
                </div>
@@ -186,18 +186,18 @@ export default function SalesMobileProfilePage() {
 
             {/* Profile Forms Section */}
             <div className="flex flex-col gap-4">
-               <h3 className="text-[#ababa8] font-bold text-xs uppercase tracking-widest px-2">Personal Info</h3>
+               <h3 className="text-on-surface-variant font-bold text-xs uppercase tracking-widest px-2">Personal Info</h3>
                
-               <div className="bg-[#121412] rounded-3xl p-5 border border-[#474846]/20 flex flex-col gap-5 shadow-lg">
+               <div className="bg-surface-container-low rounded-3xl p-5 border border-outline-variant/20 flex flex-col gap-5 shadow-lg">
                   <div className="flex flex-col flex-1">
                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#7B7B78] mb-1.5 ml-1">Full Name</label>
-                     <div className="flex items-center bg-[#1e201e] border border-[#474846]/30 rounded-2xl px-4 py-3 focus-within:border-[#aeee2a]/50 transition-colors">
-                        <span className="material-symbols-outlined text-[#ababa8] text-[18px] mr-3">person</span>
+                     <div className="flex items-center bg-surface-container-high border border-outline-variant/30 rounded-2xl px-4 py-3 focus-within:border-primary/50 transition-colors">
+                        <span className="material-symbols-outlined text-on-surface-variant text-[18px] mr-3">person</span>
                         <input
                           type="text"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="w-full bg-transparent text-[#faf9f5] text-sm outline-none font-medium placeholder-[#474846]"
+                          className="w-full bg-transparent text-on-surface text-sm outline-none font-medium placeholder-outline-variant"
                           placeholder="Your full name"
                         />
                      </div>
@@ -205,27 +205,27 @@ export default function SalesMobileProfilePage() {
 
                   <div className="flex flex-col flex-1">
                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#7B7B78] mb-1.5 ml-1">Phone</label>
-                     <div className="flex items-center bg-[#1e201e] border border-[#474846]/30 rounded-2xl px-4 py-3 focus-within:border-[#aeee2a]/50 transition-colors">
-                        <span className="material-symbols-outlined text-[#ababa8] text-[18px] mr-3">phone</span>
+                     <div className="flex items-center bg-surface-container-high border border-outline-variant/30 rounded-2xl px-4 py-3 focus-within:border-primary/50 transition-colors">
+                        <span className="material-symbols-outlined text-on-surface-variant text-[18px] mr-3">phone</span>
                         <input
                           type="tel"
                           value={editPhone}
                           onChange={(e) => setEditPhone(e.target.value)}
-                          className="w-full bg-transparent text-[#faf9f5] text-sm outline-none font-medium placeholder-[#474846]"
+                          className="w-full bg-transparent text-on-surface text-sm outline-none font-medium placeholder-outline-variant"
                           placeholder="(XXX) XXX-XXXX"
                         />
                      </div>
                   </div>
 
                   <div className="flex flex-col flex-1">
-                     <label className="text-[10px] font-bold uppercase tracking-widest text-[#7B7B78] mb-1.5 ml-1">Email <span className="text-[#474846] normal-case tracking-normal ml-1">(Read-only)</span></label>
-                     <div className="flex items-center bg-[#0d0f0d] border border-transparent rounded-2xl px-4 py-3 opacity-60">
+                     <label className="text-[10px] font-bold uppercase tracking-widest text-[#7B7B78] mb-1.5 ml-1">Email <span className="text-outline-variant normal-case tracking-normal ml-1">(Read-only)</span></label>
+                     <div className="flex items-center bg-background border border-transparent rounded-2xl px-4 py-3 opacity-60">
                         <span className="material-symbols-outlined text-[#7B7B78] text-[18px] mr-3">mail</span>
                         <input
                           type="text"
                           value={profile.email}
                           readOnly
-                          className="w-full bg-transparent text-[#ababa8] text-sm outline-none font-medium pointer-events-none"
+                          className="w-full bg-transparent text-on-surface-variant text-sm outline-none font-medium pointer-events-none"
                         />
                      </div>
                   </div>
@@ -233,7 +233,7 @@ export default function SalesMobileProfilePage() {
                   <button
                     onClick={handleSaveProfile}
                     disabled={saving}
-                    className="mt-2 w-full flex items-center justify-center py-3.5 rounded-2xl bg-[#aeee2a] text-[#1a2e00] font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50 shadow-[0_0_20px_rgba(174,238,42,0.15)]"
+                    className="mt-2 w-full flex items-center justify-center py-3.5 rounded-2xl bg-primary text-[#1a2e00] font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50 shadow-[0_0_20px_rgba(174,238,42,0.15)]"
                   >
                     {saving ? "Saving..." : "Save Changes"}
                   </button>
@@ -242,10 +242,10 @@ export default function SalesMobileProfilePage() {
 
             {/* Danger Zone */}
             <div className="flex flex-col gap-4 mt-2">
-               <h3 className="text-[#ababa8] font-bold text-xs uppercase tracking-widest px-2">Account Actions</h3>
+               <h3 className="text-on-surface-variant font-bold text-xs uppercase tracking-widest px-2">Account Actions</h3>
                <button
                  onClick={handleLogOut}
-                 className="flex items-center justify-center gap-2 bg-[#ff7351]/10 text-[#ff7351] font-bold text-sm py-4 rounded-3xl border border-[#ff7351]/20 active:scale-[0.98] transition-all"
+                 className="flex items-center justify-center gap-2 bg-error/10 text-error font-bold text-sm py-4 rounded-3xl border border-error/20 active:scale-[0.98] transition-all"
                >
                  <span className="material-symbols-outlined">logout</span>
                  Sign Out
@@ -254,7 +254,7 @@ export default function SalesMobileProfilePage() {
             
           </div>
         ) : (
-          <div className="text-[#ababa8] text-center mt-20">Could not load profile.</div>
+          <div className="text-on-surface-variant text-center mt-20">Could not load profile.</div>
         )}
       </main>
 

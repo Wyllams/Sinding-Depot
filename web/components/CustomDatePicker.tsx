@@ -187,38 +187,32 @@ export default function CustomDatePicker({
   const calendarPanel = open && isMounted ? createPortal(
     <div
       ref={dropRef}
+      className="fixed z-[99999] overflow-hidden rounded-2xl bg-surface-container-low border border-outline-variant/20 shadow-2xl"
       style={{
-        position: "fixed",
         top: dropPos.top,
         left: dropPos.left,
         width: dropPos.width,
-        zIndex: 99999,
         fontFamily: "Manrope, system-ui, sans-serif",
-        background: "#181a18",
-        border: "1px solid rgba(174,238,42,0.15)",
-        borderRadius: "16px",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
-        overflow: "hidden",
       }}
     >
       {/* Month/Year navigation */}
-      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/20">
         <button
           type="button"
           onClick={prevMonth}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#aeee2a]/10 transition-all"
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all"
         >
           <span className="material-symbols-outlined text-[18px]" translate="no">chevron_left</span>
         </button>
 
-        <span className="text-sm font-black text-[#faf9f5] tracking-wide">
-          {MONTH_NAMES[viewM]} <span className="text-[#aeee2a]">{viewY}</span>
+        <span className="text-sm font-black text-on-surface tracking-wide">
+          {MONTH_NAMES[viewM]} <span className="text-primary">{viewY}</span>
         </span>
 
         <button
           type="button"
           onClick={nextMonth}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#aeee2a]/10 transition-all"
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all"
         >
           <span className="material-symbols-outlined text-[18px]" translate="no">chevron_right</span>
         </button>
@@ -229,8 +223,7 @@ export default function CustomDatePicker({
         {DAY_HEADERS.map((h, i) => (
           <div
             key={h}
-            className="text-center text-[10px] font-black uppercase tracking-widest py-1"
-            style={{ color: i === 6 ? "#3a3c3a" : "#ababa8" }}
+            className={`text-center text-[10px] font-black uppercase tracking-widest py-1 ${i === 6 ? 'text-on-surface-variant/50' : 'text-on-surface-variant'}`}
           >
             {h}
           </div>
@@ -255,48 +248,24 @@ export default function CustomDatePicker({
               type="button"
               disabled={isDisabled}
               onClick={() => select(d)}
-              className="relative flex items-center justify-center rounded-lg text-sm font-bold transition-all h-9 w-full"
-              style={{
-                color: isDisabled
-                  ? "#2a2c2a"
+              className={`relative flex items-center justify-center rounded-lg text-sm font-bold transition-all h-9 w-full ${
+                isDisabled
+                  ? "text-on-surface-variant/30 cursor-not-allowed"
                   : isSelected
-                  ? "#3a5400"
-                  : !isCurrentMonth
-                  ? "#3a3c3a"
-                  : isSunday
-                  ? "#3a3c3a"
-                  : isToday
-                  ? "#aeee2a"
-                  : "#faf9f5",
-                background: isSelected ? "#aeee2a" : "transparent",
-                cursor: isDisabled ? "not-allowed" : "pointer",
-              }}
-              onMouseEnter={e => {
-                if (!isDisabled && !isSelected) {
-                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(174,238,42,0.12)";
-                  (e.currentTarget as HTMLButtonElement).style.color = "#aeee2a";
-                }
-              }}
-              onMouseLeave={e => {
-                if (!isSelected) {
-                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                  (e.currentTarget as HTMLButtonElement).style.color = isDisabled
-                    ? "#2a2c2a"
-                    : !isCurrentMonth
-                    ? "#3a3c3a"
-                    : isSunday
-                    ? "#3a3c3a"
-                    : isToday
-                    ? "#aeee2a"
-                    : "#faf9f5";
-                }
-              }}
+                  ? "bg-primary text-[#3a5400]"
+                  : "cursor-pointer hover:bg-primary/10 hover:text-primary " + (
+                      !isCurrentMonth || isSunday
+                        ? "text-on-surface-variant/50"
+                        : isToday
+                        ? "text-primary"
+                        : "text-on-surface"
+                    )
+              }`}
             >
               {d.getDate()}
               {isToday && !isSelected && (
                 <span
-                  className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
-                  style={{ background: "#aeee2a" }}
+                  className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
                 />
               )}
             </button>
@@ -305,11 +274,11 @@ export default function CustomDatePicker({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid rgba(71,72,70,0.2)" }}>
+      <div className="flex items-center justify-between px-5 py-3 border-t border-outline-variant/20">
         <button
           type="button"
           onClick={() => { onChange(""); setOpen(false); }}
-          className="text-[11px] font-black uppercase tracking-widest text-[#474846] hover:text-[#ababa8] transition-colors"
+          className="text-[11px] font-black uppercase tracking-widest text-outline-variant hover:text-on-surface-variant transition-colors"
         >
           Clear
         </button>
@@ -321,7 +290,7 @@ export default function CustomDatePicker({
             setViewY(t.getFullYear());
             setViewM(t.getMonth());
           }}
-          className="text-[11px] font-black uppercase tracking-widest text-[#aeee2a] hover:brightness-110 transition-colors"
+          className="text-[11px] font-black uppercase tracking-widest text-primary hover:brightness-110 transition-colors"
         >
           Today
         </button>
@@ -333,7 +302,7 @@ export default function CustomDatePicker({
   return (
     <div className={`relative ${className}`} style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
       {label && (
-        <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-1.5">
+        <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1.5">
           {label}
         </label>
       )}
@@ -344,21 +313,20 @@ export default function CustomDatePicker({
         type="button"
         onClick={toggleOpen}
         className={variant === "ghost"
-          ? `w-full block text-left font-bold cursor-pointer hover:text-[#aeee2a] transition-colors outline-none whitespace-nowrap ${!value ? "text-[#ababa8]" : "text-[#faf9f5]"}`
-          : `w-full flex items-center justify-between gap-2 bg-[#121412] border border-[#474846]/20 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-[#aeee2a] transition-colors hover:border-[#474846]/50 cursor-pointer`
+          ? `w-full block text-left font-bold cursor-pointer hover:text-primary transition-colors outline-none whitespace-nowrap ${!value ? "text-on-surface-variant" : "text-on-surface"}`
+          : `w-full flex items-center justify-between gap-2 bg-surface-container-high border border-outline-variant/20 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-primary transition-colors hover:border-outline-variant/50 cursor-pointer text-on-surface`
         }
-        style={variant === "ghost" ? {} : { color: value ? "#faf9f5" : "#474846" }}
       >
         {variant === "ghost" ? (
           value ? formatDisplay(value) : "—"
         ) : (
           <>
             <span className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-[#aeee2a]" translate="no">calendar_month</span>
+              <span className="material-symbols-outlined text-[18px] text-primary" translate="no">calendar_month</span>
               {value ? formatDisplay(value) : placeholder}
             </span>
             <span
-              className="material-symbols-outlined text-[18px] text-[#ababa8] transition-transform duration-200"
+              className="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200"
               style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
               translate="no"
             >

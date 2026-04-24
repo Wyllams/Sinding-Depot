@@ -245,24 +245,24 @@ export default function DateRangePicker({
         <span
           className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full transition-all ${
             phase === "picking_start"
-              ? "bg-[#aeee2a]/15 text-[#aeee2a] border border-[#aeee2a]/30"
-              : "text-[#474846]"
+              ? "bg-primary/15 text-primary border border-primary/30"
+              : "text-outline-variant"
           }`}
         >
           Start
         </span>
-        <span className="text-[#474846] text-xs">→</span>
+        <span className="text-outline-variant text-xs">→</span>
         <span
           className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full transition-all ${
             phase === "picking_end"
-              ? "bg-[#aeee2a]/15 text-[#aeee2a] border border-[#aeee2a]/30"
-              : "text-[#474846]"
+              ? "bg-primary/15 text-primary border border-primary/30"
+              : "text-outline-variant"
           }`}
         >
           End
         </span>
         {tempStart && (
-          <span className="text-[11px] text-[#ababa8] ml-auto font-bold">
+          <span className="text-[11px] text-on-surface-variant ml-auto font-bold">
             {formatDisplay(tempStart)}
             {tempEnd ? ` — ${formatDisplay(tempEnd)}` : ""}
           </span>
@@ -274,19 +274,19 @@ export default function DateRangePicker({
         <button
           type="button"
           onClick={prevMonth}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#aeee2a]/10 transition-all"
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all"
         >
           <span className="material-symbols-outlined text-[18px]" translate="no">chevron_left</span>
         </button>
 
-        <span className="text-sm font-black text-[#faf9f5] tracking-wide">
-          {MONTH_NAMES[viewM]} <span className="text-[#aeee2a]">{viewY}</span>
+        <span className="text-sm font-black text-on-surface tracking-wide">
+          {MONTH_NAMES[viewM]} <span className="text-primary">{viewY}</span>
         </span>
 
         <button
           type="button"
           onClick={nextMonth}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#aeee2a]/10 transition-all"
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all"
         >
           <span className="material-symbols-outlined text-[18px]" translate="no">chevron_right</span>
         </button>
@@ -371,7 +371,7 @@ export default function DateRangePicker({
         <button
           type="button"
           onClick={handleClear}
-          className="text-[11px] font-black uppercase tracking-widest text-[#474846] hover:text-[#ababa8] transition-colors"
+          className="text-[11px] font-black uppercase tracking-widest text-outline-variant hover:text-on-surface-variant transition-colors"
         >
           Clear
         </button>
@@ -396,7 +396,7 @@ export default function DateRangePicker({
             setViewY(t.getFullYear());
             setViewM(t.getMonth());
           }}
-          className="text-[11px] font-black uppercase tracking-widest text-[#aeee2a] hover:brightness-110 transition-colors"
+          className="text-[11px] font-black uppercase tracking-widest text-primary hover:brightness-110 transition-colors"
         >
           Today
         </button>
@@ -412,15 +412,15 @@ export default function DateRangePicker({
         ref={triggerRef}
         type="button"
         onClick={toggleOpen}
-        className="w-full flex items-center justify-between gap-2 bg-[#121412] border border-[#474846]/20 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-[#aeee2a] transition-colors hover:border-[#474846]/50 cursor-pointer"
+        className="w-full flex items-center justify-between gap-2 bg-surface-container-low border border-outline-variant/20 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-primary transition-colors hover:border-outline-variant/50 cursor-pointer"
         style={{ color: startDate ? "#faf9f5" : "#474846" }}
       >
         <span className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-[#aeee2a]" translate="no">date_range</span>
+          <span className="material-symbols-outlined text-[18px] text-primary" translate="no">date_range</span>
           <span className="whitespace-nowrap">{displayText}</span>
         </span>
         <span
-          className="material-symbols-outlined text-[18px] text-[#ababa8] transition-transform duration-200"
+          className="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200"
           style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
           translate="no"
         >

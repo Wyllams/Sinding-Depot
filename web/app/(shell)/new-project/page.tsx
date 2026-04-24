@@ -47,9 +47,9 @@ const services = [
 ];
 
 const inputCls =
-  "w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#aeee2a] focus:ring-1 focus:ring-[#aeee2a] transition-all cursor-pointer h-[48px] text-[15px]";
+  "w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer h-[48px] text-[15px]";
 
-const labelCls = "text-xs uppercase tracking-wider text-[#ababa8] font-bold";
+const labelCls = "text-xs uppercase tracking-wider text-on-surface-variant font-bold";
 
 // ---- Carrossel de Serviços ----
 type Service = { id: string; icon: string; label: string; color: string; partners?: string[] };
@@ -83,7 +83,7 @@ function ServicesCarousel({
       <button
         type="button"
         onClick={() => scroll("left")}
-        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 rounded-full bg-[#242624] border border-[#474846]/40 text-[#ababa8] hover:text-[#aeee2a] hover:border-[#aeee2a]/40 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover/carousel:opacity-100 cursor-pointer"
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 rounded-full bg-surface-container-highest border border-outline-variant/40 text-on-surface-variant hover:text-primary hover:border-primary/40 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover/carousel:opacity-100 cursor-pointer"
       >
         <span className="material-symbols-outlined text-[20px]" translate="no">chevron_left</span>
       </button>
@@ -111,31 +111,31 @@ function ServicesCarousel({
               }}
               className={`relative flex-shrink-0 w-[calc(25%-12px)] min-w-[140px] px-2 py-5 rounded-xl cursor-pointer transition-all group ${
                 on
-                  ? "bg-[#121412] border-2"
-                  : "bg-[#121412] border border-[#474846]/15 hover:bg-[#1e201e]"
+                  ? "bg-surface-container-highest border-2"
+                  : "bg-surface-container-highest border border-transparent hover:bg-primary/10 hover:border-primary/30"
               }`}
               style={on ? { borderColor: svc.color, boxShadow: `0 0 15px ${svc.color}1A` } : {}}
             >
               <div className="flex flex-col items-center text-center gap-2">
                 <span
                   className={`material-symbols-outlined text-3xl transition-colors ${
-                    !on ? "text-[#ababa8]" : ""
+                    !on ? "text-on-surface-variant" : ""
                   }`}
                   style={on ? { color: svc.color } : {}}
                   translate="no"
                 >
                   {svc.icon}
                 </span>
-                <span className="font-bold tracking-tight text-sm text-[#faf9f5]">{svc.label}</span>
+                <span className="font-bold tracking-tight text-sm text-on-surface">{svc.label}</span>
               </div>
               
               {/* Box de atribuição visual (assign) se o item for selecionado e tiver parceiros */}
               {on && hasPartnersList && (
                 <div className="mt-3 flex justify-center w-full">
                    {partner ? (
-                       <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider px-2.5 py-1 rounded-md border" style={{ backgroundColor: `${svc.color}33`, borderColor: svc.color }}>{partner}</span>
+                       <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider px-2.5 py-1 rounded-md border" style={{ backgroundColor: `${svc.color}33`, borderColor: svc.color }}>{partner}</span>
                    ) : (
-                       <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider border px-2.5 py-1 rounded-full transition-colors" style={{ backgroundColor: `${svc.color}1A`, borderColor: `${svc.color}80` }}>Assign Partner</span>
+                       <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider border px-2.5 py-1 rounded-full transition-colors" style={{ backgroundColor: `${svc.color}1A`, borderColor: `${svc.color}80` }}>Assign Partner</span>
                    )}
                 </div>
               )}
@@ -148,7 +148,7 @@ function ServicesCarousel({
                     e.stopPropagation();
                     toggle(svc.id);
                   }}
-                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-[#1a1c1a] border border-[#ff7351]/50 text-[#ff7351] hover:bg-[#ff7351] hover:text-[#121412] transition-colors shadow-md z-10 cursor-pointer"
+                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-surface-container-high border border-error/50 text-error hover:bg-error hover:text-surface-container-low transition-colors shadow-md z-10 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[14px]" translate="no">close</span>
                 </button>
@@ -162,7 +162,7 @@ function ServicesCarousel({
       <button
         type="button"
         onClick={() => scroll("right")}
-        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-9 h-9 rounded-full bg-[#242624] border border-[#474846]/40 text-[#ababa8] hover:text-[#aeee2a] hover:border-[#aeee2a]/40 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover/carousel:opacity-100 cursor-pointer"
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-9 h-9 rounded-full bg-surface-container-highest border border-outline-variant/40 text-on-surface-variant hover:text-primary hover:border-primary/40 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover/carousel:opacity-100 cursor-pointer"
       >
         <span className="material-symbols-outlined text-[20px]" translate="no">chevron_right</span>
       </button>
@@ -231,34 +231,34 @@ function CustomDatePicker({
     <div className="relative w-full" ref={popoverRef}>
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 flex items-center justify-between cursor-pointer hover:border-[#474846] transition-colors h-[48px] focus-within:border-[#aeee2a] focus-within:ring-1 focus-within:ring-[#aeee2a]`}
+        className={`w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 flex items-center justify-between cursor-pointer hover:border-outline-variant transition-colors h-[48px] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary`}
       >
-        <span className={`text-[15px] ${value ? "text-[#faf9f5]" : "text-[#747673] tracking-wider"}`}>
+        <span className={`text-[15px] ${value ? "text-on-surface" : "text-outline tracking-wider"}`}>
           {value ? formattedValue : placeholder}
         </span>
-        <span className="material-symbols-outlined text-[#747673] text-[18px]" translate="no">
+        <span className="material-symbols-outlined text-outline text-[18px]" translate="no">
           calendar_month
         </span>
       </div>
 
       {isOpen && (
-        <div className="absolute top-14 left-0 z-50 w-72 bg-[#1a1c1a] border border-[#474846]/50 rounded-xl shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-14 left-0 z-50 w-72 bg-surface-container-high border border-outline-variant/50 rounded-xl shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between mb-4">
-            <span className="font-bold text-[#faf9f5] ml-2 text-[15px]">
+            <span className="font-bold text-on-surface ml-2 text-[15px]">
               {MONTHS[viewMonth]} {viewYear}
             </span>
             <div className="flex gap-1">
               <button 
                 type="button" 
                 onClick={(e) => { e.stopPropagation(); viewMonth === 0 ? (setViewMonth(11), setViewYear(viewYear - 1)) : setViewMonth(viewMonth - 1); }} 
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#242624] text-[#ababa8] hover:text-[#faf9f5] transition cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface transition cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[20px]" translate="no">chevron_left</span>
               </button>
               <button 
                 type="button" 
                 onClick={(e) => { e.stopPropagation(); viewMonth === 11 ? (setViewMonth(0), setViewYear(viewYear + 1)) : setViewMonth(viewMonth + 1); }} 
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#242624] text-[#ababa8] hover:text-[#faf9f5] transition cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface transition cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[20px]" translate="no">chevron_right</span>
               </button>
@@ -267,7 +267,7 @@ function CustomDatePicker({
 
           <div className="grid grid-cols-7 mb-2">
             {DAYS.map(d => (
-              <div key={d} className="text-center text-[10px] font-black uppercase text-[#ababa8]">{d}</div>
+              <div key={d} className="text-center text-[10px] font-black uppercase text-on-surface-variant">{d}</div>
             ))}
           </div>
 
@@ -289,9 +289,9 @@ function CustomDatePicker({
                   key={day}
                   onClick={(e) => { e.stopPropagation(); selectDate(day); }}
                   className={`w-8 h-8 mx-auto flex items-center justify-center rounded-lg text-[13px] font-medium transition-colors cursor-pointer
-                    ${isSelected ? "bg-[#aeee2a] text-[#050505] font-black hover:bg-[#9bdd22]" 
-                      : isToday ? "bg-[#242624] text-[#aeee2a] border border-[#aeee2a]/30 hover:bg-[#323632]" 
-                      : "text-[#faf9f5] hover:bg-[#242624]"
+                    ${isSelected ? "bg-primary text-mobile-frame font-black hover:bg-[#9bdd22]" 
+                      : isToday ? "bg-surface-container-highest text-primary border border-primary/30 hover:bg-[#323632]" 
+                      : "text-on-surface hover:bg-surface-container-highest"
                     }
                   `}
                 >
@@ -301,8 +301,8 @@ function CustomDatePicker({
             })}
           </div>
 
-          <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#474846]/20">
-             <button type="button" onClick={() => { onChange(""); setIsOpen(false); }} className="text-xs font-bold text-[#ababa8] hover:text-[#e04545] transition-colors cursor-pointer px-2 py-1">
+          <div className="flex justify-between items-center mt-4 pt-4 border-t border-outline-variant/20">
+             <button type="button" onClick={() => { onChange(""); setIsOpen(false); }} className="text-xs font-bold text-on-surface-variant hover:text-[#e04545] transition-colors cursor-pointer px-2 py-1">
                Clear
              </button>
              <button type="button" onClick={() => { 
@@ -310,7 +310,7 @@ function CustomDatePicker({
                  onChange(`${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`);
                  setIsOpen(false);
                }} 
-               className="text-xs font-bold text-[#aeee2a] hover:text-[#9bdd22] transition-colors cursor-pointer px-2 py-1">
+               className="text-xs font-bold text-primary hover:text-[#9bdd22] transition-colors cursor-pointer px-2 py-1">
                Today
              </button>
           </div>
@@ -323,7 +323,7 @@ function CustomDatePicker({
 function SectionHeader({ icon, title }: { icon: string; title: string }) {
   return (
     <div className="flex items-center gap-3 mb-6">
-      <span className="material-symbols-outlined text-[#aeee2a]" translate="no">
+      <span className="material-symbols-outlined text-primary" translate="no">
         {icon}
       </span>
       <h2 className="text-xl font-bold" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
@@ -767,7 +767,7 @@ export default function NewProjectPage() {
     <>
       <TopBar leftSlot={
         <Link href="/projects">
-          <div className="flex items-center gap-2 text-[#aeee2a] cursor-pointer">
+          <div className="flex items-center gap-2 text-primary cursor-pointer">
             <span className="material-symbols-outlined text-sm" translate="no">arrow_back</span>
             <span className="text-sm uppercase tracking-widest font-bold">Back to Jobs</span>
           </div>
@@ -786,11 +786,11 @@ export default function NewProjectPage() {
             >
               Create New Job
             </h1>
-            <p className="text-[#ababa8] text-lg">Define details for a new project</p>
+            <p className="text-on-surface-variant text-lg">Define details for a new project</p>
           </div>
 
           {errorObj && (
-            <div className="mb-6 p-4 rounded-xl bg-[#ff7351]/10 border border-[#ff7351]/30 text-[#ff7351] font-bold text-sm flex items-center gap-3">
+            <div className="mb-6 p-4 rounded-xl bg-error/10 border border-error/30 text-error font-bold text-sm flex items-center gap-3">
               <span className="material-symbols-outlined" translate="no">error</span>
               {errorObj}
             </div>
@@ -801,7 +801,7 @@ export default function NewProjectPage() {
             {/* Client Information */}
             <section>
               <SectionHeader icon="person_add" title="Client Information" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
                 <div className="space-y-2">
                   <label className={labelCls}>Client Name *</label>
                   <input required value={clientName} onChange={(e)=>setClientName(e.target.value)} className={inputCls} placeholder="John Doe" type="text" />
@@ -836,7 +836,7 @@ export default function NewProjectPage() {
             {/* Project Address */}
             <section>
               <SectionHeader icon="location_on" title="Project Address" />
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
                 <div className="md:col-span-4 space-y-2">
                   <label className={labelCls}>Street Address *</label>
                   <input required value={streetAddress} onChange={(e)=>setStreetAddress(e.target.value)} className={inputCls} placeholder="123 Industrial Way" type="text" />
@@ -859,7 +859,7 @@ export default function NewProjectPage() {
             {/* Job Details */}
             <section>
               <SectionHeader icon="architecture" title="Job Details" />
-              <div className="flex flex-col gap-6 p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+              <div className="flex flex-col gap-6 p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
                 {/* Row 1: Job Title + Sold Date — 50/50 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -876,7 +876,7 @@ export default function NewProjectPage() {
                   <div className="space-y-2">
                     <label className={labelCls}>Contract Value</label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#ababa8] font-bold text-[15px]">$</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold text-[15px]">$</span>
                       <input value={contractAmount} onChange={(e)=>setContractAmount(e.target.value)} className={`${inputCls} pl-8`} placeholder="0.00" type="number" step="0.01" />
                     </div>
                   </div>
@@ -918,9 +918,9 @@ export default function NewProjectPage() {
               {/* Operational Status / Gating */}
               <div className="flex flex-col">
                 <SectionHeader icon="traffic" title="Operational Status" />
-                <div className="p-4 sm:p-6 lg:p-8 rounded-xl bg-[#121412] border border-[#474846]/15 h-full">
+                <div className="p-4 sm:p-6 lg:p-8 rounded-xl bg-surface-container-low border border-outline-variant/15 h-full">
                   <div className="space-y-4">
-                    <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8] ml-1">Initial Project Gate</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Initial Project Gate</label>
                     <div className="relative group w-full">
                       <CustomDropdown 
                         value={gateStatus}
@@ -937,7 +937,7 @@ export default function NewProjectPage() {
                           { value: "NO_ANSWER", label: "📴 NO ANSWER" },
                           { value: "PERMIT", label: "📋 PERMIT" }
                         ]}
-                        className="w-full bg-[#0a0a0a] border border-[#474846] rounded-xl pl-12 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-[#faf9f5] shadow-inner transition-colors flex justify-between items-center hover:border-[#aeee2a]/50"
+                        className="w-full bg-surface-container border border-outline-variant rounded-xl pl-12 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-on-surface shadow-inner transition-colors flex justify-between items-center hover:border-primary/50"
                       />
                       
                       {/* Icone Visual Overlay */}
@@ -960,20 +960,20 @@ export default function NewProjectPage() {
               {/* Sales Person (SP) */}
               <div className="flex flex-col">
                 <SectionHeader icon="badge" title="Sales Person" />
-                <div className="p-4 sm:p-6 lg:p-8 rounded-xl bg-[#121412] border border-[#474846]/15 h-full">
+                <div className="p-4 sm:p-6 lg:p-8 rounded-xl bg-surface-container-low border border-outline-variant/15 h-full">
                   <div className="space-y-4">
-                    <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8] ml-1">Assigned Seller</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Assigned Seller</label>
                      <div className="relative group w-full">
                       <CustomDropdown 
                         value={spStatus}
                         onChange={(val) => setSpStatus(val as SellerConfigKey)}
                         options={Object.entries(SELLER_CONFIG).map(([key, config]) => ({ value: key, label: config.label }))}
-                        className="w-full bg-[#0a0a0a] border border-[#474846] rounded-xl pl-16 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-[#faf9f5] shadow-inner transition-colors flex justify-between items-center hover:border-[#aeee2a]/50"
+                        className="w-full bg-surface-container border border-outline-variant rounded-xl pl-16 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-on-surface shadow-inner transition-colors flex justify-between items-center hover:border-primary/50"
                       />
                       
                       {/* Avatar / Inicial Overlay */}
                       <div 
-                        className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 pointer-events-none bg-[#1a1c1a] border border-[#2a2d2a]"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 pointer-events-none bg-surface-container-high border border-outline-variant"
                         style={{ color: SELLER_CONFIG[spStatus]?.color || '#4da8da' }}
                       >
                         <span className="font-black text-sm uppercase">
@@ -989,7 +989,7 @@ export default function NewProjectPage() {
             {/* Additional Information */}
             <section>
               <SectionHeader icon="description" title="Additional Information" />
-              <div className="p-4 sm:p-6 lg:p-8 rounded-xl bg-[#121412] border border-[#474846]/15">
+              <div className="p-4 sm:p-6 lg:p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
                 <div className="space-y-2">
                   <label className={labelCls}>Project Notes</label>
                   <textarea
@@ -1007,14 +1007,14 @@ export default function NewProjectPage() {
             <footer className="flex items-center justify-end gap-6 pt-4 pb-12">
               <Link href="/projects">
                 <button
-                  className="px-4 sm:px-6 lg:px-8 py-3 rounded-xl border border-[#474846] text-[#ababa8] font-bold hover:bg-[#1e201e] transition-all cursor-pointer"
+                  className="px-4 sm:px-6 lg:px-8 py-3 rounded-xl border border-outline-variant text-on-surface-variant font-bold hover:bg-surface-container-high transition-all cursor-pointer"
                   type="button"
                 >
                   Cancel
                 </button>
               </Link>
               <button
-                className="px-10 py-3 rounded-xl bg-[#aeee2a] text-[#3a5400] font-bold shadow-[0_0_20px_rgba(174,238,42,0.2)] hover:shadow-[0_0_30px_rgba(174,238,42,0.4)] transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                className="px-10 py-3 rounded-xl bg-primary text-[#3a5400] font-bold shadow-[0_0_20px_rgba(174,238,42,0.2)] hover:shadow-[0_0_30px_rgba(174,238,42,0.4)] transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                 type="submit"
                 disabled={isSubmitting}
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
@@ -1046,7 +1046,7 @@ export default function NewProjectPage() {
 
         return (
           <div className="hidden xl:block fixed right-0 top-0 h-full w-[400px] pt-[72px] pb-6 pr-6 pointer-events-none z-30">
-            <div className="h-full w-full rounded-3xl border border-[#474846]/20 overflow-hidden relative pointer-events-auto" style={{ background: "#111311" }}>
+            <div className="h-full w-full rounded-3xl border border-outline-variant/20 overflow-hidden relative pointer-events-auto bg-surface-container">
 
               {/* Map area */}
               <div className="h-[45%] relative overflow-hidden">
@@ -1062,7 +1062,7 @@ export default function NewProjectPage() {
                       referrerPolicy="no-referrer"
                       allowFullScreen
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111311] via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent pointer-events-none" />
                   </>
                 ) : (
                   <>
@@ -1071,7 +1071,7 @@ export default function NewProjectPage() {
                       alt="Map placeholder"
                       src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1Hp59mrKmha0ODBeyPk5bl8FoQ_-pCzr3y4R0EOkrPC79zO2WLMO2uq9-zX4uwPDUQMP63wBc6jFub_Oy-oc9rkY0j4qRRM0a0fMGdcXQvjAHU--X04u5Y9OncI5Ioc-QR40P-tVWv3gU6u1bFzVPhy8q_rSp4-NbRGC02sjR30w5HYAN0Hf-iko-nfSiGSQvNqRMDAyag8Xj6nITm1FvZR8zDxwml64Tw8fo2hZWu5ARHsPhtXnEdPXliODUriv2h7xdpG43iKg"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111311] via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent" />
                   </>
                 )}
               </div>
@@ -1080,12 +1080,12 @@ export default function NewProjectPage() {
               <div className="relative z-10 px-7 pb-7 pt-2 flex flex-col" style={{ height: "55%" }}>
                 <div className="mb-5">
                   <h3
-                    className="text-lg font-bold text-[#aeee2a] mb-1"
+                    className="text-lg font-bold text-primary mb-1"
                     style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
                   >
                     Project Preview
                   </h3>
-                  <p className="text-[11px] text-[#747673]">
+                  <p className="text-[11px] text-on-surface-variant">
                     Live preview based on form data
                   </p>
                 </div>
@@ -1094,32 +1094,32 @@ export default function NewProjectPage() {
                 <div className="space-y-3 mb-5 flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
                   {/* Client */}
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-[#aeee2a] text-[16px]" translate="no">person</span>
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-primary text-[16px]" translate="no">person</span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[9px] uppercase tracking-widest text-[#747673] font-bold">Client</p>
-                      <p className="text-sm font-bold text-[#faf9f5] truncate">
-                        {clientName || <span className="text-[#474846] italic font-normal">Not entered</span>}
+                      <p className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Client</p>
+                      <p className="text-sm font-bold text-on-surface truncate">
+                        {clientName || <span className="text-on-surface-variant italic font-normal">Not entered</span>}
                       </p>
                     </div>
                   </div>
 
                   {/* Address */}
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-[#aeee2a] text-[16px]" translate="no">location_on</span>
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-primary text-[16px]" translate="no">location_on</span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[9px] uppercase tracking-widest text-[#747673] font-bold">Address</p>
-                      <p className="text-sm font-bold text-[#faf9f5] truncate">
+                      <p className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Address</p>
+                      <p className="text-sm font-bold text-on-surface truncate">
                         {hasAddress
                           ? <>{streetAddress}, {city}</>
-                          : <span className="text-[#474846] italic font-normal">Pending</span>
+                          : <span className="text-on-surface-variant italic font-normal">Pending</span>
                         }
                       </p>
                       {hasAddress && (
-                        <p className="text-[11px] text-[#ababa8]">{state} {zipCode}</p>
+                        <p className="text-[11px] text-on-surface-variant">{state} {zipCode}</p>
                       )}
                     </div>
                   </div>
@@ -1128,15 +1128,15 @@ export default function NewProjectPage() {
                   {(sq || contractAmount) && (
                     <div className="grid grid-cols-2 gap-2">
                       {sq && (
-                        <div className="bg-[#1e201e] rounded-xl p-3 border border-[#474846]/15">
-                          <p className="text-[9px] uppercase tracking-widest text-[#747673] font-bold">SQ</p>
-                          <p className="text-base font-black text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{sq}</p>
+                        <div className="bg-surface-container-high rounded-xl p-3 border border-outline-variant/15">
+                          <p className="text-[9px] uppercase tracking-widest text-outline font-bold">SQ</p>
+                          <p className="text-base font-black text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{sq}</p>
                         </div>
                       )}
                       {contractAmount && (
-                        <div className="bg-[#1e201e] rounded-xl p-3 border border-[#474846]/15">
-                          <p className="text-[9px] uppercase tracking-widest text-[#747673] font-bold">Contract</p>
-                          <p className="text-base font-black text-[#aeee2a]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                        <div className="bg-surface-container-high rounded-xl p-3 border border-outline-variant/15">
+                          <p className="text-[9px] uppercase tracking-widest text-outline font-bold">Contract</p>
+                          <p className="text-base font-black text-primary" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                             ${Number(contractAmount).toLocaleString("en-US", { minimumFractionDigits: 0 })}
                           </p>
                         </div>
@@ -1147,7 +1147,7 @@ export default function NewProjectPage() {
                   {/* Services */}
                   {selectedServices.length > 0 && (
                     <div>
-                      <p className="text-[9px] uppercase tracking-widest text-[#747673] font-bold mb-2">Services ({selectedServices.length})</p>
+                      <p className="text-[9px] uppercase tracking-widest text-outline font-bold mb-2">Services ({selectedServices.length})</p>
                       <div className="flex flex-wrap gap-1.5">
                         {selectedServices.map(s => {
                           const partner = assignedPartners[s.id];
@@ -1177,19 +1177,19 @@ export default function NewProjectPage() {
                 </div>
 
                 {/* Progress bar */}
-                <div className="bg-[#1e201e]/80 backdrop-blur-md p-4 rounded-2xl border border-[#474846]/20">
+                <div className="bg-surface-container-high/80 backdrop-blur-md p-4 rounded-2xl border border-outline-variant/20">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[16px] text-[#aeee2a]" translate="no">
+                      <span className="material-symbols-outlined text-[16px] text-primary" translate="no">
                         {progress === 100 ? "check_circle" : "pending"}
                       </span>
-                      <p className="text-[10px] uppercase text-[#ababa8] font-bold tracking-widest">
+                      <p className="text-[10px] uppercase text-on-surface-variant font-bold tracking-widest">
                         {progress === 100 ? "Ready to Submit" : "Form Completion"}
                       </p>
                     </div>
-                    <span className="text-xs font-black text-[#aeee2a]">{progress}%</span>
+                    <span className="text-xs font-black text-primary">{progress}%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-[#121412] rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-surface-container-low rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500 ease-out"
                       style={{
@@ -1212,7 +1212,7 @@ export default function NewProjectPage() {
       ════════════════════════════════════════════════════ */}
       {openPartnerModal && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setOpenPartnerModal(null)}>
-            <div className="bg-[#181a18] border border-[#474846]/40 rounded-2xl shadow-2xl w-full max-w-lg p-8 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-surface-container border border-outline-variant/40 rounded-2xl shadow-2xl w-full max-w-lg p-8 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center border" style={{ backgroundColor: `${openPartnerModal.color}1A`, borderColor: `${openPartnerModal.color}33` }}>
@@ -1222,13 +1222,13 @@ export default function NewProjectPage() {
                     </div>
                     <div>
                       <h2 className="text-xl font-black text-white uppercase tracking-tight">{openPartnerModal.label}</h2>
-                      <p className="text-xs text-[#ababa8] mt-1 font-medium">Select a partner for this duty</p>
+                      <p className="text-xs text-on-surface-variant mt-1 font-medium">Select a partner for this duty</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setOpenPartnerModal(null)}
                     type="button"
-                    className="w-8 h-8 rounded-full bg-[#242624] flex items-center justify-center hover:bg-[#aeee2a] hover:text-[#3a5400] transition-colors"
+                    className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center hover:bg-primary hover:text-[#3a5400] transition-colors"
                   >
                     <span className="material-symbols-outlined text-sm" translate="no">close</span>
                   </button>
@@ -1283,16 +1283,16 @@ export default function NewProjectPage() {
                             className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
                               isSelected 
                                 ? '' 
-                                : 'bg-[#181a18] border-[#474846]/40 hover:bg-[#242624] hover:border-[#747673]'
+                                : 'bg-surface-container border-outline-variant/40 hover:bg-surface-container-highest hover:border-outline'
                             }`}
                             style={isSelected ? { backgroundColor: `${openPartnerModal.color}1A`, borderColor: openPartnerModal.color, boxShadow: `0 0 15px ${openPartnerModal.color}1A` } : {}}
                           >
                             <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isSelected ? '' : 'bg-[#242624] text-[#ababa8]'}`}
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isSelected ? '' : 'bg-surface-container-highest text-on-surface-variant'}`}
                                    style={isSelected ? { backgroundColor: openPartnerModal.color, color: '#000000' } : {}}>
                                 {partner.charAt(0)}
                               </div>
-                              <span className={`text-sm font-bold tracking-wide uppercase ${isSelected ? '' : 'text-[#faf9f5]'}`} style={isSelected ? { color: openPartnerModal.color } : {}}>
+                              <span className={`text-sm font-bold tracking-wide uppercase ${isSelected ? '' : 'text-on-surface'}`} style={isSelected ? { color: openPartnerModal.color } : {}}>
                                 {partner}
                               </span>
                             </div>
@@ -1342,22 +1342,22 @@ export default function NewProjectPage() {
                           </div>
                           <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Partner</span>
                         </div>
-                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="w-8 h-px bg-outline-variant"></div>
                         <div className="flex items-center gap-1.5">
                           <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center">
                             <span className="text-[10px] font-black text-[#f5a623]">2</span>
                           </div>
-                          <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Windows Config</span>
+                          <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider">Windows Config</span>
                         </div>
                       </div>
 
-                      <p className="text-xs text-[#ababa8]">
+                      <p className="text-xs text-on-surface-variant">
                         Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners["windows"]}</span>. Now configure the windows for this project.
                       </p>
 
                       {/* Window Count */}
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                           How many windows in the contract?
                         </label>
                         <input
@@ -1366,13 +1366,13 @@ export default function NewProjectPage() {
                           value={windowCount}
                           onChange={(e) => setWindowCount(e.target.value)}
                           placeholder="e.g. 42"
-                          className="w-full bg-[#242624] border border-transparent rounded-lg py-3 px-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]"
+                          className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]"
                         />
                       </div>
 
                       {/* Trim? */}
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                           Trim?
                         </label>
                         <CustomDropdown
@@ -1383,7 +1383,7 @@ export default function NewProjectPage() {
                             { value: "no", label: "No" },
                           ]}
                           placeholder="Select..."
-                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
+                          className="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-3 text-[15px] text-on-surface hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
                         />
                       </div>
 
@@ -1393,13 +1393,13 @@ export default function NewProjectPage() {
                           <div className="flex items-center gap-3">
                             <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
                             <div>
-                              <p className="text-sm font-bold text-[#faf9f5]">
+                              <p className="text-sm font-bold text-on-surface">
                                 Estimated Duration:{" "}
                                 <span className="text-[#f5a623]">
                                   {Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}
                                 </span>
                               </p>
-                              <p className="text-[10px] text-[#ababa8] mt-0.5">
+                              <p className="text-[10px] text-on-surface-variant mt-0.5">
                                 {parseInt(windowCount)} windows ÷ {windowTrim === "yes" ? "12" : "20"}/day {windowTrim === "yes" ? "(with trim)" : "(no trim)"} = {(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)).toFixed(1)} → {Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20)))} day{Math.max(1, Math.round(parseInt(windowCount) / (windowTrim === "yes" ? 12 : 20))) !== 1 ? "s" : ""}
                               </p>
                             </div>
@@ -1412,7 +1412,7 @@ export default function NewProjectPage() {
                         <button
                           type="button"
                           onClick={() => setWindowsStep("partner")}
-                          className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                          className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all"
                         >
                           Back
                         </button>
@@ -1442,22 +1442,22 @@ export default function NewProjectPage() {
                           </div>
                           <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Partner</span>
                         </div>
-                        <div className="w-8 h-px bg-[#474846]"></div>
+                        <div className="w-8 h-px bg-outline-variant"></div>
                         <div className="flex items-center gap-1.5">
                           <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center">
                             <span className="text-[10px] font-black text-[#f5a623]">2</span>
                           </div>
-                          <span className="text-[10px] font-bold text-[#faf9f5] uppercase tracking-wider">Deck Scope</span>
+                          <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider">Deck Scope</span>
                         </div>
                       </div>
 
-                      <p className="text-xs text-[#ababa8]">
+                      <p className="text-xs text-on-surface-variant">
                         Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners["decks"]}</span>. Now select the scope of work for this deck project.
                       </p>
 
                       {/* Scope Dropdown */}
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-[#ababa8]">
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                           Scope
                         </label>
                         <CustomDropdown
@@ -1468,7 +1468,7 @@ export default function NewProjectPage() {
                             label: `${o.label} — ${o.days >= 7 ? `${Math.round(o.days / 5)} weeks` : `${o.days} day${o.days !== 1 ? "s" : ""}`}`,
                           }))}
                           placeholder="Select scope..."
-                          className="w-full bg-[#242624] border border-[#474846] rounded-lg px-4 py-3 text-[15px] text-[#faf9f5] hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
+                          className="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-3 text-[15px] text-on-surface hover:border-[#f5a623]/50 transition-colors flex justify-between items-center"
                         />
                       </div>
 
@@ -1484,11 +1484,11 @@ export default function NewProjectPage() {
                             <div className="flex items-center gap-3">
                               <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">calendar_month</span>
                               <div>
-                                <p className="text-sm font-bold text-[#faf9f5]">
+                                <p className="text-sm font-bold text-on-surface">
                                   Estimated Duration:{" "}
                                   <span className="text-[#f5a623]">{durationLabel}</span>
                                 </p>
-                                <p className="text-[10px] text-[#ababa8] mt-0.5">
+                                <p className="text-[10px] text-on-surface-variant mt-0.5">
                                   {opt.label} scope selected
                                 </p>
                               </div>
@@ -1502,7 +1502,7 @@ export default function NewProjectPage() {
                         <button
                           type="button"
                           onClick={() => setDecksStep("partner")}
-                          className="flex-1 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                          className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all"
                         >
                           Back
                         </button>

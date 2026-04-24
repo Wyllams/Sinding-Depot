@@ -31,14 +31,14 @@ const TYPE_ICONS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; text: string }> = {
-  draft:   { label: "Preparing",   bg: "bg-[#474846]/10", text: "text-[#474846]" },
+  draft:   { label: "Preparing",   bg: "bg-outline-variant/10", text: "text-outline-variant" },
   active:  { label: "Active",  bg: "bg-[#60a5fa]/10", text: "text-[#2563eb]" },
   signed:  { label: "Signed",  bg: "bg-[#5c8a00]/10", text: "text-[#5c8a00]" },
   paid:    { label: "Paid",    bg: "bg-[#818cf8]/10", text: "text-[#6366f1]" },
-  archived:{ label: "Archived",bg: "bg-[#474846]/10", text: "text-[#474846]" },
-  voided:  { label: "Voided",  bg: "bg-[#ff7351]/10", text: "text-[#dc2626]" },
-  pending_signature: { label: "Needs Signature", bg: "bg-[#ff7351]/10", text: "text-[#ff7351]" },
-  pending_customer_signature: { label: "Needs Signature", bg: "bg-[#ff7351]/10", text: "text-[#ff7351]" },
+  archived:{ label: "Archived",bg: "bg-outline-variant/10", text: "text-outline-variant" },
+  voided:  { label: "Voided",  bg: "bg-error/10", text: "text-[#dc2626]" },
+  pending_signature: { label: "Needs Signature", bg: "bg-error/10", text: "text-error" },
+  pending_customer_signature: { label: "Needs Signature", bg: "bg-error/10", text: "text-error" },
 };
 
 export default function CustomerDocuments(): React.ReactElement {
@@ -157,25 +157,25 @@ export default function CustomerDocuments(): React.ReactElement {
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
-        <Link href="/customer" className="inline-flex items-center text-[#a1a19d] hover:text-[#121412] text-sm font-bold transition-colors mb-4">
+        <Link href="/customer" className="inline-flex items-center text-[#a1a19d] hover:text-surface-container-low text-sm font-bold transition-colors mb-4">
           <span className="material-symbols-outlined text-[18px] mr-1" translate="no">arrow_back</span>
           Back to Dashboard
         </Link>
-        <h1 className="font-headline text-3xl font-bold tracking-tight text-[#121412]">My Documents</h1>
-        <p className="text-[#474846] mt-2">Access all your contracts, certificates, and project files.</p>
+        <h1 className="font-headline text-3xl font-bold tracking-tight text-surface-container-low">My Documents</h1>
+        <p className="text-outline-variant mt-2">Access all your contracts, certificates, and project files.</p>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-3 border-[#e5e5e3] border-t-[#121412] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-[#e5e5e3] border-t-surface-container-low rounded-full animate-spin" />
         </div>
       ) : docs.length === 0 ? (
         <div className="text-center py-20 bg-white border border-[#e5e5e3] rounded-3xl shadow-sm">
           <div className="w-20 h-20 bg-[#f5f5f5] text-[#a1a19d] rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="material-symbols-outlined text-[40px]" translate="no">folder_off</span>
           </div>
-          <h3 className="font-headline font-bold text-xl text-[#121412]">No documents yet</h3>
-          <p className="text-[#474846] mt-2 max-w-sm mx-auto">
+          <h3 className="font-headline font-bold text-xl text-surface-container-low">No documents yet</h3>
+          <p className="text-outline-variant mt-2 max-w-sm mx-auto">
             Documents will appear here once they are added to your project by our team.
           </p>
         </div>
@@ -189,16 +189,16 @@ export default function CustomerDocuments(): React.ReactElement {
               const isMilestone = doc.source === "milestone";
 
               return (
-                <li key={doc.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#faf9f5] transition-colors">
+                <li key={doc.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-on-surface transition-colors">
                   <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${needsSignature ? "bg-[#fff1ec] text-[#ff7351]" : st.bg + " " + st.text}`}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${needsSignature ? "bg-[#fff1ec] text-error" : st.bg + " " + st.text}`}>
                       <span className="material-symbols-outlined" translate="no">{icon}</span>
                     </div>
                     <div>
-                      <h3 className="font-headline font-bold text-base text-[#121412]">{doc.title}</h3>
+                      <h3 className="font-headline font-bold text-base text-surface-container-low">{doc.title}</h3>
                       <p className="text-[#a1a19d] text-sm">{fmtDate(doc.created_at)}</p>
                       {doc.summary && (
-                        <p className="text-[#474846] text-xs mt-1 line-clamp-2">{doc.summary}</p>
+                        <p className="text-outline-variant text-xs mt-1 line-clamp-2">{doc.summary}</p>
                       )}
                     </div>
                   </div>
@@ -211,20 +211,20 @@ export default function CustomerDocuments(): React.ReactElement {
                     {needsSignature && isMilestone ? (
                       <Link
                         href={`/customer/documents/${doc.id}`}
-                        className="h-10 px-5 bg-[#ff7351] text-white rounded-full font-bold text-sm hover:brightness-110 transition-colors shadow-sm flex items-center gap-1.5"
+                        className="h-10 px-5 bg-error text-white rounded-full font-bold text-sm hover:brightness-110 transition-colors shadow-sm flex items-center gap-1.5"
                       >
                         <span className="material-symbols-outlined text-[16px]" translate="no">draw</span>
                         Sign Now
                       </Link>
                     ) : needsSignature ? (
-                      <button className="h-10 px-5 bg-[#ff7351] text-white rounded-full font-bold text-sm hover:brightness-110 transition-colors shadow-sm flex items-center gap-1.5">
+                      <button className="h-10 px-5 bg-error text-white rounded-full font-bold text-sm hover:brightness-110 transition-colors shadow-sm flex items-center gap-1.5">
                         <span className="material-symbols-outlined text-[16px]" translate="no">draw</span>
                         Sign Now
                       </button>
                     ) : doc.storage_path ? (
                       <button
                         onClick={() => handleView(doc)}
-                        className="h-10 px-5 bg-[#121412] text-[#faf9f5] rounded-full font-bold text-sm hover:bg-[#242624] transition-colors flex items-center gap-1.5"
+                        className="h-10 px-5 bg-surface-container-low text-on-surface rounded-full font-bold text-sm hover:bg-surface-container-highest transition-colors flex items-center gap-1.5"
                       >
                         <span className="material-symbols-outlined text-[16px]" translate="no">visibility</span>
                         View
@@ -232,7 +232,7 @@ export default function CustomerDocuments(): React.ReactElement {
                     ) : (doc.status === "signed" || doc.status === "paid") && isMilestone ? (
                       <Link
                         href={`/customer/documents/${doc.id}`}
-                        className="h-10 px-5 bg-[#121412] text-[#faf9f5] rounded-full font-bold text-sm hover:bg-[#242624] transition-colors flex items-center gap-1.5"
+                        className="h-10 px-5 bg-surface-container-low text-on-surface rounded-full font-bold text-sm hover:bg-surface-container-highest transition-colors flex items-center gap-1.5"
                       >
                         <span className="material-symbols-outlined text-[16px]" translate="no">visibility</span>
                         View

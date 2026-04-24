@@ -95,11 +95,11 @@ function derivedWeek(jobs: number): ReturnType<typeof mkWeek> {
 
 // ─── Visual helpers ───────────────────────────────────────────────
 const getStatusDot = (s: CrewStatus) =>
-  s === "Available" ? "bg-[#aeee2a]" : s === "Booked Out" ? "bg-[#ff7351]" : "bg-[#eedc47]";
+  s === "Available" ? "bg-primary" : s === "Booked Out" ? "bg-error" : "bg-[#eedc47]";
 const getLoadLabel = (l: number) =>
-  l >= 90 ? "text-[#ff7351]" : l >= 60 ? "text-[#aeee2a]" : "text-[#eedc47]";
+  l >= 90 ? "text-error" : l >= 60 ? "text-primary" : "text-[#eedc47]";
 const getBarColor = (s: "free" | "partial" | "booked") =>
-  s === "booked" ? "bg-[#ff7351]" : s === "partial" ? "bg-[#eedc47]" : "bg-[#aeee2a]";
+  s === "booked" ? "bg-error" : s === "partial" ? "bg-[#eedc47]" : "bg-primary";
 
 // ─── Crew Card ───────────────────────────────────────────────────
 function CrewCard({
@@ -114,21 +114,21 @@ function CrewCard({
   onAssignJob: (c: CrewUI) => void;
 }) {
   return (
-    <div className="bg-[#121412] rounded-2xl p-6 border border-[#242624] flex flex-col hover:border-[#474846]/60 transition-colors duration-300 min-h-[400px]">
+    <div className="bg-surface-container-high rounded-2xl p-6 border border-outline-variant/15 flex flex-col hover:border-outline-variant/60 transition-colors duration-300 min-h-[400px]">
       {/* Header */}
       <div className="flex justify-between items-start mb-5">
         <div>
-          <h3 className="text-2xl font-black text-[#faf9f5] tracking-wide leading-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+          <h3 className="text-2xl font-black text-on-surface tracking-wide leading-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
             {crew.name}
           </h3>
           <div className="flex items-center gap-1.5 mt-1.5">
             <div className={`w-1.5 h-1.5 rounded-full ${getStatusDot(crew.status)}`} />
-            <span className="text-[10px] font-black text-[#ababa8] uppercase tracking-widest">{crew.status}</span>
+            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{crew.status}</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
           {crew.contact_phone && (
-            <span className="text-[10px] text-[#ababa8] font-mono">{crew.contact_phone}</span>
+            <span className="text-[10px] text-on-surface-variant font-mono">{crew.contact_phone}</span>
           )}
         </div>
       </div>
@@ -136,12 +136,12 @@ function CrewCard({
       {/* Skills */}
       <div className="flex flex-wrap gap-1.5 mb-6">
         {crew.skills.map((s, i) => (
-          <span key={i} className="px-2.5 py-1 bg-[#242624] text-[#ababa8] text-[9px] font-black uppercase tracking-wide rounded-full">
+          <span key={i} className="px-2.5 py-1 bg-surface-container-highest text-on-surface-variant text-[9px] font-black uppercase tracking-wide rounded-full">
             {s}
           </span>
         ))}
         {crew.skills.length === 0 && (
-          <span className="px-2.5 py-1 bg-[#1e201e] text-[#474846] text-[9px] font-black uppercase tracking-wide rounded-full">
+          <span className="px-2.5 py-1 bg-surface-container-high text-outline-variant text-[9px] font-black uppercase tracking-wide rounded-full">
             No skills listed
           </span>
         )}
@@ -151,10 +151,10 @@ function CrewCard({
       {crew.assignedJobs.length > 0 && (
         <div className="mb-4 space-y-1.5">
           {crew.assignedJobs.slice(0, 2).map((j) => (
-            <div key={j.id} className="flex items-center gap-2 bg-[#1a1c1a] rounded-lg px-3 py-2 border border-[#242624]">
-              <span className="text-[10px] font-black text-[#aeee2a]">{j.job_number}</span>
-              <span className="text-[10px] text-[#faf9f5] font-medium truncate flex-1">{j.client}</span>
-              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${j.status === "Active" ? "bg-[#aeee2a]/15 text-[#aeee2a]" : "bg-[#e3eb5d]/15 text-[#e3eb5d]"}`}>
+            <div key={j.id} className="flex items-center gap-2 bg-surface-container-high rounded-lg px-3 py-2 border border-surface-container-highest">
+              <span className="text-[10px] font-black text-primary">{j.job_number}</span>
+              <span className="text-[10px] text-on-surface font-medium truncate flex-1">{j.client}</span>
+              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${j.status === "Active" ? "bg-primary/15 text-primary" : "bg-[#e3eb5d]/15 text-[#e3eb5d]"}`}>
                 {j.status}
               </span>
             </div>
@@ -168,13 +168,13 @@ function CrewCard({
         <div className="flex gap-2 mt-5">
           <button
             onClick={() => onViewDetails(crew)}
-            className="flex-1 py-2.5 border border-[#474846]/40 rounded-xl text-[10px] font-black text-[#faf9f5] hover:bg-[#181a18] transition-colors uppercase tracking-widest"
+            className="flex-1 py-2.5 border border-outline-variant/40 rounded-xl text-[10px] font-black text-on-surface hover:bg-surface-container transition-colors uppercase tracking-widest"
           >
             View Details
           </button>
           <button
             onClick={() => onAssignJob(crew)}
-            className="flex-1 py-2.5 rounded-xl text-[10px] font-black text-[#121412] uppercase tracking-widest hover:brightness-110 transition-all active:scale-95"
+            className="flex-1 py-2.5 rounded-xl text-[10px] font-black text-surface-container-low uppercase tracking-widest hover:brightness-110 transition-all active:scale-95"
             style={{ backgroundColor: accentColor }}
           >
             Assign Job
@@ -183,12 +183,12 @@ function CrewCard({
       </div>
 
       {/* Footer */}
-      <div className="mt-5 pt-4 border-t border-[#242624] flex justify-between items-center">
+      <div className="mt-5 pt-4 border-t border-surface-container-highest flex justify-between items-center">
         <div className="flex items-center gap-1">
-          <span className="material-symbols-outlined text-[13px] text-[#ababa8]" translate="no">group</span>
-          <span className="text-[10px] font-bold text-[#ababa8]">{crew.size} Members</span>
+          <span className="material-symbols-outlined text-[13px] text-on-surface-variant" translate="no">group</span>
+          <span className="text-[10px] font-bold text-on-surface-variant">{crew.size} Members</span>
         </div>
-        <span className="text-[10px] font-bold text-[#ababa8] uppercase">{crew.discipline}</span>
+        <span className="text-[10px] font-bold text-on-surface-variant uppercase">{crew.discipline}</span>
       </div>
     </div>
   );
@@ -663,37 +663,37 @@ export default function CrewsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <TopBar />
 
       <div className="flex-1 overflow-auto p-6 md:p-10 lg:p-14">
 
         {/* Page Header */}
         <div className="max-w-[1600px] mx-auto w-full mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-on-surface mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
             Crews
           </h1>
-          <p className="text-[#ababa8] text-sm font-medium">
+          <p className="text-on-surface-variant text-sm font-medium">
             {loading ? "Loading..." : `${totalCrews} active partners across ${categories.length} service disciplines`}
           </p>
         </div>
 
         {/* Loading */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-32 text-[#ababa8] gap-4">
+          <div className="flex flex-col items-center justify-center py-32 text-on-surface-variant gap-4">
             <span className="material-symbols-outlined text-5xl animate-spin" translate="no">progress_activity</span>
             <p className="text-base font-bold">Loading crews from the field...</p>
           </div>
         ) : categories.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-[#ababa8] gap-4">
-            <div className="w-16 h-16 rounded-full bg-[#1e201e] flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl text-[#aeee2a]" translate="no">groups</span>
+          <div className="flex flex-col items-center justify-center py-32 text-on-surface-variant gap-4">
+            <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl text-primary" translate="no">groups</span>
             </div>
-            <p className="text-lg font-bold text-[#faf9f5]">No crews found in the database</p>
+            <p className="text-lg font-bold text-on-surface">No crews found in the database</p>
             <p className="text-sm">Add your first partner using the button below.</p>
             <button
               onClick={() => setAddModalCat("siding")}
-              className="mt-3 px-6 py-2.5 bg-[#aeee2a] text-[#3a5400] font-bold text-sm rounded-xl hover:bg-[#a0df14] transition-colors cursor-pointer flex items-center gap-2"
+              className="mt-3 px-6 py-2.5 bg-primary text-[#3a5400] font-bold text-sm rounded-xl hover:bg-[#a0df14] transition-colors cursor-pointer flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-[18px]" translate="no">group_add</span>
               Add First Crew
@@ -705,7 +705,7 @@ export default function CrewsPage() {
             {categories.map((cat) => (
               <section key={cat.id}>
                 {/* Category Header */}
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#1e201e]">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-surface-container-high">
                   <div className="flex items-center gap-3">
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center"
@@ -716,10 +716,10 @@ export default function CrewsPage() {
                       </span>
                     </div>
                     <div>
-                      <h2 className="text-lg font-black text-[#faf9f5] uppercase tracking-widest" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                      <h2 className="text-lg font-black text-on-surface uppercase tracking-widest" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                         {cat.label}
                       </h2>
-                      <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest mt-0.5">
+                      <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-0.5">
                         {cat.crews.length} {cat.crews.length === 1 ? "Partner" : "Partners"} Active
                       </p>
                     </div>
@@ -748,7 +748,7 @@ export default function CrewsPage() {
 
                 {/* Crew Grid */}
                 {cat.crews.length === 0 ? (
-                  <div className="col-span-full flex flex-col items-center gap-3 py-10 text-[#ababa8]">
+                  <div className="col-span-full flex flex-col items-center gap-3 py-10 text-on-surface-variant">
                     <div
                       className="w-12 h-12 rounded-full flex items-center justify-center"
                       style={{ backgroundColor: `${cat.accentColor}10` }}
@@ -757,7 +757,7 @@ export default function CrewsPage() {
                         {cat.icon}
                       </span>
                     </div>
-                    <p className="text-sm font-bold text-[#faf9f5]">No crews registered</p>
+                    <p className="text-sm font-bold text-on-surface">No crews registered</p>
                     <p className="text-xs text-center">Add your first {cat.label.toLowerCase()} partner.</p>
                     <button
                       onClick={() => setAddModalCat(cat.id)}
@@ -780,7 +780,7 @@ export default function CrewsPage() {
                         onDragEnd={handleDragEnd}
                         className={`transition-all duration-200 cursor-grab active:cursor-grabbing 
                           ${draggedCrew?.id === crew.id ? "opacity-50 scale-95 z-10" : ""}
-                          ${dragOverCrew?.id === crew.id ? "ring-2 ring-[#aeee2a] ring-offset-2 ring-offset-[#0a0a0a] rounded-2xl transform scale-[1.02]" : ""}
+                          ${dragOverCrew?.id === crew.id ? "ring-2 ring-primary ring-offset-2 ring-offset-background rounded-2xl transform scale-[1.02]" : ""}
                         `}
                       >
                         <CrewCard
@@ -805,22 +805,22 @@ export default function CrewsPage() {
       {detailCrew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setDetailCrew(null)}>
           <div
-            className="bg-[#121412] w-full max-w-lg rounded-2xl border border-[#242624] shadow-2xl flex flex-col overflow-hidden"
+            className="bg-surface-container-low w-full max-w-lg rounded-2xl border border-surface-container-highest shadow-2xl flex flex-col overflow-hidden"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 border-b border-[#242624] flex justify-between items-center">
+            <div className="p-6 border-b border-surface-container-highest flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-black text-[#faf9f5]">{detailCrew.name}</h2>
+                <h2 className="text-lg font-black text-on-surface">{detailCrew.name}</h2>
                 <div className="flex items-center gap-1.5 mt-1">
                   <div className={`w-1.5 h-1.5 rounded-full ${getStatusDot(detailCrew.status)}`} />
-                  <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest">{detailCrew.status}</span>
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{detailCrew.status}</span>
                   {detailCrew.contact_phone && (
-                    <span className="text-[10px] text-[#ababa8] ml-2 font-mono">{detailCrew.contact_phone}</span>
+                    <span className="text-[10px] text-on-surface-variant ml-2 font-mono">{detailCrew.contact_phone}</span>
                   )}
                 </div>
               </div>
-              <button onClick={() => setDetailCrew(null)} className="text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+              <button onClick={() => setDetailCrew(null)} className="text-on-surface-variant hover:text-on-surface transition-colors">
                 <span className="material-symbols-outlined" translate="no">close</span>
               </button>
             </div>
@@ -828,28 +828,28 @@ export default function CrewsPage() {
             <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
               {/* Current Jobs */}
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">
                   Active Assignments ({detailCrew.assignedJobs.length})
                 </p>
                 {detailCrew.assignedJobs.length === 0 ? (
-                  <div className="rounded-xl bg-[#1e201e] px-4 py-4 text-center text-[11px] text-[#474846] font-bold">
+                  <div className="rounded-xl bg-surface-container-high px-4 py-4 text-center text-[11px] text-outline-variant font-bold">
                     No active assignments
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {detailCrew.assignedJobs.map((job) => (
-                      <div key={job.id} className="rounded-xl bg-[#1a1c1a] border border-[#242624] px-4 py-3 flex justify-between items-center">
+                      <div key={job.id} className="rounded-xl bg-surface-container-high border border-surface-container-highest px-4 py-3 flex justify-between items-center">
                         <div>
                           <div className="flex items-center gap-2 mb-0.5">
-                            <span className="text-[10px] font-black text-[#aeee2a]">{job.job_number}</span>
-                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${job.status === "Active" ? "bg-[#aeee2a]/15 text-[#aeee2a]" : "bg-[#e3eb5d]/15 text-[#e3eb5d]"}`}>
+                            <span className="text-[10px] font-black text-primary">{job.job_number}</span>
+                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${job.status === "Active" ? "bg-primary/15 text-primary" : "bg-[#e3eb5d]/15 text-[#e3eb5d]"}`}>
                               {job.status}
                             </span>
                           </div>
-                          <p className="text-[11px] font-bold text-[#faf9f5]">{job.client}</p>
-                          <p className="text-[10px] text-[#474846]">{job.city}</p>
+                          <p className="text-[11px] font-bold text-on-surface">{job.client}</p>
+                          <p className="text-[10px] text-outline-variant">{job.city}</p>
                         </div>
-                        <span className="material-symbols-outlined text-[#474846] text-[16px]" translate="no">arrow_forward</span>
+                        <span className="material-symbols-outlined text-outline-variant text-[16px]" translate="no">arrow_forward</span>
                       </div>
                     ))}
                   </div>
@@ -859,10 +859,10 @@ export default function CrewsPage() {
               {/* Skills / Specialty */}
               {detailCrew.skills.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-3">Specialties</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">Specialties</p>
                   <div className="flex flex-wrap gap-2">
                     {detailCrew.skills.map((s, i) => (
-                      <span key={i} className="px-3 py-1 bg-[#242624] text-[#ababa8] text-[10px] font-black uppercase tracking-wide rounded-full border border-[#474846]/30">
+                      <span key={i} className="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[10px] font-black uppercase tracking-wide rounded-full border border-outline-variant/30">
                         {s}
                       </span>
                     ))}
@@ -872,30 +872,30 @@ export default function CrewsPage() {
 
               {/* Inactivate Zone */}
               {inactiveMode && (
-                <div className="p-4 rounded-xl bg-[#ff7351]/5 border border-[#ff7351]/20 space-y-3">
+                <div className="p-4 rounded-xl bg-error/5 border border-error/20 space-y-3">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#ff7351] text-base" translate="no">warning</span>
-                    <span className="text-xs font-black text-[#ff7351] uppercase tracking-widest">Inactivate Partner</span>
+                    <span className="material-symbols-outlined text-error text-base" translate="no">warning</span>
+                    <span className="text-xs font-black text-error uppercase tracking-widest">Inactivate Partner</span>
                   </div>
-                  <p className="text-[11px] text-[#ababa8]">Describe why this partner is being inactivated. This record will be kept for audit purposes.</p>
+                  <p className="text-[11px] text-on-surface-variant">Describe why this partner is being inactivated. This record will be kept for audit purposes.</p>
                   <textarea
                     rows={4}
                     value={inactivationReason}
                     onChange={(e) => setInactivationReason(e.target.value)}
                     placeholder="e.g. Low quality work on Project #0042, client complaints..."
-                    className="w-full bg-[#0a0a0a] border border-[#ff7351]/30 rounded-xl px-4 py-3 text-sm text-[#faf9f5] focus:outline-none focus:border-[#ff7351] transition-colors resize-none placeholder:text-[#474846]"
+                    className="w-full bg-surface-container border border-error/30 rounded-xl px-4 py-3 text-sm text-on-surface focus:outline-none focus:border-error transition-colors resize-none placeholder:text-outline-variant"
                   />
                   <div className="flex gap-2 justify-end">
                     <button
                       onClick={() => { setInactiveMode(false); setInactivationReason(""); }}
-                      className="px-4 py-2 text-xs font-black uppercase tracking-widest text-[#ababa8] hover:text-[#faf9f5] transition-colors"
+                      className="px-4 py-2 text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-on-surface transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleInactivateCrew}
                       disabled={!inactivationReason.trim() || inactivating}
-                      className="px-5 py-2 bg-[#ff7351] text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-[#e5623f] transition-all disabled:opacity-40 flex items-center gap-2"
+                      className="px-5 py-2 bg-error text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-[#e5623f] transition-all disabled:opacity-40 flex items-center gap-2"
                     >
                       {inactivating && <span className="material-symbols-outlined animate-spin text-sm" translate="no">sync</span>}
                       Confirm Inactivation
@@ -905,11 +905,11 @@ export default function CrewsPage() {
               )}
             </div>
 
-            <div className="p-5 border-t border-[#242624] bg-[#0a0a0a] flex justify-between items-center">
+            <div className="p-5 border-t border-surface-container-highest bg-surface-container flex justify-between items-center">
               {!inactiveMode ? (
                 <button
                   onClick={() => setInactiveMode(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-black uppercase tracking-widest text-[#ff7351] hover:bg-[#ff7351]/10 rounded-xl transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-black uppercase tracking-widest text-error hover:bg-error/10 rounded-xl transition-colors"
                 >
                   <span className="material-symbols-outlined text-sm" translate="no">person_off</span>
                   Inactivate Partner
@@ -919,7 +919,7 @@ export default function CrewsPage() {
               )}
               <button
                 onClick={() => { setDetailCrew(null); setInactiveMode(false); setInactivationReason(""); }}
-                className="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-[#faf9f5] bg-[#242624] hover:bg-[#2a2c2a] rounded-xl transition-colors"
+                className="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-on-surface bg-surface-container-highest hover:bg-[#2a2c2a] rounded-xl transition-colors"
               >
                 Close
               </button>
@@ -934,34 +934,34 @@ export default function CrewsPage() {
       {assignCrew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setAssignCrew(null)}>
           <div
-            className="bg-[#121412] w-full max-w-md rounded-2xl border border-[#242624] shadow-2xl flex flex-col overflow-hidden"
+            className="bg-surface-container-low w-full max-w-md rounded-2xl border border-surface-container-highest shadow-2xl flex flex-col overflow-hidden"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 border-b border-[#242624] flex justify-between items-center">
+            <div className="p-6 border-b border-surface-container-highest flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-black text-[#faf9f5]">Assign Job</h2>
-                <p className="text-[10px] text-[#ababa8] mt-0.5 uppercase tracking-widest">
-                  Partner: <span className="text-[#aeee2a] font-black">{assignCrew.name}</span>
+                <h2 className="text-lg font-black text-on-surface">Assign Job</h2>
+                <p className="text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-widest">
+                  Partner: <span className="text-primary font-black">{assignCrew.name}</span>
                 </p>
               </div>
-              <button onClick={() => setAssignCrew(null)} className="text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+              <button onClick={() => setAssignCrew(null)} className="text-on-surface-variant hover:text-on-surface transition-colors">
                 <span className="material-symbols-outlined" translate="no">close</span>
               </button>
             </div>
 
             {assignSuccess ? (
               <div className="p-10 flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-[#aeee2a]/15 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[#aeee2a] text-4xl" translate="no">check_circle</span>
+                <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary text-4xl" translate="no">check_circle</span>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg font-black text-[#faf9f5]">Job Assigned!</p>
-                  <p className="text-sm text-[#ababa8] mt-1">
-                    <span className="text-[#aeee2a] font-bold">{assignCrew.name}</span> was added to the project.
+                  <p className="text-lg font-black text-on-surface">Job Assigned!</p>
+                  <p className="text-sm text-on-surface-variant mt-1">
+                    <span className="text-primary font-bold">{assignCrew.name}</span> was added to the project.
                   </p>
                 </div>
-                <button onClick={() => setAssignCrew(null)} className="mt-2 px-8 py-2.5 bg-[#aeee2a] text-[#121412] text-xs font-black uppercase tracking-widest rounded-xl hover:brightness-110 transition-all active:scale-95">
+                <button onClick={() => setAssignCrew(null)} className="mt-2 px-8 py-2.5 bg-primary text-surface-container-low text-xs font-black uppercase tracking-widest rounded-xl hover:brightness-110 transition-all active:scale-95">
                   Done
                 </button>
               </div>
@@ -970,14 +970,14 @@ export default function CrewsPage() {
                 <div className="p-6 space-y-5">
                   {/* Job Select */}
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2">Select Project</label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Select Project</label>
                     <div className="relative z-50">
                       <CustomDropdown
                         value={assignJobId}
                         onChange={(val) => setAssignJobId(val)}
                         options={openJobs.map((j) => ({ value: j.id, label: `${j.job_number} · ${j.customer_name} ${j.city ? `— ${j.city}` : ""}` }))}
                         placeholder="— Choose a project —"
-                        className="w-full bg-[#181a18] border border-[#474846]/30 rounded-xl px-4 py-3 text-sm text-[#faf9f5] font-bold flex justify-between items-center transition-all hover:border-[#aeee2a]/50"
+                        className="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-3 text-sm text-on-surface font-bold flex justify-between items-center transition-all hover:border-primary/50"
                       />
                     </div>
                   </div>
@@ -1003,13 +1003,13 @@ export default function CrewsPage() {
                 </div>
 
                 <div className="p-6 pt-0 flex gap-3">
-                  <button onClick={() => setAssignCrew(null)} className="flex-1 py-3 rounded-xl border border-[#474846]/40 text-[#ababa8] text-xs font-black uppercase tracking-widest hover:bg-[#1a1c1a] transition-colors">
+                  <button onClick={() => setAssignCrew(null)} className="flex-1 py-3 rounded-xl border border-outline-variant/40 text-on-surface-variant text-xs font-black uppercase tracking-widest hover:bg-surface-container-high transition-colors">
                     Cancel
                   </button>
                   <button
                     onClick={handleConfirmAssign}
                     disabled={!assignJobId || !assignStart || assigning}
-                    className="flex-1 py-3 rounded-xl bg-[#aeee2a] text-[#121412] text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex-1 py-3 rounded-xl bg-primary text-surface-container-low text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {assigning ? "Saving..." : "Confirm"}
                   </button>
@@ -1026,62 +1026,62 @@ export default function CrewsPage() {
       {addModalCat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setAddModalCat(null)}>
           <div
-            className="bg-[#121412] w-full max-w-md rounded-2xl border border-[#242624] shadow-2xl"
+            className="bg-surface-container-low w-full max-w-md rounded-2xl border border-surface-container-highest shadow-2xl"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 border-b border-[#242624] flex justify-between items-center">
+            <div className="p-6 border-b border-surface-container-highest flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-black text-[#faf9f5]">Add Partner</h2>
-                <p className="text-[10px] text-[#ababa8] mt-0.5 uppercase tracking-widest">
-                  Discipline: <span className="text-[#aeee2a] font-black">{DISCIPLINE_CONFIG[addModalCat]?.label ?? addModalCat}</span>
+                <h2 className="text-lg font-black text-on-surface">Add Partner</h2>
+                <p className="text-[10px] text-on-surface-variant mt-0.5 uppercase tracking-widest">
+                  Discipline: <span className="text-primary font-black">{DISCIPLINE_CONFIG[addModalCat]?.label ?? addModalCat}</span>
                 </p>
               </div>
-              <button onClick={() => setAddModalCat(null)} className="text-[#ababa8] hover:text-[#faf9f5]">
+              <button onClick={() => setAddModalCat(null)} className="text-on-surface-variant hover:text-on-surface">
                 <span className="material-symbols-outlined" translate="no">close</span>
               </button>
             </div>
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 block">Service Discipline *</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 block">Service Discipline *</label>
                 <div className="w-full relative z-40">
                   <CustomDropdown
                     value={addModalCat ?? "siding"}
                     onChange={(val) => setAddModalCat(val)}
                     options={Object.entries(DISCIPLINE_CONFIG).map(([key, cfg]) => ({ value: key, label: cfg.label }))}
                     placeholder="Select Discipline"
-                    className="w-full bg-[#181a18] border border-[#474846]/30 rounded-xl px-4 py-3 text-[#faf9f5] font-bold text-sm flex justify-between items-center hover:border-[#aeee2a]/50 transition-colors"
+                    className="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface font-bold text-sm flex justify-between items-center hover:border-primary/50 transition-colors"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 block">Crew Name *</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 block">Crew Name *</label>
                 <input
                   value={newCrewName}
                   onChange={(e) => setNewCrewName(e.target.value)}
-                  className="w-full bg-[#181a18] border border-[#474846]/30 rounded-xl px-4 py-3 text-[#faf9f5] focus:outline-none focus:border-[#aeee2a]/50 text-sm"
+                  className="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary/50 text-sm"
                   placeholder="e.g. WILMAR 3"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 block">Team Size</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 block">Team Size</label>
                   <input
                     value={newCrewSize}
                     onChange={(e) => setNewCrewSize(e.target.value)}
                     type="number"
                     min="1"
-                    className="w-full bg-[#181a18] border border-[#474846]/30 rounded-xl px-4 py-3 text-[#faf9f5] focus:outline-none focus:border-[#aeee2a]/50 text-sm"
+                    className="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary/50 text-sm"
                     placeholder="3"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 block">Phone</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 block">Phone</label>
                   <input
                     value={newCrewPhone}
                     onChange={(e) => setNewCrewPhone(e.target.value)}
-                    className="w-full bg-[#181a18] border border-[#474846]/30 rounded-xl px-4 py-3 text-[#faf9f5] focus:outline-none focus:border-[#aeee2a]/50 text-sm"
+                    className="w-full bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary/50 text-sm"
                     placeholder="(555) 000-0000"
                   />
                 </div>
@@ -1089,13 +1089,13 @@ export default function CrewsPage() {
             </div>
 
             <div className="p-6 pt-0 flex gap-3">
-              <button onClick={() => setAddModalCat(null)} className="flex-1 py-3 rounded-xl border border-[#474846]/40 text-[#ababa8] text-xs font-black uppercase tracking-widest hover:bg-[#1a1c1a] transition-colors">
+              <button onClick={() => setAddModalCat(null)} className="flex-1 py-3 rounded-xl border border-outline-variant/40 text-on-surface-variant text-xs font-black uppercase tracking-widest hover:bg-surface-container-high transition-colors">
                 Cancel
               </button>
               <button
                 onClick={handleAddCrew}
                 disabled={!newCrewName.trim() || savingCrew}
-                className="flex-1 py-3 rounded-xl bg-[#aeee2a] text-[#121412] text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 disabled:opacity-40"
+                className="flex-1 py-3 rounded-xl bg-primary text-surface-container-low text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 disabled:opacity-40"
               >
                 {savingCrew ? "Saving..." : "Add Partner"}
               </button>
@@ -1109,23 +1109,23 @@ export default function CrewsPage() {
       {inactiveModalCat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setInactiveModalCat(null)}>
           <div
-            className="bg-[#121412] w-full max-w-2xl rounded-2xl border border-[#242624] shadow-2xl flex flex-col overflow-hidden max-h-[80vh]"
+            className="bg-surface-container-low w-full max-w-2xl rounded-2xl border border-surface-container-highest shadow-2xl flex flex-col overflow-hidden max-h-[80vh]"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 border-b border-[#242624] flex justify-between items-center bg-[#181a18]">
+            <div className="p-6 border-b border-surface-container-highest flex justify-between items-center bg-surface-container">
               <div>
-                <h2 className="text-xl font-black text-[#faf9f5]">Inactive {inactiveModalCat.label} Partners</h2>
-                <p className="text-xs text-[#ababa8] mt-1 font-bold uppercase tracking-widest">{inactiveModalCat.inactiveCrews.length} partners currently disabled</p>
+                <h2 className="text-xl font-black text-on-surface">Inactive {inactiveModalCat.label} Partners</h2>
+                <p className="text-xs text-on-surface-variant mt-1 font-bold uppercase tracking-widest">{inactiveModalCat.inactiveCrews.length} partners currently disabled</p>
               </div>
-              <button onClick={() => setInactiveModalCat(null)} className="text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+              <button onClick={() => setInactiveModalCat(null)} className="text-on-surface-variant hover:text-on-surface transition-colors">
                 <span className="material-symbols-outlined" translate="no">close</span>
               </button>
             </div>
 
             <div className="p-6 overflow-y-auto space-y-3">
               {inactiveModalCat.inactiveCrews.length === 0 ? (
-                <div className="text-center py-10 text-[#ababa8]">
+                <div className="text-center py-10 text-on-surface-variant">
                   <span className="material-symbols-outlined text-4xl mb-3" translate="no">archive</span>
                   <p className="text-sm font-bold">No inactive partners directly registered.</p>
                 </div>
@@ -1134,13 +1134,13 @@ export default function CrewsPage() {
                   <div 
                      key={c.id} 
                      onClick={() => setDetailInactiveCrew(c)}
-                     className="flex justify-between items-center bg-[#181a18] p-4 rounded-xl border border-[#242624] hover:bg-[#1f221f] transition-colors cursor-pointer group"
+                     className="flex justify-between items-center bg-surface-container p-4 rounded-xl border border-surface-container-highest hover:bg-[#1f221f] transition-colors cursor-pointer group"
                   >
                      <div>
-                        <h3 className="text-base font-black text-[#faf9f5] group-hover:text-[#aeee2a] transition-colors">{c.name}</h3>
-                        {c.contact_phone && <p className="text-xs text-[#ababa8] font-mono mt-0.5">{c.contact_phone}</p>}
+                        <h3 className="text-base font-black text-on-surface group-hover:text-primary transition-colors">{c.name}</h3>
+                        {c.contact_phone && <p className="text-xs text-on-surface-variant font-mono mt-0.5">{c.contact_phone}</p>}
                      </div>
-                     <span className="material-symbols-outlined text-[#474846] group-hover:text-[#faf9f5] transition-colors" translate="no">arrow_forward_ios</span>
+                     <span className="material-symbols-outlined text-outline-variant group-hover:text-on-surface transition-colors" translate="no">arrow_forward_ios</span>
                   </div>
                 ))
               )}
@@ -1155,53 +1155,53 @@ export default function CrewsPage() {
       {detailInactiveCrew && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setDetailInactiveCrew(null)}>
           <div
-            className="bg-[#121412] w-full max-w-lg rounded-2xl border border-[#242624] shadow-2xl flex flex-col overflow-hidden relative"
+            className="bg-surface-container-low w-full max-w-lg rounded-2xl border border-surface-container-highest shadow-2xl flex flex-col overflow-hidden relative"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             onClick={(e) => e.stopPropagation()}
           >
-             <div className="p-6 border-b border-[#242624] flex justify-between items-center bg-[#181a18]">
+             <div className="p-6 border-b border-surface-container-highest flex justify-between items-center bg-surface-container">
                <div>
-                  <h2 className="text-xl font-black text-[#faf9f5]">Partner Details</h2>
-                  <p className="text-[10px] text-[#ff7351] font-bold uppercase tracking-widest mt-1">Currently Inactive</p>
+                  <h2 className="text-xl font-black text-on-surface">Partner Details</h2>
+                  <p className="text-[10px] text-error font-bold uppercase tracking-widest mt-1">Currently Inactive</p>
                </div>
-               <button onClick={() => setDetailInactiveCrew(null)} className="text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+               <button onClick={() => setDetailInactiveCrew(null)} className="text-on-surface-variant hover:text-on-surface transition-colors">
                   <span className="material-symbols-outlined" translate="no">close</span>
                </button>
              </div>
 
              <div className="p-6 space-y-6">
                 <div>
-                  <h3 className="text-2xl font-black text-[#faf9f5]">{detailInactiveCrew.name}</h3>
-                  {detailInactiveCrew.contact_phone && <p className="text-sm text-[#ababa8] font-mono mt-1 px-3 py-1 bg-[#242624] inline-block rounded-lg">{detailInactiveCrew.contact_phone}</p>}
+                  <h3 className="text-2xl font-black text-on-surface">{detailInactiveCrew.name}</h3>
+                  {detailInactiveCrew.contact_phone && <p className="text-sm text-on-surface-variant font-mono mt-1 px-3 py-1 bg-surface-container-highest inline-block rounded-lg">{detailInactiveCrew.contact_phone}</p>}
                 </div>
 
-                <div className="p-5 rounded-xl bg-[#242624]/50 border border-[#474846]/30">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#ababa8] block mb-2 flex items-center gap-1.5">
+                <div className="p-5 rounded-xl bg-surface-container-highest/50 border border-outline-variant/30">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant block mb-2 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[14px]">history_edu</span>
                     Reason for inactivation
                   </span>
-                  <p className="text-sm font-medium text-[#faf9f5] whitespace-pre-wrap leading-relaxed">
+                  <p className="text-sm font-medium text-on-surface whitespace-pre-wrap leading-relaxed">
                     {detailInactiveCrew.inactivationReason || "No specific reason was provided when this partner was deactivated."}
                   </p>
                   {detailInactiveCrew.inactivatedAt && (
-                    <div className="mt-4 pt-3 border-t border-[#474846]/30">
-                      <p className="text-[10px] text-[#474846] font-mono uppercase tracking-widest">Date: {(() => { const _d = new Date(detailInactiveCrew.inactivatedAt); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}</p>
+                    <div className="mt-4 pt-3 border-t border-outline-variant/30">
+                      <p className="text-[10px] text-outline-variant font-mono uppercase tracking-widest">Date: {(() => { const _d = new Date(detailInactiveCrew.inactivatedAt); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}</p>
                     </div>
                   )}
                 </div>
              </div>
 
-             <div className="p-5 border-t border-[#242624] bg-[#0a0a0a] flex gap-3">
+             <div className="p-5 border-t border-surface-container-highest bg-[#0a0a0a] flex gap-3">
                 <button 
                    onClick={() => setActionCrew({ crew: detailInactiveCrew, act: 'activate' })}
-                   className="flex-1 py-3 bg-[#aeee2a]/10 hover:bg-[#aeee2a]/20 text-[#aeee2a] border border-[#aeee2a]/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                   className="flex-1 py-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                 >
                    <span className="material-symbols-outlined text-[16px]" translate="no">power_settings_new</span>
                    Re-Activate
                 </button>
                 <button 
                    onClick={() => setActionCrew({ crew: detailInactiveCrew, act: 'delete' })}
-                   className="flex-1 py-3 bg-[#ff7351]/10 hover:bg-[#ff7351]/20 text-[#ff7351] border border-[#ff7351]/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                   className="flex-1 py-3 bg-error/10 hover:bg-error/20 text-error border border-error/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                 >
                    <span className="material-symbols-outlined text-[16px]" translate="no">delete_forever</span>
                    Permanent Delete
@@ -1215,29 +1215,29 @@ export default function CrewsPage() {
       {actionCrew && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md" onClick={() => setActionCrew(null)}>
            <div 
-             className="bg-[#121412] max-w-md w-full rounded-2xl border border-[#242624] shadow-2xl p-8 flex flex-col text-center items-center relative" 
+             className="bg-surface-container-low max-w-md w-full rounded-2xl border border-surface-container-highest shadow-2xl p-8 flex flex-col text-center items-center relative" 
              onClick={(e) => e.stopPropagation()}
            >
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${actionCrew.act === 'activate' ? 'bg-[#aeee2a]/10 text-[#aeee2a]' : 'bg-[#ff7351]/10 text-[#ff7351]'}`}>
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${actionCrew.act === 'activate' ? 'bg-primary/10 text-primary' : 'bg-error/10 text-error'}`}>
                  <span className="material-symbols-outlined text-3xl" translate="no">
                    {actionCrew.act === 'activate' ? 'settings_backup_restore' : 'warning'}
                  </span>
               </div>
-              <h3 className="text-xl font-black text-[#faf9f5] mb-2">{actionCrew.act === 'activate' ? 'Restore Partner?' : 'Permanent Delete?'}</h3>
-              <p className="text-[#ababa8] text-sm mb-8">
+              <h3 className="text-xl font-black text-on-surface mb-2">{actionCrew.act === 'activate' ? 'Restore Partner?' : 'Permanent Delete?'}</h3>
+              <p className="text-on-surface-variant text-sm mb-8">
                  {actionCrew.act === 'activate' 
                    ? `Are you sure you want to re-activate "${actionCrew.crew.name}"? They will reappear on the active crew board.` 
                    : `Are you sure you want to permanently delete "${actionCrew.crew.name}"? This action removes all their database connections.` }
               </p>
               
               <div className="flex gap-3 w-full">
-                 <button onClick={() => setActionCrew(null)} className="flex-1 py-3 text-xs font-bold text-[#ababa8] hover:bg-[#242624] rounded-xl border border-[#474846] transition-colors">
+                 <button onClick={() => setActionCrew(null)} className="flex-1 py-3 text-xs font-bold text-on-surface-variant hover:bg-surface-container-highest rounded-xl border border-outline-variant transition-colors">
                     CANCEL
                  </button>
                  <button 
                    onClick={handleCrewActionConfirm} 
                    disabled={isProcessingAction}
-                   className={`flex-1 flex justify-center items-center gap-2 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 ${actionCrew.act === 'activate' ? 'bg-[#aeee2a] text-[#121412] hover:brightness-110' : 'bg-[#ff7351] text-[#121412] hover:brightness-110'}`}
+                   className={`flex-1 flex justify-center items-center gap-2 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 ${actionCrew.act === 'activate' ? 'bg-primary text-surface-container-low hover:brightness-110' : 'bg-error text-surface-container-low hover:brightness-110'}`}
                  >
                     {isProcessingAction ? <span className="material-symbols-outlined animate-spin text-[16px]">sync</span> : 'CONFIRM'}
                  </button>

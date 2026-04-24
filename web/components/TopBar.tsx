@@ -114,13 +114,13 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
 
   return (
     <>
-      <header className="safe-area-top sticky top-0 z-40 flex justify-between items-center px-4 sm:px-8 bg-[#0d0f0d]/80 backdrop-blur-3xl border-b border-[#474846]/20" style={{ minHeight: "56px" }}>
+      <header className="safe-area-top sticky top-0 z-40 flex justify-between items-center px-4 sm:px-8 bg-background/80 backdrop-blur-3xl border-b border-outline-variant/20" style={{ minHeight: "56px" }}>
       {/* Left side */}
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         {/* Hamburger — only visible on mobile */}
         <button
           onClick={toggle}
-          className="lg:hidden p-2 text-[#ababa8] hover:text-[#faf9f5] hover:bg-[#242624] rounded-lg transition-colors shrink-0"
+          className="lg:hidden p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-lg transition-colors shrink-0"
           aria-label="Open menu"
         >
           <span className="material-symbols-outlined text-[22px]" translate="no">menu</span>
@@ -128,11 +128,11 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
 
         {subtitle && title ? (
           <div className="flex flex-col min-w-0">
-            <span className="text-xs font-bold text-[#aeee2a] tracking-widest uppercase truncate">
+            <span className="text-xs font-bold text-primary tracking-widest uppercase truncate">
               {subtitle}
             </span>
             <h2
-              className="text-base sm:text-xl font-black text-[#faf9f5] uppercase truncate"
+              className="text-base sm:text-xl font-black text-on-surface uppercase truncate"
               style={{ fontFamily: "Manrope, system-ui, sans-serif", letterSpacing: "-0.01em" }}
             >
               {title}
@@ -140,7 +140,7 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
           </div>
         ) : title ? (
           <span
-            className="text-base sm:text-lg font-black uppercase tracking-widest text-[#faf9f5] truncate"
+            className="text-base sm:text-lg font-black uppercase tracking-widest text-on-surface truncate"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
           >
             {title}
@@ -153,40 +153,40 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
 
       {/* Right side */}
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-        {rightSlot && <>{rightSlot}<div className="hidden sm:block w-px h-6 bg-[#474846]/50" /></>}
+        {rightSlot && <>{rightSlot}<div className="hidden sm:block w-px h-6 bg-outline-variant/50" /></>}
 
         {/* History Action Button */}
         <div className="relative" ref={historyRef}>
           <button
             onClick={() => setHistoryOpen(!historyOpen)}
-            className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all ${history.length > 0 ? "text-[#aeee2a] bg-[#aeee2a]/10 hover:bg-[#aeee2a]/20" : "text-[#ababa8] bg-transparent hover:bg-white/5"}`}
+            className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all ${history.length > 0 ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-on-surface-variant bg-transparent hover:bg-white/5"}`}
             title="History"
           >
             <span className="material-symbols-outlined text-[18px] sm:text-[22px]" translate="no">history</span>
-            {history.length > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#aeee2a] rounded-full border-2 border-[#181a18]"></span>}
+            {history.length > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-surface-container"></span>}
           </button>
 
           {historyOpen && (
-            <div className="absolute right-0 mt-3 w-64 sm:w-80 bg-[#181a18] rounded-xl shadow-2xl border border-white/5 overflow-hidden z-20 origin-top-right animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute right-0 mt-3 w-64 sm:w-80 bg-surface-container rounded-xl shadow-2xl border border-white/5 overflow-hidden z-20 origin-top-right animate-in fade-in zoom-in-95 duration-200">
               <div className="px-4 py-3 border-b border-white/5 flex justify-between items-center">
-                <span className="text-xs font-bold text-[#faf9f5]">Session History</span>
+                <span className="text-xs font-bold text-on-surface">Session History</span>
                 {history.length > 0 && (
-                  <button onClick={clearHistory} className="text-[10px] text-[#ff7351] hover:underline uppercase font-bold tracking-wider cursor-pointer">Clear</button>
+                  <button onClick={clearHistory} className="text-[10px] text-error hover:underline uppercase font-bold tracking-wider cursor-pointer">Clear</button>
                 )}
               </div>
               <div className="max-h-64 overflow-y-auto">
                 {history.length === 0 ? (
-                  <div className="p-6 text-center text-[#ababa8] text-xs">No recent actions recorded.</div>
+                  <div className="p-6 text-center text-on-surface-variant text-xs">No recent actions recorded.</div>
                 ) : (
                   <div className="divide-y divide-white/5">
                     {history.map((action) => (
                       <button
                         key={action.id}
                         onClick={() => { setConfirmUndo(action); setHistoryOpen(false); }}
-                        className="w-full text-left px-4 py-3 hover:bg-[#242624] transition-colors flex flex-col gap-1 group cursor-pointer"
+                        className="w-full text-left px-4 py-3 hover:bg-surface-container-highest transition-colors flex flex-col gap-1 group cursor-pointer"
                       >
-                        <span className="text-xs font-bold text-[#faf9f5] group-hover:text-[#aeee2a] transition-colors line-clamp-2">{action.message}</span>
-                        <span className="text-[10px] text-[#ababa8]">{action.date.toLocaleTimeString()}</span>
+                        <span className="text-xs font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2">{action.message}</span>
+                        <span className="text-[10px] text-on-surface-variant">{action.date.toLocaleTimeString()}</span>
                       </button>
                     ))}
                   </div>
@@ -200,7 +200,7 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
         <NotificationBell />
 
         {/* Divider */}
-        <div className="hidden sm:block w-px h-8 bg-[#474846]/50 mx-1" />
+        <div className="hidden sm:block w-px h-8 bg-outline-variant/50 mx-1" />
 
         {/* User profile */}
         <div className="relative" ref={profileRef}>
@@ -213,35 +213,35 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
             {profile?.avatar_url ? (
               <img
                 alt={displayName}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-[#aeee2a]"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-primary"
                 src={profile.avatar_url}
               />
             ) : (
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#aeee2a]/20 border-2 border-[#aeee2a] flex items-center justify-center">
-                <span className="text-[#aeee2a] text-xs font-black">{initials || "SD"}</span>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center">
+                <span className="text-primary text-xs font-black">{initials || "SD"}</span>
               </div>
             )}
           </button>
 
           {/* Dropdown Menu */}
           {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-52 bg-[#181a18] rounded-xl shadow-2xl border border-white/5 overflow-hidden py-1 z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute right-0 mt-3 w-52 bg-surface-container rounded-xl shadow-2xl border border-white/5 overflow-hidden py-1 z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200">
               {/* User header */}
               <div className="px-4 py-3 border-b border-white/5">
-                <p className="text-xs font-bold text-[#faf9f5] truncate">{displayName}</p>
-                <p className="text-[10px] text-[#ababa8] mt-0.5 truncate">{displayRole}</p>
+                <p className="text-xs font-bold text-on-surface truncate">{displayName}</p>
+                <p className="text-[10px] text-on-surface-variant mt-0.5 truncate">{displayRole}</p>
               </div>
               <Link
                 href="/settings"
-                className="w-full text-left px-4 py-3 text-sm text-[#faf9f5] hover:bg-[#242624] transition-colors flex items-center gap-3"
+                className="w-full text-left px-4 py-3 text-sm text-on-surface hover:bg-surface-container-highest transition-colors flex items-center gap-3"
                 onClick={() => setIsProfileOpen(false)}
               >
-                <span className="material-symbols-outlined text-[18px] text-[#ababa8]" translate="no">person</span>
+                <span className="material-symbols-outlined text-[18px] text-on-surface-variant" translate="no">person</span>
                 My Profile
               </Link>
               <div className="h-px bg-white/5 my-1" />
               <button
-                className="w-full text-left px-4 py-3 text-sm text-[#ff7351] hover:bg-[#ff7351]/10 transition-colors flex items-center gap-3"
+                className="w-full text-left px-4 py-3 text-sm text-error hover:bg-error/10 transition-colors flex items-center gap-3"
                 onClick={handleLogout}
               >
                 <span className="material-symbols-outlined text-[18px]" translate="no">logout</span>
@@ -256,19 +256,19 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
       {/* Confirm Undo Action Modal */}
       {confirmUndo && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#181a18] border border-[#aeee2a]/30 rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-[#aeee2a]/10 mx-auto flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-[#aeee2a] text-2xl" translate="no">undo</span>
+          <div className="bg-surface-container border border-primary/30 rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-primary text-2xl" translate="no">undo</span>
             </div>
-            <h3 className="text-lg font-bold text-[#faf9f5] mb-2">Undo Action?</h3>
-            <p className="text-sm text-[#ababa8] mb-6">
+            <h3 className="text-lg font-bold text-on-surface mb-2">Undo Action?</h3>
+            <p className="text-sm text-on-surface-variant mb-6">
               Are you sure you want to undo:<br/>
               <strong className="text-white mt-1 block">{confirmUndo.message}</strong>
             </p>
             <div className="flex gap-3 justify-center">
               <button 
                 onClick={() => setConfirmUndo(null)} 
-                className="px-5 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] font-bold hover:bg-[#242624] transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant font-bold hover:bg-surface-container-highest transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -278,7 +278,7 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
                   setConfirmUndo(null);
                 }} 
                 disabled={isUndoing} 
-                className="flex-1 py-2.5 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 py-2.5 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isUndoing ? <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" /> : "Yes, Undo"}
               </button>

@@ -4,13 +4,16 @@ O motor de agendamento é o coração operacional da Siding Depot. Ele garante q
 
 ## A Ordem Obrigatória (Dependências)
 
-Quando um projeto envolve múltiplas disciplinas, **existe uma hierarquia física** que precisa ser respeitada. Apenas a disciplina subsequente pode iniciar quando a anterior for concluída (ou, pelo menos, previamente agendada e em andamento coordenado).
+Quando um projeto envolve múltiplas disciplinas, **existe uma hierarquia física e sequencial** que precisa ser obrigatoriamente respeitada nos menus de seleção e no andamento da obra:
 
-1. **Measurement (Medição):** Pré-requisito para comprar materiais, especialmente Windows.
-2. **Siding / Roofing:** O "básico" e externo.
-3. **Windows & Doors:** Exige que a estrutura externa principal (Siding) esteja alinhada, mas variações podem ocorrer dependendo da Change Order.
-4. **Paint (Pintura):** Só pode ocorrer depois que todo o acabamento, molduras (fascia) e paredes/siding estiverem prontos.
-5. **Gutters (Calhas):** A etapa final que coroa o exterior. Exige que a pintura (Fascia) e o telhado (Roofing) estejam finalizados.
+1. **Siding**
+2. **Doors**
+3. **Windows**
+4. **Painting**
+5. **Roofing**
+6. **Gutters**
+
+*(A seleção de serviços na UI deve sempre apresentar os serviços exatamente nesta ordem).*
 
 ## Como o Prazo é Calculado
 

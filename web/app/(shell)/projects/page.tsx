@@ -32,7 +32,7 @@ const STATUS_MAP: Record<string, { label: string; style: string }> = {
   pending:     { label: "Pending",     style: "bg-[#ef4444]/10 text-[#ef4444] border border-[#ef4444]/20" },
   tentative:   { label: "Tentative",   style: "bg-[#f5a623]/10 text-[#f5a623] border border-[#f5a623]/20" },
   scheduled:   { label: "Confirmed",   style: "bg-[#60b8f5]/10 text-[#60b8f5] border border-[#60b8f5]/20" },
-  in_progress: { label: "In Progress", style: "bg-[#aeee2a]/10 text-[#aeee2a] border border-[#aeee2a]/20" },
+  in_progress: { label: "In Progress", style: "bg-primary/10 text-primary border border-primary/20" },
   done:        { label: "Done",        style: "bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20" },
 };
 
@@ -287,7 +287,7 @@ export default function ProjectsPage() {
     <>
       <TopBar />
 
-      <main className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#0d0f0d]">
+      <main className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background">
 
         {/* ── STICKY HEADER + FILTERS ── */}
         <div className="shrink-0 px-4 sm:px-6 lg:px-8 pt-6">
@@ -296,20 +296,20 @@ export default function ProjectsPage() {
         <div className="flex justify-between items-end mb-8">
           <div>
             <h1
-              className="text-2xl sm:text-4xl font-extrabold tracking-tight text-[#faf9f5] mb-2"
+              className="text-2xl sm:text-4xl font-extrabold tracking-tight text-on-surface mb-2"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Projects
             </h1>
             {!loading && (
-              <p className="text-[#ababa8] text-sm">
-                <span className="text-[#aeee2a] font-bold">{jobs.length}</span> total projects
+              <p className="text-on-surface-variant text-sm">
+                <span className="text-primary font-bold">{jobs.length}</span> total projects
               </p>
             )}
           </div>
           <Link href="/new-project">
             <button
-              className="bg-[#aeee2a] hover:bg-[#a0df14] text-[#3a5400] font-bold px-6 py-3 rounded-xl transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+              className="bg-primary hover:bg-[#a0df14] text-[#3a5400] font-bold px-6 py-3 rounded-xl transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               <span className="material-symbols-outlined" translate="no">add_circle</span>
@@ -323,13 +323,13 @@ export default function ProjectsPage() {
 
           {/* Search */}
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-            <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold">Search</label>
+            <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Search</label>
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] text-[18px]" translate="no">search</span>
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]" translate="no">search</span>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="bg-[#242624] pl-9 pr-3 py-2 rounded-lg text-sm text-[#faf9f5] outline-none border-none w-full sm:w-48"
+                className="bg-surface-container-highest pl-9 pr-3 py-2 rounded-lg text-sm text-on-surface outline-none border-none w-full sm:w-48"
                 placeholder="Client, job #..."
               />
             </div>
@@ -337,7 +337,7 @@ export default function ProjectsPage() {
 
           {/* Status */}
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-            <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold">Status</label>
+            <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Status</label>
             <CustomDropdown
               value={statusFilter}
               onChange={(val) => setStatusFilter(val)}
@@ -349,13 +349,13 @@ export default function ProjectsPage() {
                 { value: "done", label: "Done" },
               ]}
               placeholder="All Statuses"
-              className="w-full sm:w-36 bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] hover:border-[#aeee2a]/50 transition-colors flex justify-between items-center"
+              className="w-full sm:w-36 bg-surface-container-highest px-3 py-2 rounded-lg text-sm text-on-surface cursor-pointer hover:bg-surface-container transition-colors flex justify-between items-center"
             />
           </div>
 
           {/* Services */}
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-            <label className="text-[10px] uppercase tracking-wider text-[#ababa8] font-bold">Services</label>
+            <label className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Services</label>
             <CustomDropdown
               value={serviceFilter}
               onChange={(val) => setServiceFilter(val)}
@@ -369,7 +369,7 @@ export default function ProjectsPage() {
                 { value: "dumpster", label: "Dumpster" }
               ]}
               placeholder="All Services"
-              className="w-full sm:w-36 bg-[#242624] px-3 py-2 rounded-lg text-sm text-[#faf9f5] cursor-pointer hover:bg-[#2a2d2a] hover:border-[#aeee2a]/50 transition-colors flex justify-between items-center"
+              className="w-full sm:w-36 bg-surface-container-highest px-3 py-2 rounded-lg text-sm text-on-surface cursor-pointer hover:bg-surface-container transition-colors flex justify-between items-center"
             />
           </div>
 
@@ -393,7 +393,7 @@ export default function ProjectsPage() {
 
         {/* ── Data Table ── */}
         <div className="flex-1 overflow-hidden flex flex-col px-4 sm:px-6 lg:px-8 pb-4 min-h-0">
-        <div className="bg-[#121412] rounded-3xl overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="bg-surface-container-low rounded-3xl overflow-hidden flex flex-col flex-1 min-h-0">
           <div className="overflow-auto flex-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#474846 transparent" }}>
           <table className="w-full min-w-[1100px] text-left border-collapse">
             <thead className="sticky top-0 z-20">
@@ -401,18 +401,18 @@ export default function ProjectsPage() {
                 {["SP", "Client", "Job", "Services", "Gating / Operational Status", "Job Start Status", ""].map((col) => (
                   <th
                     key={col}
-                    className={`px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#ababa8] bg-[#121412] ${col === "SP" ? "text-center" : ""}`}
+                    className={`px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant bg-surface-container-low ${col === "SP" ? "text-center" : ""}`}
                   >
                     {col}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#474846]/10">
+            <tbody className="divide-y divide-outline-variant/10">
               {loading ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center gap-3 text-[#ababa8]">
+                    <div className="flex flex-col items-center gap-3 text-on-surface-variant">
                       <span className="material-symbols-outlined text-4xl animate-spin" translate="no">progress_activity</span>
                       <p className="text-sm font-bold">Loading projects...</p>
                     </div>
@@ -421,11 +421,11 @@ export default function ProjectsPage() {
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center gap-3 text-[#ababa8]">
-                      <div className="w-14 h-14 rounded-full bg-[#1e201e] flex items-center justify-center">
-                        <span className="material-symbols-outlined text-2xl text-[#aeee2a]" translate="no">engineering</span>
+                    <div className="flex flex-col items-center gap-3 text-on-surface-variant">
+                      <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center">
+                        <span className="material-symbols-outlined text-2xl text-primary" translate="no">engineering</span>
                       </div>
-                      <p className="text-sm font-bold text-[#faf9f5]">No projects found</p>
+                      <p className="text-sm font-bold text-on-surface">No projects found</p>
                       <p className="text-xs">Try adjusting your filters or create a new project.</p>
                     </div>
                   </td>
@@ -444,7 +444,7 @@ export default function ProjectsPage() {
                     <tr 
                       key={job.id} 
                       onClick={() => router.push(`/projects/${job.id}`)}
-                      className="transition-colors group relative hover:bg-[#1e201e] cursor-pointer"
+                      className="transition-colors group relative hover:bg-surface-container-high cursor-pointer"
                     >
 
                       {/* SP */}
@@ -466,15 +466,15 @@ export default function ProjectsPage() {
                       <td className="px-6 py-5">
                         <Link
                           href={`/projects/${job.id}`}
-                          className="text-[#faf9f5] font-medium hover:text-[#aeee2a] hover:underline underline-offset-2 transition-colors cursor-pointer"
+                          className="text-on-surface font-medium hover:text-primary hover:underline underline-offset-2 transition-colors cursor-pointer"
                         >
                           {job.customer?.full_name ?? "—"}
                         </Link>
-                        <p className="text-xs text-[#ababa8] mt-0.5">{job.city}, {job.state}</p>
+                        <p className="text-xs text-on-surface-variant mt-0.5">{job.city}, {job.state}</p>
                       </td>
 
                       {/* Job # */}
-                      <td className="px-6 py-5 font-mono text-[#ababa8] text-sm">
+                      <td className="px-6 py-5 font-mono text-on-surface-variant text-sm">
                         {job.job_number}
                       </td>
 
@@ -482,19 +482,19 @@ export default function ProjectsPage() {
                       <td className="px-6 py-5">
                         <div className="flex flex-wrap items-center gap-1.5 max-w-[220px]">
                           {job.services.length === 0 ? (
-                            <span className="text-xs text-[#474846]">—</span>
+                            <span className="text-xs text-outline-variant">—</span>
                           ) : (
                             job.services.slice(0, 3).map((s, idx) => (
                               <span
                                 key={idx}
-                                className="bg-[#1a1c1a] border border-[#3e403e] rounded-md px-2.5 py-1 text-[10px] font-bold text-[#faf9f5] whitespace-nowrap shadow-sm"
+                                className="bg-surface-container-high border border-[#3e403e] rounded-md px-2.5 py-1 text-[10px] font-bold text-on-surface whitespace-nowrap shadow-sm"
                               >
                                 {s.service_type?.name ?? "—"}
                               </span>
                             ))
                           )}
                           {job.services.length > 3 && (
-                            <span className="text-[10px] text-[#ababa8] font-bold">
+                            <span className="text-[10px] text-on-surface-variant font-bold">
                               +{job.services.length - 3}
                             </span>
                           )}
@@ -520,7 +520,7 @@ export default function ProjectsPage() {
                                 { value: "NO_ANSWER", label: "NO ANSWER" },
                                 { value: "PERMIT", label: "PERMIT" }
                               ]}
-                              className="w-full bg-[#0a0a0a] border border-[#474846] rounded-xl pl-9 pr-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-[#faf9f5] hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                              className="w-full bg-surface-container border border-outline-variant rounded-xl pl-9 pr-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-on-surface hover:border-primary transition-colors flex justify-between items-center"
                             />
                           </div>
                           <div
@@ -558,7 +558,7 @@ export default function ProjectsPage() {
                               label: job.customer?.full_name ?? job.job_number,
                             });
                           }}
-                          className="inline-flex items-center justify-center p-2 rounded-lg transition-all cursor-pointer opacity-0 group-hover:opacity-100 text-[#ababa8] hover:text-[#ff7351] hover:bg-[#ff7351]/10"
+                          className="inline-flex items-center justify-center p-2 rounded-lg transition-all cursor-pointer opacity-0 group-hover:opacity-100 text-on-surface-variant hover:text-error hover:bg-error/10"
                           title="Delete project"
                         >
                           <span className="material-symbols-outlined text-lg" translate="no">delete</span>
@@ -575,33 +575,33 @@ export default function ProjectsPage() {
         {/* ── Pagination ── */}
         {!loading && filtered.length > 0 && (
           <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t" style={{ borderColor: "rgba(71,72,70,0.2)" }}>
-            <span className="text-sm text-[#ababa8]">
+            <span className="text-sm text-on-surface-variant">
               Showing{" "}
-              <span className="text-[#faf9f5] font-bold">
+              <span className="text-on-surface font-bold">
                 {Math.min((currentPage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}
               </span>{" "}
               of{" "}
-              <span className="text-[#faf9f5] font-bold">{filtered.length}</span> projects
+              <span className="text-on-surface font-bold">{filtered.length}</span> projects
             </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#474846]/40 text-[#ababa8] hover:border-[#aeee2a] hover:text-[#aeee2a] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant/40 text-on-surface-variant hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 <span className="material-symbols-outlined text-base" translate="no">chevron_left</span>
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1).map((p, idx, arr) => (
                 <Fragment key={p}>
                   {idx > 0 && arr[idx - 1] !== p - 1 && (
-                    <span className="text-[#474846] px-1">…</span>
+                    <span className="text-outline-variant px-1">…</span>
                   )}
                   <button
                     onClick={() => setCurrentPage(p)}
                     className={`w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all ${
                       p === currentPage
-                        ? "bg-[#aeee2a] text-[#121412]"
-                        : "border border-[#474846]/40 text-[#ababa8] hover:border-[#aeee2a] hover:text-[#aeee2a]"
+                        ? "bg-primary text-surface-container-low"
+                        : "border border-outline-variant/40 text-on-surface-variant hover:border-primary hover:text-primary"
                     }`}
                   >
                     {p}
@@ -611,7 +611,7 @@ export default function ProjectsPage() {
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#474846]/40 text-[#ababa8] hover:border-[#aeee2a] hover:text-[#aeee2a] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant/40 text-on-surface-variant hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 <span className="material-symbols-outlined text-base" translate="no">chevron_right</span>
               </button>
@@ -625,31 +625,31 @@ export default function ProjectsPage() {
       {/* ── Delete Confirmation Modal ── */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#181a18] border border-[#474846]/30 rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
+          <div className="bg-surface-container border border-outline-variant/30 rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 rounded-full bg-[#ff7351]/10 flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined text-[#ff7351] text-2xl" translate="no" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
+              <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-error text-2xl" translate="no" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Delete Project</h3>
-                <p className="text-sm text-[#ababa8] mt-0.5">Are you absolutely sure?</p>
+                <h3 className="text-lg font-bold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Delete Project</h3>
+                <p className="text-sm text-on-surface-variant mt-0.5">Are you absolutely sure?</p>
               </div>
             </div>
-            <p className="text-[#faf9f5] text-sm mb-8">
+            <p className="text-on-surface text-sm mb-8">
               Are you sure you want to delete the project for{" "}
-              <span className="font-bold text-[#aeee2a]">{deleteTarget.label}</span>?
+              <span className="font-bold text-primary">{deleteTarget.label}</span>?
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="px-6 py-2.5 rounded-xl border border-[#474846] text-[#ababa8] font-bold hover:bg-[#242624] transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant font-bold hover:bg-surface-container-highest transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(deleteTarget.id)}
                 disabled={deletingId === deleteTarget.id}
-                className="px-6 py-2.5 rounded-xl bg-[#ff7351] text-white font-bold hover:bg-[#e5623f] transition-all cursor-pointer active:scale-95 shadow-[0_0_20px_rgba(255,115,81,0.2)] disabled:opacity-50"
+                className="px-6 py-2.5 rounded-xl bg-error text-white font-bold hover:bg-[#e5623f] transition-all cursor-pointer active:scale-95 shadow-[0_0_20px_rgba(255,115,81,0.2)] disabled:opacity-50"
               >
                 {deletingId === deleteTarget.id ? "Deleting..." : "Yes, delete"}
               </button>

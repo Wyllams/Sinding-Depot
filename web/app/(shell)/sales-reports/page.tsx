@@ -733,12 +733,12 @@ export default function ReportsPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1
-              className="text-xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
+              className="text-xl sm:text-3xl font-extrabold text-on-surface tracking-tighter"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Sales Dashboard
             </h1>
-            <p className="text-[#ababa8] text-sm mt-1">
+            <p className="text-on-surface-variant text-sm mt-1">
               Commercial performance overview — {data?.period.label ?? "Loading..."}
             </p>
           </div>
@@ -747,9 +747,9 @@ export default function ReportsPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={openGoalsModal}
-              className="px-4 py-2 bg-[#1e201e] hover:bg-[#242624] text-[#faf9f5] font-semibold rounded-xl flex items-center gap-2 transition-all text-xs border border-white/5 hover:border-[#aeee2a]/20"
+              className="px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-semibold rounded-xl flex items-center gap-2 transition-all text-xs border border-white/5 hover:border-primary/20"
             >
-              <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">flag</span>
+              <span className="material-symbols-outlined text-sm text-primary" translate="no">flag</span>
               Set Goals
             </button>
 
@@ -770,14 +770,14 @@ export default function ReportsPage() {
                 setSelectedYear(y);
                 setSelectedMonth(m - 1);
               }}
-              className="bg-[#121412] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors cursor-pointer [color-scheme:dark] relative"
+              className="bg-surface-container-low text-on-surface text-sm font-bold rounded-xl px-4 py-2 border border-outline-variant/20 outline-none focus:border-primary transition-colors cursor-pointer [color-scheme:dark] relative"
               style={{ height: "42px" }}
             />
 
             <button
               onClick={() => fetchData(selectedYear, selectedMonth)}
               title="Refresh"
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#1e201e] border border-white/5 text-[#ababa8] hover:text-[#aeee2a] transition-all hover:border-[#aeee2a]/20"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface-container-high border border-white/5 text-on-surface-variant hover:text-primary transition-all hover:border-primary/20"
             >
               <span className="material-symbols-outlined text-base" translate="no">refresh</span>
             </button>
@@ -786,7 +786,7 @@ export default function ReportsPage() {
 
         {/* ── Error / Loading ──────────────────────────────────────────── */}
         {error && (
-          <div className="rounded-xl p-4 bg-[#ff7351]/10 border border-[#ff7351]/20 text-[#ff7351] text-sm flex items-center gap-3">
+          <div className="rounded-xl p-4 bg-error/10 border border-error/20 text-error text-sm flex items-center gap-3">
             <span className="material-symbols-outlined" translate="no">error</span>
             {error}
           </div>
@@ -795,8 +795,8 @@ export default function ReportsPage() {
         {loading && (
           <div className="flex items-center justify-center py-16">
             <div className="flex flex-col items-center gap-4">
-              <div className="w-10 h-10 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
-              <p className="text-[#ababa8] text-sm">Loading sales data...</p>
+              <div className="w-10 h-10 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+              <p className="text-on-surface-variant text-sm">Loading sales data...</p>
             </div>
           </div>
         )}
@@ -821,16 +821,15 @@ export default function ReportsPage() {
 
             {/* Average Ticket */}
             <div
-              className="rounded-2xl p-4 flex items-center justify-between"
-              style={{ background: "rgba(36,38,36,0.4)", border: "1px solid rgba(174,238,42,0.08)", backdropFilter: "blur(20px)" }}
+              className="rounded-2xl p-4 flex items-center justify-between bg-surface-container-low border border-outline-variant/20 shadow-sm"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#e3eb5d]/10">
                   <span className="material-symbols-outlined text-[#e3eb5d] text-lg" translate="no">receipt_long</span>
                 </div>
                 <div>
-                  <p className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">Average Ticket</p>
-                  <p className="text-[#ababa8] text-xs mt-0.5">Per job sold this month</p>
+                  <p className="text-[10px] text-on-surface uppercase tracking-widest font-bold">Average Ticket</p>
+                  <p className="text-on-surface-variant text-xs mt-0.5">Per job sold this month</p>
                 </div>
               </div>
               <p className="text-3xl font-black text-[#e3eb5d]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
@@ -843,14 +842,13 @@ export default function ReportsPage() {
 
               {/* Salesperson Bar Chart — with revenue shown */}
               <div
-                className="lg:col-span-2 rounded-2xl p-6"
-                style={{ background: "rgba(36,38,36,0.4)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.05)" }}
+                className="lg:col-span-2 rounded-2xl p-6 bg-surface-container-low border border-outline-variant/20 shadow-sm"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                  <h3 className="text-lg font-bold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                     Performance by Salesperson
                   </h3>
-                  <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">
+                  <span className="text-[10px] text-on-surface uppercase tracking-widest font-bold">
                     Revenue · {data.period.label}
                   </span>
                 </div>
@@ -881,10 +879,10 @@ export default function ReportsPage() {
                             >
                               {sp.initials}
                             </div>
-                            <span className={`text-sm font-semibold transition-colors ${isHovered ? "text-[#faf9f5]" : "text-[#ababa8]"}`}>
+                            <span className={`text-sm font-semibold transition-colors ${isHovered ? "text-on-surface" : "text-on-surface-variant"}`}>
                               {sp.full_name}
                             </span>
-                            <span className="material-symbols-outlined text-[14px] text-[#474846] transition-transform" translate="no">
+                            <span className="material-symbols-outlined text-[14px] text-outline-variant transition-transform" translate="no">
                               {expandedSp === sp.id ? "expand_less" : "expand_more"}
                             </span>
                             <span
@@ -902,14 +900,14 @@ export default function ReportsPage() {
                             >
                               {fmt(sp.total_revenue)}
                             </span>
-                            <span className="text-[10px] text-[#ababa8] w-9 text-right">
+                            <span className="text-[10px] text-on-surface-variant w-9 text-right">
                               {sp.goal_pct.toFixed(0)}%
                             </span>
                           </div>
                         </div>
 
                         {/* Bar track */}
-                        <div className="relative w-full h-2 bg-[#242624] rounded-full overflow-hidden">
+                        <div className="relative w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
                           {sp.monthly_goal > 0 && (
                             <div className="absolute top-0 bottom-0 w-px bg-white/20 z-10" style={{ left: "100%" }} />
                           )}
@@ -926,24 +924,24 @@ export default function ReportsPage() {
 
                         {/* Tooltip on hover */}
                         {isHovered && sp.monthly_goal > 0 && (
-                          <div className="mt-1.5 flex items-center gap-4 text-[10px] text-[#ababa8]">
-                            <span>Goal: <span className="text-[#faf9f5] font-bold">{fmt(sp.monthly_goal)}</span></span>
+                          <div className="mt-1.5 flex items-center gap-4 text-[10px] text-on-surface-variant">
+                            <span>Goal: <span className="text-on-surface font-bold">{fmt(sp.monthly_goal)}</span></span>
                             <span>Remaining: <span style={{ color: sp.total_revenue >= sp.monthly_goal ? "#aeee2a" : "#ff7351" }} className="font-bold">{fmt(Math.max(sp.monthly_goal - sp.total_revenue, 0))}</span></span>
                           </div>
                         )}
                         
                         {/* Expanded jobs detail */}
                         {expandedSp === sp.id && (
-                          <div className="mt-3 px-4 py-3 rounded-xl bg-[#0d0f0d]/50 border border-white/5 overflow-x-auto">
+                          <div className="mt-3 px-4 py-3 rounded-xl bg-background/50 border border-white/5 overflow-x-auto">
                             <div className="min-w-[450px]">
                             {loadingJobs === sp.id ? (
                               <div className="flex items-center gap-2 py-2">
-                                <div className="w-3 h-3 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
-                                <span className="text-[11px] text-[#474846]">Loading jobs...</span>
+                                <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                <span className="text-[11px] text-outline-variant">Loading jobs...</span>
                               </div>
                             ) : (
                               <div className="space-y-1">
-                                <div className="grid grid-cols-[90px_1fr_120px_90px_50px] gap-2 px-2 pb-1 text-[9px] text-[#ababa8] uppercase tracking-widest font-bold border-b border-white/5 mb-2">
+                                <div className="grid grid-cols-[90px_1fr_120px_90px_50px] gap-2 px-2 pb-1 text-[9px] text-on-surface uppercase tracking-widest font-bold border-b border-white/5 mb-2">
                                   <span>Data</span>
                                   <span className="text-center">Client</span>
                                   <span className="text-center">Service</span>
@@ -952,11 +950,11 @@ export default function ReportsPage() {
                                 </div>
                                 {(spJobs[sp.id]?.length || 0) === 0 ? (
                                   <div className="grid grid-cols-[90px_1fr_120px_90px_50px] gap-2 px-2 py-2 rounded-lg text-xs items-center">
-                                    <span className="text-[#474846] font-mono">--</span>
-                                    <span className="text-[#474846] font-semibold text-center">--</span>
-                                    <span className="text-[#474846] font-semibold text-center">--</span>
-                                    <span className="text-[#474846] font-semibold text-center">--</span>
-                                    <span className="text-right text-[#474846] font-bold text-sm">--</span>
+                                    <span className="text-outline-variant font-mono">--</span>
+                                    <span className="text-outline-variant font-semibold text-center">--</span>
+                                    <span className="text-outline-variant font-semibold text-center">--</span>
+                                    <span className="text-outline-variant font-semibold text-center">--</span>
+                                    <span className="text-right text-outline-variant font-bold text-sm">--</span>
                                   </div>
                                 ) : (
                                   spJobs[sp.id].map((job) => {
@@ -964,9 +962,9 @@ export default function ReportsPage() {
                                     return (
                                       <div
                                         key={job.id}
-                                        className={`grid grid-cols-[90px_1fr_120px_90px_50px] gap-2 px-2 py-2 rounded-lg hover:bg-[#1e201e]/40 transition-colors text-xs items-center ${isCancelled ? "opacity-50" : ""}`}
+                                        className={`grid grid-cols-[90px_1fr_120px_90px_50px] gap-2 px-2 py-2 rounded-lg hover:bg-surface-container-high/40 transition-colors text-xs items-center ${isCancelled ? "opacity-50" : ""}`}
                                       >
-                                        <span className={`text-[#ababa8] font-mono ${isCancelled ? "line-through" : ""}`}>
+                                        <span className={`text-on-surface-variant font-mono ${isCancelled ? "line-through" : ""}`}>
                                           {(() => {
                                             const dStr = job.contract_signed_at || job.created_at;
                                             if (!dStr) return "—";
@@ -974,12 +972,12 @@ export default function ReportsPage() {
                                             return (() => { const _dt = new Date(normalized); return isNaN(_dt.getTime()) ? "—" : `${(_dt.getMonth() + 1).toString().padStart(2, '0')}/${_dt.getDate().toString().padStart(2, '0')}/${_dt.getFullYear()}`; })();
                                           })()}
                                         </span>
-                                        <span className={`text-[#faf9f5] font-semibold truncate text-center ${isCancelled ? "line-through" : ""}`}>
+                                        <span className={`text-on-surface font-semibold truncate text-center ${isCancelled ? "line-through" : ""}`}>
                                           {job.customer_name}
                                         </span>
                                         <div className="flex flex-wrap gap-1 justify-center">
                                           {(job.services?.length ? job.services : ["—"]).map((svc, i) => (
-                                            <span key={i} className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#aeee2a]/10 text-[#aeee2a] whitespace-nowrap">
+                                            <span key={i} className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary whitespace-nowrap">
                                               {svc}
                                             </span>
                                           ))}
@@ -1009,7 +1007,7 @@ export default function ReportsPage() {
                                                      e.stopPropagation();
                                                      setOpenDropdownJobId(openDropdownJobId === job.id ? null : job.id);
                                                   }}
-                                                  className="w-6 h-6 rounded-md bg-[#242624] text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#1e201e] flex items-center justify-center transition-all border border-[#474846]/20 hover:border-[#aeee2a]/40 cursor-pointer"
+                                                  className="w-6 h-6 rounded-md bg-surface-container-highest text-on-surface-variant hover:text-primary hover:bg-surface-container-high flex items-center justify-center transition-all border border-outline-variant/20 hover:border-primary/40 cursor-pointer"
                                                >
                                                   <span className="material-symbols-outlined text-[15px]" translate="no">more_vert</span>
                                                </button>
@@ -1018,23 +1016,23 @@ export default function ReportsPage() {
                                                {openDropdownJobId === job.id && (
                                                  <div
                                                    ref={dropdownRef}
-                                                   className="absolute right-0 top-7 z-50 w-40 py-1 rounded-xl bg-[#1e201e] border border-[#474846]/40 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+                                                   className="absolute right-0 top-7 z-50 w-40 py-1 rounded-xl bg-surface-container-high border border-outline-variant/40 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
                                                    onClick={(e) => e.stopPropagation()}
                                                  >
                                                    <button
                                                      onClick={() => openEditModal(job, sp.id)}
-                                                     className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-[#faf9f5] hover:bg-[#242624] transition-colors"
+                                                     className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-on-surface hover:bg-surface-container-highest transition-colors"
                                                    >
-                                                     <span className="material-symbols-outlined text-[14px] text-[#aeee2a]" translate="no">edit</span>
+                                                     <span className="material-symbols-outlined text-[14px] text-primary" translate="no">edit</span>
                                                      Editar
                                                    </button>
-                                                   <div className="mx-2 border-b border-[#474846]/30" />
+                                                   <div className="mx-2 border-b border-outline-variant/30" />
                                                    <button
                                                      onClick={() => {
                                                        setOpenDropdownJobId(null);
                                                        setJobToAbandon({ jobId: job.id, spId: sp.id, title: job.title });
                                                      }}
-                                                     className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-[#ff7351] hover:bg-[#ff7351]/10 transition-colors"
+                                                     className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-error hover:bg-error/10 transition-colors"
                                                    >
                                                      <span className="material-symbols-outlined text-[14px]" translate="no">block</span>
                                                      Abandonado
@@ -1062,17 +1060,16 @@ export default function ReportsPage() {
                 <div className="mt-6 pt-4 border-t border-white/5 flex items-center gap-1 flex-wrap">
                   <div className="flex items-center gap-1 mr-2">
                     <div className="w-5 h-px bg-white/20" />
-                    <span className="text-[9px] text-[#ababa8] uppercase tracking-widest">Monthly goal marker</span>
+                    <span className="text-[9px] text-on-surface uppercase tracking-widest">Monthly goal marker</span>
                   </div>
                 </div>
               </div>
 
               {/* Goal Progress Circle */}
               <div
-                className="rounded-2xl p-6 flex flex-col gap-6"
-                style={{ background: "rgba(36,38,36,0.4)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.05)" }}
+                className="rounded-2xl p-6 flex flex-col gap-6 bg-surface-container-low border border-outline-variant/20 shadow-sm"
               >
-                <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                <h3 className="text-lg font-bold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                   {data.period.label}
                 </h3>
 
@@ -1097,7 +1094,7 @@ export default function ReportsPage() {
                       >
                         {overallPct.toFixed(1)}%
                       </span>
-                      <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">of goal</span>
+                      <span className="text-[10px] text-on-surface uppercase tracking-widest font-bold">of goal</span>
                     </div>
                   </div>
                 </div>
@@ -1105,28 +1102,28 @@ export default function ReportsPage() {
                 {/* Mini stats */}
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#ababa8]">Sold</span>
-                    <span className="text-[#aeee2a] font-bold">{fmt(data.totalSold)}</span>
+                    <span className="text-on-surface-variant">Sold</span>
+                    <span className="text-primary font-bold">{fmt(data.totalSold)}</span>
                   </div>
-                  <div className="w-full bg-[#242624] rounded-full h-1.5">
+                  <div className="w-full bg-surface-container-highest rounded-full h-1.5">
                     <div
                       className="h-1.5 rounded-full transition-all duration-700"
                       style={{ width: `${overallPct}%`, background: "linear-gradient(90deg, #aeee2a, #22c55e)" }}
                     />
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#ababa8]">Goal</span>
-                    <span className="text-[#faf9f5] font-bold">{fmt(data.totalGoal)}</span>
+                    <span className="text-on-surface-variant">Goal</span>
+                    <span className="text-on-surface font-bold">{fmt(data.totalGoal)}</span>
                   </div>
                   <div className="flex justify-between text-sm border-t border-white/5 pt-3">
-                    <span className="text-[#ababa8]">Remaining</span>
+                    <span className="text-on-surface-variant">Remaining</span>
                     <span className="font-bold" style={{ color: remaining === 0 ? "#aeee2a" : "#ff7351" }}>
                       {remaining === 0 ? "✓ Achieved!" : fmt(remaining)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#ababa8]">Days left</span>
-                    <span className="text-[#ababa8] font-bold">{periodDaysLeft}d</span>
+                    <span className="text-on-surface-variant">Days left</span>
+                    <span className="text-on-surface-variant font-bold">{periodDaysLeft}d</span>
                   </div>
                 </div>
               </div>
@@ -1137,22 +1134,21 @@ export default function ReportsPage() {
 
               {/* Leaderboard Table */}
               <div
-                className="lg:col-span-2 rounded-2xl overflow-hidden"
-                style={{ background: "#121412", border: "1px solid rgba(255,255,255,0.04)" }}
+                className="lg:col-span-2 rounded-2xl overflow-hidden bg-surface-container-low border border-outline-variant/20 shadow-sm"
               >
                 <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                  <h3 className="text-lg font-bold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                     Leaderboard
                   </h3>
-                  <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">{data.period.label}</span>
+                  <span className="text-[10px] text-on-surface uppercase tracking-widest font-bold">{data.period.label}</span>
                 </div>
 
                 <div className="w-full text-left">
-                  <div className="flex bg-[#1e201e]/50 border-b border-white/5">
+                  <div className="flex bg-surface-container-high/50 border-b border-white/5">
                     {["#", "Salesperson", "Jobs", "Revenue", "vs Goal"].map((col, i) => (
                       <div
                         key={col}
-                        className={`px-5 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest flex items-center ${
+                        className={`px-5 py-3 text-[10px] font-bold text-on-surface uppercase tracking-widest flex items-center ${
                           i === 0 ? "w-10" : 
                           i === 2 ? "justify-center w-[120px]" : 
                           i === 3 ? "justify-center w-[150px]" : 
@@ -1168,12 +1164,12 @@ export default function ReportsPage() {
                     {data.salespeople
                       .filter(sp => !sp.full_name.toLowerCase().includes("armando"))
                       .map((sp, i) => (
-                      <div key={sp.id} className="w-full flex items-center hover:bg-[#1e201e]/40 transition-colors">
+                      <div key={sp.id} className="w-full flex items-center hover:bg-surface-container-high/40 transition-colors">
                         <div className="px-5 py-4 w-10 shrink-0">
                           {i === 0 ? (
                             <span className="text-base">🏆</span>
                           ) : (
-                            <span className="text-sm font-bold text-[#474846]">#{i + 1}</span>
+                            <span className="text-sm font-bold text-outline-variant">#{i + 1}</span>
                           )}
                         </div>
                         <div className="px-5 py-4 flex-1">
@@ -1184,10 +1180,10 @@ export default function ReportsPage() {
                             >
                               {sp.initials}
                             </div>
-                            <span className="text-sm font-semibold text-[#faf9f5]">{sp.full_name}</span>
+                            <span className="text-sm font-semibold text-on-surface">{sp.full_name}</span>
                           </div>
                         </div>
-                        <div className="px-5 py-4 flex justify-center text-sm text-[#faf9f5] font-bold w-[120px] shrink-0">{sp.jobs_sold_count}</div>
+                        <div className="px-5 py-4 flex justify-center text-sm text-on-surface font-bold w-[120px] shrink-0">{sp.jobs_sold_count}</div>
                         <div className="px-5 py-4 flex justify-center w-[150px] shrink-0">
                           <span className="text-sm font-black" style={{ color: sp.color, fontFamily: "Manrope, system-ui, sans-serif" }}>
                             {fmt(sp.total_revenue)}
@@ -1195,7 +1191,7 @@ export default function ReportsPage() {
                         </div>
                         <div className="px-5 py-4 w-[200px] shrink-0 flex justify-center">
                           <div className="flex items-center gap-2 w-full max-w-[120px]">
-                            <div className="flex-1 bg-[#242624] rounded-full h-1.5">
+                            <div className="flex-1 bg-surface-container-highest rounded-full h-1.5">
                               <div
                                 className="h-1.5 rounded-full transition-all duration-700"
                                 style={{
@@ -1204,7 +1200,7 @@ export default function ReportsPage() {
                                 }}
                               />
                             </div>
-                            <span className="text-[10px] text-[#ababa8] w-8 text-right">{sp.goal_pct.toFixed(0)}%</span>
+                            <span className="text-[10px] text-on-surface-variant w-8 text-right">{sp.goal_pct.toFixed(0)}%</span>
                           </div>
                         </div>
                       </div>
@@ -1213,7 +1209,7 @@ export default function ReportsPage() {
                 </div>
 
                 {data.salespeople.filter(sp => !sp.full_name.toLowerCase().includes("armando")).length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-10 gap-3 text-[#ababa8] text-sm">
+                  <div className="flex flex-col items-center justify-center py-10 gap-3 text-on-surface-variant text-sm">
                     <span className="material-symbols-outlined text-4xl opacity-30" translate="no">leaderboard</span>
                     <span>No sales data for this period.</span>
                   </div>
@@ -1222,18 +1218,17 @@ export default function ReportsPage() {
 
               {/* Monthly Summary Message — editable */}
               <div
-                className="rounded-2xl p-6 flex flex-col gap-4"
-                style={{ background: "rgba(36,38,36,0.4)", backdropFilter: "blur(20px)", border: "1px solid rgba(174,238,42,0.08)" }}
+                className="rounded-2xl p-6 flex flex-col gap-4 bg-surface-container-low border border-outline-variant/20 shadow-sm"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">campaign</span>
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-lg" translate="no">campaign</span>
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                    <h3 className="text-base font-bold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                       Monthly Summary
                     </h3>
-                    <p className="text-[10px] text-[#ababa8]">Ready-to-copy for WhatsApp / Email</p>
+                    <p className="text-[10px] text-on-surface-variant">Ready-to-copy for WhatsApp / Email</p>
                   </div>
                 </div>
 
@@ -1243,24 +1238,20 @@ export default function ReportsPage() {
                     <textarea
                       value={summaryDraft}
                       onChange={(e) => setSummaryDraft(e.target.value)}
-                      className="w-full rounded-xl p-4 text-[11px] text-[#faf9f5]/80 leading-relaxed font-mono resize-none outline-none focus:border-[#aeee2a]/40 transition-colors"
-                      style={{
-                        background: "rgba(13,15,13,0.6)",
-                        border: "1px solid rgba(174,238,42,0.2)",
-                        minHeight: "220px",
-                      }}
+                      className="w-full rounded-xl p-4 text-[11px] text-on-surface leading-relaxed font-mono resize-none outline-none focus:border-primary/40 transition-colors bg-surface-container-high border border-outline-variant/20"
+                      style={{ minHeight: "220px" }}
                     />
                     <div className="flex flex-col gap-2">
-                       <p className="text-[10px] text-[#ababa8] ml-1 font-semibold">
-                         <span className="text-[#aeee2a]">💡 How it works:</span> Modify the text, but keep the <span className="font-mono text-[#aeee2a] font-bold">{"{{brackets}}"}</span> intact if you want data (like Total Sold) to update automatically based on your real numbers.
+                       <p className="text-[10px] text-on-surface-variant ml-1 font-semibold">
+                         <span className="text-primary">💡 How it works:</span> Modify the text, but keep the <span className="font-mono text-primary font-bold">{"{{brackets}}"}</span> intact if you want data (like Total Sold) to update automatically based on your real numbers.
                        </p>
-                       <div className="flex flex-wrap gap-1.5 p-2 bg-[#121412] rounded-lg border border-[#474846]/20 shadow-inner">
+                       <div className="flex flex-wrap gap-1.5 p-2 bg-surface-container-low rounded-lg border border-outline-variant/20 shadow-inner">
                           {Object.keys(templateVars).map(key => (
                              <button
                                title={`Insert ${key}`}
                                key={key}
                                onClick={() => setSummaryDraft(prev => prev + " " + key)}
-                               className="text-[9px] bg-[#242624] text-[#aeee2a] font-mono px-2 py-1 rounded-md hover:bg-[#aeee2a]/20 hover:text-white transition-colors"
+                               className="text-[9px] bg-surface-container-highest text-primary font-mono px-2 py-1 rounded-md hover:bg-primary/20 hover:text-white transition-colors"
                              >
                                 {key}
                              </button>
@@ -1270,8 +1261,8 @@ export default function ReportsPage() {
                   </div>
                 ) : (
                   <div
-                    className="flex-1 rounded-xl p-4 text-[11px] text-[#faf9f5]/80 leading-relaxed whitespace-pre-line font-mono"
-                    style={{ background: "rgba(13,15,13,0.6)", border: "1px solid rgba(71,72,70,0.3)", minHeight: "220px" }}
+                    className="flex-1 rounded-xl p-4 text-[11px] text-on-surface leading-relaxed whitespace-pre-line font-mono bg-surface-container-high border border-outline-variant/20"
+                    style={{ minHeight: "220px" }}
                   >
                     {displaySummary}
                   </div>
@@ -1283,14 +1274,14 @@ export default function ReportsPage() {
                     <>
                       <button
                         onClick={() => setEditingSummary(false)}
-                        className="flex-1 py-2.5 rounded-xl bg-[#1e201e] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                        className="flex-1 py-2.5 rounded-xl bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={saveSummary}
                         disabled={savingSummary}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#aeee2a] text-[#3a5400] text-xs font-bold active:scale-95 transition-all disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-[#3a5400] text-xs font-bold active:scale-95 transition-all disabled:opacity-50"
                       >
                         {savingSummary ? (
                           <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />
@@ -1321,14 +1312,14 @@ export default function ReportsPage() {
                       <button
                         onClick={() => { setSummaryDraft(rawTemplate); setEditingSummary(true); }}
                         title="Edit summary template"
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#242624] text-[#ababa8] text-xs font-bold hover:text-[#faf9f5] transition-all hover:bg-[#2e302e]"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-surface-container-highest text-on-surface-variant text-xs font-bold hover:text-on-surface transition-all hover:bg-[#2e302e]"
                       >
                         <span className="material-symbols-outlined text-sm" translate="no">edit_document</span>
                       </button>
                       <button
                         onClick={() => fetchData(selectedYear, selectedMonth)}
                         title="Refresh data"
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#242624] text-[#ababa8] text-xs font-bold hover:text-[#faf9f5] transition-all hover:bg-[#2e302e]"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-surface-container-highest text-on-surface-variant text-xs font-bold hover:text-on-surface transition-all hover:bg-[#2e302e]"
                       >
                         <span className="material-symbols-outlined text-sm" translate="no">refresh</span>
                       </button>
@@ -1340,8 +1331,7 @@ export default function ReportsPage() {
 
             {/* ── Annual Comparison Table ──────────────────────────────── */}
             <div
-              className="rounded-2xl overflow-hidden"
-              style={{ background: "#121412", border: "1px solid rgba(255,255,255,0.04)" }}
+              className="rounded-2xl overflow-hidden bg-surface-container-low border border-outline-variant/20 shadow-sm"
             >
               <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -1349,10 +1339,10 @@ export default function ReportsPage() {
                     <span className="material-symbols-outlined text-[#a855f7] text-lg" translate="no">analytics</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                    <h3 className="text-lg font-bold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                       Annual Performance Report
                     </h3>
-                    <p className="text-[10px] text-[#ababa8]">Month-by-month comparison — {selectedYear}</p>
+                    <p className="text-[10px] text-on-surface-variant">Month-by-month comparison — {selectedYear}</p>
                   </div>
                 </div>
               </div>
@@ -1360,24 +1350,24 @@ export default function ReportsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left min-w-[900px]">
                   <thead>
-                    <tr className="bg-[#1e201e]/50">
-                      <th className="w-10 px-3 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest sticky left-0 bg-[#1e201e]/80 backdrop-blur-sm z-10">
+                    <tr className="bg-surface-container-high/50">
+                      <th className="w-10 px-3 py-3 text-[10px] font-bold text-on-surface uppercase tracking-widest sticky left-0 bg-surface-container-high/80 backdrop-blur-sm z-10">
                         #
                       </th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-[#ababa8] uppercase tracking-widest sticky left-10 bg-[#1e201e]/80 backdrop-blur-sm z-10">
+                      <th className="px-4 py-3 text-[10px] font-bold text-on-surface uppercase tracking-widest sticky left-10 bg-surface-container-high/80 backdrop-blur-sm z-10">
                         Salesperson
                       </th>
                       {MONTH_NAMES.map((m, idx) => (
                         <th
                           key={m}
                           className={`px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-center ${
-                            idx === selectedMonth ? "text-[#aeee2a]" : "text-[#ababa8]"
+                            idx === selectedMonth ? "text-primary" : "text-on-surface-variant"
                           }`}
                         >
                           {m.slice(0, 3)}
                         </th>
                       ))}
-                      <th className="px-4 py-3 text-[10px] font-bold text-[#aeee2a] uppercase tracking-widest text-right">Total</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-primary uppercase tracking-widest text-right">Total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -1392,15 +1382,15 @@ export default function ReportsPage() {
                         .sort((a, b) => b.total - a.total);
 
                       return sorted.map((sp, rank) => (
-                        <tr key={sp.id} className="hover:bg-[#1e201e]/30 transition-colors">
-                          <td className="w-10 px-3 py-3 sticky left-0 bg-[#121412] z-10">
+                        <tr key={sp.id} className="hover:bg-surface-container-high/30 transition-colors">
+                          <td className="w-10 px-3 py-3 sticky left-0 bg-surface-container-low z-10">
                             {rank === 0 && sp.total > 0 ? (
                               <span className="text-base">🏆</span>
                             ) : (
-                              <span className="text-sm font-bold text-[#474846]">#{rank + 1}</span>
+                              <span className="text-sm font-bold text-outline-variant">#{rank + 1}</span>
                             )}
                           </td>
-                          <td className="px-4 py-3 sticky left-10 bg-[#121412] z-10">
+                          <td className="px-4 py-3 sticky left-10 bg-surface-container-low z-10">
                             <div className="flex items-center gap-2">
                               <div
                                 className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black"
@@ -1408,14 +1398,14 @@ export default function ReportsPage() {
                               >
                                 {getInitials(sp.name)}
                               </div>
-                              <span className="text-xs font-semibold text-[#faf9f5]">{sp.name}</span>
+                              <span className="text-xs font-semibold text-on-surface">{sp.name}</span>
                             </div>
                           </td>
                           {sp.months.map((val, idx) => (
                             <td
                               key={idx}
                               className={`px-3 py-3 text-center text-[11px] font-bold ${
-                                idx === selectedMonth ? "bg-[#aeee2a]/5" : ""
+                                idx === selectedMonth ? "bg-primary/5" : ""
                               }`}
                               style={{ color: val > 0 ? sp.color : "#474846" }}
                             >
@@ -1438,11 +1428,11 @@ export default function ReportsPage() {
         {/* ── Empty State ─────────────────────────────────────────────── */}
         {!loading && !error && !data && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-[#1e201e] flex items-center justify-center">
-              <span className="material-symbols-outlined text-3xl text-[#474846]" translate="no">bar_chart</span>
+            <div className="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center">
+              <span className="material-symbols-outlined text-3xl text-outline-variant" translate="no">bar_chart</span>
             </div>
-            <p className="text-[#ababa8] text-sm">No sales data found for this period.</p>
-            <p className="text-[#474846] text-xs">Sales data will appear here once jobs are created with contract amounts.</p>
+            <p className="text-on-surface-variant text-sm">No sales data found for this period.</p>
+            <p className="text-outline-variant text-xs">Sales data will appear here once jobs are created with contract amounts.</p>
           </div>
         )}
 
@@ -1453,28 +1443,23 @@ export default function ReportsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowGoalsModal(false)} />
           <div
-            className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl space-y-0"
-            style={{
-              background: "#121412",
-              border: "1px solid rgba(174,238,42,0.15)",
-              boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 40px rgba(174,238,42,0.05)",
-              scrollbarWidth: "none",
-            }}
+            className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl space-y-0 bg-surface-container-low border border-outline-variant/20 shadow-2xl"
+            style={{ scrollbarWidth: "none" }}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[#aeee2a] text-xl" translate="no">flag</span>
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary text-xl" translate="no">flag</span>
                 </div>
                 <div>
-                  <h2 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Set Monthly Goals</h2>
-                  <p className="text-[10px] text-[#ababa8] uppercase tracking-widest">{MONTH_NAMES[selectedMonth]} {selectedYear}</p>
+                  <h2 className="text-lg font-extrabold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Set Monthly Goals</h2>
+                  <p className="text-[10px] text-on-surface uppercase tracking-widest">{MONTH_NAMES[selectedMonth]} {selectedYear}</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowGoalsModal(false)}
-                className="w-8 h-8 rounded-lg bg-[#1e201e] flex items-center justify-center text-[#ababa8] hover:text-[#faf9f5] transition-all"
+                className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all"
               >
                 <span className="material-symbols-outlined text-base" translate="no">close</span>
               </button>
@@ -1483,25 +1468,24 @@ export default function ReportsPage() {
             <div className="p-6 space-y-6">
               {/* Company Goal — single monthly input */}
               <div
-                className="rounded-2xl p-5 space-y-4"
-                style={{ background: "rgba(174,238,42,0.04)", border: "1px solid rgba(174,238,42,0.12)" }}
+                className="rounded-2xl p-5 space-y-4 bg-primary/5 border border-primary/20"
               >
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#aeee2a] text-xl" translate="no">business</span>
+                  <span className="material-symbols-outlined text-primary text-xl" translate="no">business</span>
                   <div>
-                    <p className="text-sm font-black text-[#aeee2a] uppercase tracking-widest">Company Monthly Goal</p>
-                    <p className="text-[10px] text-[#ababa8] mt-0.5">Total revenue target for the month</p>
+                    <p className="text-sm font-black text-primary uppercase tracking-widest">Company Monthly Goal</p>
+                    <p className="text-[10px] text-on-surface-variant mt-0.5">Total revenue target for the month</p>
                   </div>
                 </div>
 
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aeee2a] text-xs font-bold">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xs font-bold">$</span>
                   <input
                     type="number"
                     placeholder="0"
                     value={companyMonthlyGoal}
                     onChange={(e) => setCompanyMonthlyGoal(e.target.value)}
-                    className="w-full bg-[#0d0f0d] border border-[#aeee2a]/20 rounded-lg py-2.5 pl-7 pr-3 text-sm text-[#aeee2a] font-black placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/60 transition-colors"
+                    className="w-full bg-background border border-primary/20 rounded-lg py-2.5 pl-7 pr-3 text-sm text-primary font-black placeholder-outline-variant focus:outline-none focus:border-primary/60 transition-colors"
                   />
                 </div>
 
@@ -1513,14 +1497,14 @@ export default function ReportsPage() {
                       return sum + (parseFloat(spGoalInputs[sp.id] || "0") || 0);
                     }, 0);
                   if (autoMonth > 0) return (
-                    <p className="text-[10px] text-[#ababa8]">
+                    <p className="text-[10px] text-on-surface-variant">
                       📊 Sum of individual goals:{" "}
-                      <span className="text-[#aeee2a] font-bold">${autoMonth.toLocaleString()}</span>
+                      <span className="text-primary font-bold">${autoMonth.toLocaleString()}</span>
                       {" — "}
                       <button
                         type="button"
                         onClick={() => setCompanyMonthlyGoal(String(autoMonth))}
-                        className="text-[#aeee2a] underline hover:opacity-70 transition-opacity"
+                        className="text-primary underline hover:opacity-70 transition-opacity"
                       >
                         Apply
                       </button>
@@ -1533,7 +1517,7 @@ export default function ReportsPage() {
               {/* Divider */}
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-white/5" />
-                <span className="text-[10px] text-[#474846] uppercase tracking-widest font-bold">Individual Targets</span>
+                <span className="text-[10px] text-outline-variant uppercase tracking-widest font-bold">Individual Targets</span>
                 <div className="flex-1 h-px bg-white/5" />
               </div>
 
@@ -1544,8 +1528,7 @@ export default function ReportsPage() {
                   .map((sp) => (
                   <div
                     key={sp.id}
-                    className="rounded-xl p-4 flex items-center gap-3"
-                    style={{ background: "rgba(30,32,30,0.6)", border: "1px solid rgba(255,255,255,0.05)" }}
+                    className="rounded-xl p-4 flex items-center gap-3 bg-surface-container-high border border-outline-variant/20"
                   >
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
@@ -1553,9 +1536,9 @@ export default function ReportsPage() {
                     >
                       {sp.initials}
                     </div>
-                    <span className="text-sm font-bold text-[#faf9f5] flex-1">{sp.full_name}</span>
+                    <span className="text-sm font-bold text-on-surface flex-1">{sp.full_name}</span>
                     <div className="relative w-32">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] text-xs">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xs">$</span>
                       <input
                         type="number"
                         placeholder={String(DEFAULT_SP_MONTHLY_GOAL)}
@@ -1563,29 +1546,29 @@ export default function ReportsPage() {
                         onChange={(e) =>
                           setSpGoalInputs((prev) => ({ ...prev, [sp.id]: e.target.value }))
                         }
-                        className="w-full bg-[#0d0f0d] border border-white/10 rounded-lg py-2 pl-7 pr-3 text-sm text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/40 transition-colors"
+                        className="w-full bg-background border border-white/10 rounded-lg py-2 pl-7 pr-3 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:border-primary/40 transition-colors"
                       />
                     </div>
                   </div>
                 ))}
               </div>
 
-              <p className="text-[10px] text-[#474846] text-center">
-                Default individual goal: <span className="text-[#ababa8] font-bold">${DEFAULT_SP_MONTHLY_GOAL.toLocaleString()}/mo</span> — editable above
+              <p className="text-[10px] text-outline-variant text-center">
+                Default individual goal: <span className="text-on-surface-variant font-bold">${DEFAULT_SP_MONTHLY_GOAL.toLocaleString()}/mo</span> — editable above
               </p>
 
               {/* Actions */}
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowGoalsModal(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-[#1e201e] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                  className="flex-1 py-2.5 rounded-xl bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={saveGoals}
                   disabled={goalsSaving}
-                  className="flex-1 py-2.5 rounded-xl bg-[#aeee2a] text-[#3a5400] text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-[#3a5400] text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {goalsSaving ? (
                     <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />
@@ -1606,24 +1589,24 @@ export default function ReportsPage() {
       {jobToAbandon && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setJobToAbandon(null)}>
           <div
-            className="w-full max-w-sm rounded-3xl bg-[#121412] border border-[#ff7351]/30 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+            className="w-full max-w-sm rounded-3xl bg-surface-container-low border border-error/30 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="px-6 py-5 border-b border-white/5 bg-[#ff7351]/10 flex items-center gap-3">
-              <span className="material-symbols-outlined text-[#ff7351] text-xl" translate="no">warning</span>
-              <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+            <div className="px-6 py-5 border-b border-white/5 bg-error/10 flex items-center gap-3">
+              <span className="material-symbols-outlined text-error text-xl" translate="no">warning</span>
+              <h3 className="text-lg font-bold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                 Abandon Job
               </h3>
             </div>
             {/* Body */}
             <div className="p-6">
-              <p className="text-sm text-[#ababa8] mb-4 text-center">
+              <p className="text-sm text-on-surface-variant mb-4 text-center">
                 Are you sure you want to mark <br/>
-                <strong className="text-[#faf9f5] mt-2 block">{jobToAbandon.title}</strong><br/>
+                <strong className="text-on-surface mt-2 block">{jobToAbandon.title}</strong><br/>
                 as Abandoned?
               </p>
-              <p className="text-[11px] text-[#ff7351] font-semibold bg-[#ff7351]/10 p-3 rounded-lg border border-[#ff7351]/20 text-center leading-relaxed">
+              <p className="text-[11px] text-error font-semibold bg-error/10 p-3 rounded-lg border border-error/20 text-center leading-relaxed">
                 This action will cross out the line and subtract its value from the total sold this month.
               </p>
 
@@ -1631,13 +1614,13 @@ export default function ReportsPage() {
               <div className="flex gap-3 pt-6">
                 <button
                   onClick={() => setJobToAbandon(null)}
-                  className="flex-1 py-2.5 rounded-xl bg-[#1e201e] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all"
+                  className="flex-1 py-2.5 rounded-xl bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAbandonJob}
-                  className="flex-1 py-2.5 rounded-xl bg-[#ff7351] text-white text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-[#e05b3d]"
+                  className="flex-1 py-2.5 rounded-xl bg-error text-white text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-[#e05b3d]"
                 >
                   Confirm
                 </button>
@@ -1651,17 +1634,17 @@ export default function ReportsPage() {
       {editingJob && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setEditingJob(null)}>
           <div
-            className="w-full max-w-md rounded-3xl bg-[#121412] border border-[#aeee2a]/20 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md rounded-3xl bg-surface-container-low border border-primary/20 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="px-6 py-5 border-b border-white/5 bg-[#aeee2a]/5 flex items-center gap-3">
-              <span className="material-symbols-outlined text-[#aeee2a] text-xl" translate="no">edit_note</span>
+            <div className="px-6 py-5 border-b border-white/5 bg-primary/5 flex items-center gap-3">
+              <span className="material-symbols-outlined text-primary text-xl" translate="no">edit_note</span>
               <div>
-                <h3 className="text-lg font-bold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                <h3 className="text-lg font-bold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                   Editar Job
                 </h3>
-                <p className="text-[11px] text-[#ababa8] mt-0.5">{editingJob.job.customer_name} — {editingJob.job.job_number}</p>
+                <p className="text-[11px] text-on-surface-variant mt-0.5">{editingJob.job.customer_name} — {editingJob.job.job_number}</p>
               </div>
             </div>
 
@@ -1669,7 +1652,7 @@ export default function ReportsPage() {
             <div className="p-6 space-y-5">
               {/* Date */}
               <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-[#ababa8]">Data (Sold Date)</label>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Data (Sold Date)</label>
                 <CustomDatePicker
                   value={editDate}
                   onChange={(iso) => setEditDate(iso || "")}
@@ -1680,7 +1663,7 @@ export default function ReportsPage() {
 
               {/* Services */}
               <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-[#ababa8]">Serviços</label>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Serviços</label>
                 <div className="flex flex-wrap gap-2">
                   {ALL_SERVICE_OPTIONS.map((svc) => {
                     const isActive = editServices.includes(svc);
@@ -1695,8 +1678,8 @@ export default function ReportsPage() {
                         }}
                         className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
                           isActive
-                            ? "bg-[#aeee2a]/15 text-[#aeee2a] border-[#aeee2a]/40"
-                            : "bg-[#1e201e] text-[#474846] border-[#474846]/20 hover:text-[#ababa8] hover:border-[#474846]/40"
+                            ? "bg-primary/15 text-primary border-primary/40"
+                            : "bg-surface-container-high text-outline-variant border-outline-variant/20 hover:text-on-surface-variant hover:border-outline-variant/40"
                         }`}
                       >
                         {svc}
@@ -1708,15 +1691,15 @@ export default function ReportsPage() {
 
               {/* Amount */}
               <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-[#ababa8]">Valor (Contract Amount)</label>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Valor (Contract Amount)</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-bold text-[15px]">$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-bold text-[15px]">$</span>
                   <input
                     type="text"
                     value={editAmount}
                     onChange={(e) => setEditAmount(e.target.value.replace(/[^0-9.]/g, ""))}
                     placeholder="0.00"
-                    className="w-full bg-[#242624] border border-transparent rounded-lg py-3 pl-8 pr-4 text-[#faf9f5] placeholder:text-[#747673] focus:outline-none focus:border-[#aeee2a] focus:ring-1 focus:ring-[#aeee2a] transition-all h-[48px] text-[15px] font-black"
+                    className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 pl-8 pr-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all h-[48px] text-[15px] font-black"
                   />
                 </div>
               </div>
@@ -1725,17 +1708,17 @@ export default function ReportsPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setEditingJob(null)}
-                  className="flex-1 py-2.5 rounded-xl bg-[#1e201e] text-[#ababa8] text-xs font-bold hover:bg-[#242624] transition-all cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleSaveJobEdit}
                   disabled={savingEdit}
-                  className="flex-1 py-2.5 rounded-xl bg-[#aeee2a] text-[#1a1c1a] text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-[#c5f74d] disabled:opacity-50 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-surface-container-high text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-[#c5f74d] disabled:opacity-50 cursor-pointer"
                 >
                   {savingEdit ? (
-                    <div className="w-4 h-4 border-2 border-[#1a1c1a]/30 border-t-[#1a1c1a] rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-surface-container-high/30 border-t-surface-container-high rounded-full animate-spin" />
                   ) : (
                     <>
                       <span className="material-symbols-outlined text-[14px]" translate="no">save</span>
@@ -1770,12 +1753,7 @@ function KpiCard({
 }) {
   return (
     <div
-      className="rounded-2xl p-5 flex flex-col gap-3"
-      style={{
-        background: "rgba(36,38,36,0.4)",
-        backdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.05)",
-      }}
+      className="rounded-2xl p-5 flex flex-col gap-3 bg-surface-container-low border border-outline-variant/20 shadow-sm"
     >
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center"
@@ -1789,8 +1767,8 @@ function KpiCard({
         <p className="text-2xl font-black leading-tight" style={{ color, fontFamily: "Manrope, system-ui, sans-serif" }}>
           {value}
         </p>
-        <p className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold mt-0.5">{label}</p>
-        <p className="text-[10px] text-[#ababa8] mt-0.5">{sub}</p>
+        <p className="text-[10px] text-on-surface uppercase tracking-widest font-bold mt-0.5">{label}</p>
+        <p className="text-[10px] text-on-surface-variant mt-0.5">{sub}</p>
       </div>
       {trend && (
         <div className="flex items-center gap-1">

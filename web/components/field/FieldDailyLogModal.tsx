@@ -126,22 +126,22 @@ export function FieldDailyLogModal({
         onClick={onClose}
       />
       
-      <div className="relative w-full max-w-md bg-[#121412] border-t border-white/10 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-bottom duration-300">
+      <div className="relative w-full max-w-md bg-surface-container-low border-t border-white/10 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-bottom duration-300">
         <div className="flex justify-center mb-5">
           <div className="w-10 h-1 bg-zinc-700 rounded-full" />
         </div>
 
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[#aeee2a]" translate="no">photo_camera</span>
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary" translate="no">photo_camera</span>
             </div>
             <div>
-              <h3 className="text-[#faf9f5] font-bold text-lg">Daily Log - Day {dayNumber}</h3>
+              <h3 className="text-on-surface font-bold text-lg">Daily Log - Day {dayNumber}</h3>
               <p className="text-zinc-500 text-xs">Save progress for the office</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#474846] active:text-[#ababa8]">
+          <button onClick={onClose} className="text-outline-variant active:text-on-surface-variant">
              <span className="material-symbols-outlined text-xl" translate="no">close</span>
           </button>
         </div>
@@ -150,7 +150,7 @@ export function FieldDailyLogModal({
           
           {/* Image Upload */}
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-3 pl-1">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3 pl-1">
               Photos ({totalPhotos})
             </label>
             
@@ -170,7 +170,7 @@ export function FieldDailyLogModal({
 
               {/* New File Previews */}
               {newFileUrls.map((url, i) => (
-                <div key={`new-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border border-[#aeee2a]/30 group shadow-sm">
+                <div key={`new-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border border-primary/30 group shadow-sm">
                   <img src={url} alt={`Preview ${i}`} className="w-full h-full object-cover" />
                   <button 
                     onClick={() => removeNewImage(i)}
@@ -184,7 +184,7 @@ export function FieldDailyLogModal({
               {/* Add More Button */}
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="w-24 h-24 rounded-xl border-2 border-dashed border-[#474846] flex flex-col items-center justify-center text-[#ababa8] bg-[#1e201e] hover:bg-[#242624] active:scale-95 active:border-[#aeee2a] active:text-[#aeee2a] transition-all shadow-sm"
+                className="w-24 h-24 rounded-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center text-on-surface-variant bg-surface-container-high hover:bg-surface-container-highest active:scale-95 active:border-primary active:text-primary transition-all shadow-sm"
               >
                 <span className="material-symbols-outlined text-3xl mb-1" translate="no">add_photo_alternate</span>
                 <span className="text-[10px] font-bold uppercase tracking-widest">Add</span>
@@ -205,7 +205,7 @@ export function FieldDailyLogModal({
           <button
             onClick={handleSubmit}
             disabled={isSubmitting || totalPhotos === 0}
-            className="w-full mt-4 bg-[#aeee2a] text-[#1a1a00] rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-50 transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full mt-4 bg-primary text-[#1a1a00] rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-50 transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <div className="w-5 h-5 border-2 border-[#1a1a00]/30 border-t-[#1a1a00] rounded-full animate-spin" />

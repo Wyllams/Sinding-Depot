@@ -40,7 +40,7 @@ export default function SalesSettings() {
 
                {/* Password Form (Conditional) */}
                {isChangingPassword && (
-                 <div className="p-5 bg-[#050505]/50 space-y-4 border-t border-zinc-800/50">
+                 <div className="p-5 bg-mobile-frame/50 space-y-4 border-t border-zinc-800/50">
                     
                     <div className="space-y-1">
                       <label className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold ml-1">Current Password</label>
@@ -65,7 +65,7 @@ export default function SalesSettings() {
                            alert("Phew! Your new password is secure. (Mock Saved!)");
                            setIsChangingPassword(false);
                         }}
-                        className="w-full bg-[var(--color-siding-green)] text-[#050505] font-bold text-sm py-3 rounded-xl hover:bg-[#9bdd25] transition-colors"
+                        className="w-full bg-[var(--color-siding-green)] text-mobile-frame font-bold text-sm py-3 rounded-xl hover:bg-[#9bdd25] transition-colors"
                       >
                         Save New Password
                       </button>

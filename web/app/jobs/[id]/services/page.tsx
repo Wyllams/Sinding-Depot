@@ -62,7 +62,7 @@ export default function JobServices({ params }: { params: Promise<{ id: string }
     <main className="h-full overflow-y-auto">
       
       {/* PREMIUM TOPBAR */}
-      <header className="sticky top-0 z-20 flex justify-between items-center px-6 py-3 bg-[#050505]/80 backdrop-blur-md border-b border-zinc-800/30">
+      <header className="sticky top-0 z-20 flex justify-between items-center px-6 py-3 bg-mobile-frame/80 backdrop-blur-md border-b border-zinc-800/30">
         <div className="flex items-center gap-4">
           <Link href={`/jobs/${jobId}`} className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors border border-transparent hover:border-zinc-700">
             <ArrowLeft size={16} />

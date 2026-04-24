@@ -21,7 +21,7 @@ created: 2026-04-17
 |----------------|----------|
 | **Listagem completa** | Todos os jobs do Supabase com KPIs por projeto |
 | **Filtros** | Por Status, Gating Status, busca textual |
-| **Status Pipeline** | `draft` → `pending_scheduling` → `active` → `in_progress` → `completed` |
+| **Status Pipeline** | `pending` → `tentative` → `scheduled` → `in_progress` → `done` |
 | **Gating Status** | Sistema visual de bloqueios operacionais |
 | **Actions** | Click para abrir detalhes do projeto |
 

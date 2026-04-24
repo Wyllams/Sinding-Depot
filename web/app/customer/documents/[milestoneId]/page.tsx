@@ -173,7 +173,7 @@ export default function CustomerSignPage(): React.ReactElement | null {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-32">
-        <div className="w-8 h-8 border-3 border-[#e5e5e3] border-t-[#121412] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-[#e5e5e3] border-t-surface-container-low rounded-full animate-spin" />
       </div>
     );
   }
@@ -182,12 +182,12 @@ export default function CustomerSignPage(): React.ReactElement | null {
   if (error || !milestone || !job) {
     return (
       <div className="max-w-md mx-auto text-center py-20">
-        <div className="w-20 h-20 bg-[#fff1ec] text-[#ff7351] rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-20 h-20 bg-[#fff1ec] text-error rounded-full flex items-center justify-center mx-auto mb-6">
           <span className="material-symbols-outlined text-[40px]" translate="no">lock</span>
         </div>
-        <h2 className="font-headline font-bold text-xl text-[#121412] mb-2">Document Unavailable</h2>
-        <p className="text-[#474846] mb-6">{error ?? "Please check the link or contact Siding Depot."}</p>
-        <Link href="/customer/documents" className="text-sm font-bold text-[#121412] hover:underline">
+        <h2 className="font-headline font-bold text-xl text-surface-container-low mb-2">Document Unavailable</h2>
+        <p className="text-outline-variant mb-6">{error ?? "Please check the link or contact Siding Depot."}</p>
+        <Link href="/customer/documents" className="text-sm font-bold text-surface-container-low hover:underline">
           ← Back to My Documents
         </Link>
       </div>
@@ -201,7 +201,7 @@ export default function CustomerSignPage(): React.ReactElement | null {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between">
-        <Link href="/customer/documents" className="inline-flex items-center text-[#a1a19d] hover:text-[#121412] text-sm font-bold transition-colors">
+        <Link href="/customer/documents" className="inline-flex items-center text-[#a1a19d] hover:text-surface-container-low text-sm font-bold transition-colors">
           <span className="material-symbols-outlined text-[18px] mr-1" translate="no">arrow_back</span>
           Back to Documents
         </Link>
@@ -231,7 +231,7 @@ export default function CustomerSignPage(): React.ReactElement | null {
       <footer className="text-center text-xs text-[#a1a19d] py-4">
         <p>© {new Date().getFullYear()} Siding Depot LLC · 2480 Sandy Plains Road, Marietta GA 30066</p>
         <p className="mt-1">
-          <a href="tel:6784002004" className="hover:text-[#121412] transition-colors">678-400-2004</a>
+          <a href="tel:6784002004" className="hover:text-surface-container-low transition-colors">678-400-2004</a>
           {" · "}office@sidingdepot.com
         </p>
       </footer>

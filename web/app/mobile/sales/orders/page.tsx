@@ -33,9 +33,9 @@ interface ChangeOrder {
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string }> = {
   draft:                      { label: "Draft",    bg: "bg-[#fff7cf]/10", text: "text-[#fff7cf]", dot: "bg-[#fff7cf]" },
   pending_customer_approval:  { label: "Pending",  bg: "bg-[#e3eb5d]/10", text: "text-[#e3eb5d]", dot: "bg-[#e3eb5d]" },
-  approved:                   { label: "Approved", bg: "bg-[#aeee2a]/20", text: "text-[#aeee2a]", dot: "bg-[#aeee2a]" },
-  rejected:                   { label: "Rejected", bg: "bg-[#ff7351]/10", text: "text-[#ff7351]", dot: "bg-[#ff7351]" },
-  cancelled:                  { label: "Cancelled",bg: "bg-[#474846]/20", text: "text-[#ababa8]", dot: "bg-[#747673]" },
+  approved:                   { label: "Approved", bg: "bg-primary/20", text: "text-primary", dot: "bg-primary" },
+  rejected:                   { label: "Rejected", bg: "bg-error/10", text: "text-error", dot: "bg-error" },
+  cancelled:                  { label: "Cancelled",bg: "bg-outline-variant/20", text: "text-on-surface-variant", dot: "bg-outline" },
 };
 
 function formatCurrency(v: number | null) {
@@ -112,9 +112,9 @@ export default function SalesMobileOrdersPage() {
         <div className="relative z-50">
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-10 h-10 rounded-full bg-[#1e201e] border border-[#474846]/30 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+            className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
           >
-            <span className="material-symbols-outlined text-[#faf9f5]">menu</span>
+            <span className="material-symbols-outlined text-on-surface">menu</span>
           </button>
           
           {/* Dropdown Menu */}
@@ -124,16 +124,16 @@ export default function SalesMobileOrdersPage() {
                 className="fixed inset-0 z-40" 
                 onClick={() => setIsMenuOpen(false)}
               />
-              <div className="absolute top-12 left-0 w-48 bg-[#1e201e] border border-[#474846]/30 rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+              <div className="absolute top-12 left-0 w-48 bg-surface-container-high border border-outline-variant/30 rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
                 <Link 
                   href="/mobile/sales/profile"
-                  className="flex items-center gap-3 px-4 py-4 hover:bg-[#aeee2a]/10 text-[#faf9f5] transition-colors"
+                  className="flex items-center gap-3 px-4 py-4 hover:bg-primary/10 text-on-surface transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <span className="material-symbols-outlined text-[20px]">person</span>
                   <span className="font-semibold text-sm">My Profile</span>
                 </Link>
-                <div className="h-[1px] bg-[#474846]/30 w-full" />
+                <div className="h-[1px] bg-outline-variant/30 w-full" />
                 <button 
                   onClick={handleSignOut}
                   className="flex items-center gap-3 px-4 py-4 hover:bg-red-500/10 text-red-400 transition-colors text-left"
@@ -147,12 +147,12 @@ export default function SalesMobileOrdersPage() {
         </div>
 
         {/* Center: Title */}
-        <h1 className="text-lg font-black tracking-widest uppercase text-[#faf9f5] absolute left-1/2 -translate-x-1/2 min-w-max text-center">
+        <h1 className="text-lg font-black tracking-widest uppercase text-on-surface absolute left-1/2 -translate-x-1/2 min-w-max text-center">
           CHANGE ORDERS
         </h1>
 
         {/* Right side: Avatar */}
-        <Link href="/mobile/sales/profile" className="w-10 h-10 rounded-full bg-[#1e201e] border border-[#474846]/30 shadow-lg flex items-center justify-center overflow-hidden active:scale-95 transition-transform shrink-0 z-10">
+        <Link href="/mobile/sales/profile" className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/30 shadow-lg flex items-center justify-center overflow-hidden active:scale-95 transition-transform shrink-0 z-10">
           <img src="https://ui-avatars.com/api/?name=SD&background=aeee2a&color=080808&bold=true" alt="Profile" className="w-full h-full object-cover" />
         </Link>
       </div>
@@ -165,21 +165,21 @@ export default function SalesMobileOrdersPage() {
           placeholder="Search status, project, client..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-[#121412] text-[#faf9f5] border border-[#474846]/50 rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:border-[#aeee2a] placeholder-[#7B7B78] transition-colors shadow-sm"
+          className="w-full bg-surface-container-low text-on-surface border border-outline-variant/50 rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:border-primary placeholder-[#7B7B78] transition-colors shadow-sm"
         />
       </div>
         
       {loading ? (
           <div className="flex flex-col items-center justify-center py-10 gap-3">
-             <span className="material-symbols-outlined text-[#aeee2a] text-3xl animate-spin">progress_activity</span>
-             <p className="text-[#ababa8] text-sm">Loading change orders...</p>
+             <span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>
+             <p className="text-on-surface-variant text-sm">Loading change orders...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3 bg-[#121412] rounded-2xl border border-[#474846]/20">
-             <div className="w-14 h-14 bg-[#1e201e] rounded-full flex items-center justify-center">
-               <span className="material-symbols-outlined text-[#aeee2a]">request_quote</span>
+          <div className="flex flex-col items-center justify-center py-16 gap-3 bg-surface-container-low rounded-2xl border border-outline-variant/20">
+             <div className="w-14 h-14 bg-surface-container-high rounded-full flex items-center justify-center">
+               <span className="material-symbols-outlined text-primary">request_quote</span>
              </div>
-             <p className="text-[#faf9f5] font-bold">No change orders found</p>
+             <p className="text-on-surface font-bold">No change orders found</p>
           </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -197,7 +197,7 @@ export default function SalesMobileOrdersPage() {
                return (
                  <Link href={`/mobile/sales/orders/${order.id}`} key={order.id}>
                    <div 
-                     className="bg-[#121412] rounded-2xl p-4 border border-[#474846]/15 hover:border-[#aeee2a]/40 transition-colors shadow-lg active:scale-[0.98] duration-200"
+                     className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/15 hover:border-primary/40 transition-colors shadow-lg active:scale-[0.98] duration-200"
                    >
                      <div className="flex justify-between items-start gap-4">
                         <div className="flex-1 min-w-0">
@@ -205,18 +205,18 @@ export default function SalesMobileOrdersPage() {
                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${cfg.bg} ${cfg.text}`}>
                                 {cfg.label}
                              </span>
-                             <span className="text-[10px] font-bold text-[#ababa8] tracking-widest uppercase">
+                             <span className="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
                                {order.job?.job_number ? order.job.job_number : "—"}
                              </span>
                            </div>
-                           <h3 className="text-sm font-extrabold text-[#faf9f5] leading-tight truncate">{order.title}</h3>
+                           <h3 className="text-sm font-extrabold text-on-surface leading-tight truncate">{order.title}</h3>
                            
                            <div className="flex items-center gap-3 mt-2">
-                             <span className="text-xs text-[#ababa8] font-medium flex items-center gap-1">
+                             <span className="text-xs text-on-surface-variant font-medium flex items-center gap-1">
                                <span className="material-symbols-outlined text-[14px]">construction</span>
                                {order.job_service?.service_type?.name || "General"}
                              </span>
-                             <span className="text-xs text-[#ababa8] font-medium flex items-center gap-1">
+                             <span className="text-xs text-on-surface-variant font-medium flex items-center gap-1">
                                <span className="material-symbols-outlined text-[14px]">group</span>
                                <span className="truncate max-w-[80px] block">{order.requested_by_profile?.full_name || "Internal"}</span>
                              </span>
@@ -227,7 +227,7 @@ export default function SalesMobileOrdersPage() {
                            <span className="text-[10px] text-[#7B7B78] font-bold mb-2">
                              {formatDate(order.requested_at).split(',')[0]}
                            </span>
-                           <span className={`text-base font-black ${order.status === 'approved' ? 'text-[#aeee2a]' : 'text-[#faf9f5]'}`}>
+                           <span className={`text-base font-black ${order.status === 'approved' ? 'text-primary' : 'text-on-surface'}`}>
                               {formatCurrency(amount)}
                            </span>
                         </div>

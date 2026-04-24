@@ -9,10 +9,10 @@ export default function FieldLayout({
 }) {
   return (
     // Force mobile layout on desktop using bounds and dark mode bg
-    <div className="bg-[#000000] min-h-screen text-white font-sans flex justify-center items-start overflow-hidden">
+    <div className="bg-layout-bg min-h-screen text-white font-sans flex justify-center items-start overflow-hidden">
       
       {/* Mobile Frame (Constricts to ~448px max width like an actual phone) */}
-      <div className="w-full max-w-md h-[100dvh] bg-[#050505] relative shadow-2xl overflow-hidden flex flex-col border-x border-zinc-900">
+      <div className="w-full max-w-md h-[100dvh] bg-mobile-frame relative shadow-2xl overflow-hidden flex flex-col border-x border-zinc-900">
         
         {/* Fixed Top Bar */}
         <FieldTopBar title="Field Crew" />

@@ -18,11 +18,11 @@ interface ChangeOrderItem {
 }
 
 const STATUS_CFG: Record<string, { label: string; badge: string }> = {
-  draft:                       { label: "Draft",    badge: "bg-[#474846]/15 text-[#474846]" },
+  draft:                       { label: "Draft",    badge: "bg-outline-variant/15 text-outline-variant" },
   pending_customer_approval:   { label: "Pending",  badge: "bg-[#f59e0b]/15 text-[#b8860b]" },
   approved:                    { label: "Approved", badge: "bg-[#5c8a00]/15 text-[#5c8a00]" },
-  rejected:                    { label: "Rejected", badge: "bg-[#ff7351]/15 text-[#dc2626]" },
-  cancelled:                   { label: "Cancelled",badge: "bg-[#474846]/10 text-[#474846]" },
+  rejected:                    { label: "Rejected", badge: "bg-error/15 text-[#dc2626]" },
+  cancelled:                   { label: "Cancelled",badge: "bg-outline-variant/10 text-outline-variant" },
 };
 
 export default function CustomerChangeOrders() {
@@ -154,25 +154,25 @@ export default function CustomerChangeOrders() {
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
-        <Link href="/customer" className="inline-flex items-center text-[#a1a19d] hover:text-[#121412] text-sm font-bold transition-colors mb-4">
+        <Link href="/customer" className="inline-flex items-center text-[#a1a19d] hover:text-surface-container-low text-sm font-bold transition-colors mb-4">
           <span className="material-symbols-outlined text-[18px] mr-1" translate="no">arrow_back</span>
           Back to Dashboard
         </Link>
-        <h1 className="font-headline text-3xl font-bold tracking-tight text-[#121412]">Change Orders</h1>
-        <p className="text-[#474846] mt-2">Review and approve scope changes for your project.</p>
+        <h1 className="font-headline text-3xl font-bold tracking-tight text-surface-container-low">Change Orders</h1>
+        <p className="text-outline-variant mt-2">Review and approve scope changes for your project.</p>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-3 border-[#e5e5e3] border-t-[#121412] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-[#e5e5e3] border-t-surface-container-low rounded-full animate-spin" />
         </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-20 bg-white border border-[#e5e5e3] rounded-3xl shadow-sm">
-          <div className="w-20 h-20 bg-[#f0fae1] text-[#aeee2a] rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-[#f0fae1] text-primary rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="material-symbols-outlined text-[40px]" translate="no">thumb_up</span>
           </div>
-          <h3 className="font-headline font-bold text-xl text-[#121412]">You&apos;re all caught up!</h3>
-          <p className="text-[#474846] mt-2 max-w-sm mx-auto">
+          <h3 className="font-headline font-bold text-xl text-surface-container-low">You&apos;re all caught up!</h3>
+          <p className="text-outline-variant mt-2 max-w-sm mx-auto">
             There are no change orders for your project at this time.
           </p>
         </div>
@@ -189,7 +189,7 @@ export default function CustomerChangeOrders() {
                 <div className="p-6 pb-0">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="font-headline font-bold text-lg text-[#121412]">{order.title}</h3>
+                      <h3 className="font-headline font-bold text-lg text-surface-container-low">{order.title}</h3>
                       {order.requested_by?.full_name && (
                         <p className="text-xs text-[#a1a19d] mt-0.5 flex items-center gap-1">
                           <span className="material-symbols-outlined text-[12px]" translate="no">person</span>
@@ -205,15 +205,15 @@ export default function CustomerChangeOrders() {
                   </div>
 
                   {order.description && (
-                    <p className="text-[#474846] text-sm leading-relaxed mb-4">{order.description}</p>
+                    <p className="text-outline-variant text-sm leading-relaxed mb-4">{order.description}</p>
                   )}
 
                   {/* Amount */}
-                  <div className="bg-[#faf9f5] border border-[#e5e5e3] rounded-2xl p-4 mb-4">
+                  <div className="bg-on-surface border border-[#e5e5e3] rounded-2xl p-4 mb-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-1">
                       {order.status === "approved" ? "Approved Amount" : "Proposed Amount"}
                     </p>
-                    <p className="font-headline text-2xl font-bold text-[#121412]">{fmt$(amount)}</p>
+                    <p className="font-headline text-2xl font-bold text-surface-container-low">{fmt$(amount)}</p>
                   </div>
                 </div>
 
@@ -229,7 +229,7 @@ export default function CustomerChangeOrders() {
                           <button
                             key={att.id}
                             type="button"
-                            className="relative group rounded-xl overflow-hidden border border-[#e5e5e3] bg-[#faf9f5] aspect-square cursor-pointer hover:border-[#121412] transition-colors"
+                            className="relative group rounded-xl overflow-hidden border border-[#e5e5e3] bg-on-surface aspect-square cursor-pointer hover:border-surface-container-low transition-colors"
                             onClick={() => {
                               if (img || vid) setLightbox({ url: att.url, type: img ? "image" : "video" });
                               else window.open(att.url, "_blank");
@@ -239,7 +239,7 @@ export default function CustomerChangeOrders() {
                               <img src={att.url} alt={att.file_name || ""} className="w-full h-full object-cover" />
                             ) : vid ? (
                               <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                                <span className="material-symbols-outlined text-3xl text-[#121412]" translate="no">play_circle</span>
+                                <span className="material-symbols-outlined text-3xl text-surface-container-low" translate="no">play_circle</span>
                                 <span className="text-[9px] text-[#a1a19d]">Video</span>
                               </div>
                             ) : (
@@ -266,7 +266,7 @@ export default function CustomerChangeOrders() {
                     <button
                       onClick={() => { setRejectModal({ orderId: order.id, title: order.title }); setRejectReason(""); }}
                       disabled={acting === order.id}
-                      className="flex-1 h-12 rounded-2xl border-2 border-[#ff7351]/30 text-[#dc2626] font-bold text-sm hover:bg-[#fff1ec] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex-1 h-12 rounded-2xl border-2 border-error/30 text-[#dc2626] font-bold text-sm hover:bg-[#fff1ec] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
                       Reject
@@ -274,7 +274,7 @@ export default function CustomerChangeOrders() {
                     <button
                       onClick={() => handleApprove(order.id)}
                       disabled={acting === order.id}
-                      className="flex-1 h-12 rounded-2xl bg-[#121412] text-[#faf9f5] font-bold text-sm hover:bg-[#242624] transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
+                      className="flex-1 h-12 rounded-2xl bg-surface-container-low text-on-surface font-bold text-sm hover:bg-surface-container-highest transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
                     >
                       <span className="material-symbols-outlined text-[18px]" translate="no">check</span>
                       {acting === order.id ? "Processing..." : "Approve"}
@@ -284,7 +284,7 @@ export default function CustomerChangeOrders() {
 
                 {/* Decided Status Footer */}
                 {(order.status === "approved" || order.status === "rejected") && (
-                  <div className={`px-6 py-4 border-t ${order.status === "approved" ? "bg-[#f0fae1]/50 border-[#aeee2a]/20" : "bg-[#fff1ec]/50 border-[#ff7351]/20"}`}>
+                  <div className={`px-6 py-4 border-t ${order.status === "approved" ? "bg-[#f0fae1]/50 border-primary/20" : "bg-[#fff1ec]/50 border-error/20"}`}>
                     <p className="text-xs font-bold flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-[14px]" translate="no">
                         {order.status === "approved" ? "check_circle" : "cancel"}
@@ -296,7 +296,7 @@ export default function CustomerChangeOrders() {
                     {order.status === "rejected" && order.rejection_reason && (
                       <div className="mt-2 bg-white/60 rounded-xl px-4 py-3">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-1">Reason</p>
-                        <p className="text-sm text-[#474846] leading-relaxed">{order.rejection_reason}</p>
+                        <p className="text-sm text-outline-variant leading-relaxed">{order.rejection_reason}</p>
                       </div>
                     )}
                   </div>
@@ -345,15 +345,15 @@ export default function CustomerChangeOrders() {
             {/* Modal Header */}
             <div className="px-6 pt-6 pb-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-[#fff1ec] text-[#ff7351] rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-[#fff1ec] text-error rounded-full flex items-center justify-center">
                   <span className="material-symbols-outlined text-2xl" translate="no">feedback</span>
                 </div>
                 <div>
-                  <h3 className="font-headline font-bold text-lg text-[#121412]">Decline Change Order</h3>
+                  <h3 className="font-headline font-bold text-lg text-surface-container-low">Decline Change Order</h3>
                   <p className="text-xs text-[#a1a19d] mt-0.5">{rejectModal.title}</p>
                 </div>
               </div>
-              <p className="text-sm text-[#474846] leading-relaxed">
+              <p className="text-sm text-outline-variant leading-relaxed">
                 We understand this may not be the right fit. Could you share a brief reason so our team can better address your needs?
               </p>
             </div>
@@ -365,7 +365,7 @@ export default function CustomerChangeOrders() {
                 onChange={(e) => setRejectReason(e.target.value)}
                 rows={3}
                 placeholder="e.g. The cost is too high, I'd like an alternative option..."
-                className="w-full bg-[#faf9f5] border border-[#e5e5e3] rounded-2xl px-4 py-3 text-sm text-[#121412] resize-none focus:border-[#121412] focus:ring-1 focus:ring-[#121412] outline-none transition-all placeholder:text-[#d1d0c9]"
+                className="w-full bg-on-surface border border-[#e5e5e3] rounded-2xl px-4 py-3 text-sm text-surface-container-low resize-none focus:border-surface-container-low focus:ring-1 focus:ring-surface-container-low outline-none transition-all placeholder:text-[#d1d0c9]"
               />
             </div>
 
@@ -373,7 +373,7 @@ export default function CustomerChangeOrders() {
             <div className="px-6 pb-6 flex gap-3">
               <button
                 onClick={() => setRejectModal(null)}
-                className="flex-1 h-12 rounded-2xl border border-[#e5e5e3] text-[#474846] font-bold text-sm hover:bg-[#faf9f5] transition-colors"
+                className="flex-1 h-12 rounded-2xl border border-[#e5e5e3] text-outline-variant font-bold text-sm hover:bg-on-surface transition-colors"
               >
                 Cancel
               </button>

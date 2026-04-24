@@ -56,29 +56,29 @@ export function ManageListModal({
     >
       <div className="w-full max-w-md rounded-2xl flex flex-col max-h-[90vh] overflow-hidden" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.2)" }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#474846]/20">
+        <div className="flex items-center justify-between p-6 border-b border-outline-variant/20">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">{icon}</span>
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary text-lg" translate="no">{icon}</span>
             </div>
             <div>
-              <h3 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+              <h3 className="text-lg font-extrabold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                 {title}
               </h3>
-              <p className="text-[10px] text-[#ababa8] uppercase tracking-widest">{subtitle}</p>
+              <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">{subtitle}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-[#ababa8] hover:text-[#faf9f5] transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5"
+            className="text-on-surface-variant hover:text-on-surface transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5"
           >
             <span className="material-symbols-outlined" translate="no">close</span>
           </button>
         </div>
 
         {/* Input Form */}
-        <div className="p-6 border-b border-[#474846]/20 bg-[#1e201e]/30">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">{addLabel}</p>
+        <div className="p-6 border-b border-outline-variant/20 bg-surface-container-high/30">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">{addLabel}</p>
           <div className="flex gap-2">
             <input
               autoFocus
@@ -89,11 +89,11 @@ export function ManageListModal({
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleAdd();
               }}
-              className="flex-1 bg-[#121412] border border-[#aeee2a]/30 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+              className="flex-1 bg-surface-container-low border border-primary/30 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-outline-variant"
             />
             <button
               onClick={handleAdd}
-              className="px-6 py-2.5 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-sm shadow-[0_0_15px_rgba(174,238,42,0.15)]"
+              className="px-6 py-2.5 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-sm shadow-[0_0_15px_rgba(174,238,42,0.15)]"
             >
               Add
             </button>
@@ -102,16 +102,16 @@ export function ManageListModal({
 
         {/* Dynamic List Container */}
         <div className="p-6 max-h-[350px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-4">
             {listTitle} ({items.length})
           </p>
           <div className="space-y-1">
             {items.map((item) => (
-              <div key={item} className="flex items-center justify-between p-3 rounded-xl hover:bg-[#1e201e]/50 transition-colors group border border-transparent hover:border-[#474846]/20">
-                <span className="text-sm font-bold text-[#faf9f5]">{item}</span>
+              <div key={item} className="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container-high/50 transition-colors group border border-transparent hover:border-outline-variant/20">
+                <span className="text-sm font-bold text-on-surface">{item}</span>
                 <button
                   onClick={() => onRemove(item)}
-                  className="opacity-0 group-hover:opacity-100 text-[#ff7351]/80 hover:text-[#ff7351] transition-all p-1"
+                  className="opacity-0 group-hover:opacity-100 text-error/80 hover:text-error transition-all p-1"
                   title="Remove from this list"
                 >
                   <span className="material-symbols-outlined text-[20px]" translate="no">person_remove</span>
@@ -119,7 +119,7 @@ export function ManageListModal({
               </div>
             ))}
             {items.length === 0 && (
-              <p className="text-center text-[#ababa8] text-sm py-4">No items in this list.</p>
+              <p className="text-center text-on-surface-variant text-sm py-4">No items in this list.</p>
             )}
           </div>
         </div>

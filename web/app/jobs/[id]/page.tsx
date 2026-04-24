@@ -15,7 +15,7 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
     <main className="h-full overflow-y-auto">
       
       {/* PREMIUM TOPBAR */}
-      <header className="sticky top-0 z-20 flex justify-between items-center px-6 py-3 bg-[#050505]/80 backdrop-blur-md border-b border-zinc-800/30">
+      <header className="sticky top-0 z-20 flex justify-between items-center px-6 py-3 bg-mobile-frame/80 backdrop-blur-md border-b border-zinc-800/30">
         <div className="flex items-center gap-4">
           <Link href="/projects" className="flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors border border-transparent hover:border-zinc-700">
             <ArrowLeft size={16} />
@@ -74,7 +74,7 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
               
               {/* Timeline Item 1 */}
               <div className="relative flex gap-4">
-                 <div className="w-7 h-7 rounded-full bg-[var(--color-siding-green)]/20 border-2 border-[#050505] text-[var(--color-siding-green)] flex items-center justify-center shrink-0 z-10 shadow-[0_0_10px_rgba(178,210,52,0.2)]">
+                 <div className="w-7 h-7 rounded-full bg-[var(--color-siding-green)]/20 border-2 border-mobile-frame text-[var(--color-siding-green)] flex items-center justify-center shrink-0 z-10 shadow-[0_0_10px_rgba(178,210,52,0.2)]">
                     <CheckCircle2 size={14} className="stroke-[3]" />
                  </div>
                  <div className="pt-1">
@@ -86,7 +86,7 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
 
                {/* Timeline Item 2 */}
               <div className="relative flex gap-4">
-                 <div className="w-7 h-7 rounded-full bg-[var(--color-siding-green)]/20 border-2 border-[#050505] text-[var(--color-siding-green)] flex items-center justify-center shrink-0 z-10 shadow-[0_0_10px_rgba(178,210,52,0.2)]">
+                 <div className="w-7 h-7 rounded-full bg-[var(--color-siding-green)]/20 border-2 border-mobile-frame text-[var(--color-siding-green)] flex items-center justify-center shrink-0 z-10 shadow-[0_0_10px_rgba(178,210,52,0.2)]">
                     <CheckCircle2 size={14} className="stroke-[3]" />
                  </div>
                  <div className="pt-1">
@@ -98,7 +98,7 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
 
                {/* Timeline Item 3 (Current/Blocker) */}
               <div className="relative flex gap-4">
-                 <div className="w-7 h-7 rounded-full bg-orange-500/20 border-2 border-[#050505] text-orange-400 flex items-center justify-center shrink-0 z-10 shadow-[0_0_10px_rgba(249,115,22,0.2)]">
+                 <div className="w-7 h-7 rounded-full bg-orange-500/20 border-2 border-mobile-frame text-orange-400 flex items-center justify-center shrink-0 z-10 shadow-[0_0_10px_rgba(249,115,22,0.2)]">
                     <span className="relative flex h-2 w-2">
                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                        <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
@@ -116,7 +116,7 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
 
                {/* Timeline Item 4 (Future) */}
               <div className="relative flex gap-4 opacity-50 grayscale">
-                 <div className="w-7 h-7 rounded-full bg-zinc-800 border-2 border-[#050505] text-zinc-500 flex items-center justify-center shrink-0 z-10">
+                 <div className="w-7 h-7 rounded-full bg-zinc-800 border-2 border-mobile-frame text-zinc-500 flex items-center justify-center shrink-0 z-10">
                     <Circle size={10} />
                  </div>
                  <div className="pt-1">
@@ -158,7 +158,7 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
                       { value: "NO_ANSWER", label: "📴 NO ANSWER" },
                       { value: "PERMIT", label: "📋 PERMIT" }
                     ]}
-                    className="w-full bg-[#050505] border border-zinc-800 rounded-xl px-4 py-3 text-[12px] font-black tracking-wider text-white shadow-inner focus:outline-none hover:border-[var(--color-siding-green)]/50 cursor-pointer transition-colors custom-select-arrow"
+                    className="w-full bg-mobile-frame border border-zinc-800 rounded-xl px-4 py-3 text-[12px] font-black tracking-wider text-white shadow-inner focus:outline-none hover:border-[var(--color-siding-green)]/50 cursor-pointer transition-colors custom-select-arrow"
                   />
                 </div>
               </div>

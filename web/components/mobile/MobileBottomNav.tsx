@@ -14,7 +14,7 @@ export function MobileBottomNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
   return (
-    <div className="fixed bottom-0 left-0 w-full z-50 bg-[#121412] border-t border-[#474846]/30 pb-[env(safe-area-inset-bottom,16px)]">
+    <div className="fixed bottom-0 left-0 w-full z-50 bg-surface-container-low border-t border-outline-variant/30 pb-[env(safe-area-inset-bottom,16px)]">
       <div className="flex items-center justify-around h-20 px-4">
         {items.map((item) => {
           // Fix logic: if href is the root sales page, match exactly. Otherwise, match if pathname starts with the subpath.
@@ -28,10 +28,10 @@ export function MobileBottomNav({ items }: { items: NavItem[] }) {
               key={item.href} 
               href={item.href}
               className={`flex-1 flex flex-col items-center justify-center gap-1 h-full transition-all duration-300 ${
-                isActive ? "text-[#aeee2a]" : "text-[#7B7B78] hover:text-[#faf9f5]"
+                isActive ? "text-primary" : "text-[#7B7B78] hover:text-on-surface"
               }`}
             >
-              <div className={`flex flex-col items-center justify-center w-16 pt-1 pb-1.5 rounded-2xl transition-all duration-300 ${isActive ? "bg-[#aeee2a]/10" : ""}`}>
+              <div className={`flex flex-col items-center justify-center w-16 pt-1 pb-1.5 rounded-2xl transition-all duration-300 ${isActive ? "bg-primary/10" : ""}`}>
                 <span 
                   className="material-symbols-outlined transition-all duration-300 mb-0.5" 
                   translate="no"

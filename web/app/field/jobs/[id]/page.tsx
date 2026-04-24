@@ -408,7 +408,7 @@ export default function FieldJobDetail({
   // ─── Loading state ────────────────────────────
   if (loadingJob) {
     return (
-      <div className="flex justify-center py-20 bg-[#050505] min-h-full">
+      <div className="flex justify-center py-20 bg-mobile-frame min-h-full">
         <div className="w-6 h-6 border-2 border-zinc-700 border-t-[var(--color-siding-green)] rounded-full animate-spin" />
       </div>
     );
@@ -418,9 +418,9 @@ export default function FieldJobDetail({
 
   return (
     <>
-      <div className="p-4 space-y-6 bg-[#050505] min-h-full">
+      <div className="p-4 space-y-6 bg-mobile-frame min-h-full">
         {/* Header Visual */}
-        <div className="bg-[#1e201e] border border-white/5 p-6 rounded-3xl relative overflow-hidden">
+        <div className="bg-surface-container-high border border-white/5 p-6 rounded-3xl relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-[0.03]">
              <span className="material-symbols-outlined text-[120px]" translate="no">location_on</span>
           </div>
@@ -444,22 +444,22 @@ export default function FieldJobDetail({
              </span>
           </div>
 
-          <h2 className="text-[#faf9f5] font-headline text-2xl font-bold tracking-tight mb-1">
+          <h2 className="text-on-surface font-headline text-2xl font-bold tracking-tight mb-1">
             {job?.address ?? "Loading..."}
           </h2>
-          <p className="text-[#ababa8] text-sm">{job?.city}, {job?.state}</p>
+          <p className="text-on-surface-variant text-sm">{job?.city}, {job?.state}</p>
 
           <div className="mt-6 flex items-center justify-between border-t border-dashed border-white/5 pt-4">
              <div className="flex flex-col">
                <span className="text-[10px] font-bold text-[var(--color-siding-green)] uppercase tracking-widest mb-1">Rep</span>
-               <span className="text-[#faf9f5] font-medium text-sm flex items-center gap-1.5">
+               <span className="text-on-surface font-medium text-sm flex items-center gap-1.5">
                  <span className="material-symbols-outlined text-[14px]" translate="no">person</span>
                  {job?.salespersonName ?? "—"}
                </span>
              </div>
              <div className="flex flex-col text-right">
-               <span className="text-[10px] font-bold text-[#474846] uppercase tracking-widest mb-1">Customer</span>
-               <span className="text-[#faf9f5] font-medium text-sm">{job?.customerName ?? "—"}</span>
+               <span className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-1">Customer</span>
+               <span className="text-on-surface font-medium text-sm">{job?.customerName ?? "—"}</span>
              </div>
           </div>
 
@@ -476,7 +476,7 @@ export default function FieldJobDetail({
 
         {/* Duration Dropdown */}
         <div className="pt-2">
-          <h3 className="text-[#ababa8] text-xs font-bold uppercase tracking-widest mb-2 pl-1 flex items-center gap-2">
+          <h3 className="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-2 pl-1 flex items-center gap-2">
             Duration (Days)
             {updatingDuration && <span className="w-3 h-3 border border-t-[var(--color-siding-green)] rounded-full animate-spin ml-2"></span>}
           </h3>
@@ -487,52 +487,52 @@ export default function FieldJobDetail({
               value: String(i + 1),
               label: `${i + 1} day${i === 0 ? '' : 's'}`
             }))}
-            className="w-full bg-[#1e201e] border border-white/5 rounded-2xl pl-5 pr-4 py-4 text-sm font-bold text-[#faf9f5] flex justify-between items-center transition-colors hover:bg-[#252825]"
+            className="w-full bg-surface-container-high border border-white/5 rounded-2xl pl-5 pr-4 py-4 text-sm font-bold text-on-surface flex justify-between items-center transition-colors hover:bg-[#252825]"
             disabled={updatingDuration || !job}
           />
         </div>
 
         {/* Success feedbacks */}
         {logSuccess && (
-          <div className="flex items-center gap-3 bg-[#1a2e00] border border-[#aeee2a]/20 rounded-3xl p-4 animate-in slide-in-from-bottom duration-300">
-            <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[#aeee2a]" translate="no">check_circle</span>
+          <div className="flex items-center gap-3 bg-[#1a2e00] border border-primary/20 rounded-3xl p-4 animate-in slide-in-from-bottom duration-300">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-primary" translate="no">check_circle</span>
             </div>
             <div>
-              <p className="text-[#faf9f5] font-bold text-sm">Daily Log Saved!</p>
-              <p className="text-[#ababa8] text-xs mt-0.5">The office has been notified.</p>
+              <p className="text-on-surface font-bold text-sm">Daily Log Saved!</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">The office has been notified.</p>
             </div>
-            <button onClick={() => setLogSuccess(false)} className="ml-auto text-[#474846] active:text-[#ababa8] transition-colors shrink-0">
+            <button onClick={() => setLogSuccess(false)} className="ml-auto text-outline-variant active:text-on-surface-variant transition-colors shrink-0">
               <span className="material-symbols-outlined text-lg" translate="no">close</span>
             </button>
           </div>
         )}
 
         {coSuccess && (
-          <div className="flex items-center gap-3 bg-[#1a2e00] border border-[#aeee2a]/20 rounded-3xl p-4 animate-in slide-in-from-bottom duration-300">
-            <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[#aeee2a]" translate="no">check_circle</span>
+          <div className="flex items-center gap-3 bg-[#1a2e00] border border-primary/20 rounded-3xl p-4 animate-in slide-in-from-bottom duration-300">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-primary" translate="no">check_circle</span>
             </div>
             <div>
-              <p className="text-[#faf9f5] font-bold text-sm">Change Order Submitted!</p>
-              <p className="text-[#ababa8] text-xs mt-0.5">Home Office will review and add pricing.</p>
+              <p className="text-on-surface font-bold text-sm">Change Order Submitted!</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">Home Office will review and add pricing.</p>
             </div>
-            <button onClick={() => setCOSuccess(false)} className="ml-auto text-[#474846] active:text-[#ababa8] transition-colors shrink-0">
+            <button onClick={() => setCOSuccess(false)} className="ml-auto text-outline-variant active:text-on-surface-variant transition-colors shrink-0">
               <span className="material-symbols-outlined text-lg" translate="no">close</span>
             </button>
           </div>
         )}
 
         {materialSuccess && (
-          <div className="flex items-center gap-3 bg-[#1a2e00] border border-[#aeee2a]/20 rounded-3xl p-4 animate-in slide-in-from-bottom duration-300">
-            <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[#aeee2a]" translate="no">check_circle</span>
+          <div className="flex items-center gap-3 bg-[#1a2e00] border border-primary/20 rounded-3xl p-4 animate-in slide-in-from-bottom duration-300">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-primary" translate="no">check_circle</span>
             </div>
             <div>
-              <p className="text-[#faf9f5] font-bold text-sm">Material Request Sent!</p>
-              <p className="text-[#ababa8] text-xs mt-0.5">The office will review and approve your request.</p>
+              <p className="text-on-surface font-bold text-sm">Material Request Sent!</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">The office will review and approve your request.</p>
             </div>
-            <button onClick={() => setMaterialSuccess(false)} className="ml-auto text-[#474846] active:text-[#ababa8] transition-colors shrink-0">
+            <button onClick={() => setMaterialSuccess(false)} className="ml-auto text-outline-variant active:text-on-surface-variant transition-colors shrink-0">
               <span className="material-symbols-outlined text-lg" translate="no">close</span>
             </button>
           </div>
@@ -542,7 +542,7 @@ export default function FieldJobDetail({
 
         {/* Daily Logs */}
         <div className="pt-2 pb-2">
-          <h3 className="text-[#ababa8] text-xs font-bold uppercase tracking-widest mb-2 pl-1">Daily Logs</h3>
+          <h3 className="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-2 pl-1">Daily Logs</h3>
           <div className="flex overflow-x-auto gap-3 pt-2 pb-2 px-1 -mx-1 scrollbar-hide">
             {Array.from({ length: job?.totalDays || 1 }).map((_, i) => {
               const dayNum = i + 1;
@@ -552,7 +552,7 @@ export default function FieldJobDetail({
               return (
                 <div key={i} className="relative flex-shrink-0">
                   {photoCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-[#aeee2a] text-[#1a1a00] text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-[#121412] z-10 shadow-sm">
+                    <span className="absolute -top-2 -right-2 bg-primary text-[#1a1a00] text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-surface-container-low z-10 shadow-sm">
                       {photoCount}
                     </span>
                   )}
@@ -569,10 +569,10 @@ export default function FieldJobDetail({
                         setShowDailyLogModal(true);
                       }
                     }}
-                    className="w-full h-full bg-[#1e201e] border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center min-w-[100px] active:scale-95 transition-transform shadow-sm"
+                    className="w-full h-full bg-surface-container-high border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center min-w-[100px] active:scale-95 transition-transform shadow-sm"
                   >
-                    <span className="material-symbols-outlined text-[#aeee2a] text-2xl mb-1" translate="no">event_note</span>
-                    <span className="text-[#faf9f5] font-bold text-sm">Day {dayNum}</span>
+                    <span className="material-symbols-outlined text-primary text-2xl mb-1" translate="no">event_note</span>
+                    <span className="text-on-surface font-bold text-sm">Day {dayNum}</span>
                   </button>
                 </div>
               );
@@ -593,63 +593,63 @@ export default function FieldJobDetail({
         <div className="space-y-4 pt-2">
           <button 
             onClick={() => setShowCOModal(true)}
-            className="w-full bg-[#121412] border border-dashed border-white/10 p-5 rounded-3xl flex items-center justify-between active:bg-white/5 transition-colors"
+            className="w-full bg-surface-container-low border border-dashed border-white/10 p-5 rounded-3xl flex items-center justify-between active:bg-white/5 transition-colors"
           >
             <div className="flex flex-col items-start">
-               <span className="text-[#faf9f5] font-bold text-sm flex items-center gap-2">
-                 <span className="material-symbols-outlined text-[#ff7351] text-lg" translate="no">inventory_2</span>
+               <span className="text-on-surface font-bold text-sm flex items-center gap-2">
+                 <span className="material-symbols-outlined text-error text-lg" translate="no">inventory_2</span>
                  Request Change Order
                </span>
-               <span className="text-[#ababa8] text-xs mt-1">Report issues or request extras for Home Office</span>
+               <span className="text-on-surface-variant text-xs mt-1">Report issues or request extras for Home Office</span>
             </div>
-            <span className="material-symbols-outlined text-[#474846]" translate="no">add_circle</span>
+            <span className="material-symbols-outlined text-outline-variant" translate="no">add_circle</span>
           </button>
 
           {/* REQUEST EXTRA MATERIAL — replaces "Report Blocker" */}
           <button 
             onClick={() => setShowMaterialModal(true)}
-            className="w-full bg-[#121412] border border-dashed border-white/10 p-5 rounded-3xl flex items-center justify-between active:bg-white/5 transition-colors"
+            className="w-full bg-surface-container-low border border-dashed border-white/10 p-5 rounded-3xl flex items-center justify-between active:bg-white/5 transition-colors"
           >
             <div className="flex flex-col items-start">
-               <span className="text-[#faf9f5] font-bold text-sm flex items-center gap-2">
+               <span className="text-on-surface font-bold text-sm flex items-center gap-2">
                  <span className="material-symbols-outlined text-[#f59e0b] text-lg" translate="no">package_2</span>
                  Request Extra Material
                </span>
-               <span className="text-[#ababa8] text-xs mt-1">Need extra supplies? Send a request to the office.</span>
+               <span className="text-on-surface-variant text-xs mt-1">Need extra supplies? Send a request to the office.</span>
             </div>
-               <span className="material-symbols-outlined text-[#474846]" translate="no">add_circle</span>
+               <span className="material-symbols-outlined text-outline-variant" translate="no">add_circle</span>
             </button>
 
             {/* Paint Colors (Visible Only for Painters) */}
             {serviceTypeCode === 'painting' && (
               <button 
                 onClick={() => setShowPaintModal(true)}
-                className="w-full bg-[#121412] border border-dashed border-white/10 p-5 rounded-3xl flex items-center justify-between active:bg-white/5 transition-colors"
+                className="w-full bg-surface-container-low border border-dashed border-white/10 p-5 rounded-3xl flex items-center justify-between active:bg-white/5 transition-colors"
               >
                 <div className="flex flex-col items-start">
-                   <span className="text-[#faf9f5] font-bold text-sm flex items-center gap-2">
+                   <span className="text-on-surface font-bold text-sm flex items-center gap-2">
                      <span className="material-symbols-outlined text-[#3b82f6] text-lg" translate="no">palette</span>
                      View Paint Colors
                    </span>
-                   <span className="text-[#ababa8] text-xs mt-1">Check the colors selected by the customer</span>
+                   <span className="text-on-surface-variant text-xs mt-1">Check the colors selected by the customer</span>
                 </div>
-                <span className="material-symbols-outlined text-[#474846]" translate="no">chevron_right</span>
+                <span className="material-symbols-outlined text-outline-variant" translate="no">chevron_right</span>
               </button>
             )}
 
             {/* COC Button */}
             <button 
               onClick={() => setShowCOCModal(true)}
-              className="w-full bg-[#1e201e] border border-white/5 p-5 rounded-3xl flex items-center justify-between active:scale-[0.98] transition-transform"
+              className="w-full bg-surface-container-high border border-white/5 p-5 rounded-3xl flex items-center justify-between active:scale-[0.98] transition-transform"
             >
                <div className="flex items-center gap-4">
-                  <span className="material-symbols-outlined text-3xl text-[#aeee2a]" translate="no">verified</span>
+                  <span className="material-symbols-outlined text-3xl text-primary" translate="no">verified</span>
                   <div className="text-left">
-                    <h4 className="text-[#faf9f5] font-bold text-base">Certificate of Completion</h4>
+                    <h4 className="text-on-surface font-bold text-base">Certificate of Completion</h4>
                     <p className="text-zinc-500 text-xs mt-1">Submit the signed COC for {job?.jobTitle || 'this service'}</p>
                   </div>
                </div>
-               <span className="material-symbols-outlined text-[#474846]" translate="no">chevron_right</span>
+               <span className="material-symbols-outlined text-outline-variant" translate="no">chevron_right</span>
             </button>
             
           </div>
@@ -659,7 +659,7 @@ export default function FieldJobDetail({
           <button 
             onClick={handleComplete}
             disabled={completing}
-            className="w-full h-16 bg-[#aeee2a] text-[#1a2e00] font-bold text-lg rounded-full shadow-[0_10px_40px_rgba(174,238,42,0.25)] hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full h-16 bg-primary text-[#1a2e00] font-bold text-lg rounded-full shadow-[0_10px_40px_rgba(174,238,42,0.25)] hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {completing ? (
                <div className="w-6 h-6 border-2 border-[#1a2e00]/20 border-t-[#1a2e00] rounded-full animate-spin" />
@@ -670,7 +670,7 @@ export default function FieldJobDetail({
               </>
             )}
           </button>
-          <p className="text-center text-[#474846] text-[10px] uppercase tracking-widest font-bold mt-4">
+          <p className="text-center text-outline-variant text-[10px] uppercase tracking-widest font-bold mt-4">
             Generates certificate & notifies client
           </p>
         </div>
@@ -738,7 +738,7 @@ export default function FieldJobDetail({
           />
           
           {/* Modal Content */}
-          <div className="relative w-full max-w-md bg-[#121412] border-t border-white/10 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-bottom duration-300">
+          <div className="relative w-full max-w-md bg-surface-container-low border-t border-white/10 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-bottom duration-300">
             {/* Handle bar */}
             <div className="flex justify-center mb-5">
               <div className="w-10 h-1 bg-zinc-700 rounded-full" />
@@ -750,7 +750,7 @@ export default function FieldJobDetail({
                 <span className="material-symbols-outlined text-[#f59e0b]" translate="no">package_2</span>
               </div>
               <div>
-                <h3 className="text-[#faf9f5] font-bold text-lg">Request Extra Material</h3>
+                <h3 className="text-on-surface font-bold text-lg">Request Extra Material</h3>
                 <p className="text-zinc-500 text-xs">This will be sent to the office for approval.</p>
               </div>
             </div>
@@ -758,7 +758,7 @@ export default function FieldJobDetail({
             {/* Form */}
             <div className="space-y-4 max-h-[65dvh] overflow-y-auto pb-4 custom-scrollbar">
               {materialItems.map((item, index) => (
-                <div key={index} className="bg-[#1e201e] border border-white/5 rounded-2xl p-4 relative space-y-4">
+                <div key={index} className="bg-surface-container-high border border-white/5 rounded-2xl p-4 relative space-y-4">
                   {materialItems.length > 1 && (
                     <button 
                       onClick={() => removeMaterialItem(index)}
@@ -769,7 +769,7 @@ export default function FieldJobDetail({
                   )}
                   {/* Material Name */}
                   <div className={materialItems.length > 1 ? "pr-8" : ""}>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
                       Material Name {materialItems.length > 1 ? `#${index + 1}` : ""}
                     </label>
                     <input
@@ -777,14 +777,14 @@ export default function FieldJobDetail({
                       value={item.name}
                       onChange={(e) => updateMaterialItem(index, 'name', e.target.value)}
                       placeholder="e.g. J-Channel, Vinyl Siding..."
-                      className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all"
+                      className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-[#f59e0b]/50 transition-all"
                     />
                   </div>
 
                   {/* Qty + Piece Size row */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
                         Quantity
                       </label>
                       <input
@@ -793,11 +793,11 @@ export default function FieldJobDetail({
                         value={item.qty}
                         onChange={(e) => updateMaterialItem(index, 'qty', e.target.value)}
                         placeholder="1"
-                        className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all"
+                        className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-[#f59e0b]/50 transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
                         Piece Size
                       </label>
                       <input
@@ -805,14 +805,14 @@ export default function FieldJobDetail({
                         value={item.size}
                         onChange={(e) => updateMaterialItem(index, 'size', e.target.value)}
                         placeholder={`e.g. 12' x 6"`}
-                        className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all"
+                        className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-[#f59e0b]/50 transition-all"
                       />
                     </div>
                   </div>
 
                   {/* Notes */}
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
                       Notes
                     </label>
                     <textarea
@@ -820,7 +820,7 @@ export default function FieldJobDetail({
                       onChange={(e) => updateMaterialItem(index, 'notes', e.target.value)}
                       placeholder="Explain the purpose..."
                       rows={2}
-                      className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl px-4 py-3 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#f59e0b]/50 transition-all resize-none"
+                      className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-[#f59e0b]/50 transition-all resize-none"
                     />
                   </div>
                 </div>
@@ -857,23 +857,23 @@ export default function FieldJobDetail({
 
       {/* PAINT COLORS MODAL */}
       {showPaintModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6 pb-0 sm:pb-6 bg-[#000000]/80 backdrop-blur-sm transition-opacity">
-          <div className="bg-[#121412] w-full max-w-md rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-white/10 animate-in slide-in-from-bottom flex flex-col max-h-[90dvh]">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6 pb-0 sm:pb-6 bg-layout-bg/80 backdrop-blur-sm transition-opacity">
+          <div className="bg-surface-container-low w-full max-w-md rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-white/10 animate-in slide-in-from-bottom flex flex-col max-h-[90dvh]">
             
             {/* Header */}
-            <div className="sticky top-0 bg-[#121412] px-6 pt-6 pb-4 border-b border-white/5 flex items-center justify-between shrink-0 z-10">
+            <div className="sticky top-0 bg-surface-container-low px-6 pt-6 pb-4 border-b border-white/5 flex items-center justify-between shrink-0 z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#3b82f6]/10 flex items-center justify-center">
                   <span className="material-symbols-outlined text-[#3b82f6]" translate="no">palette</span>
                 </div>
                 <div>
-                  <h3 className="text-[#faf9f5] font-black text-lg">Paint Colors</h3>
-                  <p className="text-[#ababa8] text-xs">Customer Selections</p>
+                  <h3 className="text-on-surface font-black text-lg">Paint Colors</h3>
+                  <p className="text-on-surface-variant text-xs">Customer Selections</p>
                 </div>
               </div>
               <button 
                 onClick={() => setShowPaintModal(false)}
-                className="w-10 h-10 rounded-full bg-[#1e201e] flex items-center justify-center text-[#ababa8] hover:text-white transition-colors"
+                className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-white transition-colors"
               >
                 <span className="material-symbols-outlined" translate="no">close</span>
               </button>
@@ -887,12 +887,12 @@ export default function FieldJobDetail({
                   <p className="text-zinc-400 text-sm">No paint colors selected yet.</p>
                 </div>
               ) : (
-                <div className="bg-[#1e201e] border border-white/5 rounded-2xl p-5 space-y-4">
+                <div className="bg-surface-container-high border border-white/5 rounded-2xl p-5 space-y-4">
                   {paintColors.map((color) => (
                     <div key={color.id} className="flex justify-between items-center border-b border-white/5 pb-3 last:border-0 last:pb-0">
-                      <span className="text-[#ababa8] font-medium text-sm">{color.surface_area}:</span>
+                      <span className="text-on-surface-variant font-medium text-sm">{color.surface_area}:</span>
                       <div className="text-right">
-                        <span className="text-[#faf9f5] font-bold text-sm">
+                        <span className="text-on-surface font-bold text-sm">
                           {color.brand === 'Sherwin-Williams' ? 'SW' : color.brand} {color.color_code} {color.color_name ? `(${color.color_name})` : ''}
                         </span>
                       </div>

@@ -13,7 +13,7 @@ export default function MobileLayout({
         100dvh guarantees it fits exactly within the Safari/iOS viewport without jumping.
         Use iOS safe-area-inset in the future for physical notches.
       */}
-      <div className="bg-[#080808] text-[#faf9f5] min-h-[100dvh] max-h-[100dvh] w-full relative flex flex-col overflow-hidden font-body selection:bg-[#aeee2a] selection:text-black">
+      <div className="bg-[#080808] text-on-surface min-h-[100dvh] max-h-[100dvh] w-full relative flex flex-col overflow-hidden font-body selection:bg-primary selection:text-black">
         {/* Content Area - Scrolls vertically, sits behind bottom nav if needed, but we pad it so content doesn't hide */}
         <div className="flex-1 overflow-y-auto w-full styled-scrollbar pb-24">
           {children}

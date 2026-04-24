@@ -39,13 +39,14 @@ updated: 2026-04-22
 
 | Status DB (`jobs.status`) | Label no Calendar | Cor | Ícone |
 |---------------------------|-------------------|-----|-------|
-| `draft` | **Pending** | 🔴 `#ef4444` (Vermelho) | Aguardando atribuição |
-| `active` | **Confirmed** | 🔵 `#60b8f5` (Azul) | Parceiro atribuído, agendado |
-| — | **In Progress** | 🟢 `#aeee2a` (Verde Lima) | Hoje está dentro do período |
-| — | **Done** | 🟢 `#22c55e` (Verde) | Após 18h do último dia |
+| `pending` | **Pending** | 🔴 `#ef4444` (Vermelho) | Aguardando cliente/permissão |
+| `tentative` | **Tentative** | 🟠 `#f5a623` (Laranja) | Data incerta, esboço inicial |
+| `scheduled` | **Confirmed** | 🔵 `#60b8f5` (Azul) | Parceiro atribuído, agendado |
+| `in_progress` | **In Progress** | 🟢 `#aeee2a` (Verde Lima) | Hoje está dentro do período |
+| `done` | **Done** | 🟢 `#22c55e` (Verde Escuro) | Finalizado |
 
 > [!IMPORTANT]
-> **"Tentative" foi renomeado para "Pending"** em 22/04/2026. A cor agora é **vermelha** (antes era amarela/laranja).
+> **O banco de dados foi sincronizado (23/04/2026)**. Agora os status literais são `pending`, `tentative`, `scheduled`, `in_progress`, `done` gravados na própria tabela `jobs`. Eles não dependem mais exclusivamente da data para exibir In Progress ou Done.
 
 ### Regras de transição automática:
 

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 interface NavItem {
   href: string;
@@ -50,9 +51,9 @@ export function Sidebar() {
   });
 
   const sidebarContent = (
-    <aside className="bg-[#121412] h-full w-64 flex flex-col z-50 overflow-y-auto shrink-0">
+    <aside className="bg-surface-container-low h-full w-64 flex flex-col z-50 overflow-y-auto shrink-0">
       {/* Logo — aligned with TopBar header height */}
-      <div className="w-full flex items-center justify-center px-4 shrink-0 border-b border-[#474846]/20" style={{ height: "56px" }}>
+      <div className="w-full flex items-center justify-center px-4 shrink-0 border-b border-outline-variant/20" style={{ height: "56px" }}>
         <img
           src="/logo-new.png"
           alt="Siding Depot Logo"
@@ -63,7 +64,7 @@ export function Sidebar() {
         {isOpen && (
           <button
             onClick={close}
-            className="lg:hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#242624] border border-white/10 flex items-center justify-center text-[#ababa8] hover:text-white transition-colors"
+            className="lg:hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface-container-highest border border-white/10 flex items-center justify-center text-on-surface-variant hover:text-white transition-colors"
             aria-label="Close menu"
           >
             <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
@@ -86,8 +87,8 @@ export function Sidebar() {
               onClick={close}
               className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${
                 isActive
-                  ? "text-[#aeee2a] font-bold border-r-4 border-[#aeee2a] bg-[#242624]"
-                  : "text-zinc-500 hover:text-zinc-200 hover:bg-[#242624]"
+                  ? "text-primary font-bold border-r-4 border-primary bg-surface-container-highest"
+                  : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest"
               }`}
             >
               <span
@@ -107,15 +108,16 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Settings — pinned to bottom */}
-      <div className="px-4 pb-4 pt-2 border-t border-[#474846]/20 shrink-0">
+      {/* Settings & Theme — pinned to bottom */}
+      <div className="px-4 pb-4 pt-2 border-t border-outline-variant/20 shrink-0 flex flex-col gap-2">
+        <ThemeSwitcher />
         <Link
           href="/settings"
           onClick={close}
           className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${
             pathname === "/settings" || pathname.startsWith("/settings/")
-              ? "text-[#aeee2a] font-bold border-r-4 border-[#aeee2a] bg-[#242624]"
-              : "text-zinc-500 hover:text-zinc-200 hover:bg-[#242624]"
+              ? "text-primary font-bold border-r-4 border-primary bg-surface-container-highest"
+              : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest"
           }`}
         >
           <span className="material-symbols-outlined" translate="no">settings</span>

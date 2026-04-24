@@ -70,20 +70,20 @@ export default function FieldServicesPage() {
   };
 
   return (
-    <div className="bg-[#050505] min-h-[100dvh] flex flex-col font-sans">
+    <div className="bg-mobile-frame min-h-[100dvh] flex flex-col font-sans">
       
       {/* HEADER */}
-      <div className="sticky top-0 z-40 bg-[#050505]/90 backdrop-blur-xl border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-mobile-frame/90 backdrop-blur-xl border-b border-white/5">
         <div className="flex items-center justify-between p-4">
-          <Link href="/field" className="w-10 h-10 rounded-full bg-[#1e201e] border border-white/5 flex items-center justify-center text-[#faf9f5] active:scale-95 transition-transform">
+          <Link href="/field" className="w-10 h-10 rounded-full bg-surface-container-high border border-white/5 flex items-center justify-center text-on-surface active:scale-95 transition-transform">
             <span className="material-symbols-outlined" translate="no">arrow_back</span>
           </Link>
           <div className="text-center">
-            <h1 className="text-lg font-black text-[#faf9f5] tracking-tight">Services</h1>
-            <p className="text-[10px] text-[#aeee2a] font-bold uppercase tracking-widest">{services.length} items</p>
+            <h1 className="text-lg font-black text-on-surface tracking-tight">Services</h1>
+            <p className="text-[10px] text-primary font-bold uppercase tracking-widest">{services.length} items</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center">
-             <span className="material-symbols-outlined text-[#aeee2a]" translate="no">warning</span>
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+             <span className="material-symbols-outlined text-primary" translate="no">warning</span>
           </div>
         </div>
       </div>
@@ -92,11 +92,11 @@ export default function FieldServicesPage() {
       <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 opacity-50">
-            <div className="w-8 h-8 border-4 border-[#aeee2a]/20 border-t-[#aeee2a] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
           </div>
         ) : services.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-full bg-[#1e201e] flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mb-4">
                <span className="material-symbols-outlined text-3xl text-zinc-600" translate="no">assignment_turned_in</span>
             </div>
             <p className="text-white font-bold text-lg mb-1">No Services Assigned</p>
@@ -109,7 +109,7 @@ export default function FieldServicesPage() {
             return (
               <div 
                 key={service.id} 
-                className="bg-[#121412] border border-white/5 rounded-3xl overflow-hidden shadow-lg transition-all"
+                className="bg-surface-container-low border border-white/5 rounded-3xl overflow-hidden shadow-lg transition-all"
               >
                 {/* ALWAYS VISIBLE HEADER (CLICKABLE) */}
                 <div 
@@ -125,7 +125,7 @@ export default function FieldServicesPage() {
 
                   {/* Row 1: Customer Name and Date */}
                   <div className="flex justify-between items-start pr-6">
-                    <h3 className="text-[#faf9f5] font-black text-sm">
+                    <h3 className="text-on-surface font-black text-sm">
                       {service.jobs?.title?.split(" - ").pop()?.trim() || "Unknown Customer"}
                     </h3>
                     <p className="text-zinc-400 text-xs font-bold">{formatDate(service.reported_at)}</p>
@@ -133,7 +133,7 @@ export default function FieldServicesPage() {
                   
                   {/* Row 2: Status and Discipline */}
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase text-[#ababa8] bg-[#242624]">
+                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase text-on-surface-variant bg-surface-container-highest">
                       {service.type}
                     </span>
                     <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase text-white" style={{
@@ -149,7 +149,7 @@ export default function FieldServicesPage() {
                 {isExpanded && (
                   <div className="px-5 pb-5 pt-2 border-t border-white/5 animate-in slide-in-from-top-2 duration-200">
                     <div className="mb-4">
-                      <p className="text-[10px] font-bold text-[#aeee2a] uppercase tracking-widest mb-1">Project ID</p>
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Project ID</p>
                       <p className="text-zinc-400 text-xs">
                         {service.jobs?.job_number ? `#${service.jobs.job_number}` : "N/A"}
                       </p>
@@ -168,7 +168,7 @@ export default function FieldServicesPage() {
                             const isVideo = /\.(mp4|mov|webm|avi|mkv|m4v)/i.test(att.url);
                             
                             return (
-                              <div key={idx} className="aspect-square bg-[#1a1c1a] rounded-xl overflow-hidden relative">
+                              <div key={idx} className="aspect-square bg-surface-container-high rounded-xl overflow-hidden relative">
                                  {isImage ? (
                                    <img 
                                      src={att.url} 

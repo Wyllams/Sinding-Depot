@@ -77,14 +77,14 @@ export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: b
   };
 
   return (
-    <header className="safe-area-top sticky top-0 z-50 bg-[#0d0f0d]/80 backdrop-blur-3xl border-b border-[#474846]/20 flex items-center justify-between px-4 min-h-14 relative">
+    <header className="safe-area-top sticky top-0 z-50 bg-background/80 backdrop-blur-3xl border-b border-outline-variant/20 flex items-center justify-between px-4 min-h-14 relative">
 
       {/* Left — Hamburger or Back */}
       <div className="w-10 flex items-center justify-start relative" ref={menuRef}>
         {isSubPage ? (
           <button
             onClick={() => router.back()}
-            className="w-9 h-9 rounded-xl bg-[#181a18] border border-[#474846]/30 flex items-center justify-center text-[#ababa8] hover:text-[#faf9f5] transition-colors"
+            className="w-9 h-9 rounded-xl bg-surface-container border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
           >
             <span className="material-symbols-outlined text-[18px]" translate="no">arrow_back_ios_new</span>
           </button>
@@ -92,25 +92,25 @@ export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: b
           <>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="w-9 h-9 rounded-xl bg-[#181a18] border border-[#474846]/30 flex items-center justify-center text-[#ababa8] hover:text-[#faf9f5] transition-colors"
+              className="w-9 h-9 rounded-xl bg-surface-container border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
             >
               <span className="material-symbols-outlined text-[20px]" translate="no">menu</span>
             </button>
 
             {/* Dropdown Menu */}
             {menuOpen && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-[#181a18] border border-white/5 rounded-xl shadow-2xl overflow-hidden z-50 origin-top-left animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container border border-white/5 rounded-xl shadow-2xl overflow-hidden z-50 origin-top-left animate-in fade-in zoom-in-95 duration-200">
                 <Link
                   href="/field/profile"
-                  className="w-full text-left px-4 py-3.5 text-sm text-[#faf9f5] hover:bg-[#242624] transition-colors flex items-center gap-3"
+                  className="w-full text-left px-4 py-3.5 text-sm text-on-surface hover:bg-surface-container-highest transition-colors flex items-center gap-3"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span className="material-symbols-outlined text-[18px] text-[#ababa8]" translate="no">person</span>
+                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant" translate="no">person</span>
                   Profile
                 </Link>
                 <div className="h-px bg-white/5 mx-3" />
                 <button
-                  className="w-full text-left px-4 py-3.5 text-sm text-[#ff7351] hover:bg-[#ff7351]/10 transition-colors flex items-center gap-3"
+                  className="w-full text-left px-4 py-3.5 text-sm text-error hover:bg-error/10 transition-colors flex items-center gap-3"
                   onClick={handleLogout}
                 >
                   <span className="material-symbols-outlined text-[18px]" translate="no">logout</span>
@@ -123,7 +123,7 @@ export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: b
       </div>
 
       {/* Center — Title */}
-      <h1 className="absolute left-1/2 -translate-x-1/2 text-[#faf9f5] font-bold text-[15px] font-headline tracking-tight">
+      <h1 className="absolute left-1/2 -translate-x-1/2 text-on-surface font-bold text-[15px] font-headline tracking-tight">
         {title}
       </h1>
 
@@ -134,11 +134,11 @@ export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: b
             <img
               src={profile.avatar_url}
               alt={profile.full_name}
-              className="w-8 h-8 rounded-full object-cover border-2 border-[#aeee2a]"
+              className="w-8 h-8 rounded-full object-cover border-2 border-primary"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-[#aeee2a]/15 border-2 border-[#aeee2a]/40 flex items-center justify-center">
-              <span className="text-[#aeee2a] text-[10px] font-black">
+            <div className="w-8 h-8 rounded-full bg-primary/15 border-2 border-primary/40 flex items-center justify-center">
+              <span className="text-primary text-[10px] font-black">
                 {profile?.initials ?? "SD"}
               </span>
             </div>

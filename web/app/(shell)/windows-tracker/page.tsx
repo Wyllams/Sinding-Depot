@@ -307,19 +307,19 @@ export default function WindowsTrackerPage() {
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1
-              className="text-xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
+              className="text-xl sm:text-3xl font-extrabold text-on-surface tracking-tighter"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Windows & Doors Tracker
             </h1>
-            <p className="text-[#ababa8] text-sm mt-1">
+            <p className="text-on-surface-variant text-sm mt-1">
               Track window/door orders by job.&nbsp;
               <span className="text-red-400 font-bold">Can only order when Money Collected = YES!</span>
             </p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#aeee2a] rounded-xl text-sm font-bold text-[#3a5400] shadow-[0_0_15px_rgba(174,238,42,0.15)] hover:shadow-[0_0_25px_rgba(174,238,42,0.3)] hover:scale-[1.02] active:scale-95 transition-all shrink-0"
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary rounded-xl text-sm font-bold text-[#3a5400] shadow-[0_0_15px_rgba(174,238,42,0.15)] hover:shadow-[0_0_25px_rgba(174,238,42,0.3)] hover:scale-[1.02] active:scale-95 transition-all shrink-0"
           >
             <span className="material-symbols-outlined text-[18px]" translate="no">add</span>
             New Order
@@ -336,15 +336,14 @@ export default function WindowsTrackerPage() {
           ].map((kpi) => (
             <div
               key={kpi.label}
-              className="p-5 rounded-2xl flex items-center gap-4"
-              style={{ background: "rgba(36,38,36,0.4)", backdropFilter: "blur(24px)", border: "1px solid rgba(174,238,42,0.08)" }}
+              className="p-5 rounded-2xl flex items-center gap-4 bg-surface-container-high border border-outline-variant/20 shadow-sm"
             >
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${kpi.color}15` }}>
                 <span className="material-symbols-outlined text-[20px]" style={{ color: kpi.color }} translate="no">{kpi.icon}</span>
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">{kpi.label}</p>
-                <p className="text-xl font-black text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{kpi.value}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{kpi.label}</p>
+                <p className="text-xl font-black text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{kpi.value}</p>
               </div>
             </div>
           ))}
@@ -356,7 +355,7 @@ export default function WindowsTrackerPage() {
             <CustomDropdown
               value={filterStatus} onChange={(val) => setFilterStatus(val)}
               options={[{ value: "ALL", label: "All Statuses" }, ...ALL_STATUSES.map(s => ({ value: s, label: s }))]}
-              className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none hover:border-[#aeee2a] transition-colors flex justify-between items-center min-w-[150px]"
+              className="bg-surface-container-high text-on-surface text-sm font-bold rounded-xl px-4 py-2.5 border border-outline-variant/20 outline-none hover:border-primary transition-colors flex justify-between items-center min-w-[150px]"
             />
           </div>
           <div className="relative z-[80]">
@@ -368,7 +367,7 @@ export default function WindowsTrackerPage() {
                 { value: "NO", label: "No" },
                 { value: "FINANCING", label: "Financing" }
               ]}
-              className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none hover:border-[#aeee2a] transition-colors flex justify-between items-center min-w-[200px]"
+              className="bg-surface-container-high text-on-surface text-sm font-bold rounded-xl px-4 py-2.5 border border-outline-variant/20 outline-none hover:border-primary transition-colors flex justify-between items-center min-w-[200px]"
             />
           </div>
           <div className="relative z-[80]">
@@ -379,7 +378,7 @@ export default function WindowsTrackerPage() {
                 { value: "MONTH", label: "By Month" },
                 { value: "YEAR", label: "By Year" }
               ]}
-              className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none hover:border-[#aeee2a] transition-colors flex justify-between items-center min-w-[160px]"
+              className="bg-surface-container-high text-on-surface text-sm font-bold rounded-xl px-4 py-2.5 border border-outline-variant/20 outline-none hover:border-primary transition-colors flex justify-between items-center min-w-[160px]"
             />
           </div>
 
@@ -394,7 +393,7 @@ export default function WindowsTrackerPage() {
                     label: d.toLocaleString('en-US', { month: 'long', year: 'numeric' })
                   };
                 })}
-                className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none hover:border-[#aeee2a] transition-colors flex justify-between items-center min-w-[160px]"
+                className="bg-surface-container-high text-on-surface text-sm font-bold rounded-xl px-4 py-2.5 border border-outline-variant/20 outline-none hover:border-primary transition-colors flex justify-between items-center min-w-[160px]"
               />
             </div>
 
@@ -405,14 +404,14 @@ export default function WindowsTrackerPage() {
                   const y = new Date().getFullYear() - offset;
                   return { value: `YEAR-${y}`, label: String(y) };
                 })}
-                className="bg-[#1e201e] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2.5 border border-[#474846]/20 outline-none hover:border-[#aeee2a] transition-colors flex justify-between items-center min-w-[110px]"
+                className="bg-surface-container-high text-on-surface text-sm font-bold rounded-xl px-4 py-2.5 border border-outline-variant/20 outline-none hover:border-primary transition-colors flex justify-between items-center min-w-[110px]"
               />
             </div>
 
           {(filterStatus !== "ALL" || filterMoney !== "ALL" || filterMode !== "ALL" || searchQuery) && (
             <button
               onClick={() => { setFilterStatus("ALL"); setFilterMoney("ALL"); setFilterMode("ALL"); setSearchQuery(""); }}
-              className="text-xs text-[#ababa8] hover:text-[#aeee2a] transition-colors flex items-center gap-1 shrink-0"
+              className="text-xs text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1 shrink-0"
             >
               <span className="material-symbols-outlined text-sm" translate="no">close</span>
               Clear
@@ -421,13 +420,13 @@ export default function WindowsTrackerPage() {
 
           {/* Search Box on the right */}
           <div className="ml-auto relative w-full sm:w-64 max-w-full">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] text-[18px]" translate="no">search</span>
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]" translate="no">search</span>
             <input 
               type="text" 
               placeholder="Search customers or orders..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#1e201e] text-[#faf9f5] rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] placeholder:font-normal"
+              className="w-full bg-surface-container-high text-on-surface rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold border border-outline-variant/20 outline-none focus:border-primary transition-colors placeholder:text-outline-variant placeholder:font-normal"
             />
           </div>
         </div>
@@ -437,18 +436,18 @@ export default function WindowsTrackerPage() {
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
           </div>
         )}
 
         {/* Table — Reordered: Quote + Money Collected adjacent */}
         {!loading && (
           <div className="flex-1 overflow-hidden flex flex-col px-4 sm:px-6 lg:px-8 pb-4">
-          <div className="rounded-2xl overflow-hidden border flex flex-col flex-1 min-h-0" style={{ background: "rgba(18,20,18,0.8)", borderColor: "rgba(71,72,70,0.2)" }}>
+          <div className="rounded-2xl overflow-hidden border flex flex-col flex-1 min-h-0 bg-surface-container-low border-outline-variant/20 shadow-sm">
             <div className="overflow-auto flex-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#474846 transparent" }}>
               <table className="w-full text-left border-collapse text-sm min-w-[1000px]">
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
+                  <tr className="border-b border-outline-variant/20">
                     {[
                       { label: "Customer", align: "text-left", width: "w-[12%]" },
                       { label: "Order #", align: "text-left", width: "w-[7%]" },
@@ -466,23 +465,23 @@ export default function WindowsTrackerPage() {
                       col.label === "Supplier" ? (
                         <th 
                           key={col.label} 
-                          className={`px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-[#ababa8] whitespace-nowrap ${col.align} ${col.width}`}
+                          className={`px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap ${col.align} ${col.width}`}
                         >
                           <div className="flex items-center justify-center gap-2 cursor-default">
                             {col.label}
                             <button
                               onClick={(e) => { e.stopPropagation(); setIsSupplierModalOpen(true); }}
-                              className="w-7 h-7 rounded-lg bg-[#aeee2a]/10 flex items-center justify-center hover:bg-[#aeee2a]/20 transition-all ml-1"
+                              className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-all ml-1"
                               title="Manage Suppliers"
                             >
-                              <span className="material-symbols-outlined text-[#aeee2a] text-[15px]" translate="no">edit</span>
+                              <span className="material-symbols-outlined text-primary text-[15px]" translate="no">edit</span>
                             </button>
                           </div>
                         </th>
                       ) : (
                         <th 
                           key={col.label} 
-                          className={`px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-[#ababa8] whitespace-nowrap ${col.align} ${col.width}`}
+                          className={`px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap ${col.align} ${col.width}`}
                         >
                           {col.label}
                         </th>
@@ -493,7 +492,7 @@ export default function WindowsTrackerPage() {
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={12} className="px-6 py-16 text-center text-[#ababa8] text-sm">
+                      <td colSpan={12} className="px-6 py-16 text-center text-on-surface-variant text-sm">
                         <div className="flex flex-col items-center justify-center gap-3">
                           <span className="material-symbols-outlined text-4xl opacity-30" translate="no">window</span>
                           <span>{orders.length === 0 ? "No orders yet. Create one to get started." : "No orders match current filters."}</span>
@@ -504,17 +503,16 @@ export default function WindowsTrackerPage() {
                     paginatedRows.map((o, i) => (
                       <tr
                         key={o.id}
-                        className="hover:bg-[#1e201e]/50 transition-colors group"
-                        style={{ borderBottom: i < paginatedRows.length - 1 ? "1px solid rgba(71,72,70,0.1)" : "none" }}
+                        className="hover:bg-surface-container-high/50 transition-colors group border-b border-outline-variant/10 last:border-none"
                       >
                         <td 
-                          className="px-4 py-3.5 font-bold text-[#faf9f5] whitespace-nowrap cursor-pointer hover:text-[#aeee2a] transition-colors"
+                          className="px-4 py-3.5 font-bold text-on-surface whitespace-nowrap cursor-pointer hover:text-primary transition-colors"
                           onClick={() => openEdit(o)}
                         >
                           {o.customer_name}
                         </td>
-                        <td className="px-4 py-3.5 text-[#ababa8] font-mono text-xs">{o.order_number || "—"}</td>
-                        <td className="px-4 py-3.5 font-bold text-[#aeee2a]">{o.quote ? fmt(o.quote) : "—"}</td>
+                        <td className="px-4 py-3.5 text-on-surface-variant font-mono text-xs">{o.order_number || "—"}</td>
+                        <td className="px-4 py-3.5 font-bold text-primary">{o.quote ? fmt(o.quote) : "—"}</td>
 
                         {/* Money Collected — inline colored dropdown */}
                         <td className="px-4 py-3.5">
@@ -555,7 +553,7 @@ export default function WindowsTrackerPage() {
                             onChange={(val) => updateField(o.id, "expected_delivery", val)}
                           />
                         </td>
-                        <td className="px-4 py-3.5 text-center font-bold text-[#faf9f5]">{o.quantity || "—"}</td>
+                        <td className="px-4 py-3.5 text-center font-bold text-on-surface">{o.quantity || "—"}</td>
                         <td className="px-4 py-3.5 relative">
                           <CustomDropdown
                             options={supplierFilter}
@@ -564,8 +562,8 @@ export default function WindowsTrackerPage() {
                             inline={true}
                             className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border outline-none cursor-pointer transition-colors w-full min-w-[85px] ${
                               o.supplier
-                                ? "bg-transparent text-[#faf9f5] border-[#474846]/40 hover:border-[#aeee2a]"
-                                : "bg-transparent text-[#ababa8] border-[rgba(171,171,168,0.3)] hover:border-[#aeee2a]"
+                                ? "bg-transparent text-on-surface border-outline-variant/40 hover:border-primary"
+                                : "bg-transparent text-on-surface-variant border-[rgba(171,171,168,0.3)] hover:border-primary"
                             }`}
                           />
                         </td>
@@ -588,7 +586,7 @@ export default function WindowsTrackerPage() {
                           />
                         </td>
 
-                        <td className="px-4 py-3.5 text-[#ababa8] max-w-[160px] truncate text-xs">{o.notes || "—"}</td>
+                        <td className="px-4 py-3.5 text-on-surface-variant max-w-[160px] truncate text-xs">{o.notes || "—"}</td>
 
                         {/* Edit & Delete Action Menu */}
                         <td className="px-4 py-3.5 relative">
@@ -607,7 +605,7 @@ export default function WindowsTrackerPage() {
                                 });
                               }
                             }}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg text-[#aeee2a] bg-[#aeee2a]/10 hover:bg-[#aeee2a]/20 transition-all font-bold"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-primary bg-primary/10 hover:bg-primary/20 transition-all font-bold"
                           >
                             <span className="material-symbols-outlined text-[16px]" translate="no">edit</span>
                           </button>
@@ -620,8 +618,8 @@ export default function WindowsTrackerPage() {
             </div>
 
             {/* ── PAGINATION ── */}
-              <div className="shrink-0 flex items-center justify-between px-5 py-3 border-t" style={{ borderColor: "rgba(71,72,70,0.2)" }}>
-                <p className="text-xs text-[#ababa8] font-bold">
+              <div className="shrink-0 flex items-center justify-between px-5 py-3 border-t border-outline-variant/20">
+                <p className="text-xs text-on-surface-variant font-bold">
                   {filtered.length === 0
                     ? "No orders"
                     : `Showing ${((currentPage - 1) * ROWS_PER_PAGE) + 1}–${Math.min(currentPage * ROWS_PER_PAGE, filtered.length)} of ${filtered.length} orders`
@@ -634,8 +632,8 @@ export default function WindowsTrackerPage() {
                     disabled={currentPage === 1}
                     className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
                       currentPage === 1
-                        ? "text-[#ababa8]/30 cursor-not-allowed"
-                        : "text-[#faf9f5] hover:bg-[#474846]/40 cursor-pointer"
+                        ? "text-on-surface-variant/30 cursor-not-allowed"
+                        : "text-on-surface hover:bg-outline-variant/40 cursor-pointer"
                     }`}
                   >
                     <span className="material-symbols-outlined text-sm" translate="no">chevron_left</span>
@@ -646,8 +644,8 @@ export default function WindowsTrackerPage() {
                       onClick={() => setCurrentPage(page)}
                       className={`w-8 h-8 rounded-lg text-xs font-black transition-all ${
                         page === currentPage
-                          ? "bg-[#aeee2a] text-[#3a5400]"
-                          : "text-[#ababa8] hover:bg-[#474846]/40 hover:text-[#faf9f5]"
+                          ? "bg-primary text-[#3a5400]"
+                          : "text-on-surface-variant hover:bg-outline-variant/40 hover:text-on-surface"
                       }`}
                     >
                       {page}
@@ -658,8 +656,8 @@ export default function WindowsTrackerPage() {
                     disabled={currentPage === totalPages}
                     className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
                       currentPage === totalPages
-                        ? "text-[#ababa8]/30 cursor-not-allowed"
-                        : "text-[#faf9f5] hover:bg-[#474846]/40 cursor-pointer"
+                        ? "text-on-surface-variant/30 cursor-not-allowed"
+                        : "text-on-surface hover:bg-outline-variant/40 cursor-pointer"
                     }`}
                   >
                     <span className="material-symbols-outlined text-sm" translate="no">chevron_right</span>
@@ -679,7 +677,7 @@ export default function WindowsTrackerPage() {
         <>
           <div className="fixed inset-0 z-[100]" onClick={() => setActiveMenu(null)}></div>
           <div
-            className="absolute bg-[#1a1c1a] border border-[#474846]/30 rounded-xl shadow-2xl z-[101] flex flex-col py-1 animate-in fade-in zoom-in-95 duration-100"
+            className="absolute bg-surface-container-high border border-outline-variant/30 rounded-xl shadow-2xl z-[101] flex flex-col py-1 animate-in fade-in zoom-in-95 duration-100"
             style={{
               top: activeMenu.top,
               right: activeMenu.right,
@@ -688,7 +686,7 @@ export default function WindowsTrackerPage() {
           >
             <button
               onClick={() => { setActiveMenu(null); openEdit(activeMenu.o); }}
-              className="px-4 py-2.5 text-left text-xs font-bold text-[#faf9f5] hover:bg-[#242624] transition-colors flex items-center gap-2 rounded-t-xl"
+              className="px-4 py-2.5 text-left text-xs font-bold text-on-surface hover:bg-surface-container-highest transition-colors flex items-center gap-2 rounded-t-xl"
             >
               <span className="material-symbols-outlined text-[16px]" translate="no">edit</span>
               Edit
@@ -714,18 +712,17 @@ export default function WindowsTrackerPage() {
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
         >
           <div
-            className="w-full max-w-sm rounded-2xl p-6 relative"
-            style={{ background: "#1a1c1a", border: "1px solid rgba(239, 68, 68, 0.2)" }}
+            className="w-full max-w-sm rounded-2xl p-6 relative bg-surface-container-low border border-red-500/20 shadow-xl"
           >
-            <h2 className="text-xl font-extrabold text-[#faf9f5] mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Confirm Deletion</h2>
-            <p className="text-sm text-[#ababa8] mb-6">
-              Are you sure you want to delete <strong className="text-[#faf9f5]">{deletePrompt.customer_name}</strong>'s order{deletePrompt.order_number ? ` (${deletePrompt.order_number})` : ''}?
+            <h2 className="text-xl font-extrabold text-on-surface mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Confirm Deletion</h2>
+            <p className="text-sm text-on-surface-variant mb-6">
+              Are you sure you want to delete <strong className="text-on-surface">{deletePrompt.customer_name}</strong>'s order{deletePrompt.order_number ? ` (${deletePrompt.order_number})` : ''}?
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setDeletePrompt(null)}
-                className="flex-1 py-3 bg-[#1e201e] text-[#faf9f5] font-bold rounded-xl border border-[#474846]/20 hover:bg-[#242624] transition-all"
+                className="flex-1 py-3 bg-surface-container-high text-on-surface font-bold rounded-xl border border-outline-variant/20 hover:bg-surface-container-highest transition-all"
               >
                 Cancel
               </button>
@@ -752,14 +749,14 @@ export default function WindowsTrackerPage() {
           onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}
         >
           <div
-            className="w-full max-w-2xl rounded-2xl p-8 relative max-h-[90vh] overflow-y-auto"
-            style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)", scrollbarWidth: "none" }}
+            className="w-full max-w-2xl rounded-2xl p-8 relative max-h-[90vh] overflow-y-auto bg-surface-container-low border border-outline-variant/20 shadow-xl"
+            style={{ scrollbarWidth: "none" }}
           >
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-5 right-5 text-on-surface-variant hover:text-on-surface transition-colors">
               <span className="material-symbols-outlined" translate="no">close</span>
             </button>
 
-            <h2 className="text-xl font-extrabold text-[#faf9f5] mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+            <h2 className="text-xl font-extrabold text-on-surface mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
               New Window Order
             </h2>
             <p className="text-xs text-red-400 font-bold mb-6">
@@ -769,13 +766,13 @@ export default function WindowsTrackerPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Customer Name</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Customer Name</label>
                   <input required type="text" placeholder="e.g. Eric Lefebvre" value={form.customer_name}
                     onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]" />
+                    className="bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-outline-variant" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Supplier</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Supplier</label>
                   <CustomDropdown
                     options={supplierFilter}
                     value={form.supplier}
@@ -787,31 +784,31 @@ export default function WindowsTrackerPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Order # <span className="normal-case text-[#474846] font-normal">(optional)</span></label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Order # <span className="normal-case text-outline-variant font-normal">(optional)</span></label>
                   <input type="text" placeholder="e.g. ORD-8821" value={form.order_number}
                     onChange={(e) => setForm({ ...form, order_number: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]" />
+                    className="bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-outline-variant" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Quantity</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Quantity</label>
                   <input required type="number" min="1" placeholder="0" value={form.quantity}
                     onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]" />
+                    className="bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-primary transition-colors placeholder:text-outline-variant" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Quote ($)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Quote ($)</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-black text-sm">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-black text-sm">$</span>
                     <input required type="number" step="0.01" min="0" placeholder="0.00" value={form.quote}
                       onChange={(e) => setForm({ ...form, quote: e.target.value })}
-                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]" />
+                      className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold outline-none focus:border-primary transition-colors placeholder:text-outline-variant" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5 relative z-[60]">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Deposit Date</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Deposit Date</label>
                   <CustomDatePicker
                     value={form.deposit || ""}
                     onChange={(val) => setForm({ ...form, deposit: val })}
@@ -822,14 +819,14 @@ export default function WindowsTrackerPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5 relative z-[60]">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Ordered On</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Ordered On</label>
                   <CustomDatePicker
                     value={form.ordered_on || ""}
                     onChange={(val) => setForm({ ...form, ordered_on: val })}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 relative z-[60]">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Expected Delivery</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Expected Delivery</label>
                   <CustomDatePicker
                     value={form.expected_delivery || ""}
                     onChange={(val) => setForm({ ...form, expected_delivery: val })}
@@ -840,7 +837,7 @@ export default function WindowsTrackerPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Status</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Status</label>
                   <CustomDropdown
                     value={form.status}
                     onChange={(val) => setForm({ ...form, status: val as OrderStatus })}
@@ -848,7 +845,7 @@ export default function WindowsTrackerPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">
                     Money Collected &nbsp;<span className="text-red-400">⚠ Required</span>
                   </label>
                   <CustomDropdown
@@ -860,10 +857,10 @@ export default function WindowsTrackerPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Notes</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Notes</label>
                 <textarea rows={2} placeholder="Any notes..." value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] resize-none" />
+                  className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-outline-variant resize-none" />
               </div>
 
               {form.money_collected !== "YES" && (
@@ -876,7 +873,7 @@ export default function WindowsTrackerPage() {
               )}
 
               <button type="submit" disabled={saving}
-                className="w-full py-3 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] mt-2 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] mt-2 disabled:opacity-50 flex items-center justify-center gap-2"
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                 {saving ? <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" /> : "Save Order"}
               </button>
@@ -895,67 +892,67 @@ export default function WindowsTrackerPage() {
           onClick={(e) => { if (e.target === e.currentTarget) { setEditOrder(null); setEditForm(null); } }}
         >
           <div
-            className="w-full max-w-2xl rounded-2xl p-8 relative max-h-[90vh] overflow-y-auto"
-            style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)", scrollbarWidth: "none" }}
+            className="w-full max-w-2xl rounded-2xl p-8 relative max-h-[90vh] overflow-y-auto bg-surface-container-low border border-outline-variant/20 shadow-xl"
+            style={{ scrollbarWidth: "none" }}
           >
-            <button onClick={() => { setEditOrder(null); setEditForm(null); }} className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+            <button onClick={() => { setEditOrder(null); setEditForm(null); }} className="absolute top-5 right-5 text-on-surface-variant hover:text-on-surface transition-colors">
               <span className="material-symbols-outlined" translate="no">close</span>
             </button>
 
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">edit</span>
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-[18px]" translate="no">edit</span>
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Edit Order</h2>
-                <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest">{editForm.customer_name}</p>
+                <h2 className="text-xl font-extrabold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Edit Order</h2>
+                <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{editForm.customer_name}</p>
               </div>
             </div>
 
             <form onSubmit={handleEditSave} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Customer Name</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Customer Name</label>
                   <input required type="text" value={editForm.customer_name || ""}
                     onChange={(e) => setEditForm({ ...editForm, customer_name: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors" />
+                    className="bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Order #</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Order #</label>
                   <input type="text" value={editForm.order_number || ""}
                     onChange={(e) => setEditForm({ ...editForm, order_number: e.target.value })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors" />
+                    className="bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors" />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Quote</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Quote</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aeee2a] font-black text-xs">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary font-black text-xs">$</span>
                     <input type="number" step="0.01" value={editForm.quote ?? ""}
                       onChange={(e) => setEditForm({ ...editForm, quote: parseFloat(e.target.value) || 0 })}
-                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl pl-7 pr-3 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors" />
+                      className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl pl-7 pr-3 py-2.5 text-sm font-bold outline-none focus:border-primary transition-colors" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5 relative z-[60]">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Deposit Date</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Deposit Date</label>
                   <CustomDatePicker
                     value={editForm.deposit || ""}
                     onChange={(val) => setEditForm({ ...editForm, deposit: val })}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Qty</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Qty</label>
                   <input type="number" min="0" value={editForm.quantity ?? ""}
                     onChange={(e) => setEditForm({ ...editForm, quantity: parseInt(e.target.value) || 0 })}
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors" />
+                    className="bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-primary transition-colors" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Supplier</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Supplier</label>
                   <CustomDropdown
                     options={supplierFilter}
                     value={editForm.supplier || ""}
@@ -964,7 +961,7 @@ export default function WindowsTrackerPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Status</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Status</label>
                   <CustomDropdown
                     value={editForm.status || "Measurement"}
                     onChange={(val) => setEditForm({ ...editForm, status: val as OrderStatus })}
@@ -975,14 +972,14 @@ export default function WindowsTrackerPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5 relative z-[60]">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Ordered On</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Ordered On</label>
                   <CustomDatePicker
                     value={editForm.ordered_on || ""}
                     onChange={(val) => setEditForm({ ...editForm, ordered_on: val })}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 relative z-[60]">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Expected</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Expected</label>
                   <CustomDatePicker
                     value={editForm.expected_delivery || ""}
                     onChange={(val) => setEditForm({ ...editForm, expected_delivery: val })}
@@ -992,7 +989,7 @@ export default function WindowsTrackerPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Money Collected</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Money Collected</label>
                 <CustomDropdown
                   value={editForm.money_collected || "NO"}
                   onChange={(val) => setEditForm({ ...editForm, money_collected: val as MoneyCollected })}
@@ -1001,19 +998,19 @@ export default function WindowsTrackerPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Notes</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Notes</label>
                 <textarea rows={2} value={editForm.notes || ""}
                   onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors resize-none" />
+                  className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors resize-none" />
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => { setEditOrder(null); setEditForm(null); }}
-                  className="flex-1 py-3 bg-[#1e201e] text-[#faf9f5] font-bold rounded-xl border border-[#474846]/20 hover:bg-[#242624] transition-all">
+                  className="flex-1 py-3 bg-surface-container-high text-on-surface font-bold rounded-xl border border-outline-variant/20 hover:bg-surface-container-highest transition-all">
                   Cancel
                 </button>
                 <button type="submit" disabled={saving}
-                  className="flex-1 py-3 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                   {saving ? <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" /> : "Save Changes"}
                 </button>

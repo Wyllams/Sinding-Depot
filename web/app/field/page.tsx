@@ -56,39 +56,39 @@ export default function FieldHome() {
   const crewName = profile?.full_name ?? "Crew Partner";
 
   return (
-    <div className="p-5 space-y-8 bg-[#050505] min-h-[100dvh]">
+    <div className="p-5 space-y-8 bg-mobile-frame min-h-[100dvh]">
       {/* Greeting */}
       <section className="pt-2">
-        <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-[0.15em] mb-1">
+        <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-[0.15em] mb-1">
           Welcome Back
         </p>
-        <h1 className="text-[32px] font-black font-headline text-white leading-none tracking-tight mb-2">
+        <h1 className="text-[32px] font-black font-headline text-on-surface leading-none tracking-tight mb-2">
           {crewName}
         </h1>
-        <p className="text-[14px] text-[var(--color-siding-green)] font-medium">
+        <p className="text-[14px] text-primary font-medium">
           You have {jobCount} active job{jobCount !== 1 ? "s" : ""} in the field.
         </p>
       </section>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <Link href="/field/jobs" className="bg-[#151515] rounded-3xl p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform">
-          <div className="w-10 h-10 rounded-full bg-[var(--color-siding-green)]/10 flex items-center justify-center">
-            <span className="material-symbols-outlined text-[var(--color-siding-green)]" translate="no">handyman</span>
+        <Link href="/field/jobs" className="bg-surface-container-low border border-outline-variant/20 shadow-sm rounded-3xl p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-primary" translate="no">handyman</span>
           </div>
           <div>
-            <p className="text-3xl font-black font-headline text-white tracking-tighter">{jobCount}</p>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">My Jobs</p>
+            <p className="text-3xl font-black font-headline text-on-surface tracking-tighter">{jobCount}</p>
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1">My Jobs</p>
           </div>
         </Link>
 
-        <Link href="/field/services" className="bg-[#151515] rounded-3xl p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform">
-          <div className="w-10 h-10 rounded-full bg-[#aeee2a]/10 flex items-center justify-center">
-            <span className="material-symbols-outlined text-[#aeee2a]" translate="no">warning</span>
+        <Link href="/field/services" className="bg-surface-container-low border border-outline-variant/20 shadow-sm rounded-3xl p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-primary" translate="no">warning</span>
           </div>
           <div>
-            <p className="text-3xl font-black font-headline text-white tracking-tighter">{issueCount}</p>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Services</p>
+            <p className="text-3xl font-black font-headline text-on-surface tracking-tighter">{issueCount}</p>
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1">Services</p>
           </div>
         </Link>
       </div>

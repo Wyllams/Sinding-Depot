@@ -107,7 +107,7 @@ export function CustomDropdown({
   const menuContent = open ? (
     <div 
       ref={menuRef}
-      className={`fixed z-[99999] bg-[#1a1c1a] border border-[#474846]/30 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] py-1 overflow-y-auto max-h-[300px] custom-scrollbar`}
+      className={`fixed z-[99999] bg-surface-container-high border border-outline-variant/30 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] py-1 overflow-y-auto max-h-[300px] custom-scrollbar`}
       style={{
         top: coords.top,
         left: coords.left,
@@ -116,11 +116,11 @@ export function CustomDropdown({
       }}
     >
       {searchable && (
-        <div className="px-3 py-2 sticky top-0 bg-[#1a1c1a] border-b border-[#474846]/30 mb-1 z-10">
+        <div className="px-3 py-2 sticky top-0 bg-surface-container-high border-b border-outline-variant/30 mb-1 z-10">
           <input
             ref={searchInputRef}
             type="text"
-            className="w-full bg-[#242624] border border-[#474846]/30 rounded-lg px-3 py-2 text-xs text-[#faf9f5] focus:outline-none focus:border-[#aeee2a] placeholder-[#ababa8]"
+            className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary placeholder-on-surface-variant"
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -131,7 +131,7 @@ export function CustomDropdown({
       )}
       <button
         type="button"
-        className={`w-full ${inline ? "text-center" : "text-left"} px-4 py-2.5 text-[11px] uppercase tracking-widest text-[#ababa8] hover:bg-[#aeee2a] hover:text-[#1a1c1a] font-black transition-colors`}
+        className={`w-full ${inline ? "text-center" : "text-left"} px-4 py-2.5 text-[11px] uppercase tracking-widest text-on-surface-variant hover:bg-primary hover:text-surface-container-high font-black transition-colors`}
         onClick={() => { onChange(""); setOpen(false); setSearchQuery(""); }}
       >
         {placeholder}
@@ -143,7 +143,7 @@ export function CustomDropdown({
           <button
             type="button"
             key={optValue}
-            className={`w-full ${inline ? "text-center" : "text-left"} px-4 py-2.5 text-xs text-[#faf9f5] hover:bg-[#aeee2a] hover:text-[#1a1c1a] font-extrabold tracking-wider transition-colors`}
+            className={`w-full ${inline ? "text-center" : "text-left"} px-4 py-2.5 text-xs text-on-surface hover:bg-primary hover:text-surface-container-high font-extrabold tracking-wider transition-colors`}
             onClick={() => { onChange(optValue); setOpen(false); setSearchQuery(""); }}
           >
             {optLabel}
@@ -151,7 +151,7 @@ export function CustomDropdown({
         );
       })}
       {searchable && filteredOptions.length === 0 && (
-        <div className="px-4 py-3 text-xs text-[#ababa8] text-center font-medium">
+        <div className="px-4 py-3 text-xs text-on-surface-variant text-center font-medium">
           No results found
         </div>
       )}
@@ -164,7 +164,7 @@ export function CustomDropdown({
         ref={triggerRef}
         type="button"
         onClick={handleToggle}
-        className={className || "w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a] text-left"}
+        className={className || "w-full bg-surface-container-low border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-primary text-left"}
         style={style}
       >
         <span className={`${inline ? "mx-auto" : "truncate pr-2"}`}>{selectedLabel}</span>

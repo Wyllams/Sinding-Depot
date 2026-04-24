@@ -89,7 +89,7 @@ const ActionMenu = ({ p, onEdit, onDelete }: { p: CashPayment, onEdit: () => voi
         ref={triggerRef}
         onClick={handleToggle}
         title="Quick Actions"
-        className="w-8 h-8 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#faf9f5] hover:bg-[#242624] transition-all ml-auto relative z-10"
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all ml-auto relative z-10"
       >
         <span className="material-symbols-outlined text-[16px]" translate="no">edit</span>
       </button>
@@ -97,20 +97,20 @@ const ActionMenu = ({ p, onEdit, onDelete }: { p: CashPayment, onEdit: () => voi
       {open && typeof window !== "undefined" && createPortal(
         <div 
           ref={menuRef}
-          className="fixed z-[99999] w-32 bg-[#181a18] border border-[#aeee2a]/20 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] text-left overflow-hidden" 
+          className="fixed z-[99999] w-32 bg-surface-container border border-primary/20 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] text-left overflow-hidden" 
           style={{ top: coords.top, left: coords.left }}
           onClick={(e) => e.stopPropagation()}
         >
           <button
             onClick={() => { setOpen(false); onEdit(); }}
-            className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-[#faf9f5] hover:bg-[#242624] transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-on-surface hover:bg-surface-container-highest transition-colors"
           >
-            <span className="material-symbols-outlined text-[16px] text-[#aeee2a]" translate="no">edit</span>
+            <span className="material-symbols-outlined text-[16px] text-primary" translate="no">edit</span>
             Edit
           </button>
           <button
             onClick={() => { setOpen(false); onDelete(); }}
-            className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-[#ff7351] hover:bg-[#ff7351]/10 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-error hover:bg-error/10 transition-colors"
           >
             <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
             Delete
@@ -501,24 +501,24 @@ export default function CashPaymentsPage() {
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1
-              className="text-xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
+              className="text-xl sm:text-3xl font-extrabold text-on-surface tracking-tighter"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Cash Payments
             </h1>
-            <p className="text-[#ababa8] text-sm mt-1">Track cash purchases and extra materials per job.</p>
+            <p className="text-on-surface-variant text-sm mt-1">Track cash purchases and extra materials per job.</p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setIsStoreModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#1e201e] rounded-xl text-sm font-bold text-[#faf9f5] border border-[#474846]/30 hover:border-[#aeee2a]/40 hover:text-[#aeee2a] hover:scale-[1.02] active:scale-95 transition-all"
+              className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high rounded-xl text-sm font-bold text-on-surface border border-outline-variant/30 hover:border-primary/40 hover:text-primary hover:scale-[1.02] active:scale-95 transition-all"
             >
               <span className="material-symbols-outlined text-[18px]" translate="no">store</span>
               Manage Stores
             </button>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#aeee2a] rounded-xl text-sm font-bold text-[#3a5400] shadow-[0_0_15px_rgba(174,238,42,0.15)] hover:shadow-[0_0_25px_rgba(174,238,42,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary rounded-xl text-sm font-bold text-[#3a5400] shadow-[0_0_15px_rgba(174,238,42,0.15)] hover:shadow-[0_0_25px_rgba(174,238,42,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
             >
               <span className="material-symbols-outlined text-[18px]" translate="no">add</span>
               Add Payment
@@ -536,15 +536,14 @@ export default function CashPaymentsPage() {
           ].map((kpi) => (
             <div
               key={kpi.label}
-              className="p-5 rounded-2xl flex items-center gap-4"
-              style={{ background: "rgba(36,38,36,0.4)", backdropFilter: "blur(24px)", border: "1px solid rgba(174,238,42,0.08)" }}
+              className="p-5 rounded-2xl flex items-center gap-4 bg-surface-container-low border border-outline-variant/20 shadow-sm"
             >
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${kpi.color}15` }}>
                 <span className="material-symbols-outlined text-[20px]" style={{ color: kpi.color }} translate="no">{kpi.icon}</span>
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">{kpi.label}</p>
-                <p className="text-xl font-black text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{kpi.value}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{kpi.label}</p>
+                <p className="text-xl font-black text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{kpi.value}</p>
               </div>
             </div>
           ))}
@@ -554,13 +553,13 @@ export default function CashPaymentsPage() {
         <div className="flex flex-wrap items-center gap-3 mb-6">
           {/* Search */}
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] text-[18px]" translate="no">search</span>
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]" translate="no">search</span>
             <input
               type="text"
               placeholder="Search jobs, stores, amount..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-[#1e201e] text-[#faf9f5] text-sm rounded-xl pl-10 pr-4 py-2.5 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] w-64"
+              className="bg-surface-container-high text-on-surface text-sm rounded-xl pl-10 pr-4 py-2.5 border border-outline-variant/20 outline-none focus:border-primary transition-colors placeholder:text-outline-variant w-64"
             />
           </div>
 
@@ -571,7 +570,7 @@ export default function CashPaymentsPage() {
               onChange={(val) => setFilterStore(val)}
               options={[{ value: "ALL", label: "All Stores" }, ...stores.map(s => ({ value: s.name, label: s.name }))]}
               placeholder="All Stores"
-              className="w-full bg-[#1e201e] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+              className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-primary"
             />
           </div>
 
@@ -583,12 +582,12 @@ export default function CashPaymentsPage() {
                 onChange={(val) => setFilterPickedBy(val)}
                 options={[{ value: "ALL", label: "All Employees" }, ...cashEmployees.map((p) => ({ value: p.name, label: p.name }))]}
                 placeholder="All Employees"
-                className="w-full bg-[#1e201e] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-primary"
               />
             </div>
             <button
                onClick={() => setIsEmployeeModalOpen(true)}
-               className="w-10 h-10 flex items-center justify-center bg-[#1e201e] rounded-xl text-[#ababa8] hover:text-[#aeee2a] hover:border-[#aeee2a]/40 border border-[#474846]/20 transition-all"
+               className="w-10 h-10 flex items-center justify-center bg-surface-container-high rounded-xl text-on-surface-variant hover:text-primary hover:border-primary/40 border border-outline-variant/20 transition-all"
                title="Manage Employees Filter"
             >
                <span className="material-symbols-outlined text-[18px]" translate="no">edit</span>
@@ -596,8 +595,8 @@ export default function CashPaymentsPage() {
           </div>
 
           {/* Monthly Picker */}
-          <div className="flex items-center gap-1 bg-[#1e201e] p-1 rounded-xl border border-[#474846]/20">
-            <button onClick={goToPrevMonth} className="w-7 h-7 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] transition-all">
+          <div className="flex items-center gap-1 bg-surface-container-high p-1 rounded-xl border border-outline-variant/20">
+            <button onClick={goToPrevMonth} className="w-7 h-7 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-highest transition-all">
               <span className="material-symbols-outlined text-sm" translate="no">chevron_left</span>
             </button>
             <div className="flex items-center gap-1 px-2 z-20">
@@ -607,7 +606,7 @@ export default function CashPaymentsPage() {
                   onChange={(val) => setSelectedMonth(Number(val))}
                   options={MONTH_NAMES.map((name, idx) => ({ value: idx.toString(), label: name }))}
                   inline={true}
-                  className="w-full bg-transparent text-[#faf9f5] text-[13px] font-bold outline-none flex justify-center items-center hover:text-[#aeee2a] transition-colors gap-1"
+                  className="w-full bg-transparent text-on-surface text-[13px] font-bold outline-none flex justify-center items-center hover:text-primary transition-colors gap-1"
                 />
               </div>
               <div className="w-16">
@@ -616,11 +615,11 @@ export default function CashPaymentsPage() {
                   onChange={(val) => setSelectedYear(Number(val))}
                   options={[2024, 2025, 2026, 2027].map(y => ({ value: y.toString(), label: y.toString() }))}
                   inline={true}
-                  className="w-full bg-transparent text-[#ababa8] text-[13px] font-bold outline-none flex justify-center items-center hover:text-[#aeee2a] transition-colors gap-1"
+                  className="w-full bg-transparent text-on-surface-variant text-[13px] font-bold outline-none flex justify-center items-center hover:text-primary transition-colors gap-1"
                 />
               </div>
             </div>
-            <button onClick={goToNextMonth} className="w-7 h-7 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] transition-all">
+            <button onClick={goToNextMonth} className="w-7 h-7 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-highest transition-all">
               <span className="material-symbols-outlined text-sm" translate="no">chevron_right</span>
             </button>
           </div>
@@ -628,7 +627,7 @@ export default function CashPaymentsPage() {
           {(filterStore !== "ALL" || filterPickedBy !== "ALL" || searchQuery) && (
             <button
               onClick={() => { setFilterStore("ALL"); setFilterPickedBy("ALL"); setSearchQuery(""); }}
-              className="text-xs text-[#ababa8] hover:text-[#aeee2a] transition-colors flex items-center gap-1"
+              className="text-xs text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-sm" translate="no">close</span>
               Clear filters
@@ -639,22 +638,21 @@ export default function CashPaymentsPage() {
 
         {/* ── Scrollable table section ── */}
         <div
-          className="flex-1 min-h-0 rounded-2xl overflow-hidden border flex flex-col mb-4"
-          style={{ background: "rgba(18,20,18,0.8)", borderColor: "rgba(71,72,70,0.2)" }}
+          className="flex-1 min-h-0 rounded-2xl overflow-hidden border border-outline-variant/20 flex flex-col mb-4 bg-surface-container-low shadow-sm"
         >
           <div className="flex-1 min-h-0 overflow-auto" style={{ scrollbarWidth: "thin" }}>
             <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead className="sticky top-0 z-10" style={{ background: "#121412" }}>
-                <tr style={{ borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
+              <thead className="sticky top-0 z-10 bg-surface-container border-b border-outline-variant/20">
+                <tr>
                   {["Date", "Job Name", "Store", "Amount", "Employee", "Notes", ""].map((h) => (
-                    <th key={h} className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">{h}</th>
+                    <th key={h} className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-16 text-center text-[#ababa8] text-sm">
+                    <td colSpan={7} className="px-6 py-16 text-center text-on-surface-variant text-sm">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <span className="material-symbols-outlined text-4xl opacity-30" translate="no">payments</span>
                         <span>No records found for {MONTH_NAMES[selectedMonth]} {selectedYear}</span>
@@ -665,12 +663,11 @@ export default function CashPaymentsPage() {
                   paginatedPayments.map((p, i) => (
                     <tr
                       key={p.id}
-                      className="hover:bg-[#1e201e]/50 transition-colors group"
-                      style={{ borderBottom: i < paginatedPayments.length - 1 ? "1px solid rgba(71,72,70,0.1)" : "none" }}
+                      className={`hover:bg-surface-container-high/50 transition-colors group ${i < paginatedPayments.length - 1 ? 'border-b border-outline-variant/10' : ''}`}
                     >
-                      <td className="px-6 py-4 text-sm text-[#ababa8] whitespace-nowrap">{fmtDate(p.date)}</td>
+                      <td className="px-6 py-4 text-sm text-on-surface-variant whitespace-nowrap">{fmtDate(p.date)}</td>
                       <td className="px-6 py-4">
-                        <span className="text-sm font-bold text-[#faf9f5]">{p.jobName}</span>
+                        <span className="text-sm font-bold text-on-surface">{p.jobName}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span
@@ -685,12 +682,12 @@ export default function CashPaymentsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-base font-black text-[#aeee2a]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                        <span className="text-base font-black text-primary" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                           {fmt(p.amount)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-[#faf9f5]">{p.pickedBy}</td>
-                      <td className="px-6 py-4 text-sm text-[#ababa8] max-w-[200px] truncate">{p.notes || "—"}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-on-surface">{p.pickedBy}</td>
+                      <td className="px-6 py-4 text-sm text-on-surface-variant max-w-[200px] truncate">{p.notes || "—"}</td>
                       <td className="px-6 py-4 text-right">
                         <ActionMenu 
                           p={p} 
@@ -728,20 +725,20 @@ export default function CashPaymentsPage() {
               className="flex items-center justify-between px-6 py-4"
               style={{ borderTop: "1px solid rgba(71,72,70,0.15)" }}
             >
-              <p className="text-xs text-[#ababa8]">
+              <p className="text-xs text-on-surface-variant">
                 Showing{" "}
-                <span className="font-bold text-[#faf9f5]">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>
+                <span className="font-bold text-on-surface">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>
                 {" "}–{" "}
-                <span className="font-bold text-[#faf9f5]">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</span>
+                <span className="font-bold text-on-surface">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</span>
                 {" "}of{" "}
-                <span className="font-bold text-[#faf9f5]">{filtered.length}</span>{" "}records
+                <span className="font-bold text-on-surface">{filtered.length}</span>{" "}records
               </p>
               <div className="flex items-center gap-1">
                 {/* Prev */}
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#ababa8]"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-highest transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-on-surface-variant"
                 >
                   <span className="material-symbols-outlined text-sm" translate="no">chevron_left</span>
                 </button>
@@ -764,15 +761,15 @@ export default function CashPaymentsPage() {
                   }, [])
                   .map((item, idx) =>
                     item === "..." ? (
-                      <span key={`dots-${idx}`} className="w-8 h-8 flex items-center justify-center text-[#474846] text-xs">…</span>
+                      <span key={`dots-${idx}`} className="w-8 h-8 flex items-center justify-center text-outline-variant text-xs">…</span>
                     ) : (
                       <button
                         key={item}
                         onClick={() => setCurrentPage(item)}
                         className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${
                           currentPage === item
-                            ? "bg-[#aeee2a] text-[#3a5400]"
-                            : "text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624]"
+                            ? "bg-primary text-[#3a5400]"
+                            : "text-on-surface-variant hover:text-primary hover:bg-surface-container-highest"
                         }`}
                       >
                         {item}
@@ -784,7 +781,7 @@ export default function CashPaymentsPage() {
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#ababa8]"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-highest transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-on-surface-variant"
                 >
                   <span className="material-symbols-outlined text-sm" translate="no">chevron_right</span>
                 </button>
@@ -803,11 +800,11 @@ export default function CashPaymentsPage() {
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}
         >
-          <div className="w-full max-w-lg rounded-2xl p-8 relative" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)" }}>
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+          <div className="w-full max-w-lg rounded-2xl p-8 relative bg-surface-container-low border border-outline-variant/20 shadow-xl">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-5 right-5 text-on-surface-variant hover:text-on-surface transition-colors">
               <span className="material-symbols-outlined" translate="no">close</span>
             </button>
-            <h2 className="text-xl font-extrabold text-[#faf9f5] mb-6" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+            <h2 className="text-xl font-extrabold text-on-surface mb-6" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
               Add Cash Payment
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -821,7 +818,7 @@ export default function CashPaymentsPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 relative">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Job Name</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Job Name</label>
                   <input
                     ref={addInputRef}
                     required
@@ -841,12 +838,12 @@ export default function CashPaymentsPage() {
                     }}
                     onFocus={() => { if (customerSuggestions.length > 0) setShowSuggestions(true); }}
                     autoComplete="off"
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+                    className="bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-outline-variant"
                   />
                   {showSuggestions && customerSuggestions.length > 0 && (
                     <div
                       ref={addSuggestionsRef}
-                      className="absolute top-full left-0 right-0 mt-1 bg-[#181a18] border border-[#aeee2a]/20 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-[200px] overflow-y-auto z-50"
+                      className="absolute top-full left-0 right-0 mt-1 bg-surface-container border border-primary/20 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-[200px] overflow-y-auto z-50"
                       style={{ scrollbarWidth: "thin" }}
                     >
                       {customerSuggestions.map((c) => (
@@ -858,9 +855,9 @@ export default function CashPaymentsPage() {
                             setShowSuggestions(false);
                             setCustomerSuggestions([]);
                           }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-[#faf9f5] hover:bg-[#aeee2a]/10 hover:text-[#aeee2a] transition-colors flex items-center gap-2"
+                          className="w-full text-left px-4 py-2.5 text-sm text-on-surface hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2"
                         >
-                          <span className="material-symbols-outlined text-[14px] text-[#ababa8]" translate="no">person</span>
+                          <span className="material-symbols-outlined text-[14px] text-on-surface-variant" translate="no">person</span>
                           {c.full_name}
                         </button>
                       ))}
@@ -870,43 +867,43 @@ export default function CashPaymentsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5 z-40">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Store</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Store</label>
                   <CustomDropdown
                     value={form.store}
                     onChange={(val) => setForm({ ...form, store: val })}
                     options={stores.map(s => ({ value: s.name, label: s.name }))}
                     placeholder="Select Store..."
-                    className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                    className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-primary"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Amount</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Amount</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-black text-sm">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-black text-sm">$</span>
                     <input required type="number" step="0.01" min="0" placeholder="0.00" value={form.amount}
                       onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]" />
+                      className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold outline-none focus:border-primary transition-colors placeholder:text-outline-variant" />
                   </div>
                 </div>
               </div>
               <div className="flex flex-col gap-1.5 z-30">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Employee</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Employee</label>
                 <CustomDropdown
                   value={form.pickedBy}
                   onChange={(val) => setForm({ ...form, pickedBy: val })}
                   options={cashEmployees.map(p => ({ value: p.name, label: p.name }))}
                   placeholder="Select Employee..."
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                  className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-primary"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Notes <span className="normal-case text-[#474846] font-normal">(optional)</span></label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Notes <span className="normal-case text-outline-variant font-normal">(optional)</span></label>
                 <textarea rows={3} placeholder="Any additional notes..." value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] resize-none" />
+                  className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-outline-variant resize-none" />
               </div>
               <button type="submit"
-                className="w-full py-3 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] mt-2"
+                className="w-full py-3 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] mt-2"
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                 Save Payment
               </button>
@@ -924,26 +921,26 @@ export default function CashPaymentsPage() {
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setIsStoreModalOpen(false); }}
         >
-          <div className="w-full max-w-md rounded-2xl" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.2)" }}>
+          <div className="w-full max-w-md rounded-2xl bg-surface-container-low border border-outline-variant/20 shadow-xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/5">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">store</span>
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary text-lg" translate="no">store</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Manage Stores</h3>
-                  <p className="text-[10px] text-[#ababa8] uppercase tracking-widest">Add, edit or remove stores</p>
+                  <h3 className="text-lg font-extrabold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Manage Stores</h3>
+                  <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">Add, edit or remove stores</p>
                 </div>
               </div>
-              <button onClick={() => setIsStoreModalOpen(false)} className="text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+              <button onClick={() => setIsStoreModalOpen(false)} className="text-on-surface-variant hover:text-on-surface transition-colors">
                 <span className="material-symbols-outlined" translate="no">close</span>
               </button>
             </div>
 
             {/* Add new store */}
             <div className="p-6 border-b border-white/5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Add New Store</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Add New Store</p>
               <div className="flex gap-2">
                 <input
                   autoFocus
@@ -952,18 +949,18 @@ export default function CashPaymentsPage() {
                   value={newStoreName}
                   onChange={(e) => setNewStoreName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleAddStore(); }}
-                  className="flex-1 bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+                  className="flex-1 bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-outline-variant"
                 />
                 <input
                   type="color"
                   value={newStoreColor}
                   onChange={(e) => setNewStoreColor(e.target.value)}
-                  className="w-10 h-10 rounded-xl border border-[#474846]/20 cursor-pointer bg-transparent"
+                  className="w-10 h-10 rounded-xl border border-outline-variant/20 cursor-pointer bg-transparent"
                   title="Pick a color"
                 />
                 <button
                   onClick={handleAddStore}
-                  className="px-5 py-2.5 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-sm"
+                  className="px-5 py-2.5 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-sm"
                 >
                   Add
                 </button>
@@ -972,11 +969,11 @@ export default function CashPaymentsPage() {
 
             {/* Store list */}
             <div className="p-6 max-h-[300px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Current Stores ({stores.length})</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Current Stores ({stores.length})</p>
               {storesLoading ? (
                 <div className="flex items-center gap-2 py-4">
-                  <div className="w-4 h-4 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
-                  <span className="text-sm text-[#ababa8]">Loading...</span>
+                  <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  <span className="text-sm text-on-surface-variant">Loading...</span>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -984,41 +981,41 @@ export default function CashPaymentsPage() {
                     <div key={store.id}>
                       {editingStore?.id === store.id ? (
                         /* Edit mode */
-                        <div className="flex items-center gap-2 p-3 rounded-xl bg-[#0d0f0d] border border-[#aeee2a]/20">
+                        <div className="flex items-center gap-2 p-3 rounded-xl bg-background border border-primary/20">
                           <input
                             type="text"
                             value={editStoreName}
                             onChange={(e) => setEditStoreName(e.target.value)}
-                            className="flex-1 bg-transparent border border-[#474846]/20 text-[#faf9f5] rounded-lg px-3 py-1.5 text-sm outline-none focus:border-[#aeee2a]"
+                            className="flex-1 bg-transparent border border-outline-variant/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary"
                           />
                           <input
                             type="color"
                             value={editStoreColor}
                             onChange={(e) => setEditStoreColor(e.target.value)}
-                            className="w-8 h-8 rounded-lg border border-[#474846]/20 cursor-pointer bg-transparent"
+                            className="w-8 h-8 rounded-lg border border-outline-variant/20 cursor-pointer bg-transparent"
                           />
-                          <button onClick={handleUpdateStore} className="text-[#aeee2a] hover:text-[#faf9f5] transition-colors">
+                          <button onClick={handleUpdateStore} className="text-primary hover:text-on-surface transition-colors">
                             <span className="material-symbols-outlined text-[18px]" translate="no">check</span>
                           </button>
-                          <button onClick={() => setEditingStore(null)} className="text-[#ababa8] hover:text-[#ff7351] transition-colors">
+                          <button onClick={() => setEditingStore(null)} className="text-on-surface-variant hover:text-error transition-colors">
                             <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
                           </button>
                         </div>
                       ) : (
                         /* Display mode */
-                        <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#1e201e]/50 transition-colors group">
+                        <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container-high/50 transition-colors group">
                           <div className="w-5 h-5 rounded-full border-2 shrink-0" style={{ backgroundColor: store.color, borderColor: `${store.color}60` }} />
-                          <span className="text-sm font-bold text-[#faf9f5] flex-1">{store.name}</span>
-                          <span className="text-[10px] text-[#474846] font-mono">{store.color}</span>
+                          <span className="text-sm font-bold text-on-surface flex-1">{store.name}</span>
+                          <span className="text-[10px] text-outline-variant font-mono">{store.color}</span>
                           <button
                             onClick={() => { setEditingStore(store); setEditStoreName(store.name); setEditStoreColor(store.color); }}
-                            className="opacity-0 group-hover:opacity-100 text-[#ababa8] hover:text-[#aeee2a] transition-all"
+                            className="opacity-0 group-hover:opacity-100 text-on-surface-variant hover:text-primary transition-all"
                           >
                             <span className="material-symbols-outlined text-[16px]" translate="no">edit</span>
                           </button>
                           <button
                             onClick={() => handleDeleteStore(store.id)}
-                            className="opacity-0 group-hover:opacity-100 text-[#ababa8] hover:text-[#ff7351] transition-all"
+                            className="opacity-0 group-hover:opacity-100 text-on-surface-variant hover:text-error transition-all"
                           >
                             <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
                           </button>
@@ -1042,17 +1039,17 @@ export default function CashPaymentsPage() {
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) { setEditingPayment(null); setEditForm(null); } }}
         >
-          <div className="w-full max-w-lg rounded-2xl p-8 relative" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)" }}>
-            <button onClick={() => { setEditingPayment(null); setEditForm(null); }} className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+          <div className="w-full max-w-lg rounded-2xl p-8 relative bg-surface-container-low border border-outline-variant/20 shadow-xl">
+            <button onClick={() => { setEditingPayment(null); setEditForm(null); }} className="absolute top-5 right-5 text-on-surface-variant hover:text-on-surface transition-colors">
               <span className="material-symbols-outlined" translate="no">close</span>
             </button>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">edit</span>
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-[18px]" translate="no">edit</span>
               </div>
               <div>
-                <h2 className="text-xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Edit Payment</h2>
-                <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest">{editForm.id}</p>
+                <h2 className="text-xl font-extrabold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Edit Payment</h2>
+                <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{editForm.id}</p>
               </div>
             </div>
             <form onSubmit={handleEditSave} className="space-y-4">
@@ -1066,7 +1063,7 @@ export default function CashPaymentsPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 relative">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Job Name</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Job Name</label>
                   <input
                     ref={editInputRef}
                     required
@@ -1086,12 +1083,12 @@ export default function CashPaymentsPage() {
                     }}
                     onFocus={() => { if (editCustomerSuggestions.length > 0) setShowEditSuggestions(true); }}
                     autoComplete="off"
-                    className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+                    className="bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-outline-variant"
                   />
                   {showEditSuggestions && editCustomerSuggestions.length > 0 && (
                     <div
                       ref={editSuggestionsRef}
-                      className="absolute top-full left-0 right-0 mt-1 bg-[#181a18] border border-[#aeee2a]/20 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-[200px] overflow-y-auto z-50"
+                      className="absolute top-full left-0 right-0 mt-1 bg-surface-container border border-primary/20 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-[200px] overflow-y-auto z-50"
                       style={{ scrollbarWidth: "thin" }}
                     >
                       {editCustomerSuggestions.map((c) => (
@@ -1103,9 +1100,9 @@ export default function CashPaymentsPage() {
                             setShowEditSuggestions(false);
                             setEditCustomerSuggestions([]);
                           }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-[#faf9f5] hover:bg-[#aeee2a]/10 hover:text-[#aeee2a] transition-colors flex items-center gap-2"
+                          className="w-full text-left px-4 py-2.5 text-sm text-on-surface hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2"
                         >
-                          <span className="material-symbols-outlined text-[14px] text-[#ababa8]" translate="no">person</span>
+                          <span className="material-symbols-outlined text-[14px] text-on-surface-variant" translate="no">person</span>
                           {c.full_name}
                         </button>
                       ))}
@@ -1115,47 +1112,47 @@ export default function CashPaymentsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5 z-40">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Store</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Store</label>
                   <CustomDropdown
                     value={editForm.store}
                     onChange={(val) => setEditForm({ ...editForm, store: val })}
                     options={stores.map(s => ({ value: s.name, label: s.name }))}
                     placeholder="Select Store..."
-                    className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                    className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-primary"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Amount</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Amount</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-black text-sm">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-black text-sm">$</span>
                     <input required type="number" step="0.01" min="0" value={editForm.amount}
                       onChange={(e) => setEditForm({ ...editForm, amount: parseFloat(e.target.value) || 0 })}
-                      className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors" />
+                      className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold outline-none focus:border-primary transition-colors" />
                   </div>
                 </div>
               </div>
               <div className="flex flex-col gap-1.5 z-30">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Employee</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Employee</label>
                 <CustomDropdown
                   value={editForm.pickedBy}
                   onChange={(val) => setEditForm({ ...editForm, pickedBy: val })}
                   options={cashEmployees.map(p => ({ value: p.name, label: p.name }))}
                   placeholder="Select Employee..."
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                  className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold flex justify-between items-center transition-colors hover:border-primary"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Notes <span className="normal-case text-[#474846] font-normal">(optional)</span></label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Notes <span className="normal-case text-outline-variant font-normal">(optional)</span></label>
                 <textarea rows={3} value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                  className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846] resize-none" />
+                  className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-outline-variant resize-none" />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => { setEditingPayment(null); setEditForm(null); }}
-                  className="flex-1 py-3 bg-[#1e201e] text-[#faf9f5] font-bold rounded-xl border border-[#474846]/20 hover:bg-[#242624] transition-all">
+                  className="flex-1 py-3 bg-surface-container-high text-on-surface font-bold rounded-xl border border-outline-variant/20 hover:bg-surface-container-highest transition-all">
                   Cancel
                 </button>
                 <button type="submit"
-                  className="flex-1 py-3 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)]"
+                  className="flex-1 py-3 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)]"
                   style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                   Save Changes
                 </button>
@@ -1174,26 +1171,26 @@ export default function CashPaymentsPage() {
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setIsEmployeeModalOpen(false); }}
         >
-          <div className="w-full max-w-md rounded-2xl" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.2)" }}>
+          <div className="w-full max-w-md rounded-2xl bg-surface-container-low border border-outline-variant/20 shadow-xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/5">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">badge</span>
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary text-lg" translate="no">badge</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Manage Employees</h3>
-                  <p className="text-[10px] text-[#ababa8] uppercase tracking-widest">Add or Remove from Cash Filter</p>
+                  <h3 className="text-lg font-extrabold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Manage Employees</h3>
+                  <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">Add or Remove from Cash Filter</p>
                 </div>
               </div>
-              <button onClick={() => setIsEmployeeModalOpen(false)} className="text-[#ababa8] hover:text-[#faf9f5] transition-colors">
+              <button onClick={() => setIsEmployeeModalOpen(false)} className="text-on-surface-variant hover:text-on-surface transition-colors">
                 <span className="material-symbols-outlined" translate="no">close</span>
               </button>
             </div>
 
             {/* Add new employee */}
             <div className="p-6 border-b border-white/5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Add Custom Employee</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Add Custom Employee</p>
               <div className="flex gap-2">
                 <input
                   autoFocus
@@ -1202,11 +1199,11 @@ export default function CashPaymentsPage() {
                   value={newEmployeeName}
                   onChange={(e) => setNewEmployeeName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleAddEmployee(); }}
-                  className="flex-1 bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors placeholder:text-[#474846]"
+                  className="flex-1 bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-outline-variant"
                 />
                 <button
                   onClick={handleAddEmployee}
-                  className="px-5 py-2.5 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-sm"
+                  className="px-5 py-2.5 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-sm"
                 >
                   Add
                 </button>
@@ -1215,20 +1212,20 @@ export default function CashPaymentsPage() {
 
             {/* List */}
             <div className="p-6 max-h-[300px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Filter Employees ({cashEmployees.length})</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Filter Employees ({cashEmployees.length})</p>
               {employeesLoading ? (
                 <div className="flex items-center gap-2 py-4">
-                  <div className="w-4 h-4 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
-                  <span className="text-sm text-[#ababa8]">Loading...</span>
+                  <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  <span className="text-sm text-on-surface-variant">Loading...</span>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {cashEmployees.map((emp) => (
-                    <div key={emp.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-[#1e201e]/50 transition-colors group">
-                      <span className="text-sm font-bold text-[#faf9f5]">{emp.name}</span>
+                    <div key={emp.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container-high/50 transition-colors group">
+                      <span className="text-sm font-bold text-on-surface">{emp.name}</span>
                       <button
                         onClick={() => handleRemoveEmployee(emp.id, emp.name)}
-                        className="opacity-0 group-hover:opacity-100 text-[#ababa8] hover:text-[#ff7351] transition-all"
+                        className="opacity-0 group-hover:opacity-100 text-on-surface-variant hover:text-error transition-all"
                         title="Remove from this filter"
                       >
                        <span className="material-symbols-outlined text-[16px]" translate="no">person_remove</span>
@@ -1250,37 +1247,32 @@ export default function CashPaymentsPage() {
           style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)" }}
         >
           <div
-            className="w-full max-w-sm rounded-3xl p-6 relative overflow-hidden"
-            style={{
-              background: "linear-gradient(180deg, #1e201e 0%, #121412 100%)",
-              border: "1px solid rgba(255,115,81,0.2)",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
-            }}
+            className="w-full max-w-sm rounded-3xl p-6 relative overflow-hidden bg-surface-container-low border border-error/20 shadow-2xl"
           >
             {/* Top Glow */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-[#ff7351] rounded-b-full shadow-[0_0_20px_#ff7351]" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-error rounded-b-full shadow-[0_0_20px_#ff7351]" />
 
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: "rgba(255,115,81,0.1)", border: "1px solid rgba(255,115,81,0.2)" }}>
-                <span className="material-symbols-outlined text-[32px] text-[#ff7351]" translate="no">warning</span>
+                <span className="material-symbols-outlined text-[32px] text-error" translate="no">warning</span>
               </div>
-              <h3 className="text-xl font-extrabold text-[#faf9f5] mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+              <h3 className="text-xl font-extrabold text-on-surface mb-2" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                 {confirmModal.title}
               </h3>
-              <p className="text-sm text-[#ababa8] mb-8 px-2 leading-relaxed">
+              <p className="text-sm text-on-surface-variant mb-8 px-2 leading-relaxed">
                 {confirmModal.message}
               </p>
 
               <div className="flex items-center gap-3 w-full">
                 <button
                   onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
-                  className="flex-1 py-3 px-4 rounded-xl text-sm font-bold text-[#faf9f5] bg-[#242624] border border-[#474846]/30 hover:bg-[#303330] hover:text-white transition-all outline-none"
+                  className="flex-1 py-3 px-4 rounded-xl text-sm font-bold text-on-surface bg-surface-container-highest border border-outline-variant/30 hover:bg-[#303330] hover:text-white transition-all outline-none"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmModal.onConfirm}
-                  className="flex-1 py-3 px-4 rounded-xl text-sm font-black text-white bg-[#ff7351] hover:bg-[#ff5a33] active:scale-[0.98] transition-all shadow-[0_4px_15px_rgba(255,115,81,0.3)] outline-none"
+                  className="flex-1 py-3 px-4 rounded-xl text-sm font-black text-white bg-error hover:bg-[#ff5a33] active:scale-[0.98] transition-all shadow-[0_4px_15px_rgba(255,115,81,0.3)] outline-none"
                   style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
                 >
                   Confirm

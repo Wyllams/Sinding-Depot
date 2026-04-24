@@ -84,9 +84,9 @@ export default function SalesProjectsMobile() {
         <div className="relative z-50">
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-10 h-10 rounded-full bg-[#1e201e] border border-[#474846]/30 flex items-center justify-center shadow-lg active:scale-95 transition-transform shrink-0"
+            className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-lg active:scale-95 transition-transform shrink-0"
           >
-            <span className="material-symbols-outlined text-[#faf9f5]">menu</span>
+            <span className="material-symbols-outlined text-on-surface">menu</span>
           </button>
           
           {/* Dropdown Menu */}
@@ -96,16 +96,16 @@ export default function SalesProjectsMobile() {
                 className="fixed inset-0 z-40" 
                 onClick={() => setIsMenuOpen(false)}
               />
-              <div className="absolute top-12 left-0 w-48 bg-[#1e201e] border border-[#474846]/30 rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+              <div className="absolute top-12 left-0 w-48 bg-surface-container-high border border-outline-variant/30 rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
                 <Link 
                   href="/mobile/sales/profile"
-                  className="flex items-center gap-3 px-4 py-4 hover:bg-[#aeee2a]/10 text-[#faf9f5] transition-colors"
+                  className="flex items-center gap-3 px-4 py-4 hover:bg-primary/10 text-on-surface transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <span className="material-symbols-outlined text-[20px]">person</span>
                   <span className="font-semibold text-sm">My Profile</span>
                 </Link>
-                <div className="h-[1px] bg-[#474846]/30 w-full" />
+                <div className="h-[1px] bg-outline-variant/30 w-full" />
                 <button 
                   onClick={handleSignOut}
                   className="flex items-center gap-3 px-4 py-4 hover:bg-red-500/10 text-red-400 transition-colors text-left"
@@ -119,12 +119,12 @@ export default function SalesProjectsMobile() {
         </div>
 
         {/* Center: Title */}
-        <h1 className="text-lg font-black tracking-widest uppercase text-[#faf9f5] absolute left-1/2 -translate-x-1/2">
+        <h1 className="text-lg font-black tracking-widest uppercase text-on-surface absolute left-1/2 -translate-x-1/2">
           PROJECTS
         </h1>
 
         {/* Right side: Avatar */}
-        <Link href="/mobile/sales/profile" className="w-10 h-10 rounded-full bg-[#1e201e] border border-[#474846]/30 shadow-lg flex items-center justify-center overflow-hidden active:scale-95 transition-transform shrink-0 z-10">
+        <Link href="/mobile/sales/profile" className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/30 shadow-lg flex items-center justify-center overflow-hidden active:scale-95 transition-transform shrink-0 z-10">
           <img src="https://ui-avatars.com/api/?name=SD&background=aeee2a&color=080808&bold=true" alt="Profile" className="w-full h-full object-cover" />
         </Link>
       </div>
@@ -137,29 +137,29 @@ export default function SalesProjectsMobile() {
           placeholder="Search project, client, service..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-[#121412] text-[#faf9f5] border border-[#474846]/50 rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:border-[#aeee2a] placeholder-[#7B7B78] transition-colors shadow-sm"
+          className="w-full bg-surface-container-low text-on-surface border border-outline-variant/50 rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:border-primary placeholder-[#7B7B78] transition-colors shadow-sm"
         />
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center mt-20 gap-4">
-          <span className="material-symbols-outlined text-4xl animate-spin text-[#aeee2a]" translate="no">progress_activity</span>
-          <span className="text-[#ababa8] font-bold text-sm tracking-widest uppercase">Loading Projects...</span>
+          <span className="material-symbols-outlined text-4xl animate-spin text-primary" translate="no">progress_activity</span>
+          <span className="text-on-surface-variant font-bold text-sm tracking-widest uppercase">Loading Projects...</span>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-center px-1 mb-2">
-            <span className="text-sm font-bold text-[#ababa8]">
+            <span className="text-sm font-bold text-on-surface-variant">
               {filteredJobs.length} {filteredJobs.length === 1 ? 'Project' : 'Projects'} Found
             </span>
-            <span className="material-symbols-outlined text-[#aeee2a] text-[20px]">filter_list</span>
+            <span className="material-symbols-outlined text-primary text-[20px]">filter_list</span>
           </div>
 
           {filteredJobs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center mt-10 p-8 bg-[#121412] rounded-3xl border border-[#474846]/20">
+            <div className="flex flex-col items-center justify-center mt-10 p-8 bg-surface-container-low rounded-3xl border border-outline-variant/20">
               <span className="material-symbols-outlined text-4xl text-[#7B7B78] mb-3">search_off</span>
-              <p className="text-[#faf9f5] font-bold">No projects found</p>
-              <p className="text-[#ababa8] text-sm text-center mt-1">Try searching for a different term.</p>
+              <p className="text-on-surface font-bold">No projects found</p>
+              <p className="text-on-surface-variant text-sm text-center mt-1">Try searching for a different term.</p>
             </div>
           ) : (
             filteredJobs.map((job) => {
@@ -186,9 +186,9 @@ export default function SalesProjectsMobile() {
 
               return (
                 <Link href={`/mobile/sales/projects/${job.id}`} key={job.id}>
-                  <div className="bg-[#121412] active:scale-[0.98] transition-transform duration-200 rounded-3xl p-5 border border-[#474846]/30 shadow-lg relative overflow-hidden flex flex-col gap-3">
+                  <div className="bg-surface-container-low active:scale-[0.98] transition-transform duration-200 rounded-3xl p-5 border border-outline-variant/30 shadow-lg relative overflow-hidden flex flex-col gap-3">
                     {/* Left Accent Neon Bar */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${job.status === 'active' ? 'bg-[#aeee2a]' : 'bg-[#ff7351]'}`} />
+                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${job.status === 'active' ? 'bg-primary' : 'bg-error'}`} />
                     
                     {/* Top Row: Job Number & Status icon */}
                     <div className="flex justify-between items-center pl-2">
@@ -196,43 +196,43 @@ export default function SalesProjectsMobile() {
                         Job {job.job_number}
                       </span>
                       {job.status === "active" ? (
-                        <div className="bg-[#aeee2a]/15 text-[#aeee2a] px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-[#aeee2a]/20">Active</div>
+                        <div className="bg-primary/15 text-primary px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-primary/20">Active</div>
                       ) : (
-                        <div className="bg-[#ff7351]/15 text-[#ff7351] px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-[#ff7351]/20">Pending</div>
+                        <div className="bg-error/15 text-error px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-error/20">Pending</div>
                       )}
                     </div>
 
                     {/* Client info */}
                     <div className="flex items-center gap-3 mt-1 pl-2">
-                      <div className="w-10 h-10 rounded-full bg-[#1e201e] flex items-center justify-center shrink-0 border border-[#474846]/50">
-                        <span className="material-symbols-outlined text-[#faf9f5] text-[20px]">person</span>
+                      <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center shrink-0 border border-outline-variant/50">
+                        <span className="material-symbols-outlined text-on-surface text-[20px]">person</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-base font-black text-[#faf9f5] leading-tight">{clientName}</span>
-                        <span className="text-xs text-[#ababa8] mt-0.5 font-medium flex items-center gap-1">
+                        <span className="text-base font-black text-on-surface leading-tight">{clientName}</span>
+                        <span className="text-xs text-on-surface-variant mt-0.5 font-medium flex items-center gap-1">
                           <span className="material-symbols-outlined text-[12px]">location_on</span>
                           {location}
                         </span>
                       </div>
                     </div>
 
-                    <div className="h-[1px] w-full bg-[#474846]/20 my-1 ml-2" />
+                    <div className="h-[1px] w-full bg-outline-variant/20 my-1 ml-2" />
 
                     {/* Info Grid */}
                     <div className="grid grid-cols-2 gap-3 pl-2">
                       {/* Service */}
                       <div className="flex flex-col">
                         <span className="text-[9px] uppercase tracking-widest font-bold text-[#7B7B78] mb-0.5">Service</span>
-                        <span className="text-xs font-bold text-[#faf9f5] flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[#aeee2a] text-[12px]">build</span>
+                        <span className="text-xs font-bold text-on-surface flex items-center gap-1">
+                          <span className="material-symbols-outlined text-primary text-[12px]">build</span>
                           <span className="truncate">{services}</span>
                         </span>
                       </div>
                       {/* Crew */}
                       <div className="flex flex-col">
                         <span className="text-[9px] uppercase tracking-widest font-bold text-[#7B7B78] mb-0.5">Crew Executing</span>
-                        <span className="text-xs font-bold text-[#faf9f5] flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[#ff7351] text-[12px]">engineering</span>
+                        <span className="text-xs font-bold text-on-surface flex items-center gap-1">
+                          <span className="material-symbols-outlined text-error text-[12px]">engineering</span>
                           <span className="truncate">{partnerName}</span>
                         </span>
                       </div>
@@ -242,9 +242,9 @@ export default function SalesProjectsMobile() {
                     <div className="mt-2 pl-2 flex items-center justify-between">
                       <div className="flex flex-col">
                           <span className="text-[9px] uppercase tracking-widest font-bold text-[#7B7B78]">Total Value</span>
-                          <span className="text-lg font-black text-[#faf9f5] tracking-tight">{value}</span>
+                          <span className="text-lg font-black text-on-surface tracking-tight">{value}</span>
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-[#1e201e] flex items-center justify-center hover:bg-[#aeee2a] hover:text-[#080808] transition-colors cursor-pointer border border-[#474846]/50">
+                      <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-primary hover:text-[#080808] transition-colors cursor-pointer border border-outline-variant/50">
                           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                       </div>
                     </div>

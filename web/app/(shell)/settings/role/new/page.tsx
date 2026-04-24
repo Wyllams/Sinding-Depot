@@ -142,24 +142,24 @@ export default function CreateRolePage() {
         <div className="mb-8">
           <Link
             href="/settings"
-            className="inline-flex items-center gap-2 text-[#ababa8] hover:text-white transition-colors mb-4 text-sm font-medium"
+            className="inline-flex items-center gap-2 text-on-surface-variant hover:text-white transition-colors mb-4 text-sm font-medium"
           >
             <span className="material-symbols-outlined text-sm" translate="no">arrow_back</span>
             Back to Settings
           </Link>
-          <h1 className="font-headline text-4xl font-extrabold tracking-tighter text-[#faf9f5] mb-2">
+          <h1 className="font-headline text-4xl font-extrabold tracking-tighter text-on-surface mb-2">
             Create Role
           </h1>
-          <p className="text-[#ababa8] max-w-2xl">
+          <p className="text-on-surface-variant max-w-2xl">
             Define a new permission set for your organization. Assign granular access levels for each module.
           </p>
         </div>
 
         {/* ── Error ── */}
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-[#ff7351]/10 border border-[#ff7351]/30 flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#ff7351] text-lg" translate="no">error</span>
-            <p className="text-sm text-[#ff7351] font-bold">{error}</p>
+          <div className="mb-6 p-4 rounded-xl bg-error/10 border border-error/30 flex items-center gap-3">
+            <span className="material-symbols-outlined text-error text-lg" translate="no">error</span>
+            <p className="text-sm text-error font-bold">{error}</p>
           </div>
         )}
 
@@ -169,29 +169,29 @@ export default function CreateRolePage() {
           <div className="col-span-12 lg:col-span-4 space-y-6">
 
             {/* Role Identity */}
-            <div className="p-6 rounded-2xl bg-[#121412] border border-white/5">
-              <label className="block text-xs font-bold uppercase tracking-widest text-[#aeee2a] mb-5">
+            <div className="p-6 rounded-2xl bg-surface-container-low border border-white/5">
+              <label className="block text-xs font-bold uppercase tracking-widest text-primary mb-5">
                 Role Identity
               </label>
               <div className="space-y-4">
                 <div>
-                  <label className="text-[11px] text-[#ababa8] uppercase mb-1.5 block font-bold">
-                    Role Name <span className="text-[#ff7351]">*</span>
+                  <label className="text-[11px] text-on-surface-variant uppercase mb-1.5 block font-bold">
+                    Role Name <span className="text-error">*</span>
                   </label>
                   <input
                     type="text"
                     value={roleName}
                     onChange={e => setRoleName(e.target.value)}
-                    className="w-full bg-[#1e201e] border border-white/5 rounded-xl py-3 px-4 text-[#faf9f5] placeholder:text-[#474846] focus:ring-1 focus:ring-[#aeee2a] focus:border-transparent transition-all outline-none"
+                    className="w-full bg-surface-container-high border border-white/5 rounded-xl py-3 px-4 text-on-surface placeholder:text-outline-variant focus:ring-1 focus:ring-primary focus:border-transparent transition-all outline-none"
                     placeholder="e.g. Field Supervisor"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] text-[#ababa8] uppercase mb-1.5 block font-bold">Description</label>
+                  <label className="text-[11px] text-on-surface-variant uppercase mb-1.5 block font-bold">Description</label>
                   <textarea
                     value={description}
                     onChange={e => setDescription(e.target.value)}
-                    className="w-full bg-[#1e201e] border border-white/5 rounded-xl py-3 px-4 text-[#faf9f5] placeholder:text-[#474846] focus:ring-1 focus:ring-[#aeee2a] focus:border-transparent transition-all outline-none resize-none"
+                    className="w-full bg-surface-container-high border border-white/5 rounded-xl py-3 px-4 text-on-surface placeholder:text-outline-variant focus:ring-1 focus:ring-primary focus:border-transparent transition-all outline-none resize-none"
                     placeholder="Define the scope of this role..."
                     rows={3}
                   />
@@ -200,17 +200,17 @@ export default function CreateRolePage() {
             </div>
 
             {/* Template Picker */}
-            <div className="p-6 rounded-2xl bg-[#181a18] border border-white/5 relative">
-              <h4 className="text-sm font-bold text-[#faf9f5] mb-1">Start from Template</h4>
-              <p className="text-xs text-[#ababa8] mb-4">Apply a preset to speed up configuration.</p>
+            <div className="p-6 rounded-2xl bg-surface-container border border-white/5 relative">
+              <h4 className="text-sm font-bold text-on-surface mb-1">Start from Template</h4>
+              <p className="text-xs text-on-surface-variant mb-4">Apply a preset to speed up configuration.</p>
               <div className="space-y-2">
                 {Object.keys(TEMPLATES).map(name => (
                   <button
                     key={name}
                     onClick={() => applyTemplate(name)}
-                    className="w-full py-2 px-4 rounded-xl border border-[#474846]/50 text-[#ababa8] text-xs font-bold hover:bg-[#242624] hover:border-[#aeee2a]/30 hover:text-[#faf9f5] transition-all text-left flex items-center gap-2"
+                    className="w-full py-2 px-4 rounded-xl border border-outline-variant/50 text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest hover:border-primary/30 hover:text-on-surface transition-all text-left flex items-center gap-2"
                   >
-                    <span className="material-symbols-outlined text-[14px] text-[#aeee2a]" translate="no">auto_awesome</span>
+                    <span className="material-symbols-outlined text-[14px] text-primary" translate="no">auto_awesome</span>
                     {name}
                   </button>
                 ))}
@@ -218,8 +218,8 @@ export default function CreateRolePage() {
             </div>
 
             {/* Permission stats */}
-            <div className="p-6 rounded-2xl bg-[#121412] border border-white/5">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-[#ababa8] mb-4">Summary</h4>
+            <div className="p-6 rounded-2xl bg-surface-container-low border border-white/5">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">Summary</h4>
               <div className="space-y-3">
                 {(["view", "edit", "hide"] as Permission[]).map(p => (
                   <div key={p} className="flex items-center justify-between">
@@ -231,7 +231,7 @@ export default function CreateRolePage() {
                       >
                         {PERMISSION_CONFIG[p].icon}
                       </span>
-                      <span className="text-xs text-[#ababa8] font-bold uppercase tracking-wider">
+                      <span className="text-xs text-on-surface-variant font-bold uppercase tracking-wider">
                         {PERMISSION_CONFIG[p].label}
                       </span>
                     </div>
@@ -247,8 +247,8 @@ export default function CreateRolePage() {
             </div>
 
             {/* Quick set all */}
-            <div className="p-4 rounded-2xl bg-[#181a18] border border-white/5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Quick Set All</p>
+            <div className="p-4 rounded-2xl bg-surface-container border border-white/5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Quick Set All</p>
               <div className="flex gap-2">
                 {(["view", "edit", "hide"] as Permission[]).map(p => (
                   <button
@@ -270,19 +270,19 @@ export default function CreateRolePage() {
 
           {/* ── Right: Permission Table ── */}
           <div className="col-span-12 lg:col-span-8">
-            <div className="rounded-2xl bg-[#121412] border border-white/5 overflow-hidden">
-              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#1e201e]/50">
+            <div className="rounded-2xl bg-surface-container-low border border-white/5 overflow-hidden">
+              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-surface-container-high/50">
                 <div>
-                  <h3 className="font-headline text-lg font-bold text-[#faf9f5]">Feature Permissions</h3>
-                  <p className="text-xs text-[#ababa8] mt-1">Click a cell to toggle the access level for each module.</p>
+                  <h3 className="font-headline text-lg font-bold text-on-surface">Feature Permissions</h3>
+                  <p className="text-xs text-on-surface-variant mt-1">Click a cell to toggle the access level for each module.</p>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
-                    <tr className="bg-[#121412]">
-                      <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-wider text-[#ababa8]">Module</th>
+                    <tr className="bg-surface-container-low">
+                      <th className="py-4 px-6 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Module</th>
                       {(["view", "edit", "hide"] as Permission[]).map(p => (
                         <th key={p} className="py-4 px-4 text-[10px] font-bold uppercase tracking-wider text-center" style={{ color: PERMISSION_CONFIG[p].color }}>
                           <div className="flex flex-col items-center gap-1">
@@ -297,7 +297,7 @@ export default function CreateRolePage() {
                     {MODULES.map(module => {
                       const current = permissions[module.key];
                       return (
-                        <tr key={module.key} className="hover:bg-[#1e201e]/40 transition-colors">
+                        <tr key={module.key} className="hover:bg-surface-container-high/40 transition-colors">
                           <td className="py-4 px-6">
                             <div className="flex items-center gap-3">
                               <span
@@ -308,8 +308,8 @@ export default function CreateRolePage() {
                                 {module.icon}
                               </span>
                               <div>
-                                <span className="font-bold text-sm text-[#faf9f5]">{module.name}</span>
-                                <p className="text-[10px] text-[#474846] mt-0.5">{module.description}</p>
+                                <span className="font-bold text-sm text-on-surface">{module.name}</span>
+                                <p className="text-[10px] text-outline-variant mt-0.5">{module.description}</p>
                               </div>
                             </div>
                           </td>
@@ -355,14 +355,14 @@ export default function CreateRolePage() {
             <div className="mt-8 flex justify-end items-center gap-4">
               <Link
                 href="/settings"
-                className="px-8 py-3 rounded-full font-bold text-[#ababa8] hover:text-[#faf9f5] transition-colors"
+                className="px-8 py-3 rounded-full font-bold text-on-surface-variant hover:text-on-surface transition-colors"
               >
                 Cancel
               </Link>
               <button
                 onClick={handleSave}
                 disabled={saving || !roleName.trim()}
-                className="px-10 py-3 bg-[#aeee2a] text-[#3a5400] rounded-full font-black shadow-[0_0_20px_rgba(174,238,42,0.2)] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-10 py-3 bg-primary text-[#3a5400] rounded-full font-black shadow-[0_0_20px_rgba(174,238,42,0.2)] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
               >
                 {saving ? (

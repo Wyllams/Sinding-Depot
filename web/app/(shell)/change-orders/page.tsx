@@ -37,9 +37,9 @@ interface ChangeOrder {
 const STATUS_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {
   draft:                      { label: "DRAFT",    badge: "bg-[#fff7cf]/10 text-[#fff7cf] border border-[#fff7cf]/20",   dot: "#fff7cf" },
   pending_customer_approval:  { label: "PENDING",  badge: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20",   dot: "#e3eb5d" },
-  approved:                   { label: "APPROVED", badge: "bg-[#aeee2a]/20 text-[#aeee2a] border border-[#aeee2a]/30",   dot: "#aeee2a" },
-  rejected:                   { label: "REJECTED", badge: "bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20",   dot: "#ff7351" },
-  cancelled:                  { label: "CANCELLED",badge: "bg-[#474846]/20 text-[#ababa8] border border-[#474846]/30",   dot: "#747673" },
+  approved:                   { label: "APPROVED", badge: "bg-primary/20 text-primary border border-primary/30",   dot: "#aeee2a" },
+  rejected:                   { label: "REJECTED", badge: "bg-error/10 text-error border border-error/20",   dot: "#ff7351" },
+  cancelled:                  { label: "CANCELLED",badge: "bg-outline-variant/20 text-on-surface-variant border border-outline-variant/30",   dot: "#747673" },
 };
 
 // Filter tabs
@@ -151,7 +151,7 @@ export default function ChangeOrdersPage() {
         leftSlot={
           <div className="relative group">
             <span
-              className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#ababa8] group-focus-within:text-[#aeee2a] transition-colors"
+              className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors"
               translate="no"
             >
               search
@@ -159,7 +159,7 @@ export default function ChangeOrdersPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-[#1e201e] border-none rounded-xl py-2.5 pl-10 pr-4 text-sm w-[280px] focus:ring-1 focus:ring-[#aeee2a] text-[#faf9f5] outline-none placeholder:text-[#ababa8]"
+              className="bg-surface-container-high border-none rounded-xl py-2.5 pl-10 pr-4 text-sm w-[280px] focus:ring-1 focus:ring-primary text-on-surface outline-none placeholder:text-on-surface-variant"
               placeholder="Search Change Orders"
               type="text"
             />
@@ -174,16 +174,16 @@ export default function ChangeOrdersPage() {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <h1
-                className="text-xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
+                className="text-xl sm:text-3xl font-extrabold text-on-surface tracking-tighter"
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
               >
                 Change Orders & Approvals
               </h1>
-              <p className="text-[#ababa8] text-sm mt-1">
+              <p className="text-on-surface-variant text-sm mt-1">
                 {totalPending > 0 ? (
                   <>
                     <span className="text-[#e3eb5d] font-bold">{totalPending} orders</span> awaiting client approval —{" "}
-                    <span className="text-[#aeee2a] font-bold">${totalPendingValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span> total value
+                    <span className="text-primary font-bold">${totalPendingValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span> total value
                   </>
                 ) : (
                   "Track and manage financial structural adjustments."
@@ -196,7 +196,7 @@ export default function ChangeOrdersPage() {
         {/* Filter Bar */}
         <section className="px-4 sm:px-6 lg:px-8 mb-8 flex flex-wrap gap-4 items-center">
           {/* Status toggle */}
-          <div className="flex bg-[#121412] p-1 rounded-xl">
+          <div className="flex bg-surface-container-low p-1 rounded-xl">
             {(["ALL", "PENDING", "APPROVED"] as TabFilter[]).map((tab) => (
               <button
                 key={tab}
@@ -204,11 +204,11 @@ export default function ChangeOrdersPage() {
                 className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                   activeFilter === tab
                     ? tab === "PENDING"
-                      ? "bg-[#242624] text-[#e3eb5d]"
+                      ? "bg-surface-container-highest text-[#e3eb5d]"
                       : tab === "APPROVED"
-                      ? "bg-[#242624] text-[#aeee2a]"
-                      : "bg-[#242624] text-[#faf9f5]"
-                    : "text-[#ababa8] hover:text-[#faf9f5]"
+                      ? "bg-surface-container-highest text-primary"
+                      : "bg-surface-container-highest text-on-surface"
+                    : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
                 {tab === "ALL" ? "ALL ORDERS" : tab}
@@ -216,7 +216,7 @@ export default function ChangeOrdersPage() {
             ))}
           </div>
 
-          <div className="h-8 w-px bg-[#474846]/30 hidden sm:block" />
+          <div className="h-8 w-px bg-outline-variant/30 hidden sm:block" />
           <div className="flex-1" />
 
           {/* Date range */}
@@ -234,7 +234,7 @@ export default function ChangeOrdersPage() {
           {/* Create button */}
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#aeee2a] rounded-xl text-sm font-bold text-[#3a5400] shadow-[0_0_15px_rgba(174,238,42,0.15)] hover:shadow-[0_0_25px_rgba(174,238,42,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary rounded-xl text-sm font-bold text-[#3a5400] shadow-[0_0_15px_rgba(174,238,42,0.15)] hover:shadow-[0_0_25px_rgba(174,238,42,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
           >
             <span className="material-symbols-outlined text-[18px]" translate="no">add</span>
             Create Change Order
@@ -244,16 +244,16 @@ export default function ChangeOrdersPage() {
         {/* Cards Grid */}
         <section className="px-4 sm:px-6 lg:px-8">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-24 text-[#ababa8] gap-3">
+            <div className="flex flex-col items-center justify-center py-24 text-on-surface-variant gap-3">
               <span className="material-symbols-outlined text-4xl animate-spin" translate="no">progress_activity</span>
               <p className="text-sm font-bold">Loading change orders...</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-[#ababa8] gap-4">
-              <div className="w-16 h-16 rounded-full bg-[#1e201e] flex items-center justify-center">
-                <span className="material-symbols-outlined text-2xl text-[#aeee2a]" translate="no">request_quote</span>
+            <div className="flex flex-col items-center justify-center py-24 text-on-surface-variant gap-4">
+              <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center">
+                <span className="material-symbols-outlined text-2xl text-primary" translate="no">request_quote</span>
               </div>
-              <p className="text-base font-bold text-[#faf9f5]">No change orders found</p>
+              <p className="text-base font-bold text-on-surface">No change orders found</p>
               <p className="text-sm">
                 {search ? "Try a different search term." : "Create your first change order to get started."}
               </p>
@@ -282,17 +282,17 @@ export default function ChangeOrdersPage() {
                     <div>
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <p className="text-[10px] font-bold text-[#ababa8] tracking-widest uppercase">
+                          <p className="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
                             {order.job?.job_number ? `${order.job.job_number}` : "—"} • {fmtDate(order.requested_at)}
                           </p>
                           <h3
-                            className="text-base font-bold mt-1 group-hover:text-[#aeee2a] transition-colors leading-tight"
+                            className="text-base font-bold mt-1 group-hover:text-primary transition-colors leading-tight"
                             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
                           >
                             {order.title}
                           </h3>
                           {order.job?.customer?.full_name && (
-                            <p className="text-xs text-[#ababa8] mt-0.5">{order.job.customer.full_name}</p>
+                            <p className="text-xs text-on-surface-variant mt-0.5">{order.job.customer.full_name}</p>
                           )}
                         </div>
                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ml-2 ${cfg.badge}`}>
@@ -300,21 +300,21 @@ export default function ChangeOrdersPage() {
                         </span>
                       </div>
                       {order.description && (
-                        <p className="text-[#ababa8] text-sm leading-relaxed mb-4 line-clamp-2">
+                        <p className="text-on-surface-variant text-sm leading-relaxed mb-4 line-clamp-2">
                           {order.description}
                         </p>
                       )}
                       {order.status === "rejected" && (order as any).rejection_reason && (
-                        <div className="bg-[#ff7351]/10 border border-[#ff7351]/20 rounded-xl px-3 py-2.5 mb-4">
-                          <p className="text-[9px] font-bold uppercase tracking-widest text-[#ff7351]/70 mb-1">Customer Rejection Reason</p>
-                          <p className="text-xs text-[#faf9f5]/80 leading-relaxed line-clamp-2">{(order as any).rejection_reason}</p>
+                        <div className="bg-error/10 border border-error/20 rounded-xl px-3 py-2.5 mb-4">
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-error/70 mb-1">Customer Rejection Reason</p>
+                          <p className="text-xs text-on-surface/80 leading-relaxed line-clamp-2">{(order as any).rejection_reason}</p>
                         </div>
                       )}
                     </div>
 
                     <div className="flex items-end justify-between mt-2">
                       <div>
-                        <p className="text-xs text-[#ababa8]">
+                        <p className="text-xs text-on-surface-variant">
                           {order.status === "approved" ? "Approved Amount" : "Proposed Amount"}
                         </p>
                         <p
@@ -327,11 +327,11 @@ export default function ChangeOrdersPage() {
                           {fmt$(amount)}
                         </p>
                         {order.requested_by?.full_name && (
-                          <p className="text-[10px] text-[#ababa8] mt-3 flex items-center gap-1">
+                          <p className="text-[10px] text-on-surface-variant mt-3 flex items-center gap-1">
                             <span className="material-symbols-outlined text-[11px]" translate="no">person</span>
                             {order.requested_by.full_name}
-                            <span className="text-[#aeee2a]/60">•</span>
-                            <span className="capitalize text-[#aeee2a]/80">{order.requested_by.role}</span>
+                            <span className="text-primary/60">•</span>
+                            <span className="capitalize text-primary/80">{order.requested_by.role}</span>
                           </p>
                         )}
                       </div>
@@ -359,8 +359,8 @@ export default function ChangeOrdersPage() {
                       )}
 
                       {order.status === "approved" && (
-                        <div className="w-10 h-10 flex items-center justify-center bg-[#aeee2a]/10 rounded-xl border border-[#aeee2a]/20">
-                          <span className="material-symbols-outlined text-[#aeee2a] text-[20px]" translate="no">check_circle</span>
+                        <div className="w-10 h-10 flex items-center justify-center bg-primary/10 rounded-xl border border-primary/20">
+                          <span className="material-symbols-outlined text-primary text-[20px]" translate="no">check_circle</span>
                         </div>
                       )}
                     </div>
@@ -548,21 +548,21 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
       onClick={onClose}
     >
       <div
-        className="bg-[#181a18] border border-[#474846]/40 rounded-3xl shadow-2xl w-full max-w-3xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+        className="bg-surface-container border border-outline-variant/40 rounded-3xl shadow-2xl w-full max-w-3xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
         style={{ scrollbarWidth: "none" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-8 pb-6 border-b border-[#474846]/20">
+        <div className="flex items-center justify-between p-8 pb-6 border-b border-outline-variant/20">
           <div className="flex items-center gap-4">
-            <div className="w-1.5 h-8 bg-[#aeee2a] rounded-full" />
-            <h2 className="text-2xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+            <div className="w-1.5 h-8 bg-primary rounded-full" />
+            <h2 className="text-2xl font-extrabold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
               Create New Change Order
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-[#242624] flex items-center justify-center hover:bg-[#ba1212] hover:text-white transition-colors text-[#ababa8]"
+            className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center hover:bg-[#ba1212] hover:text-white transition-colors text-on-surface-variant"
           >
             <span className="material-symbols-outlined text-[20px]" translate="no">close</span>
           </button>
@@ -571,9 +571,9 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
         {/* Body */}
         <div className="p-8 space-y-6">
           {/* Workflow hint */}
-          <div className="flex items-start gap-3 bg-[#242624] rounded-xl p-4 border border-[#474846]/20">
+          <div className="flex items-start gap-3 bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20">
             <span className="material-symbols-outlined text-[#e3eb5d] shrink-0 mt-0.5" translate="no">info</span>
-            <p className="text-xs text-[#ababa8] leading-relaxed">
+            <p className="text-xs text-on-surface-variant leading-relaxed">
               <span className="text-[#e3eb5d] font-bold">Double Approval Flow:</span> After creating, you review pricing and send to the client. The client approves or rejects via their portal.
             </p>
           </div>
@@ -581,7 +581,7 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Project */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Project</label>
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Project</label>
               <div className="relative z-50">
                 <CustomDropdown
                   value={jobId}
@@ -589,20 +589,20 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
                   options={jobs.map(j => ({ value: j.id, label: `${j.job_number} — ${j.customer_name}` }))}
                   placeholder="Select a Project..."
                   searchable
-                  className="w-full bg-[#242624] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-3.5 text-[15px] font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                  className="w-full bg-surface-container-highest border border-outline-variant/20 text-on-surface rounded-xl px-4 py-3.5 text-[15px] font-bold flex justify-between items-center transition-colors hover:border-primary"
                 />
               </div>
             </div>
 
             {/* Estimated Amount */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Estimated Amount</label>
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Estimated Amount</label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aeee2a] font-black text-[15px] pointer-events-none">$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-black text-[15px] pointer-events-none">$</span>
                 <input
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full bg-[#242624] border border-[#474846]/20 hover:border-[#474846] focus:border-[#aeee2a] rounded-xl py-3.5 pl-8 pr-4 text-[#faf9f5] outline-none placeholder:text-[#474846] font-bold text-[15px] transition-colors tracking-wide"
+                  className="w-full bg-surface-container-highest border border-outline-variant/20 hover:border-outline-variant focus:border-primary rounded-xl py-3.5 pl-8 pr-4 text-on-surface outline-none placeholder:text-outline-variant font-bold text-[15px] transition-colors tracking-wide"
                   placeholder="0.00"
                   type="number"
                   step="0.01"
@@ -613,25 +613,25 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
 
             {/* Title */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Change Title *</label>
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Change Title *</label>
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-[#242624] border border-[#474846]/20 hover:border-[#474846] focus:border-[#aeee2a] rounded-xl py-3.5 px-4 text-[#faf9f5] outline-none placeholder:text-[#ababa8] font-bold text-[15px] transition-colors"
+                  className="w-full bg-surface-container-highest border border-outline-variant/20 hover:border-outline-variant focus:border-primary rounded-xl py-3.5 px-4 text-on-surface outline-none placeholder:text-on-surface-variant font-bold text-[15px] transition-colors"
                   placeholder="e.g. Front Door Replacement"
                 />
             </div>
 
             {/* Service */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Service</label>
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Service</label>
               <div className={`relative z-40 ${!jobId || jobServices.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
                 <CustomDropdown
                   value={serviceId}
                   onChange={(val) => setServiceId(val)}
                   options={jobServices.map(s => ({ value: s.id, label: s.service_type?.name ?? "Unknown" }))}
                   placeholder={!jobId ? "Select Project First..." : "Select Service..."}
-                  className="w-full bg-[#242624] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-3.5 text-[15px] font-bold flex justify-between items-center transition-colors hover:border-[#aeee2a]"
+                  className="w-full bg-surface-container-highest border border-outline-variant/20 text-on-surface rounded-xl px-4 py-3.5 text-[15px] font-bold flex justify-between items-center transition-colors hover:border-primary"
                 />
               </div>
             </div>
@@ -639,11 +639,11 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
 
           {/* Description */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Detailed Description</label>
+            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Detailed Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-[#242624] border border-transparent hover:border-[#474846] rounded-xl py-4 px-4 text-[#faf9f5] focus:ring-1 focus:ring-[#aeee2a] outline-none resize-none placeholder:text-[#747673] font-medium text-sm transition-colors"
+              className="w-full bg-surface-container-highest border border-transparent hover:border-outline-variant rounded-xl py-4 px-4 text-on-surface focus:ring-1 focus:ring-primary outline-none resize-none placeholder:text-outline font-medium text-sm transition-colors"
               placeholder="Explain the change requirements, materials, and labor implications..."
               rows={4}
             />
@@ -651,15 +651,15 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
 
           {/* Upload area */}
           <div className="space-y-3">
-            <label className="text-xs font-bold text-[#ababa8] uppercase tracking-widest">Attachments</label>
+            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Attachments</label>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full border-2 border-dashed border-[#474846]/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-[#181a18] hover:border-[#aeee2a]/70 hover:bg-[#aeee2a]/5 transition-colors cursor-pointer group/drop"
+              className="w-full border-2 border-dashed border-outline-variant/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-surface-container hover:border-primary/70 hover:bg-primary/5 transition-colors cursor-pointer group/drop"
             >
-              <span className="material-symbols-outlined text-4xl text-[#474846] group-hover/drop:text-[#aeee2a] mb-3 transition-colors" translate="no">cloud_upload</span>
-              <p className="text-sm font-bold text-[#faf9f5]">Click to add files</p>
-              <p className="text-[11px] font-medium text-[#ababa8] mt-1">PDF, JPG, PNG, DOC up to 20MB each</p>
+              <span className="material-symbols-outlined text-4xl text-outline-variant group-hover/drop:text-primary mb-3 transition-colors" translate="no">cloud_upload</span>
+              <p className="text-sm font-bold text-on-surface">Click to add files</p>
+              <p className="text-[11px] font-medium text-on-surface-variant mt-1">PDF, JPG, PNG, DOC up to 20MB each</p>
             </button>
             <input
               ref={fileInputRef}
@@ -672,13 +672,13 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
             {files.length > 0 && (
               <div className="space-y-2">
                 {files.map((file, idx) => (
-                  <div key={idx} className="flex items-center gap-3 bg-[#242624] border border-white/5 rounded-xl px-4 py-2.5">
-                    <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">{getFileIcon(file)}</span>
+                  <div key={idx} className="flex items-center gap-3 bg-surface-container-highest border border-white/5 rounded-xl px-4 py-2.5">
+                    <span className="material-symbols-outlined text-primary text-lg" translate="no">{getFileIcon(file)}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[#faf9f5] font-medium truncate">{file.name}</p>
-                      <p className="text-[10px] text-[#ababa8]">{formatBytes(file.size)}</p>
+                      <p className="text-sm text-on-surface font-medium truncate">{file.name}</p>
+                      <p className="text-[10px] text-on-surface-variant">{formatBytes(file.size)}</p>
                     </div>
-                    <button type="button" onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))} className="text-[#ababa8] hover:text-[#ff7351] transition-colors">
+                    <button type="button" onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))} className="text-on-surface-variant hover:text-error transition-colors">
                       <span className="material-symbols-outlined text-lg" translate="no">close</span>
                     </button>
                   </div>
@@ -689,17 +689,17 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
         </div>
 
         {/* Footer */}
-        <div className="px-8 pb-8 pt-2 border-t border-[#474846]/30 flex justify-end gap-5">
+        <div className="px-8 pb-8 pt-2 border-t border-outline-variant/30 flex justify-end gap-5">
           <button
             onClick={onClose}
-            className="px-6 py-3.5 rounded-xl border border-[#474846] text-[#faf9f5] font-bold hover:bg-[#242624] transition-colors text-sm"
+            className="px-6 py-3.5 rounded-xl border border-outline-variant text-on-surface font-bold hover:bg-surface-container-highest transition-colors text-sm"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={saving || !title.trim()}
-            className="px-10 py-3.5 rounded-xl bg-[#aeee2a] text-[#3a5400] font-black tracking-wide shadow-lg shadow-[#aeee2a]/20 hover:shadow-[#aeee2a]/40 hover:-translate-y-0.5 active:scale-95 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            className="px-10 py-3.5 rounded-xl bg-primary text-[#3a5400] font-black tracking-wide shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:scale-95 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             {saving ? "Saving..." : files.length > 0 ? `Save & Upload ${files.length} file${files.length > 1 ? "s" : ""}` : "Save as Draft"}
           </button>
@@ -805,36 +805,36 @@ function ChangeOrderDrawer({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
-      <div className="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-[#181a18] border-l border-[#474846]/30 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+      <div className="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-surface-container border-l border-outline-variant/30 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
 
         {/* Header */}
-        <div className="flex items-start justify-between p-6 border-b border-[#474846]/20 shrink-0">
+        <div className="flex items-start justify-between p-6 border-b border-outline-variant/20 shrink-0">
           <div className="flex-1 min-w-0 pr-3">
             <div className="flex items-center gap-2 mb-1">
               <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${cfg.badge}`}>
                 {cfg.label}
               </span>
               {order.job?.job_number && (
-                <span className="text-[10px] text-[#ababa8] font-bold">{order.job.job_number}</span>
+                <span className="text-[10px] text-on-surface-variant font-bold">{order.job.job_number}</span>
               )}
             </div>
-            <h2 className="text-lg font-extrabold text-[#faf9f5] leading-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+            <h2 className="text-lg font-extrabold text-on-surface leading-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
               {order.title}
             </h2>
             {order.job?.customer?.full_name && (
-              <p className="text-xs text-[#ababa8] mt-0.5">{order.job.customer.full_name}</p>
+              <p className="text-xs text-on-surface-variant mt-0.5">{order.job.customer.full_name}</p>
             )}
             {order.requested_by?.full_name && (
-              <p className="text-[10px] text-[#747673] mt-1 flex items-center gap-1">
+              <p className="text-[10px] text-outline mt-1 flex items-center gap-1">
                 <span className="material-symbols-outlined text-[11px]" translate="no">person</span>
                 Created by {order.requested_by.full_name}
-                <span className="px-1.5 py-0.5 bg-[#aeee2a]/10 text-[#aeee2a] rounded text-[8px] font-bold uppercase">
+                <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[8px] font-bold uppercase">
                   {order.requested_by.role}
                 </span>
               </p>
             )}
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#242624] hover:bg-[#474846]/60 flex items-center justify-center transition-colors text-[#ababa8] shrink-0">
+          <button onClick={onClose} className="w-9 h-9 rounded-full bg-surface-container-highest hover:bg-outline-variant/60 flex items-center justify-center transition-colors text-on-surface-variant shrink-0">
             <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
           </button>
         </div>
@@ -843,10 +843,10 @@ function ChangeOrderDrawer({
         <div className="flex-1 overflow-y-auto p-6 space-y-5" style={{ scrollbarWidth: "none" }}>
 
           {/* Amount */}
-          <div className="bg-[#242624] rounded-2xl p-5 border border-[#474846]/20">
+          <div className="bg-surface-container-highest rounded-2xl p-5 border border-outline-variant/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
                   {order.status === "approved" ? "Approved Amount" : "Proposed Amount"}
                 </p>
                 <p
@@ -872,7 +872,7 @@ function ChangeOrderDrawer({
 
           {/* Workflow Status Timeline */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Approval Workflow</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Approval Workflow</p>
             <div className="space-y-2">
               {[
                 { label: "Created as Draft",           done: true,                                                      icon: "draft"        },
@@ -895,7 +895,7 @@ function ChangeOrderDrawer({
                       {step.done ? "check" : step.icon}
                     </span>
                   </div>
-                  <span className={`text-sm font-medium ${step.done ? "text-[#faf9f5]" : "text-[#747673]"}`}>
+                  <span className={`text-sm font-medium ${step.done ? "text-on-surface" : "text-outline"}`}>
                     {step.label}
                   </span>
                 </div>
@@ -906,8 +906,8 @@ function ChangeOrderDrawer({
           {/* Description */}
           {order.description && (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-2">Description</p>
-              <p className="text-sm text-[#faf9f5] leading-relaxed bg-[#242624] rounded-xl p-4 border border-[#474846]/20">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Description</p>
+              <p className="text-sm text-on-surface leading-relaxed bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20">
                 {order.description}
               </p>
             </div>
@@ -916,8 +916,8 @@ function ChangeOrderDrawer({
           {/* Customer rejection reason */}
           {order.status === "rejected" && (order as any).rejection_reason && (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ff7351] mb-2">Customer Rejection Reason</p>
-              <p className="text-sm text-[#faf9f5] leading-relaxed bg-[#ff7351]/10 rounded-xl p-4 border border-[#ff7351]/20">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-error mb-2">Customer Rejection Reason</p>
+              <p className="text-sm text-on-surface leading-relaxed bg-error/10 rounded-xl p-4 border border-error/20">
                 {(order as any).rejection_reason}
               </p>
             </div>
@@ -926,7 +926,7 @@ function ChangeOrderDrawer({
           {/* Attachments — Photos & Videos */}
           {attachments.length > 0 && (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-3">Photos & Attachments</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Photos & Attachments</p>
               <div className="grid grid-cols-3 gap-2">
                 {attachments.map((att) => {
                   const isImage = att.mime_type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(att.url);
@@ -935,7 +935,7 @@ function ChangeOrderDrawer({
                     <button
                       key={att.id}
                       type="button"
-                      className="relative group rounded-xl overflow-hidden border border-[#474846]/20 bg-[#121412] aspect-square cursor-pointer hover:border-[#aeee2a]/30 transition-colors"
+                      className="relative group rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container-low aspect-square cursor-pointer hover:border-primary/30 transition-colors"
                       onClick={() => {
                         if (isImage || isVideo) {
                           setLightboxUrl(att.url);
@@ -948,14 +948,14 @@ function ChangeOrderDrawer({
                       {isImage ? (
                         <img src={att.url} alt={att.file_name || ""} className="w-full h-full object-cover" />
                       ) : isVideo ? (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-[#0d0f0d]">
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-background">
                           <span className="material-symbols-outlined text-3xl text-[#60b8f5]" translate="no">play_circle</span>
-                          <span className="text-[9px] text-[#ababa8]">Video</span>
+                          <span className="text-[9px] text-on-surface-variant">Video</span>
                         </div>
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                          <span className="material-symbols-outlined text-2xl text-[#ababa8]" translate="no">attach_file</span>
-                          <span className="text-[9px] text-[#ababa8] truncate w-full text-center px-1">
+                          <span className="material-symbols-outlined text-2xl text-on-surface-variant" translate="no">attach_file</span>
+                          <span className="text-[9px] text-on-surface-variant truncate w-full text-center px-1">
                             {att.file_name || "File"}
                           </span>
                         </div>
@@ -975,13 +975,13 @@ function ChangeOrderDrawer({
 
           {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#242624] rounded-xl p-3 border border-[#474846]/20">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-1">Requested</p>
-              <p className="text-sm text-[#faf9f5] font-bold">{fmtDate(order.requested_at)}</p>
+            <div className="bg-surface-container-highest rounded-xl p-3 border border-outline-variant/20">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Requested</p>
+              <p className="text-sm text-on-surface font-bold">{fmtDate(order.requested_at)}</p>
             </div>
-            <div className="bg-[#242624] rounded-xl p-3 border border-[#474846]/20">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8] mb-1">Service</p>
-              <p className="text-sm text-[#faf9f5] font-bold">
+            <div className="bg-surface-container-highest rounded-xl p-3 border border-outline-variant/20">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Service</p>
+              <p className="text-sm text-on-surface font-bold">
                 {order.job_service?.service_type?.name ?? "—"}
               </p>
             </div>
@@ -989,7 +989,7 @@ function ChangeOrderDrawer({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-6 border-t border-[#474846]/20 shrink-0 space-y-3">
+        <div className="p-6 border-t border-outline-variant/20 shrink-0 space-y-3">
           {order.status === "draft" && (
             <button
               onClick={() => handleAction("send")}
@@ -1005,14 +1005,14 @@ function ChangeOrderDrawer({
               <button
                 onClick={() => handleAction("reject")}
                 disabled={loading}
-                className="flex-1 py-3 rounded-xl bg-[#ff7351]/10 text-[#ff7351] border border-[#ff7351]/20 font-bold text-sm hover:bg-[#ff7351]/20 transition-all active:scale-95 disabled:opacity-50"
+                className="flex-1 py-3 rounded-xl bg-error/10 text-error border border-error/20 font-bold text-sm hover:bg-error/20 transition-all active:scale-95 disabled:opacity-50"
               >
                 Reject
               </button>
               <button
                 onClick={() => handleAction("approve")}
                 disabled={loading}
-                className="flex-1 py-3 rounded-xl bg-[#aeee2a] text-[#3a5400] font-black text-sm shadow-lg shadow-[#aeee2a]/20 hover:shadow-[#aeee2a]/40 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl bg-primary text-[#3a5400] font-black text-sm shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-[16px]" translate="no">check_circle</span>
                 {loading ? "Saving..." : "Approve"}
@@ -1025,14 +1025,14 @@ function ChangeOrderDrawer({
             <button
               onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
               disabled={deleting}
-              className="w-full py-3 rounded-xl bg-[#ba1212]/10 text-[#ff7351] border border-[#ba1212]/20 font-bold text-sm hover:bg-[#ba1212]/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-[#ba1212]/10 text-error border border-[#ba1212]/20 font-bold text-sm hover:bg-[#ba1212]/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <span className="material-symbols-outlined text-[16px]" translate="no">delete_forever</span>
               {deleting ? "Deleting..." : "Delete Change Order"}
             </button>
           )}
 
-          <button onClick={onClose} className="w-full py-2.5 rounded-xl border border-[#474846] text-[#ababa8] font-bold text-sm hover:bg-[#242624] transition-colors">
+          <button onClick={onClose} className="w-full py-2.5 rounded-xl border border-outline-variant text-on-surface-variant font-bold text-sm hover:bg-surface-container-highest transition-colors">
             Close
           </button>
         </div>
@@ -1048,47 +1048,47 @@ function ChangeOrderDrawer({
         >
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-md bg-[#181a18] border border-[#ba1212]/30 rounded-2xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-md bg-surface-container border border-[#ba1212]/30 rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             style={{ animation: "fadeInScale 0.2s ease-out" }}
           >
             {/* Icon + Title */}
             <div className="flex flex-col items-center pt-8 pb-4 px-6">
               <div className="w-16 h-16 rounded-full bg-[#ba1212]/10 border border-[#ba1212]/20 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-3xl text-[#ff7351]" translate="no">
+                <span className="material-symbols-outlined text-3xl text-error" translate="no">
                   delete_forever
                 </span>
               </div>
               <h3
-                className="text-lg font-extrabold text-[#faf9f5] text-center"
+                className="text-lg font-extrabold text-on-surface text-center"
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
               >
                 Delete Change Order?
               </h3>
-              <p className="text-sm text-[#ababa8] text-center mt-2 leading-relaxed">
+              <p className="text-sm text-on-surface-variant text-center mt-2 leading-relaxed">
                 You are about to permanently delete
-                <span className="text-[#ff7351] font-bold"> &ldquo;{order.title}&rdquo;</span>.
+                <span className="text-error font-bold"> &ldquo;{order.title}&rdquo;</span>.
                 <br />
-                This action <span className="text-[#ff7351] font-bold">cannot be undone</span>.
+                This action <span className="text-error font-bold">cannot be undone</span>.
               </p>
             </div>
 
             {/* Order summary */}
-            <div className="mx-6 mb-5 bg-[#242624] rounded-xl p-4 border border-[#474846]/20">
+            <div className="mx-6 mb-5 bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-[#ababa8]">Amount</span>
-                <span className="text-[#faf9f5] font-bold">{fmt$(order.proposed_amount)}</span>
+                <span className="text-on-surface-variant">Amount</span>
+                <span className="text-on-surface font-bold">{fmt$(order.proposed_amount)}</span>
               </div>
               {order.job?.job_number && (
                 <div className="flex justify-between items-center text-xs mt-1.5">
-                  <span className="text-[#ababa8]">Project</span>
-                  <span className="text-[#faf9f5] font-bold">{order.job.job_number}</span>
+                  <span className="text-on-surface-variant">Project</span>
+                  <span className="text-on-surface font-bold">{order.job.job_number}</span>
                 </div>
               )}
               {order.job?.customer?.full_name && (
                 <div className="flex justify-between items-center text-xs mt-1.5">
-                  <span className="text-[#ababa8]">Customer</span>
-                  <span className="text-[#faf9f5] font-bold">{order.job.customer.full_name}</span>
+                  <span className="text-on-surface-variant">Customer</span>
+                  <span className="text-on-surface font-bold">{order.job.customer.full_name}</span>
                 </div>
               )}
             </div>
@@ -1097,7 +1097,7 @@ function ChangeOrderDrawer({
             <div className="px-6 pb-6 flex gap-3">
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="flex-1 py-3 rounded-xl border border-[#474846] text-[#faf9f5] font-bold text-sm hover:bg-[#242624] transition-colors"
+                className="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface font-bold text-sm hover:bg-surface-container-highest transition-colors"
               >
                 Cancel
               </button>

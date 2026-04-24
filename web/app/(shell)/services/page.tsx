@@ -341,19 +341,19 @@ export default function ServicesPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <h2
-              className="text-2xl sm:text-3xl font-extrabold text-[#faf9f5] tracking-tighter"
+              className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tighter"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Services
             </h2>
-            <p className="text-[#ababa8] mt-2 text-sm">
+            <p className="text-on-surface-variant mt-2 text-sm">
               Managing{" "}
-              <span className="text-[#aeee2a] font-bold">
+              <span className="text-primary font-bold">
                 {serviceCalls.filter((s) => s.status === "open").length} active service calls
               </span>{" "}
               across operations
               {signalCount > 0 && (
-                <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ff7351]/15 text-[#ff7351] text-[10px] font-bold animate-pulse">
+                <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-error/15 text-error text-[10px] font-bold animate-pulse">
                   <span className="material-symbols-outlined text-[12px]" translate="no">notifications_active</span>
                   {signalCount} alert{signalCount > 1 ? "s" : ""}
                 </span>
@@ -361,13 +361,13 @@ export default function ServicesPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <button className="px-4 sm:px-5 py-2 sm:py-2.5 bg-[#1e201e] hover:bg-[#242624] text-[#faf9f5] font-semibold rounded-xl flex items-center gap-2 transition-all text-sm">
+            <button className="px-4 sm:px-5 py-2 sm:py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-semibold rounded-xl flex items-center gap-2 transition-all text-sm">
               <span className="material-symbols-outlined text-sm" translate="no">download</span>
               <span className="hidden sm:inline">Export</span>
             </button>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="px-4 sm:px-5 py-2 sm:py-2.5 bg-[#aeee2a] text-[#3a5400] font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-[#aeee2a]/10 active:scale-95 transition-all text-sm"
+              className="px-4 sm:px-5 py-2 sm:py-2.5 bg-primary text-[#3a5400] font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/10 active:scale-95 transition-all text-sm"
             >
               <span className="material-symbols-outlined text-sm" translate="no">add</span>
               <span className="hidden sm:inline">New Service Call</span>
@@ -379,8 +379,8 @@ export default function ServicesPage() {
         <div className="flex flex-wrap items-end gap-6 justify-between">
           {/* Status pills */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest px-1">Status</label>
-            <div className="flex bg-[#121412] p-1 rounded-full w-fit max-w-full overflow-x-auto gap-0.5">
+            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Status</label>
+            <div className="flex bg-surface-container-low p-1 rounded-full w-fit max-w-full overflow-x-auto gap-0.5">
               {[{ key: "all", label: "All" }, ...STATUS_OPTIONS.map((s) => ({ key: s, label: STATUS_CONFIG[s].label }))].map((opt) => (
                 <button
                   key={opt.key}
@@ -388,7 +388,7 @@ export default function ServicesPage() {
                   className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
                     filterStatus === opt.key
                       ? "text-[#3a5400]"
-                      : "text-[#ababa8] hover:text-[#faf9f5]"
+                      : "text-on-surface-variant hover:text-on-surface"
                   }`}
                   style={filterStatus === opt.key ? {
                     backgroundColor: opt.key === "all" ? "#aeee2a" : STATUS_CONFIG[opt.key as StatusType]?.color || "#aeee2a",
@@ -403,12 +403,12 @@ export default function ServicesPage() {
 
           {/* Discipline pills */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest px-1">Discipline / Type</label>
-            <div className="flex bg-[#121412] p-1 rounded-full overflow-x-auto w-fit max-w-full gap-0.5">
+            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Discipline / Type</label>
+            <div className="flex bg-surface-container-low p-1 rounded-full overflow-x-auto w-fit max-w-full gap-0.5">
               <button
                 onClick={() => setFilterType("all")}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                  filterType === "all" ? "bg-[#aeee2a] text-[#3a5400]" : "text-[#ababa8] hover:text-[#faf9f5]"
+                  filterType === "all" ? "bg-primary text-[#3a5400]" : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
                 All
@@ -418,7 +418,7 @@ export default function ServicesPage() {
                   key={t}
                   onClick={() => setFilterType(t.toLowerCase())}
                   className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                    filterType === t.toLowerCase() ? "bg-[#242624] text-[#faf9f5] font-bold" : "text-[#ababa8] hover:text-[#faf9f5]"
+                    filterType === t.toLowerCase() ? "bg-surface-container-highest text-on-surface font-bold" : "text-on-surface-variant hover:text-on-surface"
                   }`}
                 >
                   {t}
@@ -429,15 +429,15 @@ export default function ServicesPage() {
         </div>
 
         {/* Data Table */}
-        <div className="bg-[#121412] rounded-xl shadow-2xl border border-[#474846]/10">
+        <div className="bg-surface-container-low rounded-xl shadow-2xl border border-outline-variant/10">
           <div className="overflow-x-auto overflow-y-visible min-h-[220px]">
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
-                <tr className="bg-[#1e201e]/50">
+                <tr className="bg-surface-container-high/50">
                   {["ID", "Title", "Project", "Status", "Assigned To", "Type", "Date", "Signal", ""].map((col, i) => (
                     <th
                       key={col}
-                      className={`px-5 py-4 text-[10px] font-extrabold text-[#ababa8] uppercase tracking-widest ${
+                      className={`px-5 py-4 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest ${
                         ["Status", "Assigned To", "Type", "Signal", ""].includes(col) ? "text-center" : col === "Date" ? "text-right" : "text-left"
                       }`}
                     >
@@ -447,7 +447,7 @@ export default function ServicesPage() {
                           <button
                             onClick={() => setIsFilterModalOpen(true)}
                             title="Manage Assigned Crew Filter"
-                            className="w-5 h-5 flex items-center justify-center rounded bg-[#1e201e] text-[#ababa8] hover:text-[#aeee2a] hover:bg-[#242624] border border-[#474846]/30 transition-all ml-1"
+                            className="w-5 h-5 flex items-center justify-center rounded bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-surface-container-highest border border-outline-variant/30 transition-all ml-1"
                           >
                             <span className="material-symbols-outlined text-[13px]" translate="no">edit</span>
                           </button>
@@ -457,19 +457,19 @@ export default function ServicesPage() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#474846]/10">
+              <tbody className="divide-y divide-outline-variant/10">
                 {isLoading ? (
                   <tr>
                     <td colSpan={9} className="px-6 py-16 text-center">
                       <div className="flex items-center justify-center gap-3">
-                        <div className="w-5 h-5 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
-                        <span className="text-[#ababa8] text-sm">Loading service calls...</span>
+                        <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                        <span className="text-on-surface-variant text-sm">Loading service calls...</span>
                       </div>
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-6 py-16 text-center text-[#ababa8] text-sm">
+                    <td colSpan={9} className="px-6 py-16 text-center text-on-surface-variant text-sm">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <span className="material-symbols-outlined text-4xl opacity-30" translate="no">construction</span>
                         <span>No service calls found.</span>
@@ -483,23 +483,23 @@ export default function ServicesPage() {
                     return (
                       <tr
                         key={issue.id}
-                        className="group hover:bg-[#242624]/50 transition-colors"
+                        className="group hover:bg-surface-container-highest/50 transition-colors"
                       >
                         {/* ID */}
-                        <td className="px-5 py-4 text-sm font-mono text-[#ababa8]">{formatId(issue.id)}</td>
+                        <td className="px-5 py-4 text-sm font-mono text-on-surface-variant">{formatId(issue.id)}</td>
 
                         {/* Title + Description */}
                         <td className="px-5 py-4 cursor-pointer text-left" onClick={() => setSelectedService(issue)}>
                           <div className="flex flex-col">
-                            <span className="text-[#faf9f5] font-semibold text-sm hover:text-[#aeee2a] transition-colors">{issue.title}</span>
-                            <span className="text-xs text-[#ababa8] truncate max-w-[200px]">{issue.description}</span>
+                            <span className="text-on-surface font-semibold text-sm hover:text-primary transition-colors">{issue.title}</span>
+                            <span className="text-xs text-on-surface-variant truncate max-w-[200px]">{issue.description}</span>
                           </div>
                         </td>
 
                         {/* Project */}
-                        <td className="px-5 py-4 text-sm text-[#faf9f5] text-left">
+                        <td className="px-5 py-4 text-sm text-on-surface text-left">
                           <span className="font-bold">{issue.jobs?.job_number || "—"}</span>
-                          {issue.jobs?.title && <span className="text-[#ababa8]"> — {issue.jobs.title}</span>}
+                          {issue.jobs?.title && <span className="text-on-surface-variant"> — {issue.jobs.title}</span>}
                         </td>
 
                         {/* Status — colored dropdown */}
@@ -528,20 +528,20 @@ export default function ServicesPage() {
                             options={displayCrews.map((c) => ({ value: c.id, label: c.name }))}
                             placeholder="Unassigned"
                             inline={true}
-                            className="bg-[#1e201e] border border-[#474846]/20 text-[#faf9f5] rounded-lg px-2 py-1 text-xs font-bold outline-none hover:border-[#aeee2a]/40 transition-colors cursor-pointer mx-auto block w-fit"
+                            className="bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-lg px-2 py-1 text-xs font-bold outline-none hover:border-primary/40 transition-colors cursor-pointer mx-auto block w-fit"
                             style={{ minWidth: "110px", textAlign: "center" }}
                           />
                         </td>
 
                         {/* Type */}
                         <td className="px-5 py-4 text-center">
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase text-[#ababa8] bg-[#242624] inline-block">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase text-on-surface-variant bg-surface-container-highest inline-block">
                             {issue.type}
                           </span>
                         </td>
 
                         {/* Date */}
-                        <td className="px-5 py-4 text-right text-xs font-bold text-[#faf9f5]">
+                        <td className="px-5 py-4 text-right text-xs font-bold text-on-surface">
                           {(() => { const _d = new Date(issue.reported_at); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}
                         </td>
 
@@ -552,9 +552,9 @@ export default function ServicesPage() {
                               <button
                                 onClick={() => acknowledgeSignal(issue.id)}
                                 title="Inspection report received — click to acknowledge"
-                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#ff7351]/15 border border-[#ff7351]/30 animate-pulse hover:animate-none hover:bg-[#ff7351]/25 transition-all"
+                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-error/15 border border-error/30 animate-pulse hover:animate-none hover:bg-error/25 transition-all"
                               >
-                                <span className="material-symbols-outlined text-[#ff7351] text-[16px]" translate="no">notifications_active</span>
+                                <span className="material-symbols-outlined text-error text-[16px]" translate="no">notifications_active</span>
                               </button>
                             )}
                             {issue.is_signal && issue.signal_acknowledged && (
@@ -569,23 +569,23 @@ export default function ServicesPage() {
                         <td className="px-5 py-4 relative">
                           <button
                             onClick={(e) => { e.stopPropagation(); setDropdownOpen(dropdownOpen === issue.id ? null : issue.id); }}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#faf9f5] hover:bg-[#242624] transition-all ml-auto relative z-10"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all ml-auto relative z-10"
                           >
                             <span className="material-symbols-outlined text-[16px]" translate="no">edit</span>
                           </button>
                           
                           {dropdownOpen === issue.id && (
-                            <div className="absolute top-[calc(100%+4px)] right-0 w-32 bg-[#181a18] border border-[#ff7351]/0 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[9999] text-left border-[#aeee2a]/20" onClick={(e) => e.stopPropagation()}>
+                            <div className="absolute top-[calc(100%+4px)] right-0 w-32 bg-surface-container border border-error/0 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[9999] text-left border-primary/20" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => { setDropdownOpen(null); openEdit(issue); }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-[#faf9f5] hover:bg-[#242624] transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-on-surface hover:bg-surface-container-highest transition-colors"
                               >
-                                <span className="material-symbols-outlined text-[16px] text-[#aeee2a]" translate="no">edit</span>
+                                <span className="material-symbols-outlined text-[16px] text-primary" translate="no">edit</span>
                                 Edit
                               </button>
                               <button
                                 onClick={() => { setDropdownOpen(null); setDeleteConfirm(issue.id); }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-[#ff7351] hover:bg-[#ff7351]/10 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-error hover:bg-error/10 transition-colors"
                               >
                                 <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
                                 Delete
@@ -602,9 +602,9 @@ export default function ServicesPage() {
           </div>
 
           {/* Footer */}
-          <div className="px-4 sm:px-8 py-4 sm:py-6 border-t border-[#474846]/10 flex items-center justify-between text-[11px] font-bold tracking-widest uppercase text-[#ababa8]">
-            <span className="text-[#faf9f5]">
-              <span className="text-[#aeee2a]">{filtered.length}</span> of {serviceCalls.length} records
+          <div className="px-4 sm:px-8 py-4 sm:py-6 border-t border-outline-variant/10 flex items-center justify-between text-[11px] font-bold tracking-widest uppercase text-on-surface-variant">
+            <span className="text-on-surface">
+              <span className="text-primary">{filtered.length}</span> of {serviceCalls.length} records
             </span>
           </div>
         </div>
@@ -626,17 +626,17 @@ export default function ServicesPage() {
             {/* Header — sticky */}
             <div className="flex items-center justify-between p-6 pb-0 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">edit</span>
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary text-[18px]" translate="no">edit</span>
                 </div>
                 <div>
-                  <h2 className="text-xl font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Edit Service Call</h2>
-                  <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest">{formatId(editService.id)}</p>
+                  <h2 className="text-xl font-extrabold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Edit Service Call</h2>
+                  <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{formatId(editService.id)}</p>
                 </div>
               </div>
               <button
                 onClick={() => { setEditService(null); setEditForm(null); }}
-                className="text-[#ababa8] hover:text-[#faf9f5] transition-colors"
+                className="text-on-surface-variant hover:text-on-surface transition-colors"
               >
                 <span className="material-symbols-outlined" translate="no">close</span>
               </button>
@@ -646,22 +646,22 @@ export default function ServicesPage() {
             <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4" style={{ scrollbarWidth: "none" }}>
             <form onSubmit={handleEditSave} className="space-y-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Title</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Title</label>
                 <input required type="text" value={editForm.title}
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                  className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors" />
+                  className="bg-surface-container-low border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors" />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Description</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Description</label>
                 <textarea rows={3} value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                  className="bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#aeee2a] transition-colors resize-none" />
+                  className="bg-surface-container-low border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors resize-none" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5 z-50 relative">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Status</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Status</label>
                   <CustomDropdown
                     value={editForm.status}
                     onChange={(val) => setEditForm({ ...editForm, status: val })}
@@ -669,7 +669,7 @@ export default function ServicesPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 z-50 relative">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Discipline</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Discipline</label>
                   <CustomDropdown
                     value={editForm.type}
                     onChange={(val) => setEditForm({ ...editForm, type: val })}
@@ -679,7 +679,7 @@ export default function ServicesPage() {
               </div>
 
               <div className="flex flex-col gap-1.5 z-40 relative">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">Assigned Crew</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Assigned Crew</label>
                 <CustomDropdown
                   value={editForm.crew_id}
                   onChange={(val) => setEditForm({ ...editForm, crew_id: val })}
@@ -690,7 +690,7 @@ export default function ServicesPage() {
 
               {/* ── Photos & Attachments ─────────────── */}
               <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
                   Photos & Attachments
                 </label>
 
@@ -703,7 +703,7 @@ export default function ServicesPage() {
                         const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(photo.url);
                         const isVideo = /\.(mp4|mov|webm|avi|mkv|m4v)/i.test(photo.url);
                         return (
-                          <div key={photo.id} className="relative group rounded-xl overflow-hidden border border-[#474846]/20 bg-[#121412] aspect-square">
+                          <div key={photo.id} className="relative group rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container-low aspect-square">
                             {/* Clickable area to open lightbox */}
                             <button
                               type="button"
@@ -716,14 +716,14 @@ export default function ServicesPage() {
                               {isImage ? (
                                 <img src={photo.url} alt="" className="w-full h-full object-cover" />
                               ) : isVideo ? (
-                                <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-[#0d0f0d]">
+                                <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-background">
                                   <span className="material-symbols-outlined text-3xl text-[#60b8f5]" translate="no">play_circle</span>
-                                  <span className="text-[9px] text-[#ababa8] truncate w-full text-center px-1">Video</span>
+                                  <span className="text-[9px] text-on-surface-variant truncate w-full text-center px-1">Video</span>
                                 </div>
                               ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                                  <span className="material-symbols-outlined text-2xl text-[#ababa8]" translate="no">attach_file</span>
-                                  <span className="text-[9px] text-[#ababa8] truncate w-full text-center px-1">
+                                  <span className="material-symbols-outlined text-2xl text-on-surface-variant" translate="no">attach_file</span>
+                                  <span className="text-[9px] text-on-surface-variant truncate w-full text-center px-1">
                                     {photo.url.split("/").pop()?.split("?")[0] || "File"}
                                   </span>
                                 </div>
@@ -732,7 +732,7 @@ export default function ServicesPage() {
                             <button
                               type="button"
                               onClick={() => setEditPhotosToDelete(prev => [...prev, photo.id])}
-                              className="absolute top-1 right-1 w-6 h-6 bg-black/70 hover:bg-[#ff7351] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                              className="absolute top-1 right-1 w-6 h-6 bg-black/70 hover:bg-error rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                             >
                               <span className="material-symbols-outlined text-[14px] text-white" translate="no">close</span>
                             </button>
@@ -746,18 +746,18 @@ export default function ServicesPage() {
                 {editNewFiles.length > 0 && (
                   <div className="space-y-2">
                     {editNewFiles.map((file, idx) => (
-                      <div key={idx} className="flex items-center gap-3 bg-[#181a18] border border-[#aeee2a]/20 rounded-xl px-4 py-2.5">
-                        <span className="material-symbols-outlined text-[#aeee2a] text-lg" translate="no">
+                      <div key={idx} className="flex items-center gap-3 bg-surface-container border border-primary/20 rounded-xl px-4 py-2.5">
+                        <span className="material-symbols-outlined text-primary text-lg" translate="no">
                           {file.type.startsWith("image/") ? "image" : file.type.startsWith("video/") ? "videocam" : "attach_file"}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-[#faf9f5] font-medium truncate">{file.name}</p>
-                          <p className="text-[10px] text-[#aeee2a]">New • {file.size < 1024 * 1024 ? `${(file.size / 1024).toFixed(0)} KB` : `${(file.size / (1024 * 1024)).toFixed(1)} MB`}</p>
+                          <p className="text-sm text-on-surface font-medium truncate">{file.name}</p>
+                          <p className="text-[10px] text-primary">New • {file.size < 1024 * 1024 ? `${(file.size / 1024).toFixed(0)} KB` : `${(file.size / (1024 * 1024)).toFixed(1)} MB`}</p>
                         </div>
                         <button
                           type="button"
                           onClick={() => setEditNewFiles(prev => prev.filter((_, i) => i !== idx))}
-                          className="text-[#ababa8] hover:text-[#ff7351] transition-colors flex-shrink-0"
+                          className="text-on-surface-variant hover:text-error transition-colors flex-shrink-0"
                         >
                           <span className="material-symbols-outlined text-lg" translate="no">close</span>
                         </button>
@@ -770,20 +770,20 @@ export default function ServicesPage() {
                 <button
                   type="button"
                   onClick={() => editFileInputRef.current?.click()}
-                  className="w-full p-4 rounded-xl border-2 border-dashed border-[#474846] bg-[#0d0f0d] hover:border-[#aeee2a]/50 transition-all flex items-center justify-center gap-2 text-[#ababa8] hover:text-[#faf9f5] group"
+                  className="w-full p-4 rounded-xl border-2 border-dashed border-outline-variant bg-background hover:border-primary/50 transition-all flex items-center justify-center gap-2 text-on-surface-variant hover:text-on-surface group"
                 >
-                  <span className="material-symbols-outlined text-xl group-hover:text-[#aeee2a] transition-colors" translate="no">add_photo_alternate</span>
+                  <span className="material-symbols-outlined text-xl group-hover:text-primary transition-colors" translate="no">add_photo_alternate</span>
                   <span className="text-sm font-semibold">Add Photos & Videos</span>
                 </button>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => { setEditService(null); setEditForm(null); }}
-                  className="flex-1 py-3 bg-[#1e201e] text-[#faf9f5] font-bold rounded-xl border border-[#474846]/20 hover:bg-[#242624] transition-all">
+                  className="flex-1 py-3 bg-surface-container-high text-on-surface font-bold rounded-xl border border-outline-variant/20 hover:bg-surface-container-highest transition-all">
                   Cancel
                 </button>
                 <button type="submit" disabled={editSaving}
-                  className="flex-1 py-3 bg-[#aeee2a] text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                   {editSaving ? <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" /> : editNewFiles.length > 0 ? `Save & Upload ${editNewFiles.length} file${editNewFiles.length > 1 ? "s" : ""}` : "Save Changes"}
                 </button>
@@ -844,22 +844,22 @@ export default function ServicesPage() {
           className="fixed inset-0 z-[60] flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
         >
-          <div className="bg-[#1a1c1a] border border-[#ff7351]/30 rounded-2xl p-6 w-full max-w-sm text-center shadow-2xl">
-            <div className="w-12 h-12 bg-[#ff7351]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="material-symbols-outlined text-[#ff7351] text-2xl" translate="no">warning</span>
+          <div className="bg-surface-container-high border border-error/30 rounded-2xl p-6 w-full max-w-sm text-center shadow-2xl">
+            <div className="w-12 h-12 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-error text-2xl" translate="no">warning</span>
             </div>
-            <h3 className="text-lg font-bold text-[#faf9f5] mb-2">Delete Service Call?</h3>
-            <p className="text-sm text-[#ababa8] mb-6">Are you sure you want to delete this service call?</p>
+            <h3 className="text-lg font-bold text-on-surface mb-2">Delete Service Call?</h3>
+            <p className="text-sm text-on-surface-variant mb-6">Are you sure you want to delete this service call?</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="flex-1 px-4 py-2 bg-[#242624] text-[#faf9f5] font-bold rounded-xl hover:bg-[#2a2c2a] transition-colors"
+                className="flex-1 px-4 py-2 bg-surface-container-highest text-on-surface font-bold rounded-xl hover:bg-[#2a2c2a] transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirm)}
-                className="flex-1 px-4 py-2 bg-[#ff7351] text-white font-bold rounded-xl hover:bg-[#ff7351]/90 transition-colors"
+                className="flex-1 px-4 py-2 bg-error text-white font-bold rounded-xl hover:bg-error/90 transition-colors"
               >
                 Delete
               </button>
@@ -907,14 +907,14 @@ export default function ServicesPage() {
               />
             )}
             {lightboxType === "other" && (
-              <div className="bg-[#181a18] rounded-2xl p-8 flex flex-col items-center gap-4 border border-[#474846]/30">
-                <span className="material-symbols-outlined text-5xl text-[#ababa8]" translate="no">attach_file</span>
-                <p className="text-[#faf9f5] font-bold text-sm">File Preview</p>
+              <div className="bg-surface-container rounded-2xl p-8 flex flex-col items-center gap-4 border border-outline-variant/30">
+                <span className="material-symbols-outlined text-5xl text-on-surface-variant" translate="no">attach_file</span>
+                <p className="text-on-surface font-bold text-sm">File Preview</p>
                 <a
                   href={lightboxUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-6 py-2 bg-[#aeee2a] text-[#3a5400] font-bold rounded-xl text-sm hover:opacity-90 transition-opacity"
+                  className="px-6 py-2 bg-primary text-[#3a5400] font-bold rounded-xl text-sm hover:opacity-90 transition-opacity"
                 >
                   Open File
                 </a>

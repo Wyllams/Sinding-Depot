@@ -37,10 +37,10 @@ function LoginFormHeader() {
         />
       </div>
 
-      <h1 className="text-3xl font-black text-[#faf9f5] tracking-tight">
+      <h1 className="text-3xl font-black text-on-surface tracking-tight">
         {title}
       </h1>
-      <p className="text-[#ababa8] text-sm mt-3 font-medium max-w-[280px]">
+      <p className="text-on-surface-variant text-sm mt-3 font-medium max-w-[280px]">
         {subtitle}
       </p>
     </div>
@@ -130,19 +130,19 @@ function LoginFormContent() {
 
         {/* Error Banner */}
         {error && (
-          <div className="flex items-start gap-3 bg-[#ff7351]/10 border border-[#ff7351]/25 rounded-xl px-4 py-3">
-            <span className="material-symbols-outlined text-[#ff7351] shrink-0 text-[18px] mt-0.5" translate="no">error</span>
-            <p className="text-xs text-[#ff7351] font-bold leading-relaxed">{error}</p>
+          <div className="flex items-start gap-3 bg-error/10 border border-error/25 rounded-xl px-4 py-3">
+            <span className="material-symbols-outlined text-error shrink-0 text-[18px] mt-0.5" translate="no">error</span>
+            <p className="text-xs text-error font-bold leading-relaxed">{error}</p>
           </div>
         )}
 
         {/* Identifier Input (Email or Username) */}
         <div>
-          <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+          <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
             {isCustomerMode ? "Username" : "Work Email"}
           </label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[#474846] text-xl" translate="no">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant text-xl" translate="no">
               {isCustomerMode ? "person" : "mail"}
             </span>
             <input
@@ -158,7 +158,7 @@ function LoginFormContent() {
               placeholder={isCustomerMode ? "Nick_Magalhaes" : "nick@sidingdepot.com"}
               required
               autoComplete={isCustomerMode ? "username" : "email"}
-              className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/50 focus:bg-[#121412] transition-all"
+              className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-primary/50 focus:bg-surface-container-low transition-all"
               suppressHydrationWarning
             />
           </div>
@@ -167,13 +167,13 @@ function LoginFormContent() {
         {/* Password Input */}
         <div>
           <div className="flex items-center justify-between mb-2 px-1">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8]">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
               Password
             </label>
             {!isCustomerMode && (
               <Link
                 href="/forgot-password"
-                className="text-[10px] font-bold text-[#aeee2a] hover:text-white transition-colors"
+                className="text-[10px] font-bold text-primary hover:text-white transition-colors"
                 tabIndex={-1}
               >
                 Forgot?
@@ -181,7 +181,7 @@ function LoginFormContent() {
             )}
           </div>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[#474846] text-xl" translate="no">lock</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant text-xl" translate="no">lock</span>
             <input
               type={showPassword ? "text" : "password"}
               value={password}
@@ -195,13 +195,13 @@ function LoginFormContent() {
               placeholder="Enter your password"
               required
               autoComplete="current-password"
-              className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl pl-12 pr-12 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/50 focus:bg-[#121412] transition-all"
+              className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl pl-12 pr-12 py-3.5 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-primary/50 focus:bg-surface-container-low transition-all"
               suppressHydrationWarning
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#474846] hover:text-[#aeee2a] transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant hover:text-primary transition-colors"
             >
               <span className="material-symbols-outlined text-lg" translate="no">
                 {showPassword ? "visibility_off" : "visibility"}
@@ -214,7 +214,7 @@ function LoginFormContent() {
         <button
           type="submit"
           disabled={isLoading || !identifier || !password}
-          className="w-full mt-2 relative overflow-hidden group bg-[#aeee2a] text-[#121412] rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-70 transition-all hover:brightness-110 active:scale-[0.98]"
+          className="w-full mt-2 relative overflow-hidden group bg-primary text-surface-container-low rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-70 transition-all hover:brightness-110 active:scale-[0.98]"
         >
           <span className={`flex items-center justify-center gap-2 ${isLoading ? "opacity-0" : "opacity-100"}`}>
             {isCustomerMode ? "Access My Project" : "Sign In to Dashboard"}
@@ -222,7 +222,7 @@ function LoginFormContent() {
           </span>
           {isLoading && (
             <span className="absolute inset-0 flex items-center justify-center">
-              <span className="w-5 h-5 border-2 border-[#121412]/30 border-t-[#121412] rounded-full animate-spin" />
+              <span className="w-5 h-5 border-2 border-surface-container-low/30 border-t-surface-container-low rounded-full animate-spin" />
             </span>
           )}
         </button>
@@ -231,16 +231,16 @@ function LoginFormContent() {
       {/* Portal Switch Links */}
       <div className="mt-6 text-center">
         {isCustomerMode ? (
-          <p className="text-[11px] text-[#474846]">
+          <p className="text-[11px] text-outline-variant">
             Are you a Siding Depot team member?{" "}
-            <Link href="/login" className="text-[#aeee2a] font-bold hover:text-white transition-colors">
+            <Link href="/login" className="text-primary font-bold hover:text-white transition-colors">
               Team Login →
             </Link>
           </p>
         ) : (
-          <p className="text-[11px] text-[#474846]">
+          <p className="text-[11px] text-outline-variant">
             Are you a customer?{" "}
-            <Link href="/login?role=customer" className="text-[#aeee2a] font-bold hover:text-white transition-colors">
+            <Link href="/login?role=customer" className="text-primary font-bold hover:text-white transition-colors">
               Customer Portal →
             </Link>
           </p>
@@ -254,12 +254,12 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-sm">
       {/* Brand Header */}
-      <Suspense fallback={<div className="mb-8 flex flex-col items-center text-center"><h1 className="text-3xl font-black text-[#faf9f5]">Welcome Back</h1></div>}>
+      <Suspense fallback={<div className="mb-8 flex flex-col items-center text-center"><h1 className="text-3xl font-black text-on-surface">Welcome Back</h1></div>}>
         <LoginFormHeader />
       </Suspense>
 
       {/* Login Form */}
-      <Suspense fallback={<div className="text-center text-[#ababa8]">Loading...</div>}>
+      <Suspense fallback={<div className="text-center text-on-surface-variant">Loading...</div>}>
         <LoginFormContent />
       </Suspense>
 
@@ -268,7 +268,7 @@ export default function LoginPage() {
         <QuickAccessButtons />
       </Suspense>
 
-      <p className="text-center mt-8 text-[11px] font-bold text-[#474846]">
+      <p className="text-center mt-8 text-[11px] font-bold text-outline-variant">
         Secure access for Siding Depot personnel only.
       </p>
     </div>
@@ -310,8 +310,8 @@ function QuickAccessButtons() {
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-[#242624]">
-      <p className="text-[10px] font-black uppercase tracking-widest text-[#474846] text-center mb-4">
+    <div className="mt-8 pt-6 border-t border-surface-container-highest">
+      <p className="text-[10px] font-black uppercase tracking-widest text-outline-variant text-center mb-4">
         Quick Access
       </p>
       <div className="grid grid-cols-2 gap-3">
@@ -320,7 +320,7 @@ function QuickAccessButtons() {
             key={item.role}
             onClick={() => handleQuickLogin(item)}
             disabled={loadingRole !== null}
-            className="relative bg-[#0a0a0a] border border-[#242624] rounded-2xl p-4 flex flex-col items-center gap-2 hover:border-opacity-60 active:scale-95 transition-all disabled:opacity-50 group"
+            className="relative bg-[#0a0a0a] border border-surface-container-highest rounded-2xl p-4 flex flex-col items-center gap-2 hover:border-opacity-60 active:scale-95 transition-all disabled:opacity-50 group"
             style={{ borderColor: `${item.color}30` }}
           >
             {loadingRole === item.role ? (

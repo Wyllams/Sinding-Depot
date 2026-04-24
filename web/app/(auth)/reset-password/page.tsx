@@ -86,8 +86,8 @@ export default function ResetPasswordPage() {
   if (stage === "loading") {
     return (
       <div className="w-full max-w-sm flex flex-col items-center gap-4 py-12">
-        <span className="w-8 h-8 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
-        <p className="text-[#ababa8] text-sm font-bold">Verifying your reset link...</p>
+        <span className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <p className="text-on-surface-variant text-sm font-bold">Verifying your reset link...</p>
       </div>
     );
   }
@@ -109,23 +109,23 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="text-center py-4">
-          <div className="w-16 h-16 bg-[#ff7351]/10 rounded-full flex items-center justify-center mx-auto mb-5">
-            <span className="material-symbols-outlined text-3xl text-[#ff7351]" translate="no">link_off</span>
+          <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-5">
+            <span className="material-symbols-outlined text-3xl text-error" translate="no">link_off</span>
           </div>
-          <h2 className="text-xl font-black text-[#faf9f5] mb-2">Link Expired or Invalid</h2>
-          <p className="text-[#ababa8] text-sm mb-8 leading-relaxed">
+          <h2 className="text-xl font-black text-on-surface mb-2">Link Expired or Invalid</h2>
+          <p className="text-on-surface-variant text-sm mb-8 leading-relaxed">
             This password reset link has expired or already been used. Request a new one to proceed.
           </p>
           <Link
             href="/forgot-password"
-            className="inline-flex items-center justify-center gap-2 w-full bg-[#aeee2a] text-[#121412] rounded-xl py-4 font-black uppercase tracking-widest text-xs hover:brightness-110 transition-all active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-2 w-full bg-primary text-surface-container-low rounded-xl py-4 font-black uppercase tracking-widest text-xs hover:brightness-110 transition-all active:scale-[0.98]"
           >
             <span className="material-symbols-outlined text-lg" translate="no">refresh</span>
             Request New Link
           </Link>
           <Link
             href="/login"
-            className="mt-4 text-[11px] font-bold text-[#474846] hover:text-[#faf9f5] transition-colors flex items-center justify-center gap-1.5"
+            className="mt-4 text-[11px] font-bold text-outline-variant hover:text-on-surface transition-colors flex items-center justify-center gap-1.5"
           >
             <span className="material-symbols-outlined text-sm" translate="no">arrow_back</span>
             Return to Login
@@ -153,20 +153,20 @@ export default function ResetPasswordPage() {
         <div className="text-center py-4">
           {/* Animated success ring */}
           <div className="relative w-20 h-20 mx-auto mb-6">
-            <div className="absolute inset-0 rounded-full bg-[#aeee2a]/10 animate-ping opacity-50" />
-            <div className="relative w-20 h-20 bg-[#aeee2a]/15 rounded-full flex items-center justify-center border border-[#aeee2a]/30">
-              <span className="material-symbols-outlined text-4xl text-[#aeee2a]" translate="no" style={{ fontVariationSettings: "'FILL' 1" }}>lock_reset</span>
+            <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping opacity-50" />
+            <div className="relative w-20 h-20 bg-primary/15 rounded-full flex items-center justify-center border border-primary/30">
+              <span className="material-symbols-outlined text-4xl text-primary" translate="no" style={{ fontVariationSettings: "'FILL' 1" }}>lock_reset</span>
             </div>
           </div>
 
-          <h2 className="text-xl font-black text-[#faf9f5] mb-2">Password Updated!</h2>
-          <p className="text-[#ababa8] text-sm mb-8 leading-relaxed">
+          <h2 className="text-xl font-black text-on-surface mb-2">Password Updated!</h2>
+          <p className="text-on-surface-variant text-sm mb-8 leading-relaxed">
             Your password has been successfully changed. You can now sign in with your new credentials.
           </p>
 
           <button
             onClick={() => router.push("/login")}
-            className="inline-flex items-center justify-center gap-2 w-full bg-[#aeee2a] text-[#121412] rounded-xl py-4 font-black uppercase tracking-widest text-xs hover:brightness-110 transition-all active:scale-[0.98] group"
+            className="inline-flex items-center justify-center gap-2 w-full bg-primary text-surface-container-low rounded-xl py-4 font-black uppercase tracking-widest text-xs hover:brightness-110 transition-all active:scale-[0.98] group"
           >
             Sign In
             <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform" translate="no">arrow_forward</span>
@@ -189,8 +189,8 @@ export default function ResetPasswordPage() {
           className="w-[140px] h-auto object-contain mb-6"
           style={{ filter: "drop-shadow(0px 0px 8px rgba(174,238,42,0.8)) drop-shadow(0px 0px 20px rgba(174,238,42,0.4))" }}
         />
-        <h1 className="text-2xl font-black text-[#faf9f5] tracking-tight">Create New Password</h1>
-        <p className="text-[#ababa8] text-sm mt-3 font-medium">
+        <h1 className="text-2xl font-black text-on-surface tracking-tight">Create New Password</h1>
+        <p className="text-on-surface-variant text-sm mt-3 font-medium">
           Choose a strong password to protect your account.
         </p>
       </div>
@@ -199,31 +199,31 @@ export default function ResetPasswordPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="flex items-start gap-3 bg-[#ff7351]/10 border border-[#ff7351]/25 rounded-xl px-4 py-3">
-            <span className="material-symbols-outlined text-[#ff7351] shrink-0 text-[18px] mt-0.5" translate="no">error</span>
-            <p className="text-xs text-[#ff7351] font-bold leading-relaxed">{error}</p>
+          <div className="flex items-start gap-3 bg-error/10 border border-error/25 rounded-xl px-4 py-3">
+            <span className="material-symbols-outlined text-error shrink-0 text-[18px] mt-0.5" translate="no">error</span>
+            <p className="text-xs text-error font-bold leading-relaxed">{error}</p>
           </div>
         )}
 
         {/* New Password */}
         <div>
-          <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+          <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
             New Password
           </label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[#474846] text-xl" translate="no">lock</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant text-xl" translate="no">lock</span>
             <input
               type={showPwd ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Create a strong password"
               required
-              className="w-full bg-[#0a0a0a] border border-[#242624] rounded-xl pl-12 pr-12 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none focus:border-[#aeee2a]/50 focus:bg-[#121412] transition-all"
+              className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl pl-12 pr-12 py-3.5 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-primary/50 focus:bg-surface-container-low transition-all"
             />
             <button
               type="button"
               onClick={() => setShowPwd(!showPwd)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#474846] hover:text-[#aeee2a] transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant hover:text-primary transition-colors"
             >
               <span className="material-symbols-outlined text-lg" translate="no">{showPwd ? "visibility_off" : "visibility"}</span>
             </button>
@@ -258,7 +258,7 @@ export default function ResetPasswordPage() {
                   >
                     {r.passed ? "check_circle" : "circle"}
                   </span>
-                  <span className={`text-[10px] font-bold transition-colors ${r.passed ? "text-[#faf9f5]" : "text-[#474846]"}`}>
+                  <span className={`text-[10px] font-bold transition-colors ${r.passed ? "text-on-surface" : "text-outline-variant"}`}>
                     {r.label}
                   </span>
                 </div>
@@ -269,7 +269,7 @@ export default function ResetPasswordPage() {
 
         {/* Confirm Password */}
         <div>
-          <label className="block text-[10px] font-black uppercase tracking-widest text-[#ababa8] mb-2 pl-1">
+          <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
             Confirm Password
           </label>
           <div className="relative">
@@ -286,27 +286,27 @@ export default function ResetPasswordPage() {
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="Repeat your password"
               required
-              className={`w-full bg-[#0a0a0a] border rounded-xl pl-12 pr-12 py-3.5 text-sm font-bold text-[#faf9f5] placeholder-[#474846] focus:outline-none transition-all ${
+              className={`w-full bg-[#0a0a0a] border rounded-xl pl-12 pr-12 py-3.5 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none transition-all ${
                 confirm.length > 0
                   ? passwordsMatch
-                    ? "border-[#aeee2a]/50 focus:border-[#aeee2a]"
-                    : "border-[#ff7351]/50 focus:border-[#ff7351]"
-                  : "border-[#242624] focus:border-[#aeee2a]/50 focus:bg-[#121412]"
+                    ? "border-primary/50 focus:border-primary"
+                    : "border-error/50 focus:border-error"
+                  : "border-surface-container-highest focus:border-primary/50 focus:bg-surface-container-low"
               }`}
             />
             <button
               type="button"
               onClick={() => setShowCfm(!showCfm)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#474846] hover:text-[#aeee2a] transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant hover:text-primary transition-colors"
             >
               <span className="material-symbols-outlined text-lg" translate="no">{showCfm ? "visibility_off" : "visibility"}</span>
             </button>
           </div>
           {confirm.length > 0 && !passwordsMatch && (
-            <p className="text-[10px] text-[#ff7351] font-bold mt-1.5 pl-1">Passwords do not match</p>
+            <p className="text-[10px] text-error font-bold mt-1.5 pl-1">Passwords do not match</p>
           )}
           {passwordsMatch && (
-            <p className="text-[10px] text-[#aeee2a] font-bold mt-1.5 pl-1">✓ Passwords match</p>
+            <p className="text-[10px] text-primary font-bold mt-1.5 pl-1">✓ Passwords match</p>
           )}
         </div>
 
@@ -314,7 +314,7 @@ export default function ResetPasswordPage() {
         <button
           type="submit"
           disabled={!canSubmit}
-          className="w-full mt-2 relative overflow-hidden group bg-[#aeee2a] text-[#121412] rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 active:scale-[0.98]"
+          className="w-full mt-2 relative overflow-hidden group bg-primary text-surface-container-low rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 active:scale-[0.98]"
         >
           <span className={`flex items-center justify-center gap-2 ${isLoading ? "opacity-0" : "opacity-100"}`}>
             <span className="material-symbols-outlined text-lg" translate="no">lock_reset</span>
@@ -322,7 +322,7 @@ export default function ResetPasswordPage() {
           </span>
           {isLoading && (
             <span className="absolute inset-0 flex items-center justify-center">
-              <span className="w-5 h-5 border-2 border-[#121412]/30 border-t-[#121412] rounded-full animate-spin" />
+              <span className="w-5 h-5 border-2 border-surface-container-low/30 border-t-surface-container-low rounded-full animate-spin" />
             </span>
           )}
         </button>
@@ -330,7 +330,7 @@ export default function ResetPasswordPage() {
         <div className="text-center pt-1">
           <Link
             href="/login"
-            className="text-[11px] font-bold text-[#474846] hover:text-[#faf9f5] transition-colors flex items-center justify-center gap-1.5"
+            className="text-[11px] font-bold text-outline-variant hover:text-on-surface transition-colors flex items-center justify-center gap-1.5"
           >
             <span className="material-symbols-outlined text-sm" translate="no">arrow_back</span>
             Return to Login

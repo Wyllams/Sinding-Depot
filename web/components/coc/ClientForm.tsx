@@ -103,22 +103,22 @@ export default function ClientForm({
 
   if (signed || isSigned) {
     return (
-      <div className="bg-[#1e201e]/80 border border-[#aeee2a]/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
-        <div className="w-16 h-16 bg-[#aeee2a]/10 rounded-full flex items-center justify-center mb-4">
-          <span className="material-symbols-outlined text-4xl text-[#aeee2a]" translate="no">verified</span>
+      <div className="bg-surface-container-high/80 border border-primary/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+          <span className="material-symbols-outlined text-4xl text-primary" translate="no">verified</span>
         </div>
-        <h3 className="text-[#faf9f5] font-bold text-lg">Document Digitally Signed</h3>
-        <p className="text-[#ababa8] text-sm mt-1 mb-6">Thank you. This certificate has been sealed and securely logged.</p>
+        <h3 className="text-on-surface font-bold text-lg">Document Digitally Signed</h3>
+        <p className="text-on-surface-variant text-sm mt-1 mb-6">Thank you. This certificate has been sealed and securely logged.</p>
         
         {existingMetadata?.signatureUrl || existingMetadata?.signature ? (
           <img 
             src={existingMetadata.signatureUrl || existingMetadata.signature} 
             alt="Customer Signature" 
-            className="h-24 object-contain filter invert border-b border-dashed border-[#474846] px-8" 
+            className="h-24 object-contain filter invert border-b border-dashed border-outline-variant px-8" 
           />
         ) : (
-          <div className="h-16 border-b border-dashed border-[#474846] px-8 flex items-end pb-2">
-            <span className="font-serif text-[#aeee2a] text-xl opacity-80">(Signed Digitally)</span>
+          <div className="h-16 border-b border-dashed border-outline-variant px-8 flex items-end pb-2">
+            <span className="font-serif text-primary text-xl opacity-80">(Signed Digitally)</span>
           </div>
         )}
       </div>
@@ -128,24 +128,24 @@ export default function ClientForm({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Legal Full Name</label>
+        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Legal Full Name</label>
         <input 
           type="text" 
           placeholder="Type your name to confirm..."
           value={signatureName}
           onChange={(e) => setSignatureName(e.target.value)}
-          className="w-full bg-[#1e201e] border-none rounded-xl py-3.5 px-4 text-[#faf9f5] font-medium focus:ring-1 focus:ring-[#aeee2a] outline-none transition-all"
+          className="w-full bg-surface-container-high border-none rounded-xl py-3.5 px-4 text-on-surface font-medium focus:ring-1 focus:ring-primary outline-none transition-all"
         />
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold uppercase tracking-wider text-[#ababa8]">Draw your signature</label>
-          <button onClick={clearCanvas} className="text-[10px] uppercase font-bold text-[#474846] hover:text-[#ff7351] transition-colors">
+          <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Draw your signature</label>
+          <button onClick={clearCanvas} className="text-[10px] uppercase font-bold text-outline-variant hover:text-error transition-colors">
             Clear
           </button>
         </div>
-        <div className="w-full bg-[#1e201e] border border-dashed border-[#474846] rounded-xl overflow-hidden touch-none relative h-48">
+        <div className="w-full bg-surface-container-high border border-dashed border-outline-variant rounded-xl overflow-hidden touch-none relative h-48">
           <canvas
             ref={canvasRef}
             width={800} // Logical width (css scales it relative)
@@ -160,7 +160,7 @@ export default function ClientForm({
             onTouchEnd={stopDrawing}
             onTouchCancel={stopDrawing}
           />
-          <div className="absolute inset-x-8 bottom-8 border-b-2 border-[#121412] opacity-50 z-[-1] pointer-events-none" />
+          <div className="absolute inset-x-8 bottom-8 border-b-2 border-surface-container-low opacity-50 z-[-1] pointer-events-none" />
         </div>
       </div>
 
@@ -168,7 +168,7 @@ export default function ClientForm({
         <button 
           onClick={handleSign}
           disabled={loading || !signatureName.trim()}
-          className="w-full py-4 bg-[#aeee2a] text-[#1a2e00] font-bold text-lg rounded-xl shadow-[0_8px_30px_rgb(174,238,42,0.2)] hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
+          className="w-full py-4 bg-primary text-[#1a2e00] font-bold text-lg rounded-xl shadow-[0_8px_30px_rgb(174,238,42,0.2)] hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
         >
           {loading ? (
              <div className="w-6 h-6 border-2 border-[#1a2e00]/20 border-t-[#1a2e00] rounded-full animate-spin" />

@@ -1,29 +1,76 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-container: var(--color-surface-container);
+  --color-surface-container-low: var(--color-surface-container-low);
+  --color-surface-container-high: var(--color-surface-container-high);
+  --color-surface-container-highest: var(--color-surface-container-highest);
+  --color-surface-variant: var(--color-surface-variant);
+  --color-on-surface: var(--color-on-surface);
+  --color-on-surface-variant: var(--color-on-surface-variant);
+  --color-outline: var(--color-outline);
+  --color-outline-variant: var(--color-outline-variant);
+  --color-primary: var(--color-primary);
+  --color-error: var(--color-error);
+  --color-layout-bg: var(--color-layout-bg);
+  --color-mobile-frame: var(--color-mobile-frame);
+}
+
 /* =============================================
    BUILDFLOW / SIDING DEPOT DESIGN SYSTEM
    Standard CSS variables - compatible with
    Tailwind v4 and VS Code CSS linter
    ============================================= */
 
-:root {
-  /* Legacy Siding Depot tokens */
+:root, [data-theme="light"], .light {
+  /* LIGHT MODE VARS */
+  --color-siding-green: #b2d234;
+  --color-siding-green-hover: #9abc29;
+  --color-siding-dark: #faf9f5; /* Inverted for light */
+  --color-siding-card: #f5f5f5; /* Inverted */
+
+  --color-primary: #aeee2a; /* Keep brand color same */
+  --color-primary-dim: #a0df14;
+  --color-on-primary: #3a5400;
+
+  --color-error: #ff7351;
+  --color-error-container: #ffdad2;
+  --color-on-error: #450900;
+
+  --color-background: #f7f7f5;
+  --color-surface: #f7f7f5;
+  --color-surface-container: #ffffff;
+  --color-surface-container-low: #faf9f5;
+  --color-surface-container-high: #f0f0f0;
+  --color-surface-container-highest: #e8e8e8;
+  --color-surface-variant: #e8e8e8;
+  
+  --color-on-surface: #121412;
+  --color-on-surface-variant: #474846;
+  
+  --color-outline: #ababa8;
+  --color-outline-variant: #d6d6d6;
+  
+  --color-layout-bg: #e0e0e0;
+  --color-mobile-frame: #f7f7f5;
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-headline: 'Manrope', system-ui, sans-serif;
+}
+
+[data-theme="dark"], .dark {
+  /* DARK MODE VARS */
   --color-siding-green: #b2d234;
   --color-siding-green-hover: #9abc29;
   --color-siding-dark: #0a0a0a;
   --color-siding-card: #1f1f1f;
 
-  /* Material Design 3 - BuildFlow palette */
   --color-primary: #aeee2a;
   --color-primary-dim: #a0df14;
   --color-on-primary: #3a5400;
-
-  --color-secondary: #e3eb5d;
-  --color-secondary-container: #5e6300;
-  --color-on-secondary-container: #f9ff8b;
-
-  --color-tertiary-container: #fdeb54;
-  --color-on-tertiary-container: #5f5600;
 
   --color-error: #ff7351;
   --color-error-container: #b92902;
@@ -36,15 +83,15 @@
   --color-surface-container-high: #1e201e;
   --color-surface-container-highest: #242624;
   --color-surface-variant: #242624;
+  
   --color-on-surface: #faf9f5;
   --color-on-surface-variant: #ababa8;
-
+  
   --color-outline: #747673;
   --color-outline-variant: #474846;
-
-  /* Fonts */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-headline: 'Manrope', system-ui, sans-serif;
+  
+  --color-layout-bg: #000000;
+  --color-mobile-frame: #050505;
 }
 
 /* Base */
@@ -52,6 +99,7 @@ body {
   font-family: var(--font-sans);
   background-color: var(--color-background);
   color: var(--color-on-surface);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Cursor pointer global — sobrescreve o reset do Tailwind Preflight */
@@ -68,6 +116,9 @@ label[for] {
   background: rgba(36, 38, 36, 0.4);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
+}
+.light .glass-card {
+  background: rgba(255, 255, 255, 0.6);
 }
 
 /* Material Symbols icon font - prevent translation breaking ligatures */
@@ -95,8 +146,6 @@ label[for] {
 }
 
 /* ─── iOS PWA Safe Area ─────────────────────────── */
-/* When running as standalone PWA on iPhone (notch/Dynamic Island),
-   the status bar overlaps content. This adds padding for it. */
 .safe-area-top {
   padding-top: env(safe-area-inset-top, 0px);
 }

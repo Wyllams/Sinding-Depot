@@ -196,6 +196,20 @@ graph LR
 → Schedule: [[Job Schedule]]
 → Portal: [[Field App]]
 
+### 2026-04-23 — Sincronização Global de Status e Dropdowns
+
+| Feature | Descrição | Arquivos |
+|---------|-----------|----------|
+| **Status Literal no Banco** | `status` da tabela `jobs` aceita `pending`, `tentative`, `scheduled`, `in_progress`, `done` | Supabase DB |
+| **Unificação Visual e Backend** | Remoção do mapeamento de data/fallback que causava conflito com `draft` e `active` | `projects/page.tsx`, `projects/[id]/page.tsx` |
+| **Dropdown de Change Orders** | Corrigido para buscar os novos status em vez de buscar os extintos, resolvendo `No results found` | `change-orders/page.tsx` |
+| **Filtros Globais** | Filtros de Crews e Vendas foram atualizados para consultar o banco usando os novos status literais | `crews/page.tsx`, `sales-reports/page.tsx` |
+| **Modal do Calendário** | O salvamento do status e a renderização (In Progress / Done) obedecem o novo formato nativo | `schedule/page.tsx` |
+
+→ Detalhes: [[Changelog 2026-04-23]]
+→ Projetos: [[Projects]]
+→ Schedule: [[Job Schedule]]
+
 ---
 
 > [!NOTE]

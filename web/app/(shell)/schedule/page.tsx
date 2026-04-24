@@ -979,11 +979,11 @@ export default function SchedulePage() {
           undoStack.length > 0 ? (
             <button
               onClick={handleUndo}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#242624] border border-[#474846]/30 text-[#faf9f5] text-xs font-bold hover:bg-[#1e201e] hover:border-[#aeee2a]/30 transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container-highest border border-outline-variant/30 text-on-surface text-xs font-bold hover:bg-surface-container-high hover:border-primary/30 transition-all active:scale-95 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[16px] text-[#aeee2a]" translate="no">undo</span>
+              <span className="material-symbols-outlined text-[16px] text-primary" translate="no">undo</span>
               <span>Undo</span>
-              <span className="text-[10px] text-[#ababa8] font-bold">({undoStack.length})</span>
+              <span className="text-[10px] text-on-surface-variant font-bold">({undoStack.length})</span>
             </button>
           ) : undefined
         }
@@ -991,12 +991,12 @@ export default function SchedulePage() {
 
       {/* Undo Toast */}
       {showUndoToast && undoStack.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 px-5 py-3 rounded-2xl bg-[#1a1c1a] border border-[#aeee2a]/20 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
-          <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">undo</span>
-          <span className="text-sm font-bold text-[#faf9f5]">{undoStack[undoStack.length - 1].label}</span>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 px-5 py-3 rounded-2xl bg-surface-container-high border border-primary/20 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+          <span className="material-symbols-outlined text-primary text-[18px]" translate="no">undo</span>
+          <span className="text-sm font-bold text-on-surface">{undoStack[undoStack.length - 1].label}</span>
           <button
             onClick={handleUndo}
-            className="ml-2 px-3 py-1 rounded-lg text-xs font-black text-[#3a5400] bg-[#aeee2a] hover:brightness-110 transition-all active:scale-95 cursor-pointer"
+            className="ml-2 px-3 py-1 rounded-lg text-xs font-black text-[#3a5400] bg-primary hover:brightness-110 transition-all active:scale-95 cursor-pointer"
           >
             Undo
           </button>
@@ -1006,20 +1006,20 @@ export default function SchedulePage() {
       {/* Custom Alert Modal */}
       {alertMessage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1a1c1a] border border-[#474846]/50 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+          <div className="bg-surface-container-high border border-outline-variant/50 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
             <div className="flex items-center gap-3 px-6 pt-5 pb-3">
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#ef4444]/10 border border-[#ef4444]/20">
                 <span className="material-symbols-outlined text-[#ef4444] text-[22px]" translate="no">block</span>
               </div>
-              <h3 className="text-[#faf9f5] font-extrabold text-base tracking-tight" style={{ fontFamily: 'Manrope, system-ui, sans-serif' }}>Action Not Allowed</h3>
+              <h3 className="text-on-surface font-extrabold text-base tracking-tight" style={{ fontFamily: 'Manrope, system-ui, sans-serif' }}>Action Not Allowed</h3>
             </div>
             <div className="px-6 pb-5">
-              <p className="text-[#ababa8] text-sm leading-relaxed whitespace-pre-line">{alertMessage}</p>
+              <p className="text-on-surface-variant text-sm leading-relaxed whitespace-pre-line">{alertMessage}</p>
             </div>
             <div className="flex justify-end px-6 pb-5">
               <button
                 onClick={() => setAlertMessage(null)}
-                className="px-6 py-2.5 rounded-xl text-sm font-black bg-[#aeee2a] text-[#1a1c1a] hover:brightness-110 transition-all active:scale-95 cursor-pointer"
+                className="px-6 py-2.5 rounded-xl text-sm font-black bg-primary text-surface-container-high hover:brightness-110 transition-all active:scale-95 cursor-pointer"
               >
                 OK
               </button>
@@ -1034,12 +1034,12 @@ export default function SchedulePage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div className="flex flex-col gap-1">
             <h1
-              className="tracking-tighter text-3xl font-extrabold text-[#faf9f5]"
+              className="tracking-tighter text-3xl font-extrabold text-on-surface"
               style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
             >
               Job Schedule
             </h1>
-            <p className="text-[#ababa8] text-sm mt-1">
+            <p className="text-on-surface-variant text-sm mt-1">
               {fmtDate(weekDates[0])} → {fmtDate(weekDates[5])}
               <span className="ml-3 text-[#60b8f5] font-bold text-xs">
                 Drag cards to reschedule
@@ -1048,14 +1048,14 @@ export default function SchedulePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1 bg-[#121412] rounded-xl p-1 border border-[#474846]/20">
-              <button onClick={prevWeek} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#faf9f5] hover:bg-[#1e201e] transition-colors cursor-pointer">
+            <div className="flex items-center gap-1 bg-surface-container-low rounded-xl p-1 border border-outline-variant/20">
+              <button onClick={prevWeek} className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer">
                 <span className="material-symbols-outlined text-[18px]" translate="no">chevron_left</span>
               </button>
-              <button onClick={goToday} className="px-4 py-1.5 text-sm font-bold text-[#faf9f5] hover:text-[#aeee2a] transition-colors cursor-pointer">
+              <button onClick={goToday} className="px-4 py-1.5 text-sm font-bold text-on-surface hover:text-primary transition-colors cursor-pointer">
                 Today
               </button>
-              <button onClick={nextWeek} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#ababa8] hover:text-[#faf9f5] hover:bg-[#1e201e] transition-colors cursor-pointer">
+              <button onClick={nextWeek} className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer">
                 <span className="material-symbols-outlined text-[18px]" translate="no">chevron_right</span>
               </button>
             </div>
@@ -1087,7 +1087,7 @@ export default function SchedulePage() {
                   setWeekBase(new Date(y, m - 1, 1 + (8 - dow)));
                 }
               }}
-              className="bg-[#121412] text-[#faf9f5] text-sm font-bold rounded-xl px-4 py-2 border border-[#474846]/20 outline-none focus:border-[#aeee2a] transition-colors cursor-pointer [color-scheme:dark] relative"
+              className="bg-surface-container-low text-on-surface text-sm font-bold rounded-xl px-4 py-2 border border-outline-variant/20 outline-none focus:border-primary transition-colors cursor-pointer [color-scheme:dark] relative"
               style={{ height: "42px" }}
             />
 
@@ -1099,7 +1099,7 @@ export default function SchedulePage() {
                   { value: "ALL", label: "All Services" },
                   ...SERVICE_CATEGORIES.map(s => ({ value: s.id, label: s.label }))
                 ]}
-                className="bg-[#121412] text-[#faf9f5] text-sm font-bold rounded-xl px-4 border border-[#474846]/20 outline-none hover:border-[#aeee2a]/50 flex items-center justify-between"
+                className="bg-surface-container-low text-on-surface text-sm font-bold rounded-xl px-4 border border-outline-variant/20 outline-none hover:border-primary/50 flex items-center justify-between"
                 style={{ height: "42px", minWidth: "160px" }}
               />
             </div>
@@ -1107,11 +1107,11 @@ export default function SchedulePage() {
         </div>
 
         {/* ── Gantt Grid ── */}
-        <div className="rounded-2xl overflow-hidden overflow-x-auto flex flex-col flex-1" style={{ background: "#121412", border: "1px solid rgba(71,72,70,0.2)" }}>
+        <div className="rounded-2xl overflow-hidden overflow-x-auto flex flex-col flex-1 bg-surface-container-low border border-outline-variant/20">
           <div className="min-w-[800px] flex flex-col flex-1 min-h-0">
             {/* Day headers — STICKY (6.2) */}
-            <div className="grid sticky top-0 z-20" style={{ gridTemplateColumns: "200px repeat(7, 1fr)", background: "#1e201e", borderBottom: "1px solid rgba(71,72,70,0.2)" }}>
-              <div className="px-5 py-4 text-[#ababa8] text-[10px] font-bold uppercase tracking-widest border-r border-white/5">
+            <div className="grid sticky top-0 z-20 bg-surface-container-low border-b border-outline-variant/20" style={{ gridTemplateColumns: "200px repeat(7, 1fr)" }}>
+              <div className="px-5 py-4 text-on-surface text-[10px] font-bold uppercase tracking-widest border-r border-outline-variant/20">
               Partner / Service
             </div>
             {DAY_LABELS.map((label, i) => {
@@ -1121,27 +1121,27 @@ export default function SchedulePage() {
               return (
                 <div
                   key={label}
-                  className={`py-4 text-center flex flex-col border-r border-white/5 last:border-r-0 transition-colors ${dragOverDay === i ? "bg-[#aeee2a]/10" : ""}`}
+                  className={`py-4 text-center flex flex-col border-r border-outline-variant/20 last:border-r-0 transition-colors ${dragOverDay === i ? "bg-primary/10" : ""}`}
                   style={{ opacity: isSun ? 0.35 : 1 }}
                   onDragOver={e => handleDayDragOver(e, i)}
                   onDrop={e => handleDayDrop(e, i)}
                 >
-                  <span className="text-[#ababa8] text-[9px] font-black uppercase tracking-widest">{label}</span>
+                  <span className="text-on-surface text-[9px] font-black uppercase tracking-widest">{label}</span>
                   <span
-                    className={`text-lg font-black mt-0.5 ${isToday ? "text-[#aeee2a]" : isSun ? "text-[#474846]" : "text-[#faf9f5]"}`}
+                    className={`text-lg font-black mt-0.5 ${isToday ? "text-primary" : isSun ? "text-outline-variant" : "text-on-surface"}`}
                     style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
                   >
                     {date.getDate()}
                   </span>
-                  {isToday && <span className="w-1 h-1 rounded-full bg-[#aeee2a] mx-auto mt-1" />}
-                  {isSun   && <span className="text-[9px] text-[#474846] font-bold mt-0.5">OFF</span>}
+                  {isToday && <span className="w-1 h-1 rounded-full bg-primary mx-auto mt-1" />}
+                  {isSun   && <span className="text-[9px] text-outline-variant font-bold mt-0.5">OFF</span>}
                 </div>
               );
             })}
           </div>
 
           {/* Main rows */}
-          <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#242624 #0d0f0d" }}>
+          <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
 
             {visibleCats.map(cat => (
               <div key={cat.id}>
@@ -1149,11 +1149,11 @@ export default function SchedulePage() {
                 {/* Category separator */}
                 <div
                   className="px-5 py-2 flex items-center gap-2"
-                  style={{ background: `${cat.color}08`, borderBottom: `1px solid ${cat.color}20`, borderTop: "1px solid rgba(71,72,70,0.1)" }}
+                  style={{ background: `${cat.color}08`, borderBottom: `1px solid ${cat.color}20`, borderTop: "1px solid rgba(0,0,0,0.05)" }}
                 >
                   <span className="material-symbols-outlined text-[14px]" style={{ color: cat.color }} translate="no">{cat.icon}</span>
                   <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: cat.color }}>{cat.label}</span>
-                  <span className="text-[10px] text-[#474846] font-bold ml-1">— {cat.partners.length} partner{cat.partners.length > 1 ? "s" : ""}</span>
+                  <span className="text-[10px] text-outline-variant font-bold ml-1">— {cat.partners.length} partner{cat.partners.length > 1 ? "s" : ""}</span>
                 </div>
 
                 {cat.partners.map(name => {
@@ -1177,12 +1177,12 @@ export default function SchedulePage() {
                   return (
                     <div
                       key={name}
-                      className="grid border-b border-white/[0.04] hover:bg-[#141614]/40 transition-colors"
+                      className="grid border-b border-outline-variant/20 hover:bg-surface-container-highest transition-colors"
                       style={{ gridTemplateColumns: "200px 1fr", minHeight: `${rowHeight}px` }}
                     >
                       {/* Partner info */}
                       <div 
-                        className="px-5 py-4 border-r border-white/5 flex flex-col justify-center gap-1" 
+                        className="px-5 py-4 border-r border-outline-variant/20 flex flex-col justify-center gap-1" 
                         style={{ borderLeft: `2px solid ${cat.color}40` }}
                         onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
                         onDrop={e => {
@@ -1192,11 +1192,11 @@ export default function SchedulePage() {
                           }
                         }}
                       >
-                        <span className="text-sm font-extrabold text-[#faf9f5] tracking-wide" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                        <span className="text-sm font-extrabold text-on-surface tracking-wide" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                           {name}
                         </span>
                         <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: `${cat.color}99` }}>{cat.label}</span>
-                        <span className="text-[9px] text-[#474846] font-bold">{pJobs.length} job{pJobs.length !== 1 ? "s" : ""}</span>
+                        <span className="text-[9px] text-outline-variant font-bold">{pJobs.length} job{pJobs.length !== 1 ? "s" : ""}</span>
                       </div>
 
                       {/* Gantt area with drop zones */}
@@ -1206,12 +1206,12 @@ export default function SchedulePage() {
                           {Array.from({ length: 7 }).map((_, i) => (
                             <div
                               key={i}
-                              className={`h-full transition-colors ${i < 6 ? "border-r border-white/[0.04]" : ""}`}
+                              className={`h-full transition-colors ${i < 6 ? "border-r border-outline-variant/20" : ""}`}
                               style={
                                 dragOverDay === i && i < 6
                                   ? { background: "rgba(174,238,42,0.08)", borderLeft: "2px dashed rgba(174,238,42,0.3)" }
                                   : i === 6
-                                  ? { background: "rgba(10,10,10,0.5)", borderLeft: "1px dashed rgba(71,72,70,0.25)" }
+                                  ? { background: "rgba(0,0,0,0.02)", borderLeft: "1px dashed rgba(0,0,0,0.1)" }
                                   : i === todayIndex
                                   ? { background: "rgba(174,238,42,0.03)" }
                                   : {}
@@ -1311,7 +1311,7 @@ export default function SchedulePage() {
 
                         {pJobs.length === 0 && (
                           <div className="absolute inset-0 flex items-center px-4">
-                            <span className="text-[10px] text-[#474846] font-bold italic">No jobs scheduled</span>
+                            <span className="text-[10px] text-on-surface font-bold italic">No jobs scheduled</span>
                           </div>
                         )}
                       </div>
@@ -1335,12 +1335,12 @@ export default function SchedulePage() {
           ].map(l => (
             <div key={l.label} className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: l.color }} />
-              <span className="text-[10px] text-[#ababa8] uppercase tracking-widest font-bold">{l.label}</span>
+              <span className="text-[10px] text-on-surface uppercase tracking-widest font-bold">{l.label}</span>
             </div>
           ))}
-          <div className="ml-auto text-[#ababa8] text-xs">
-            Partners: <span className="text-[#faf9f5] font-bold">{SERVICE_CATEGORIES.reduce((a, c) => a + c.partners.length, 0)}</span>
-            {" | "}Jobs this week: <span className="text-[#faf9f5] font-bold">{jobs.filter(j => { const idx = dayIndex(j, weekBase); return idx >= 0 && idx < 7; }).length}</span>
+          <div className="ml-auto text-on-surface-variant text-xs">
+            Partners: <span className="text-on-surface font-bold">{SERVICE_CATEGORIES.reduce((a, c) => a + c.partners.length, 0)}</span>
+            {" | "}Jobs this week: <span className="text-on-surface font-bold">{jobs.filter(j => { const idx = dayIndex(j, weekBase); return idx >= 0 && idx < 7; }).length}</span>
           </div>
         </div>
       </div>
@@ -1354,24 +1354,24 @@ export default function SchedulePage() {
           style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
           onClick={e => { if (e.target === e.currentTarget) setEditJob(null); }}
         >
-          <div className="w-full max-w-2xl rounded-2xl relative flex flex-col max-h-[90vh]" style={{ background: "#1a1c1a", border: "1px solid rgba(174,238,42,0.15)" }}>
+          <div className="w-full max-w-2xl rounded-2xl relative flex flex-col max-h-[90vh] bg-surface-container-low border border-outline-variant/20 shadow-xl">
             
             {/* Fixed Header */}
             <div className="px-8 pt-8 pb-4 shrink-0">
-              <button onClick={() => setEditJob(null)} className="absolute top-5 right-5 text-[#ababa8] hover:text-[#faf9f5] transition-colors cursor-pointer z-10">
+              <button onClick={() => setEditJob(null)} className="absolute top-5 right-5 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer z-10">
                 <span className="material-symbols-outlined" translate="no">close</span>
               </button>
 
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#aeee2a]/10 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">event</span>
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-primary text-[18px]" translate="no">event</span>
                 </div>
                 <div>
-                  <h2 className="text-lg font-extrabold text-[#faf9f5]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                  <h2 className="text-lg font-extrabold text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                     Reschedule Job
                   </h2>
                   <div className="flex items-center gap-3 flex-wrap">
-                    <p className="text-[10px] text-[#ababa8] font-bold uppercase tracking-widest">
+                    <p className="text-[10px] text-on-surface font-bold uppercase tracking-widest">
                       {editJob.clientName} · {editJob.partnerName}
                     </p>
                     {editJob.jobStartStatus && (
@@ -1406,7 +1406,7 @@ export default function SchedulePage() {
                       placeholder="Pick a date"
                     />
                     {editDate && (
-                      <p className="text-[10px] text-[#ababa8] mt-1.5 ml-1">
+                      <p className="text-[10px] text-on-surface-variant mt-1.5 ml-1">
                         {(() => { const _d = fromIso(editDate); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}
                       </p>
                     )}
@@ -1414,7 +1414,7 @@ export default function SchedulePage() {
 
                   {/* Status Dropdown */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">
                       Status
                     </label>
                     <div className="relative z-[60]">
@@ -1428,7 +1428,7 @@ export default function SchedulePage() {
                           { value: "in_progress", label: "In Progress" },
                           { value: "done", label: "Done" }
                         ]}
-                        className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                        className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold hover:border-primary transition-colors flex justify-between items-center"
                       />
                     </div>
                   </div>
@@ -1436,7 +1436,7 @@ export default function SchedulePage() {
                   {/* SQ Input — visible for siding & paint (both use SQ for duration calc) */}
                   {(editJob?.serviceType === "siding" || editJob?.serviceType === "paint") && (
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">
                         SQ (Square Footage)
                       </label>
                       <input
@@ -1445,14 +1445,14 @@ export default function SchedulePage() {
                         placeholder="e.g. 50"
                         value={editSq}
                         onChange={e => { setEditSq(e.target.value); setDurManuallySet(false); }}
-                        className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#aeee2a] transition-colors"
+                        className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-primary transition-colors"
                       />
                     </div>
                   )}
 
                   {/* Duration */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#ababa8]">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface">
                       Duration (days)
                     </label>
                     <div className="relative z-50">
@@ -1460,7 +1460,7 @@ export default function SchedulePage() {
                       value={editDur.toString()}
                         onChange={(val) => { setEditDur(Number(val)); setDurManuallySet(true); }}
                         options={Array.from({ length: 30 }, (_, i) => i + 1).map(d => ({ value: d.toString(), label: `${d} day${d > 1 ? "s" : ""}` }))}
-                        className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                        className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold hover:border-primary transition-colors flex justify-between items-center"
                       />
                     </div>
                   </div>
@@ -1474,9 +1474,9 @@ export default function SchedulePage() {
                       <span className="material-symbols-outlined text-[#60b8f5] text-[16px] mt-0.5" translate="no">info</span>
                       <div>
                         <p className="text-xs text-[#60b8f5] font-bold">This will shift {affected.length} other job{affected.length > 1 ? "s" : ""}:</p>
-                        <ul className="mt-1 text-[10px] text-[#faf9f5] font-bold">
+                        <ul className="mt-1 text-[10px] text-on-surface font-bold">
                           {affected.slice(0, 2).map(a => <li key={a.id} className="truncate">• {a.clientName} (new: {fmtDate(fromIso(a.startDate))})</li>)}
-                          {affected.length > 2 && <li className="text-[#ababa8] mt-0.5">...and {affected.length - 2} more</li>}
+                          {affected.length > 2 && <li className="text-on-surface-variant mt-0.5">...and {affected.length - 2} more</li>}
                         </ul>
                       </div>
                     </div>
@@ -1487,18 +1487,18 @@ export default function SchedulePage() {
 
                 {/* Per-Service Crew Selectors */}
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">
+                  <span className="material-symbols-outlined text-sm text-primary" translate="no">
                     {editJob?.status === "in_progress" ? "swap_horiz" : "event_available"}
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-[#aeee2a]">
+                  <span className="text-xs font-bold uppercase tracking-widest text-primary">
                     Change Partner / Team
                   </span>
                 </div>
                 
                 {serviceCrewOptions.length === 0 ? (
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121412] border border-white/5">
-                    <div className="w-3 h-3 border-2 border-[#aeee2a]/30 border-t-[#aeee2a] rounded-full animate-spin" />
-                    <span className="text-[11px] text-[#474846] font-bold">Loading available crews...</span>
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-surface-container-low border border-outline-variant/20">
+                    <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                    <span className="text-[11px] text-outline-variant font-bold">Loading available crews...</span>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
@@ -1513,8 +1513,8 @@ export default function SchedulePage() {
                       return (
                         <div key={svcOpt.jobServiceId} className="flex flex-col gap-1.5">
                           <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                            <span className="text-[#ababa8]">Assign Crew</span>
-                            <span className="text-[#aeee2a]">— {svcOpt.serviceName}</span>
+                            <span className="text-on-surface">Assign Crew</span>
+                            <span className="text-primary">— {svcOpt.serviceName}</span>
                           </label>
                           <div className="relative z-40">
                             <CustomDropdown
@@ -1531,7 +1531,7 @@ export default function SchedulePage() {
                                 };
                               })}
                               placeholder="Select partner / team..."
-                              className="w-full bg-[#121412] border border-[#474846]/20 text-[#faf9f5] rounded-xl px-4 py-2.5 text-sm font-bold hover:border-[#aeee2a] transition-colors flex justify-between items-center"
+                              className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface rounded-xl px-4 py-2.5 text-sm font-bold hover:border-primary transition-colors flex justify-between items-center"
                             />
                           </div>
                         </div>
@@ -1541,36 +1541,36 @@ export default function SchedulePage() {
                 )}
 
                 {/* Info Grid */}
-                <div className="grid grid-cols-2 bg-[#121412] rounded-xl border border-white/5 overflow-hidden mt-4">
-                  <div className="p-4 border-r border-b border-white/5">
-                    <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Salesperson</span>
-                    <div className="text-sm font-bold text-[#faf9f5] flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">person</span>
+                <div className="grid grid-cols-2 bg-surface-container-low rounded-xl border border-outline-variant/20 overflow-hidden mt-4">
+                  <div className="p-4 border-r border-b border-outline-variant/20">
+                    <span className="text-[10px] font-bold text-on-surface uppercase tracking-widest block mb-1">Salesperson</span>
+                    <div className="text-sm font-bold text-on-surface flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-primary" translate="no">person</span>
                       {editJob.salesperson || "Not assigned"}
                     </div>
                   </div>
 
-                  <div className="p-4 border-b border-white/5">
-                    <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Contract Value</span>
-                    <div className="text-sm font-bold text-[#faf9f5] flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm text-[#aeee2a]" translate="no">payments</span>
+                  <div className="p-4 border-b border-outline-variant/20">
+                    <span className="text-[10px] font-bold text-on-surface uppercase tracking-widest block mb-1">Contract Value</span>
+                    <div className="text-sm font-bold text-on-surface flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-primary" translate="no">payments</span>
                       {editJob.contract_amount ? `$${editJob.contract_amount.toLocaleString()}` : "Not set"}
                     </div>
                   </div>
 
-                  <div className="p-4 border-r border-white/5">
-                    <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Contact</span>
-                    <div className="text-xs font-semibold text-[#faf9f5] flex flex-col gap-1">
+                  <div className="p-4 border-r border-outline-variant/20">
+                    <span className="text-[10px] font-bold text-on-surface uppercase tracking-widest block mb-1">Contact</span>
+                    <div className="text-xs font-semibold text-on-surface flex flex-col gap-1">
                       <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[12px] opacity-70" translate="no">call</span> {editJob.phone || "---"}</span>
                       <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[12px] opacity-70" translate="no">mail</span> {editJob.email || "---"}</span>
                     </div>
                   </div>
 
-                  <div className="p-4 border-white/5 flex flex-col justify-start">
-                    <span className="text-[10px] font-bold text-[#ababa8] uppercase tracking-widest block mb-1">Project Address</span>
-                    <div className="text-[11px] font-semibold text-[#faf9f5] flex flex-col gap-0.5 mt-1">
+                  <div className="p-4 border-outline-variant/20 flex flex-col justify-start">
+                    <span className="text-[10px] font-bold text-on-surface uppercase tracking-widest block mb-1">Project Address</span>
+                    <div className="text-[11px] font-semibold text-on-surface flex flex-col gap-0.5 mt-1">
                       <span className="text-xs">{editJob.street || "---"}</span>
-                      <span className="text-[#ababa8]">{editJob.city || "---"}, {editJob.state || "---"} {editJob.zip || "---"}</span>
+                      <span className="text-on-surface-variant">{editJob.city || "---"}, {editJob.state || "---"} {editJob.zip || "---"}</span>
                     </div>
                   </div>
                 </div>
@@ -1578,7 +1578,7 @@ export default function SchedulePage() {
             </div>
 
             {/* Fixed Footer */}
-            <div className="px-8 pt-4 pb-6 shrink-0 border-t border-white/5">
+            <div className="px-8 pt-4 pb-6 shrink-0 border-t border-outline-variant/20">
               <div className="flex justify-between items-center">
                 {/* Delete button — left side */}
                 <button
@@ -1631,7 +1631,7 @@ export default function SchedulePage() {
                   <button
                     type="button"
                     onClick={() => { setEditJob(null); setDeleteStep("idle"); }}
-                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#ababa8] hover:text-[#faf9f5] transition-colors bg-[#121412] border border-[#474846]/20 cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-on-surface-variant hover:text-on-surface transition-colors bg-surface-container-low border border-outline-variant/20 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1639,7 +1639,7 @@ export default function SchedulePage() {
                     type="button"
                     disabled={!editDate || isSundayIso(editDate) || confirmingSchedule}
                     onClick={confirmReschedule}
-                    className="px-6 py-2.5 rounded-xl text-sm font-black bg-[#aeee2a] text-[#3a5400] flex items-center gap-2 active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] disabled:opacity-50 cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl text-sm font-black bg-primary text-[#3a5400] flex items-center gap-2 active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] disabled:opacity-50 cursor-pointer"
                     style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
                   >
                     {confirmingSchedule ? (

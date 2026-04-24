@@ -50,7 +50,7 @@ export default function SalesDashboard() {
          </div>
          <h2 className="text-[11px] font-bold text-[var(--color-siding-green)] uppercase tracking-widest mb-1">Monthly Quota</h2>
          <p className="text-xl font-bold font-headline text-white mb-2">$85,400 <span className="text-sm text-zinc-500 font-normal">/ 100k</span></p>
-         <div className="w-full bg-[#050505] h-2 rounded-full overflow-hidden mb-3 border border-zinc-800">
+         <div className="w-full bg-mobile-frame h-2 rounded-full overflow-hidden mb-3 border border-zinc-800">
             <div className="h-full bg-[var(--color-siding-green)] w-[85%] rounded-full"></div>
          </div>
          <p className="text-xs text-zinc-400 font-medium leading-relaxed pr-8">

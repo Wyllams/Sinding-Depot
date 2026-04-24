@@ -24,7 +24,7 @@ export default function SalesDealsList() {
       
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold font-headline tracking-tight text-white">My Deals</h1>
-        <button className="bg-[var(--color-siding-green)] text-[#050505] p-2 rounded-full shadow-[0_0_15px_rgba(174,238,42,0.4)]">
+        <button className="bg-[var(--color-siding-green)] text-mobile-frame p-2 rounded-full shadow-[0_0_15px_rgba(174,238,42,0.4)]">
            <Plus size={20} strokeWidth={3} />
         </button>
       </div>
@@ -41,7 +41,7 @@ export default function SalesDealsList() {
       </div>
 
       <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar">
-         <button className="bg-[var(--color-siding-green)] text-[#050505] px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">All Deals ({mockDeals.length})</button>
+         <button className="bg-[var(--color-siding-green)] text-mobile-frame px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">All Deals ({mockDeals.length})</button>
          <button className="bg-zinc-900 border border-zinc-800 text-zinc-400 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Active</button>
          <button className="bg-zinc-900 border border-zinc-800 text-zinc-400 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Pending</button>
       </div>

@@ -183,7 +183,7 @@ export default function FieldJobsList() {
   ];
 
   return (
-    <div className="p-4 space-y-4 bg-[#050505] min-h-full">
+    <div className="p-4 space-y-4 bg-mobile-frame min-h-full">
       {/* Tab Pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
         {tabs.map((t) => (
@@ -210,9 +210,9 @@ export default function FieldJobsList() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 bg-[#ff7351]/10 border border-[#ff7351]/20 rounded-2xl p-4">
-          <span className="material-symbols-outlined text-[#ff7351]" translate="no">error</span>
-          <p className="text-xs text-[#ff7351] font-medium">{error}</p>
+        <div className="flex items-center gap-3 bg-error/10 border border-error/20 rounded-2xl p-4">
+          <span className="material-symbols-outlined text-error" translate="no">error</span>
+          <p className="text-xs text-error font-medium">{error}</p>
         </div>
       )}
 

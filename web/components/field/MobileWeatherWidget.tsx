@@ -30,7 +30,7 @@ function getWeatherIcon(code: number): { icon: string; color: string } {
   if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code))              return { icon: "rainy",             color: "text-blue-400"   };
   if ([71, 73, 75, 77, 85, 86].includes(code))                           return { icon: "snowing",           color: "text-white"      };
   if ([95, 96, 99].includes(code))                                       return { icon: "thunderstorm",      color: "text-purple-400" };
-  return { icon: "partly_cloudy_day", color: "text-[#ababa8]" };
+  return { icon: "partly_cloudy_day", color: "text-on-surface-variant" };
 }
 
 function nwsForecastToWmoCode(shortForecast: string): number {
@@ -252,18 +252,18 @@ export function MobileWeatherWidget() {
   };
 
   return (
-    <div className="bg-[#121412] rounded-3xl overflow-hidden border border-white/5 relative">
+    <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-white/5 relative">
       {/* Header */}
-      <div className="px-5 py-4 flex flex-col gap-3 bg-[#181a18]/50 border-b border-white/5">
+      <div className="px-5 py-4 flex flex-col gap-3 bg-surface-container/50 border-b border-white/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#aeee2a] text-[18px]" translate="no">location_on</span>
-            <h3 className="text-base font-bold tracking-tight text-[#faf9f5]">
+            <span className="material-symbols-outlined text-primary text-[18px]" translate="no">location_on</span>
+            <h3 className="text-base font-bold tracking-tight text-on-surface">
               {location.name}
             </h3>
           </div>
           {source && (
-            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest bg-[#242624] border border-[#474846]/30 text-[#ababa8]">
+            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest bg-surface-container-highest border border-outline-variant/30 text-on-surface-variant">
               {source === "nws" ? "NWS" : "O-M"}
             </span>
           )}
@@ -271,7 +271,7 @@ export function MobileWeatherWidget() {
 
         {/* Search */}
         <div className="relative w-full z-10" ref={dropdownRef}>
-          <div className="flex items-center bg-[#1e201e] border border-white/5 rounded-xl px-3 py-2">
+          <div className="flex items-center bg-surface-container-high border border-white/5 rounded-xl px-3 py-2">
             <span className="material-symbols-outlined text-zinc-500 text-sm mr-2" translate="no">search</span>
             <input
               type="text"
@@ -288,7 +288,7 @@ export function MobileWeatherWidget() {
 
           {/* Dropdown */}
           {showDropdown && search.trim().length > 1 && (
-            <div className="absolute top-full left-0 w-full mt-2 bg-[#1e201e] border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-48 overflow-y-auto z-50">
+            <div className="absolute top-full left-0 w-full mt-2 bg-surface-container-high border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-48 overflow-y-auto z-50">
               {isSearching ? (
                 <div className="px-4 py-3 text-xs text-zinc-400 flex justify-center">Searching...</div>
               ) : results.length > 0 ? (
@@ -296,7 +296,7 @@ export function MobileWeatherWidget() {
                   {results.map((city) => (
                     <li
                       key={city.id}
-                      className="px-4 py-2 text-xs text-white hover:bg-[#aeee2a]/10 cursor-pointer flex flex-col"
+                      className="px-4 py-2 text-xs text-white hover:bg-primary/10 cursor-pointer flex flex-col"
                       onClick={() => selectCity(city)}
                     >
                       <span className="font-bold">{city.name}</span>
@@ -316,7 +316,7 @@ export function MobileWeatherWidget() {
       <div className="px-2 pb-2 pt-2">
         {isLoadingWeather || days.length === 0 ? (
           <div className="h-32 flex items-center justify-center">
-             <div className="animate-spin w-6 h-6 rounded-full border-2 border-[#aeee2a]/20 border-t-[#aeee2a]"></div>
+             <div className="animate-spin w-6 h-6 rounded-full border-2 border-primary/20 border-t-primary"></div>
           </div>
         ) : (
           <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar">
@@ -329,12 +329,12 @@ export function MobileWeatherWidget() {
                   key={day.date}
                   className="w-1/2 shrink-0 snap-center p-2"
                 >
-                  <div className={`h-full flex flex-col items-center justify-center p-4 rounded-2xl transition-colors ${isToday ? "bg-[#aeee2a]/[0.08]" : "bg-transparent"}`}>
+                  <div className={`h-full flex flex-col items-center justify-center p-4 rounded-2xl transition-colors ${isToday ? "bg-primary/[0.08]" : "bg-transparent"}`}>
                     <div className="flex items-center gap-1 mb-3">
-                      <span className="text-[10px] font-black text-[#aeee2a]">
+                      <span className="text-[10px] font-black text-primary">
                         {new Date(day.date + "T00:00:00").getDate().toString().padStart(2, '0')}
                       </span>
-                      <span className={`text-[10px] font-bold tracking-widest uppercase ${isToday ? "text-[#aeee2a]" : "text-zinc-500"}`}>
+                      <span className={`text-[10px] font-bold tracking-widest uppercase ${isToday ? "text-primary" : "text-zinc-500"}`}>
                         {isToday ? "TODAY" : getDayName(day.date)}
                       </span>
                     </div>
