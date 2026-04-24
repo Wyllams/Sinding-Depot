@@ -329,7 +329,21 @@ export async function POST(req: Request) {
 
     // 1. Check or Create Customer
     let customerId = "";
-    if (emailAddress) {
+    const contactId = payload.contact_id || payload.ID || payload.id || null;
+
+    if (contactId) {
+      const { data: extCustomerById } = await supabaseAdmin
+        .from("customers")
+        .select("id")
+        .eq("clickone_contact_id", contactId)
+        .maybeSingle();
+
+      if (extCustomerById) {
+        customerId = extCustomerById.id;
+      }
+    }
+
+    if (!customerId && emailAddress) {
       const { data: extCustomer } = await supabaseAdmin
         .from("customers")
         .select("id")
@@ -338,6 +352,18 @@ export async function POST(req: Request) {
 
       if (extCustomer) {
         customerId = extCustomer.id;
+      }
+    }
+    
+    if (!customerId && phoneNumber && phoneNumber !== "Sem Telefone") {
+      const { data: extCustomerByPhone } = await supabaseAdmin
+        .from("customers")
+        .select("id")
+        .eq("phone", phoneNumber)
+        .maybeSingle();
+
+      if (extCustomerByPhone) {
+        customerId = extCustomerByPhone.id;
       }
     }
 
@@ -352,12 +378,20 @@ export async function POST(req: Request) {
           city: city,
           state: state,
           postal_code: zip,
+          clickone_contact_id: contactId,
         })
         .select("id")
         .single();
       
       if (custErr) throw custErr;
       customerId = newCustomer.id;
+    } else if (contactId) {
+      // Update existing customer with ClickOne ID if missing
+      await supabaseAdmin
+        .from("customers")
+        .update({ clickone_contact_id: contactId })
+        .eq("id", customerId)
+        .is("clickone_contact_id", null);
     }
 
     // ────────────────────────────────────────────────────
@@ -511,17 +545,32 @@ export async function POST(req: Request) {
       spId = spMatch?.id || null;
     }
 
-    // 3. Create the Job
+    // 3. Create or Match the Job
+    const jobTitle = `${rawServices} - ${clientName}`;
+    let newJob = null;
+
+    const { data: existingJob } = await supabaseAdmin
+      .from("jobs")
+      .select("id")
+      .eq("customer_id", customerId)
+      .eq("title", jobTitle)
+      .maybeSingle();
+
+    if (existingJob) {
+      console.log(`⚠️ Job already exists for ${jobTitle}. Skipping creation to avoid duplicates.`);
+      return NextResponse.json({ success: true, message: 'Customer mapped and job already existed.', jobId: existingJob.id });
+    }
+
     const jobNumber = `SD-${new Date().getFullYear()}-${Math.floor(Math.random()*9000)+1000}`;
     const numericValue = serviceValue ? parseFloat(String(serviceValue).replace(/[^0-9.]/g, '')) : 0;
 
-    const { data: newJob, error: jobErr } = await supabaseAdmin
+    const { data: createdJob, error: jobErr } = await supabaseAdmin
       .from("jobs")
       .insert({
         customer_id: customerId,
         salesperson_id: spId,
         job_number: jobNumber,
-        title: `${rawServices} - ${clientName}`,
+        title: jobTitle,
         status: "draft",
         gate_status: "NOT_CONTACTED",
         requested_start_date: startDateIso,
@@ -537,6 +586,7 @@ export async function POST(req: Request) {
       .single();
 
     if (jobErr) throw jobErr;
+    newJob = createdJob;
 
     // 4. Register Services + Create Cascade Scheduling
     // ── Service code normalization ──

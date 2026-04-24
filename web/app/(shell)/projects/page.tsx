@@ -54,7 +54,7 @@ interface Job {
   city: string;
   state: string;
   requested_start_date: string | null;
-  customer: { full_name: string } | null;
+  customer: { full_name: string; clickone_contact_id?: string | null } | null;
   salesperson: { full_name: string } | null;
   services: { service_type: { name: string } | null }[];
   blocker_type: string | null; // gate exibido (prioridade: gate_status > derivado)
@@ -90,7 +90,7 @@ export default function ProjectsPage() {
           state,
           requested_start_date,
           contract_signed_at,
-          customer:customers (full_name),
+          customer:customers (full_name, clickone_contact_id),
           salesperson:salespersons (full_name),
           services:job_services (
             service_type:service_types (name)
@@ -398,7 +398,7 @@ export default function ProjectsPage() {
           <table className="w-full min-w-[1100px] text-left border-collapse">
             <thead className="sticky top-0 z-20">
               <tr style={{ boxShadow: "0 1px 0 rgba(71,72,70,0.2)" }}>
-                {["SP", "Client", "Job", "Services", "Gating / Operational Status", "Job Start Status", ""].map((col) => (
+                {["SP", "ID", "Client", "Job", "Services", "Gating / Operational Status", "Job Start Status", ""].map((col) => (
                   <th
                     key={col}
                     className={`px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant bg-surface-container-low ${col === "SP" ? "text-center" : ""}`}
@@ -460,6 +460,18 @@ export default function ProjectsPage() {
                         >
                           {spInitial}
                         </div>
+                      </td>
+
+                      {/* ID */}
+                      <td className="px-6 py-5">
+                        <span 
+                          className="text-[10px] font-mono text-on-surface-variant bg-surface-container py-1 px-2 rounded border border-outline-variant/30 cursor-help"
+                          title={job.customer?.clickone_contact_id || ""}
+                        >
+                          {job.customer?.clickone_contact_id 
+                            ? job.customer.clickone_contact_id.substring(0, 6) + "..." 
+                            : "—"}
+                        </span>
                       </td>
 
                       {/* Client */}
