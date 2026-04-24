@@ -223,8 +223,8 @@ export async function POST(req: Request) {
     // VendedorOP = opportunity.assignedToUsersName (deal owner)
     // VendedorUser = user.name (CRM user who triggered)
     // Rules: same name → use it; only one filled → use it; different names → null
-    const vendedorOP = nonEmpty(cd.VendedorOP) || nonEmpty(cd.vendedorOP);
-    const vendedorUser = nonEmpty(cd.VendedorUser) || nonEmpty(cd.vendedorUser);
+    const vendedorOP = nonEmpty(cd.VendedorOP) || nonEmpty(cd.vendedorOP) || nonEmpty(payload.VendedorOP) || nonEmpty(payload.vendedorOP);
+    const vendedorUser = nonEmpty(cd.VendedorUser) || nonEmpty(cd.vendedorUser) || nonEmpty(payload.VendedorUser) || nonEmpty(payload.vendedorUser);
 
     let salespersonName: string | null = null;
     if (vendedorOP && vendedorUser) {
