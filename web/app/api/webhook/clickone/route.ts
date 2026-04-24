@@ -210,11 +210,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── Helper: returns null for empty, 'undefined', 'null' strings ──
+    // ── Helper: returns null for empty, 'undefined', 'null' strings or unresolved templates ──
     const nonEmpty = (v: unknown): string | null => {
       if (!v || typeof v !== 'string') return null;
       const t = v.trim();
       if (!t || t === 'undefined' || t === 'null') return null;
+      if (t.includes('{{') && t.includes('}}')) return null; // Ignore unresolved ClickOne variables
       return t;
     };
 
@@ -571,7 +572,7 @@ export async function POST(req: Request) {
         salesperson_id: spId,
         job_number: jobNumber,
         title: jobTitle,
-        status: "draft",
+        status: "tentative",
         gate_status: "NOT_CONTACTED",
         requested_start_date: startDateIso,
         service_address_line_1: finalAddress,

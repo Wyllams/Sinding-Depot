@@ -465,7 +465,7 @@ export default function NewProjectPage() {
       const spId = spMatch?.id || null;
 
       const jobNumber = `JOB-${Math.floor(Math.random() * 900000) + 100000}`;
-      const jobStatus = "draft";
+      const jobStatus = "tentative";
 
       const { data: newJob, error: jobErr } = await supabase.from("jobs").insert({
         customer_id: customerId,
