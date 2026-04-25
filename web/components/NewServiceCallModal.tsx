@@ -6,7 +6,7 @@ import { compressImage } from "../lib/compressImage";
 import CustomDatePicker from "./CustomDatePicker";
 import { CustomDropdown } from "./CustomDropdown";
 
-interface Job { id: string; job_number: string; title: string; }
+interface Job { id: string; job_number: string; title: string; customer?: { full_name: string } }
 interface Crew { id: string; name: string; }
 
 interface NewServiceCallModalProps {
@@ -58,7 +58,7 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
 
   const fetchDependencies = async () => {
     const [{ data: jobsData }, { data: crewsData }] = await Promise.all([
-      supabase.from("jobs").select("id, job_number, title").order("job_number", { ascending: false }),
+      supabase.from("jobs").select("id, job_number, title, customer:customers(full_name)").order("job_number", { ascending: false }),
       supabase.from("crews").select("id, name").eq("active", true).order("name"),
     ]);
     if (jobsData) setJobs(jobsData);
@@ -177,9 +177,10 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                 <CustomDropdown
                   value={formData.job_id}
                   onChange={(val) => setFormData({ ...formData, job_id: val })}
+                  searchable={true}
                   options={[
                     { value: "", label: "Select Project" },
-                    ...jobs.map((job) => ({ value: job.id, label: `${job.job_number} - ${job.title}` }))
+                    ...jobs.map((job) => ({ value: job.id, label: job.customer?.full_name || job.title }))
                   ]}
                   className="w-full bg-surface-container border border-white/10 rounded-xl px-4 py-3 text-sm text-on-surface hover:border-primary transition-colors flex justify-between items-center"
                 />
