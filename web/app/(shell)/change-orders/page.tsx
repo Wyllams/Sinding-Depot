@@ -586,7 +586,7 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
                 <CustomDropdown
                   value={jobId}
                   onChange={(val) => setJobId(val)}
-                  options={jobs.map(j => ({ value: j.id, label: `${j.job_number} — ${j.customer_name}` }))}
+                  options={jobs.map(j => ({ value: j.id, label: j.customer_name !== "—" ? j.customer_name : j.job_number }))}
                   placeholder="Select a Project..."
                   searchable
                   className="w-full bg-surface-container-highest border border-outline-variant/20 text-on-surface rounded-xl px-4 py-3.5 text-[15px] font-bold flex justify-between items-center transition-colors hover:border-primary"
