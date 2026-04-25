@@ -106,6 +106,7 @@ export default function ServicesPage() {
   // Filters
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
+  const [search, setSearch] = useState("");
 
   // Edit modal
   const [editService, setEditService] = useState<ServiceCall | null>(null);
@@ -159,7 +160,7 @@ export default function ServicesPage() {
         .select(`
           id, title, description, status, type, reported_at,
           is_signal, signal_acknowledged, inspection_result, crew_id,
-          jobs ( job_number, title ),
+          jobs ( job_number, title, customer:customers ( full_name ) ),
           profiles!blockers_resolved_by_profile_id_fkey ( full_name ),
           blocker_attachments ( url )
         `)
@@ -283,6 +284,13 @@ export default function ServicesPage() {
   const filtered = serviceCalls.filter((s) => {
     if (filterStatus !== "all" && s.status !== filterStatus) return false;
     if (filterType !== "all" && s.type !== filterType) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      const jobMatch = s.jobs?.job_number?.toLowerCase().includes(q) || false;
+      const titleMatch = s.title?.toLowerCase().includes(q) || false;
+      const clientMatch = s.jobs?.customer?.full_name?.toLowerCase().includes(q) || false;
+      if (!jobMatch && !titleMatch && !clientMatch) return false;
+    }
     return true;
   });
 
@@ -377,8 +385,25 @@ export default function ServicesPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-end gap-6 justify-between">
-          {/* Status pills */}
-          <div className="space-y-2">
+          
+          <div className="flex flex-wrap gap-6 items-end">
+            {/* Search Input */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Search</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-lg" translate="no">search</span>
+                <input
+                  type="text"
+                  placeholder="Client, job #, title..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full sm:w-64 bg-surface-container-low border border-outline-variant/20 text-on-surface rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/50"
+                />
+              </div>
+            </div>
+
+            {/* Status pills */}
+            <div className="space-y-2">
             <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Status</label>
             <div className="flex bg-surface-container-low p-1 rounded-full w-fit max-w-full overflow-x-auto gap-0.5">
               {[{ key: "all", label: "All" }, ...STATUS_OPTIONS.map((s) => ({ key: s, label: STATUS_CONFIG[s].label }))].map((opt) => (
@@ -425,6 +450,7 @@ export default function ServicesPage() {
                 </button>
               ))}
             </div>
+          </div>
           </div>
         </div>
 
@@ -499,7 +525,7 @@ export default function ServicesPage() {
                         {/* Project */}
                         <td className="px-5 py-4 text-sm text-on-surface text-left">
                           <span className="font-bold">{issue.jobs?.job_number || "—"}</span>
-                          {issue.jobs?.title && <span className="text-on-surface-variant"> — {issue.jobs.title}</span>}
+                          {issue.jobs?.customer?.full_name && <span className="text-on-surface-variant"> — {issue.jobs.customer.full_name}</span>}
                         </td>
 
                         {/* Status — colored dropdown */}
