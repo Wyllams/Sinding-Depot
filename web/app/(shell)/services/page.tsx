@@ -369,6 +369,18 @@ export default function ServicesPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {/* Search Input */}
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-lg" translate="no">search</span>
+              <input
+                type="text"
+                placeholder="Client, job #, title..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full sm:w-64 bg-surface-container-low border border-outline-variant/20 text-on-surface rounded-xl pl-10 pr-4 py-2 sm:py-2.5 text-sm outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/50"
+              />
+            </div>
+
             <button className="px-4 sm:px-5 py-2 sm:py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-semibold rounded-xl flex items-center gap-2 transition-all text-sm">
               <span className="material-symbols-outlined text-sm" translate="no">download</span>
               <span className="hidden sm:inline">Export</span>
@@ -387,21 +399,6 @@ export default function ServicesPage() {
         <div className="flex flex-wrap items-end gap-6 justify-between">
           
           <div className="flex flex-wrap gap-6 items-end">
-            {/* Search Input */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Search</label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-lg" translate="no">search</span>
-                <input
-                  type="text"
-                  placeholder="Client, job #, title..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full sm:w-64 bg-surface-container-low border border-outline-variant/20 text-on-surface rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/50"
-                />
-              </div>
-            </div>
-
             {/* Status pills */}
             <div className="space-y-2">
             <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Status</label>
