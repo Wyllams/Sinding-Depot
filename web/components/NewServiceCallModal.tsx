@@ -35,6 +35,72 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
 
   const [activeFilter, setActiveFilter] = useState<string[]>(["XICARA", "WILMAR", "SULA", "LUIS", "OSVIN", "VICTOR", "LEANDRO", "JOSUE"]);
 
+  // ── Auto-crew lookup ────────────────────────────
+  const [autoCrewLabel, setAutoCrewLabel] = useState<string | null>(null);
+
+  // Map discipline names to service_types names
+  const DISCIPLINE_TO_SERVICE_TYPE: Record<string, string> = {
+    siding: "Siding",
+    doors: "Doors",
+    windows: "Windows",
+    paint: "Painting",
+    gutters: "Gutters",
+    roofing: "Roofing",
+  };
+
+  const lookupAutoCrew = async (jobId: string, discipline: string): Promise<void> => {
+    if (!jobId || !discipline) {
+      setAutoCrewLabel(null);
+      return;
+    }
+
+    const serviceTypeName = DISCIPLINE_TO_SERVICE_TYPE[discipline];
+    if (!serviceTypeName) {
+      setAutoCrewLabel(null);
+      return;
+    }
+
+    try {
+      // 1. Find the service_type id by name
+      const { data: stData } = await supabase
+        .from("service_types")
+        .select("id")
+        .eq("name", serviceTypeName)
+        .single();
+
+      if (!stData) { setAutoCrewLabel(null); return; }
+
+      // 2. Find the job_service for this job + service_type
+      const { data: jsData } = await supabase
+        .from("job_services")
+        .select("id")
+        .eq("job_id", jobId)
+        .eq("service_type_id", stData.id)
+        .limit(1)
+        .single();
+
+      if (!jsData) { setAutoCrewLabel(null); return; }
+
+      // 3. Find the crew assigned to this job_service
+      const { data: saData } = await supabase
+        .from("service_assignments")
+        .select("crew_id")
+        .eq("job_service_id", jsData.id)
+        .limit(1)
+        .single();
+
+      if (!saData?.crew_id) { setAutoCrewLabel(null); return; }
+
+      // 4. Set the crew_id on form and show label
+      setFormData(prev => ({ ...prev, crew_id: saData.crew_id }));
+      // Find crew name for the label
+      const matchedCrew = crews.find(c => c.id === saData.crew_id);
+      setAutoCrewLabel(matchedCrew?.name || "Auto-assigned");
+    } catch {
+      setAutoCrewLabel(null);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchDependencies();
@@ -51,6 +117,7 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
       
       // Reset form on open
       setFormData({ job_id: "", type: "", crew_id: "", reported_at: new Date().toISOString().split("T")[0], title: "", description: "" });
+      setAutoCrewLabel(null);
       setFiles([]);
       setError(null);
     }
@@ -105,7 +172,7 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
           reported_at: new Date(formData.reported_at).toISOString(),
           resolved_by_profile_id: null,
           reported_by_profile_id: userData.user?.id,
-          status: "open",
+          status: "inspection_date",
           crew_id: formData.crew_id || null,
         })
         .select("id")
@@ -176,7 +243,11 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                 </label>
                 <CustomDropdown
                   value={formData.job_id}
-                  onChange={(val) => setFormData({ ...formData, job_id: val })}
+                  onChange={(val) => {
+                      const updated = { ...formData, job_id: val };
+                      setFormData(updated);
+                      lookupAutoCrew(val, formData.type);
+                    }}
                   searchable={true}
                   options={[
                     { value: "", label: "Select Project" },
@@ -193,7 +264,11 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                 </label>
                 <CustomDropdown
                   value={formData.type}
-                  onChange={(val) => setFormData({ ...formData, type: val })}
+                  onChange={(val) => {
+                      const updated = { ...formData, type: val };
+                      setFormData(updated);
+                      lookupAutoCrew(formData.job_id, val);
+                    }}
                   options={[
                     { value: "", label: "--" },
                     { value: "siding", label: "Siding" },
@@ -243,6 +318,14 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                   />
                 </div>
               </div>
+              {autoCrewLabel && (
+                <div className="col-span-2 flex items-center gap-2 px-1 -mt-2">
+                  <span className="material-symbols-outlined text-primary text-sm" translate="no">auto_fix_high</span>
+                  <span className="text-[11px] text-primary font-semibold">
+                    Auto-assigned: {autoCrewLabel} (based on project crew assignment)
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Title */}

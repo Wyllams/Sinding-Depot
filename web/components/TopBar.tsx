@@ -6,6 +6,7 @@ import { useSidebar } from "./SidebarContext";
 import { useUndo } from "./UndoContext";
 import { supabase } from "../lib/supabase";
 import { NotificationBell } from "./NotificationBell";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 // =============================================
 // TopBar — Componente padrão de cabeçalho
@@ -154,6 +155,9 @@ export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
       {/* Right side */}
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {rightSlot && <>{rightSlot}<div className="hidden sm:block w-px h-6 bg-outline-variant/50" /></>}
+
+        {/* Theme Switcher */}
+        <ThemeSwitcher />
 
         {/* History Action Button */}
         <div className="relative" ref={historyRef}>

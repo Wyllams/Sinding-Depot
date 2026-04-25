@@ -225,6 +225,7 @@ export default function ReportsPage() {
   // ── Annual Report Data (Ruby & Matt) ────────────────────────────────────
   const [annualData, setAnnualData] = useState<Record<string, number[]>>({});
   const [annualSalespeople, setAnnualSalespeople] = useState<{ id: string; name: string; color: string }[]>([]);
+  const [annualTotalByMonth, setAnnualTotalByMonth] = useState<number[]>(Array(12).fill(0));
 
   // ─────────────────────────────────────────────────────────────────────────
   // Open Goals Modal — loads current monthly goals only
@@ -493,8 +494,23 @@ export default function ReportsPage() {
       report[j.salesperson_id][jobMonth] += Number(j.contract_amount);
     });
 
+    // Total by month across ALL salespersons (including Armando) for Total Sold card
+    const allSpIds = new Set(spData.map((sp) => sp.id));
+    const totalByMonth: number[] = Array(12).fill(0);
+    (jobsData || []).forEach((j) => {
+      if (!j.salesperson_id || !allSpIds.has(j.salesperson_id)) return;
+      if (j.status === "cancelled") return;
+      const dStr = j.contract_signed_at || j.created_at;
+      if (!dStr) return;
+      const jy = parseInt(dStr.slice(0, 4), 10);
+      const jm = parseInt(dStr.slice(5, 7), 10) - 1;
+      if (jy !== year) return;
+      totalByMonth[jm] += Number(j.contract_amount);
+    });
+
     setAnnualData(report);
     setAnnualSalespeople(spList);
+    setAnnualTotalByMonth(totalByMonth);
   }, []);
 
   // ── Data Fetcher (monthly-centric) ─────────────────────────────────────
@@ -840,22 +856,81 @@ export default function ReportsPage() {
               <KpiCard icon="work" label="Total Jobs" value={String(data.totalJobs)} sub="Closed this month" color="#aeee2a" />
             </div>
 
-            {/* Average Ticket */}
-            <div
-              className="rounded-2xl p-4 flex items-center justify-between bg-surface-container-low border border-outline-variant/20 shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#e3eb5d]/10">
-                  <span className="material-symbols-outlined text-[#e3eb5d] text-lg" translate="no">receipt_long</span>
+            {/* Average Ticket + Total Sold — 50/50 grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Average Ticket */}
+              <div
+                className="rounded-2xl p-4 flex items-center justify-between bg-surface-container-low border border-outline-variant/20 shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#e3eb5d]/10">
+                    <span className="material-symbols-outlined text-[#e3eb5d] text-lg" translate="no">receipt_long</span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-on-surface uppercase tracking-widest font-bold">Average Ticket</p>
+                    <p className="text-on-surface-variant text-xs mt-0.5">Per job sold this month</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] text-on-surface uppercase tracking-widest font-bold">Average Ticket</p>
-                  <p className="text-on-surface-variant text-xs mt-0.5">Per job sold this month</p>
+                <p className="text-3xl font-black text-[#e3eb5d]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                  {fmt(data.averageTicket)}
+                </p>
+              </div>
+
+              {/* Total Sold — Annual Accumulated */}
+              <div
+                className="rounded-2xl p-4 flex flex-col gap-3 bg-surface-container-low border border-outline-variant/20 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary/10">
+                      <span className="material-symbols-outlined text-primary text-lg" translate="no">payments</span>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-on-surface uppercase tracking-widest font-bold">Total Sold</p>
+                      <p className="text-on-surface-variant text-xs mt-0.5">Accumulated · {selectedYear}</p>
+                    </div>
+                  </div>
+                  <p className="text-3xl font-black text-primary" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                    {fmt(annualTotalByMonth.reduce((a, b) => a + b, 0))}
+                  </p>
+                </div>
+                {/* Monthly breakdown mini-bars */}
+                <div className="flex gap-1 items-end h-10 mt-1">
+                  {annualTotalByMonth.map((val, i) => {
+                    const max = Math.max(...annualTotalByMonth, 1);
+                    // Set a minimum height of 15% for empty months so they show as grey bars
+                    const h = max > 0 ? Math.max((val / max) * 100, val > 0 ? 8 : 15) : 15;
+                    const isBest = val > 0 && val === max;
+                    return (
+                      <div
+                        key={i}
+                        className="group relative flex-1 flex items-end justify-center h-full"
+                        title={`${MONTH_NAMES[i].slice(0, 3)}: ${fmt(val)}`}
+                      >
+                        <div
+                          className="w-full rounded-sm transition-all"
+                          style={{
+                            height: `${h}%`,
+                            backgroundColor: isBest 
+                              ? "#e3eb5d" 
+                              : val > 0 
+                                ? "#aeee2a" 
+                                : "rgba(255, 255, 255, 0.12)", // Cinza claro para os meses vazios
+                            opacity: val > 0 ? (i === selectedMonth ? 1 : 0.8) : 0.5,
+                          }}
+                        />
+                        {/* Custom Tooltip */}
+                        <div className="absolute bottom-full mb-1 hidden group-hover:flex flex-col items-center z-10 pointer-events-none">
+                          <div className="bg-surface-container-highest border border-white/10 text-on-surface text-[10px] py-1 px-2 rounded whitespace-nowrap shadow-xl">
+                            <span className="font-bold opacity-70 mr-1">{MONTH_NAMES[i].slice(0, 3)}</span>
+                            <span className="font-black" style={{ color: isBest ? "#e3eb5d" : val > 0 ? "#aeee2a" : "#fff" }}>{fmt(val)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              <p className="text-3xl font-black text-[#e3eb5d]" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
-                {fmt(data.averageTicket)}
-              </p>
             </div>
 
             {/* ── Chart + Goal Progress ────────────────────────────────── */}

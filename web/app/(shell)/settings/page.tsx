@@ -160,14 +160,14 @@ export default function SettingsPage() {
           ══════════════════════════════════════ */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
-              <h3 className="text-xl font-headline font-bold text-white">My Profile</h3>
+              <h3 className="text-xl font-headline font-bold text-on-surface">My Profile</h3>
               <p className="text-on-surface-variant text-sm mt-2 leading-relaxed">
                 Update your personal information and profile photo. Changes are reflected across the entire platform.
               </p>
             </div>
 
             <div className="lg:col-span-2">
-              <div className="bg-surface-container-low p-8 rounded-2xl space-y-6 border border-white/5">
+              <div className="bg-surface-container-low p-8 rounded-2xl space-y-6 border border-outline-variant/20">
 
                 {/* Avatar section */}
                 <div className="flex items-center gap-6">
@@ -228,7 +228,7 @@ export default function SettingsPage() {
                       value={editName}
                       onChange={e => setEditName(e.target.value)}
                       placeholder="Your full name"
-                      className="w-full bg-surface-container border border-white/5 rounded-xl py-3 px-4 text-on-surface font-medium focus:ring-1 focus:ring-primary focus:border-transparent outline-none transition-all"
+                      className="w-full bg-surface-container border border-outline-variant/20 rounded-xl py-3 px-4 text-on-surface font-medium focus:ring-1 focus:ring-primary focus:border-transparent outline-none transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -238,7 +238,7 @@ export default function SettingsPage() {
                       value={editPhone}
                       onChange={e => setEditPhone(e.target.value)}
                       placeholder="+1 (555) 000-0000"
-                      className="w-full bg-surface-container border border-white/5 rounded-xl py-3 px-4 text-on-surface font-medium focus:ring-1 focus:ring-primary focus:border-transparent outline-none transition-all"
+                      className="w-full bg-surface-container border border-outline-variant/20 rounded-xl py-3 px-4 text-on-surface font-medium focus:ring-1 focus:ring-primary focus:border-transparent outline-none transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -247,13 +247,13 @@ export default function SettingsPage() {
                       type="email"
                       value={myProfile?.email || ""}
                       readOnly
-                      className="w-full bg-background border border-white/5 rounded-xl py-3 px-4 text-on-surface-variant font-medium outline-none cursor-not-allowed"
+                      className="w-full bg-background border border-outline-variant/20 rounded-xl py-3 px-4 text-on-surface-variant font-medium outline-none cursor-not-allowed"
                     />
                     <p className="text-[10px] text-outline-variant">Email cannot be changed here</p>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Role</label>
-                    <div className="w-full bg-background border border-white/5 rounded-xl py-3 px-4 flex items-center gap-2 cursor-not-allowed">
+                    <div className="w-full bg-background border border-outline-variant/20 rounded-xl py-3 px-4 flex items-center gap-2 cursor-not-allowed">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${getRoleBadgeColor(myProfile?.role || "")}`}>
                         {ROLE_LABELS[myProfile?.role || ""] || myProfile?.role || "—"}
                       </span>
@@ -288,11 +288,11 @@ export default function SettingsPage() {
           ══════════════════════════════════════ */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
-              <h3 className="text-xl font-headline font-bold text-white">Organization Profile</h3>
+              <h3 className="text-xl font-headline font-bold text-on-surface">Organization Profile</h3>
               <p className="text-on-surface-variant text-sm mt-2 leading-relaxed">Update your company's core identity, branding, and operational timezone.</p>
             </div>
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-surface-container-low p-8 rounded-2xl space-y-6 border border-white/5">
+              <div className="bg-surface-container-low p-8 rounded-2xl space-y-6 border border-outline-variant/20">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Legal Name</label>

@@ -10,6 +10,7 @@ import { supabase } from "../../../../lib/supabase";
 import { calculateServiceDuration } from "../../../../lib/duration-calculator";
 import { SCHEDULING_PAUSED } from "../../../../lib/scheduling-flag";
 import { ProjectWeatherCard } from "../../../../components/ProjectWeatherCard";
+import { useRealtimeSubscription } from "../../../../lib/hooks/useRealtimeSubscription";
 
 // ─── Discipline visuals (reused from /crews) ──────────────────────
 const DISCIPLINE_VIS: Record<string, { icon: string; color: string }> = {
@@ -252,7 +253,7 @@ interface JobDetail {
     start_date: string | null;
     end_date: string | null;
   }[];
-  change_orders: { id: string; title: string; status: string; proposed_amount: number | null }[];
+  change_orders: { id: string; title: string; status: string; proposed_amount: number | null; decided_at: string | null }[];
 }
 
 // ─── Status Map (3 values matching calendar popup) ─────────────────────
@@ -303,6 +304,19 @@ function PaintColorsCard({ jobId }: { jobId: string }) {
   const [overriding, setOverriding] = useState(false);
   const [overrideActive, setOverrideActive] = useState(false);
 
+  // ── Refetch helper (para Realtime)
+  const refetchColors = useCallback(async () => {
+    try {
+      const { data: colorData } = await supabase
+        .from("job_color_selections")
+        .select("surface_area, color_code, brand, status")
+        .eq("job_id", jobId);
+      setColors(colorData || []);
+    } catch (err) {
+      console.error("[PaintColors] refetch error:", err);
+    }
+  }, [jobId]);
+
   useEffect(() => {
     (async () => {
       try {
@@ -351,6 +365,17 @@ function PaintColorsCard({ jobId }: { jobId: string }) {
       }
     })();
   }, [jobId]);
+
+  // ── Realtime: atualiza quando o cliente submeter/editar cores
+  useRealtimeSubscription({
+    table: "job_color_selections",
+    event: "*",
+    filter: `job_id=eq.${jobId}`,
+    onPayload: () => {
+      refetchColors();
+    },
+  });
+
 
   async function handleOverride(): Promise<void> {
     setOverriding(true);
@@ -455,7 +480,7 @@ export default function ProjectDetailPage() {
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "crews" | "documents" | "extra_material">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "crews" | "change_orders" | "extra_material" | "daily_log" | "documents">("overview");
   const [copied, setCopied] = useState(false);
   const [gateStatus, setGateStatus] = useState<string>("READY");
   const [crewPopupOpen, setCrewPopupOpen] = useState(false);
@@ -466,6 +491,20 @@ export default function ProjectDetailPage() {
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loadingMilestones, setLoadingMilestones] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+
+  // ── Daily Log state ──
+  interface DailyLogEntry {
+    id: string;
+    log_date: string | null;
+    notes: string | null;
+    crew_on_site: string | null;
+    images: string[] | null;
+    created_at: string;
+    author: { full_name: string } | null;
+    daily_log_attachments: { url: string }[];
+  }
+  const [dailyLogs, setDailyLogs] = useState<DailyLogEntry[]>([]);
+  const [dailyLogsLoading, setDailyLogsLoading] = useState(false);
 
   // States para gerenciar a edição global
   const [allSalespersons, setAllSalespersons] = useState<{ id: string; full_name: string }[]>([]);
@@ -708,7 +747,7 @@ export default function ProjectDetailPage() {
       // Separate query for change_orders (RLS-protected, may fail for non-auth sessions)
       const { data: coData } = await supabase
         .from("change_orders")
-        .select("id, title, status, proposed_amount")
+        .select("id, title, status, proposed_amount, decided_at")
         .eq("job_id", jobId);
 
       const j = data as any;
@@ -790,6 +829,41 @@ export default function ProjectDetailPage() {
       setLoading(false);
     }
   }, [jobId]);
+
+  // ── Fetch daily logs ──
+  const fetchDailyLogs = useCallback(async () => {
+    if (!jobId) return;
+    setDailyLogsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("daily_logs")
+        .select(`
+          id, log_date, notes, crew_on_site, images, created_at,
+          author:profiles!daily_logs_author_id_fkey ( full_name ),
+          daily_log_attachments ( url )
+        `)
+        .eq("job_id", jobId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("[DailyLog] fetch error:", error);
+      } else {
+        setDailyLogs((data || []) as unknown as DailyLogEntry[]);
+      }
+    } catch (err) {
+      console.error("[DailyLog] unexpected error:", err);
+    } finally {
+      setDailyLogsLoading(false);
+    }
+  }, [jobId]);
+
+  // Load daily logs when tab switches to daily_log
+  useEffect(() => {
+    if (activeTab === "daily_log") {
+      fetchDailyLogs();
+    }
+  }, [activeTab, fetchDailyLogs]);
+
 
   // ── Fetch milestones for the Documents tab ──
   const fetchMilestones = useCallback(async () => {
@@ -1559,8 +1633,10 @@ export default function ProjectDetailPage() {
           {[
             { key: "overview",        label: "Overview",        icon: "dashboard" },
             { key: "crews",           label: "Crews",           icon: "groups" },
-            { key: "documents",       label: "Documents",       icon: "folder" },
+            { key: "change_orders",   label: "Change Orders",   icon: "request_quote" },
             { key: "extra_material",  label: "Extra Material",  icon: "inventory_2" },
+            { key: "daily_log",       label: "Daily Log",       icon: "edit_note" },
+            { key: "documents",       label: "Documents",       icon: "folder" },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -1822,50 +1898,6 @@ export default function ProjectDetailPage() {
               </div>
             </section>
 
-            {/* ── Section: Change Orders ── */}
-            <section>
-              <div className="flex items-center justify-between">
-                <SectionHeader icon="request_quote" title="Change Orders" />
-                <Link href="/change-orders">
-                  <button className="text-primary text-xs font-bold uppercase hover:underline tracking-widest mb-6">View All →</button>
-                </Link>
-              </div>
-              <div className="p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
-                {job.change_orders.length === 0 ? (
-                  <p className="text-sm text-outline-variant text-center py-4">No change orders for this project</p>
-                ) : (
-                  <div className="space-y-3">
-                    {job.change_orders.map((co: any) => {
-                      const coColors: Record<string, string> = {
-                        draft: "#fff7cf",
-                        pending_customer_approval: "#e3eb5d",
-                        approved: "#aeee2a",
-                        rejected: "#ff7351",
-                        cancelled: "#747673",
-                      };
-                      const c = coColors[co.status] ?? "#ababa8";
-                      return (
-                        <div key={co.id} className="flex items-center justify-between p-4 bg-surface-container-highest rounded-xl border border-outline-variant/15 hover:border-outline-variant/40 transition-colors">
-                          <div>
-                            <p className="text-sm font-bold text-on-surface">{co.title}</p>
-                            <span
-                              className="text-[10px] font-black uppercase"
-                              style={{ color: c }}
-                            >
-                              {co.status.replace(/_/g, " ")}
-                            </span>
-                          </div>
-                          <p className="text-sm font-black text-on-surface">
-                            {co.proposed_amount != null ? `$${co.proposed_amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "—"}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </section>
-
           </div>
         )}
 
@@ -1956,7 +1988,69 @@ export default function ProjectDetailPage() {
         )}
 
         {/* ══════════════════════════════════════════════════
-            TAB 3: DOCUMENTS & MEDIA VAULT
+            TAB 3: CHANGE ORDERS
+        ══════════════════════════════════════════════════ */}
+        {activeTab === "change_orders" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black tracking-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Change Orders</h3>
+                <p className="text-xs text-on-surface-variant">All change orders for this project</p>
+              </div>
+              <Link href="/change-orders">
+                <button className="text-primary text-xs font-bold uppercase hover:underline tracking-widest">View All →</button>
+              </Link>
+            </div>
+            <div className="p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
+              {job.change_orders.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 py-12 text-on-surface-variant">
+                  <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center">
+                    <span className="material-symbols-outlined text-2xl text-primary" translate="no">request_quote</span>
+                  </div>
+                  <p className="text-sm font-bold text-on-surface">No change orders yet</p>
+                  <p className="text-xs">Change orders for this project will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {job.change_orders.map((co: any) => {
+                    const coColors: Record<string, string> = {
+                      draft: "#fff7cf",
+                      pending_customer_approval: "#e3eb5d",
+                      approved: "#aeee2a",
+                      rejected: "#ff7351",
+                      cancelled: "#747673",
+                    };
+                    const c = coColors[co.status] ?? "#ababa8";
+                    return (
+                      <div key={co.id} className="flex items-center justify-between p-4 bg-surface-container-highest rounded-xl border border-outline-variant/15 hover:border-outline-variant/40 transition-colors">
+                        <div>
+                          <p className="text-sm font-bold text-on-surface">{co.title}</p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-[10px] font-black uppercase" style={{ color: c }}>
+                              {co.status.replace(/_/g, " ")}
+                            </span>
+                            {co.decided_at && (
+                              <span className="text-[10px] font-bold text-on-surface-variant">
+                                {co.status === "approved" ? "Approved" : co.status === "rejected" ? "Rejected" : "Decided"}{" "}
+                                {(() => { const d = new Date(co.decided_at); return `${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}/${d.getFullYear()}`; })()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm font-black text-on-surface">
+                          {co.proposed_amount != null ? `$${co.proposed_amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "—"}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            TAB 4: DOCUMENTS & MEDIA VAULT
         ══════════════════════════════════════════════════ */}
         {activeTab === "documents" && (
           <div className="space-y-6">
@@ -2490,6 +2584,106 @@ export default function ProjectDetailPage() {
                     >Add Request</button>
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            TAB 6: DAILY LOG
+        ══════════════════════════════════════════════════ */}
+        {activeTab === "daily_log" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black tracking-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Daily Log</h3>
+                <p className="text-xs text-on-surface-variant">
+                  Daily activity reports from crews assigned to this project
+                  {dailyLogs.length > 0 && <span className="text-primary font-bold ml-1">({dailyLogs.length} entries)</span>}
+                </p>
+              </div>
+            </div>
+
+            {dailyLogsLoading ? (
+              <div className="flex justify-center py-16">
+                <span className="material-symbols-outlined animate-spin text-primary text-3xl" translate="no">sync</span>
+              </div>
+            ) : dailyLogs.length === 0 ? (
+              <div className="p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
+                <div className="flex flex-col items-center gap-3 py-12 text-on-surface-variant">
+                  <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center">
+                    <span className="material-symbols-outlined text-2xl text-primary" translate="no">edit_note</span>
+                  </div>
+                  <p className="text-sm font-bold text-on-surface">No daily logs yet</p>
+                  <p className="text-xs">Crew daily activity reports will appear here once submitted.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {dailyLogs.map((log) => {
+                  const logDate = log.log_date ? new Date(log.log_date + "T12:00:00") : new Date(log.created_at);
+                  const dateStr = `${(logDate.getMonth()+1).toString().padStart(2,"0")}/${logDate.getDate().toString().padStart(2,"0")}/${logDate.getFullYear()}`;
+                  const dayName = logDate.toLocaleDateString("en-US", { weekday: "short" });
+                  const authorName = Array.isArray(log.author) ? (log.author as any)[0]?.full_name : (log.author as any)?.full_name;
+                  const allImages: string[] = [
+                    ...(log.images || []),
+                    ...(log.daily_log_attachments || []).map((a: any) => a.url),
+                  ];
+
+                  return (
+                    <div key={log.id} className="rounded-xl bg-surface-container-low border border-outline-variant/15 overflow-hidden">
+                      {/* Log Header */}
+                      <div className="px-5 py-3.5 bg-surface-container flex items-center justify-between border-b border-white/5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <span className="text-primary font-extrabold text-xs">{dayName}</span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-on-surface">{dateStr}</p>
+                            {authorName && (
+                              <p className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold">by {authorName}</p>
+                            )}
+                          </div>
+                        </div>
+                        {log.crew_on_site && (
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-highest text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+                            <span className="material-symbols-outlined text-[12px]" translate="no">group</span>
+                            {log.crew_on_site}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Log Content */}
+                      <div className="px-5 py-4">
+                        {log.notes && (
+                          <p className="text-sm text-on-surface whitespace-pre-wrap leading-relaxed">{log.notes}</p>
+                        )}
+
+                        {/* Images Grid */}
+                        {allImages.length > 0 && (
+                          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                            {allImages.map((url, imgIdx) => (
+                              <a
+                                key={imgIdx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-primary/50 transition-colors group"
+                              >
+                                <img
+                                  src={url}
+                                  alt={`Daily log photo ${imgIdx + 1}`}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                  loading="lazy"
+                                />
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

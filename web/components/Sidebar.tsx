@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { ThemeSwitcher } from "./ThemeSwitcher";
 
 interface NavItem {
   href: string;
@@ -23,6 +22,7 @@ const navItems: NavItem[] = [
   { href: "/cash-payments", icon: "payments", label: "Cash Payments", roles: ["admin"] },
   { href: "/windows-tracker", icon: "window", label: "Windows Tracker", roles: ["admin"] },
   { href: "/services", icon: "warning", label: "Services", roles: ["admin"] },
+  { href: "/labor-bills", icon: "receipt_long", label: "Labor Bills", roles: ["admin"] },
   { href: "/schedule", icon: "calendar_today", label: "Job Schedule", roles: ["admin", "salesperson", "partner", "crew"] },
   { href: "/sales-reports", icon: "assessment", label: "Sales", roles: ["admin", "salesperson"] },
   { href: "/team", icon: "admin_panel_settings", label: "Users & Permissions", roles: ["admin"] },
@@ -51,7 +51,7 @@ export function Sidebar() {
   });
 
   const sidebarContent = (
-    <aside className="bg-surface-container-low h-full w-64 flex flex-col z-50 overflow-y-auto shrink-0">
+    <aside className="bg-surface-container-low h-full w-64 flex flex-col z-50 overflow-hidden shrink-0">
       {/* Logo — aligned with TopBar header height */}
       <div className="w-full flex items-center justify-center px-4 shrink-0 border-b border-outline-variant/20" style={{ height: "56px" }}>
         <img
@@ -73,7 +73,7 @@ export function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-1 px-4 pt-4 pb-6">
+      <nav className="flex-1 space-y-1 px-4 pt-4 pb-6 overflow-y-auto">
         {visibleItems.map((item) => {
           const isActive =
             item.href !== "#" &&
@@ -108,9 +108,8 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Settings & Theme — pinned to bottom */}
+      {/* Settings — pinned to bottom */}
       <div className="px-4 pb-4 pt-2 border-t border-outline-variant/20 shrink-0 flex flex-col gap-2">
-        <ThemeSwitcher />
         <Link
           href="/settings"
           onClick={close}

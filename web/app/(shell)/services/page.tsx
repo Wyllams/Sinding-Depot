@@ -108,6 +108,12 @@ export default function ServicesPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [search, setSearch] = useState("");
 
+  // ── Service Reports Tab ──
+  const [servicesTab, setServicesTab] = useState<"calls" | "reports">("calls");
+  const [serviceReports, setServiceReports] = useState<any[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsFilter, setReportsFilter] = useState<"all" | "pending" | "reviewed">("all");
+
   // Edit modal
   const [editService, setEditService] = useState<ServiceCall | null>(null);
   const [editForm, setEditForm] = useState<{
@@ -326,6 +332,39 @@ export default function ServicesPage() {
     }
   });
 
+
+  // ── Fetch service reports ──
+  const fetchServiceReports = async () => {
+    setReportsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("service_reports")
+        .select(`
+          id, blocker_id, is_our_fault, notes, reported_at, reviewed_by, reviewed_at,
+          reporter:profiles!service_reports_reporter_id_fkey ( full_name ),
+          blocker:blockers!service_reports_blocker_id_fkey ( id, title, type, status, jobs ( job_number, title ) ),
+          service_report_attachments ( url, file_name )
+        `)
+        .order("reported_at", { ascending: false });
+      if (error) console.error("[ServiceReports] fetch error:", error);
+      else setServiceReports(data || []);
+    } catch (err) { console.error("[ServiceReports] error:", err); }
+    finally { setReportsLoading(false); }
+  };
+
+  useEffect(() => { if (servicesTab === "reports") fetchServiceReports(); }, [servicesTab]);
+
+  const filteredReports = serviceReports.filter((r: any) => {
+    if (reportsFilter === "pending") return !r.reviewed_at;
+    if (reportsFilter === "reviewed") return !!r.reviewed_at;
+    return true;
+  });
+
+  const markReportReviewed = async (reportId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("service_reports").update({ reviewed_by: user?.id, reviewed_at: new Date().toISOString() }).eq("id", reportId);
+    fetchServiceReports();
+  };
   return (
     <>
       <TopBar />
@@ -451,33 +490,51 @@ export default function ServicesPage() {
           </div>
         </div>
 
+
+        {/* ── Tab Switcher ── */}
+        <div className="flex gap-1 bg-surface-container-low p-1 rounded-xl w-fit">
+          {([{ key: "calls" as const, label: "Service Calls", icon: "construction" }, { key: "reports" as const, label: "Reports", icon: "summarize" }]).map(tab => (
+            <button key={tab.key} onClick={() => setServicesTab(tab.key)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${servicesTab === tab.key ? "bg-primary text-[#3a5400] shadow-md" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container"}`}>
+              <span className="material-symbols-outlined text-[18px]" translate="no">{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {servicesTab === "calls" && (<>
         {/* Data Table */}
         <div className="bg-surface-container-low rounded-xl shadow-2xl border border-outline-variant/10">
           <div className="overflow-x-auto overflow-y-visible min-h-[220px]">
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-surface-container-high/50">
-                  {["ID", "Title", "Project", "Status", "Assigned To", "Type", "Date", "Signal", ""].map((col, i) => (
-                    <th
-                      key={col}
-                      className={`px-5 py-4 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest ${
-                        ["Status", "Assigned To", "Type", "Signal", ""].includes(col) ? "text-center" : col === "Date" ? "text-right" : "text-left"
-                      }`}
-                    >
-                      <div className={`flex items-center gap-2 ${col === "Assigned To" ? "justify-center" : ""}`}>
-                        {col}
-                        {col === "Assigned To" && (
-                          <button
-                            onClick={() => setIsFilterModalOpen(true)}
-                            title="Manage Assigned Crew Filter"
-                            className="w-5 h-5 flex items-center justify-center rounded bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-surface-container-highest border border-outline-variant/30 transition-all ml-1"
-                          >
-                            <span className="material-symbols-outlined text-[13px]" translate="no">edit</span>
-                          </button>
-                        )}
-                      </div>
-                    </th>
-                  ))}
+                  {["ID", "Title", "Project", "Status", "Assigned To", "Type", "Date", "Signal", ""].map((col, i) => {
+                    const isCenter = ["Status", "Assigned To", "Type", "Signal", ""].includes(col);
+                    const isRight = col === "Date";
+                    
+                    return (
+                      <th
+                        key={col}
+                        className={`px-5 py-4 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest ${
+                          isCenter ? "text-center" : isRight ? "text-right" : "text-left"
+                        }`}
+                      >
+                        <div className={`flex items-center gap-2 ${isCenter ? "justify-center" : isRight ? "justify-end" : "justify-start"}`}>
+                          {col}
+                          {col === "Assigned To" && (
+                            <button
+                              onClick={() => setIsFilterModalOpen(true)}
+                              title="Manage Assigned Crew Filter"
+                              className="w-5 h-5 flex items-center justify-center rounded bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-surface-container-highest border border-outline-variant/30 transition-all ml-1"
+                            >
+                              <span className="material-symbols-outlined text-[13px]" translate="no">edit</span>
+                            </button>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/10">
@@ -631,6 +688,104 @@ export default function ServicesPage() {
             </span>
           </div>
         </div>
+        </>)}
+
+        {/* ══════════════════════════════════════════════
+            TAB: REPORTS
+        ══════════════════════════════════════════════ */}
+        {servicesTab === "reports" && (
+          <div className="bg-surface-container-low rounded-xl shadow-2xl border border-outline-variant/10 p-6 space-y-6">
+            {/* Reports filters */}
+            <div className="flex items-center gap-3">
+              {(["all", "pending", "reviewed"] as const).map(f => (
+                <button key={f} onClick={() => setReportsFilter(f)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${reportsFilter === f ? "bg-primary text-[#3a5400]" : "bg-surface-container text-on-surface-variant hover:text-on-surface border border-outline-variant/20"}`}>
+                  {f === "all" ? "All Reports" : f === "pending" ? "Pending Review" : "Reviewed"}
+                  {f === "pending" && serviceReports.filter((r: any) => !r.reviewed_at).length > 0 && (
+                    <span className="ml-1.5 bg-error/20 text-error px-1.5 py-0.5 rounded-full text-[10px] font-black">
+                      {serviceReports.filter((r: any) => !r.reviewed_at).length}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {reportsLoading ? (
+              <div className="flex justify-center py-16">
+                <span className="material-symbols-outlined animate-spin text-primary text-3xl" translate="no">sync</span>
+              </div>
+            ) : filteredReports.length === 0 ? (
+              <div className="p-8 rounded-xl bg-surface-container border border-outline-variant/15">
+                <div className="flex flex-col items-center gap-3 py-12 text-on-surface-variant">
+                  <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center">
+                    <span className="material-symbols-outlined text-2xl text-primary" translate="no">summarize</span>
+                  </div>
+                  <p className="text-sm font-bold text-on-surface">No reports found</p>
+                  <p className="text-xs">Partner inspection reports will appear here once submitted.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredReports.map((report: any) => {
+                  const reportDate = new Date(report.reported_at);
+                  const dateStr = `${(reportDate.getMonth()+1).toString().padStart(2,"0")}/${reportDate.getDate().toString().padStart(2,"0")}/${reportDate.getFullYear()}`;
+                  const reporterName = Array.isArray(report.reporter) ? report.reporter[0]?.full_name : report.reporter?.full_name;
+                  const blockerData = Array.isArray(report.blocker) ? report.blocker[0] : report.blocker;
+                  const jobData = blockerData?.jobs;
+                  const isReviewed = !!report.reviewed_at;
+                  return (
+                    <div key={report.id} className={`rounded-xl border overflow-hidden transition-all ${isReviewed ? "bg-surface-container border-outline-variant/15" : "bg-surface-container border-primary/30 shadow-lg shadow-primary/5"}`}>
+                      <div className="px-5 py-3.5 bg-surface-container-high/50 flex items-center justify-between border-b border-white/5">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${report.is_our_fault === true ? "bg-error/10" : report.is_our_fault === false ? "bg-[#22c55e]/10" : "bg-surface-container-highest"}`}>
+                            <span className={`material-symbols-outlined text-lg ${report.is_our_fault === true ? "text-error" : report.is_our_fault === false ? "text-[#22c55e]" : "text-on-surface-variant"}`} translate="no">
+                              {report.is_our_fault === true ? "error" : report.is_our_fault === false ? "check_circle" : "help"}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-on-surface">{blockerData?.title || "Service Report"}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold">{dateStr}</span>
+                              {reporterName && <span className="text-[10px] text-on-surface-variant">by {reporterName}</span>}
+                              {jobData && <span className="text-[10px] text-primary font-bold">{Array.isArray(jobData) ? jobData[0]?.job_number : jobData?.job_number}</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${report.is_our_fault === true ? "bg-error/15 text-error" : report.is_our_fault === false ? "bg-[#22c55e]/15 text-[#22c55e]" : "bg-surface-container-highest text-on-surface-variant"}`}>
+                            {report.is_our_fault === true ? "Our Fault" : report.is_our_fault === false ? "Not Ours" : "TBD"}
+                          </span>
+                          {isReviewed ? (
+                            <span className="px-2.5 py-1 rounded-full bg-[#22c55e]/15 text-[#22c55e] text-[10px] font-bold uppercase tracking-widest">Reviewed</span>
+                          ) : (
+                            <button onClick={() => markReportReviewed(report.id)}
+                              className="px-3 py-1.5 rounded-lg bg-primary text-[#3a5400] text-[10px] font-black uppercase tracking-wider hover:opacity-90 transition-opacity">
+                              Mark Reviewed
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="px-5 py-4">
+                        {report.notes && <p className="text-sm text-on-surface whitespace-pre-wrap leading-relaxed">{report.notes}</p>}
+                        {report.service_report_attachments?.length > 0 && (
+                          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                            {report.service_report_attachments.map((att: any, imgIdx: number) => (
+                              <a key={imgIdx} href={att.url} target="_blank" rel="noopener noreferrer"
+                                className="block aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-primary/50 transition-colors group">
+                                <img src={att.url} alt={att.file_name || `Photo ${imgIdx + 1}`}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy" />
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ══════════════════════════════════════════════

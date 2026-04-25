@@ -6,6 +6,7 @@ import { CustomDropdown } from "../../../components/CustomDropdown";
 import { TopBar } from "../../../components/TopBar";
 import { supabase } from "../../../lib/supabase";
 import { compressImage } from "../../../lib/compressImage";
+import { useRealtimeSubscription } from "../../../lib/hooks/useRealtimeSubscription";
 
 // =============================================
 // Change Orders & Approvals
@@ -127,6 +128,15 @@ export default function ChangeOrdersPage() {
   }, [activeFilter, filterStart, filterEnd]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  // ── Realtime: auto-refresh quando cliente aprovar/rejeitar/qualquer mudança
+  useRealtimeSubscription({
+    table: "change_orders",
+    event: "*",
+    onPayload: () => {
+      fetchOrders();
+    },
+  });
 
   // Local search
   const filtered = orders.filter((o) => {
@@ -272,12 +282,7 @@ export default function ChangeOrdersPage() {
                   <div
                     key={order.id}
                     onClick={() => setSelectedOrder(order)}
-                    className="p-6 rounded-2xl flex flex-col justify-between group hover:scale-[1.02] transition-transform duration-300 cursor-pointer"
-                    style={{
-                      background: "rgba(36,38,36,0.4)",
-                      backdropFilter: "blur(24px)",
-                      border: "1px solid rgba(174,238,42,0.08)",
-                    }}
+                    className="p-6 rounded-2xl flex flex-col justify-between group hover:scale-[1.02] transition-all duration-300 cursor-pointer bg-surface-container-low border border-outline-variant/20 shadow-sm"
                   >
                     <div>
                       <div className="flex justify-between items-start mb-4">
@@ -424,18 +429,24 @@ export default function ChangeOrdersPage() {
   }
 }
 
-// ─── Modal: Create Change Order ────────────────────────────────────
+// ─── Modal: Create Change Order (Multi-Line Items) ────────────────
+interface COItem {
+  description: string;
+  amount: string;
+  files: File[];
+}
+
 function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const [jobs, setJobs] = useState<{ id: string; job_number: string; customer_name: string }[]>([]);
   const [jobId, setJobId]           = useState("");
   const [title, setTitle]           = useState("");
-  const [description, setDescription] = useState("");
-  const [amount, setAmount]         = useState("");
   const [saving, setSaving]         = useState(false);
-  const [files,  setFiles]          = useState<File[]>([]);
   const [jobServices, setJobServices]= useState<any[]>([]);
   const [serviceId, setServiceId]   = useState("");
-  const fileInputRef                = useRef<HTMLInputElement>(null);
+
+  // Multi-line items
+  const [items, setItems] = useState<COItem[]>([{ description: "", amount: "", files: [] }]);
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Load real projects for the select
   useEffect(() => {
@@ -472,8 +483,41 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
       });
   }, [jobId]);
 
-  async function uploadFiles(coId: string) {
-    for (const rawFile of files) {
+  // ── Item helpers ──
+  function updateItem(index: number, field: keyof COItem, value: string | File[]) {
+    setItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+  }
+
+  function addItem() {
+    setItems(prev => [...prev, { description: "", amount: "", files: [] }]);
+  }
+
+  function removeItem(index: number) {
+    if (items.length <= 1) return;
+    setItems(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function addFilesToItem(index: number, newFiles: FileList) {
+    setItems(prev => prev.map((item, i) =>
+      i === index ? { ...item, files: [...item.files, ...Array.from(newFiles)] } : item
+    ));
+  }
+
+  function removeFileFromItem(itemIdx: number, fileIdx: number) {
+    setItems(prev => prev.map((item, i) =>
+      i === itemIdx ? { ...item, files: item.files.filter((_, fi) => fi !== fileIdx) } : item
+    ));
+  }
+
+  // ── Computed total ──
+  const totalAmount = items.reduce((sum, item) => {
+    const val = parseFloat(item.amount);
+    return sum + (isNaN(val) ? 0 : val);
+  }, 0);
+
+  // ── Upload files for a specific CO ──
+  async function uploadFilesForCO(coId: string, filesToUpload: File[]) {
+    for (const rawFile of filesToUpload) {
       const file = await compressImage(rawFile);
       const ext  = file.name.split(".").pop();
       const path = `change-orders/${coId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -492,22 +536,46 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
 
   async function handleSubmit() {
     if (!title.trim()) return;
+    if (items.every(i => !i.description.trim())) return;
     setSaving(true);
     try {
-      // Get current user for requested_by_profile_id
       const { data: { user } } = await supabase.auth.getUser();
+
+      // Build description from items (legacy compatibility)
+      const descriptionText = items
+        .filter(i => i.description.trim())
+        .map((i, idx) => `Item ${idx + 1}: ${i.description.trim()}${i.amount ? ` — $${parseFloat(i.amount).toFixed(2)}` : ''}`)
+        .join("\n");
 
       const { data: co, error } = await supabase.from("change_orders").insert({
         job_id: jobId || null,
         job_service_id: serviceId || null,
         title: title.trim(),
-        description: description.trim(),
-        proposed_amount: amount ? parseFloat(amount) : null,
+        description: descriptionText,
+        proposed_amount: totalAmount > 0 ? totalAmount : null,
         status: "draft",
         requested_by_profile_id: user?.id ?? null,
       }).select("id").single();
       if (error) throw error;
-      if (co && files.length > 0) await uploadFiles(co.id);
+
+      // Insert individual items
+      const validItems = items.filter(i => i.description.trim());
+      if (co && validItems.length > 0) {
+        await supabase.from("change_order_items").insert(
+          validItems.map((item, idx) => ({
+            change_order_id: co.id,
+            description: item.description.trim(),
+            amount: item.amount ? parseFloat(item.amount) : null,
+            sort_order: idx,
+          }))
+        );
+      }
+
+      // Upload all files from all items
+      if (co) {
+        const allFiles = items.flatMap(i => i.files);
+        if (allFiles.length > 0) await uploadFilesForCO(co.id, allFiles);
+      }
 
       // Push notification to admins
       try {
@@ -517,7 +585,7 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: '📝 New Change Order',
-            body: `${title.trim()} — ${selectedJob?.customer_name || 'Project'} (${amount ? `$${parseFloat(amount).toLocaleString()}` : 'No amount'})`,
+            body: `${title.trim()} — ${selectedJob?.customer_name || 'Project'} (${totalAmount > 0 ? `$${totalAmount.toLocaleString()}` : 'No amount'})`,
             url: '/change-orders',
             tag: 'change-order-created',
             notificationType: 'change_order_created',
@@ -574,39 +642,23 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
           <div className="flex items-start gap-3 bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20">
             <span className="material-symbols-outlined text-[#e3eb5d] shrink-0 mt-0.5" translate="no">info</span>
             <p className="text-xs text-on-surface-variant leading-relaxed">
-              <span className="text-[#e3eb5d] font-bold">Double Approval Flow:</span> After creating, you review pricing and send to the client. The client approves or rejects via their portal.
+              <span className="text-[#e3eb5d] font-bold">Multi-line items:</span> Add one or more line items with individual pricing. Total is calculated automatically.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Top row: Project / Title / Service */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Project */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Project</label>
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Project *</label>
               <div className="relative z-50">
                 <CustomDropdown
                   value={jobId}
                   onChange={(val) => setJobId(val)}
                   options={jobs.map(j => ({ value: j.id, label: j.customer_name !== "—" ? j.customer_name : j.job_number }))}
-                  placeholder="Select a Project..."
+                  placeholder="Select Project..."
                   searchable
                   className="w-full bg-surface-container-highest border border-outline-variant/20 text-on-surface rounded-xl px-4 py-3.5 text-[15px] font-bold flex justify-between items-center transition-colors hover:border-primary"
-                />
-              </div>
-            </div>
-
-            {/* Estimated Amount */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Estimated Amount</label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-black text-[15px] pointer-events-none">$</span>
-                <input
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full bg-surface-container-highest border border-outline-variant/20 hover:border-outline-variant focus:border-primary rounded-xl py-3.5 pl-8 pr-4 text-on-surface outline-none placeholder:text-outline-variant font-bold text-[15px] transition-colors tracking-wide"
-                  placeholder="0.00"
-                  type="number"
-                  step="0.01"
-                  min="0"
                 />
               </div>
             </div>
@@ -614,12 +666,12 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
             {/* Title */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Change Title *</label>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-surface-container-highest border border-outline-variant/20 hover:border-outline-variant focus:border-primary rounded-xl py-3.5 px-4 text-on-surface outline-none placeholder:text-on-surface-variant font-bold text-[15px] transition-colors"
-                  placeholder="e.g. Front Door Replacement"
-                />
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-surface-container-highest border border-outline-variant/20 hover:border-outline-variant focus:border-primary rounded-xl py-3.5 px-4 text-on-surface outline-none placeholder:text-on-surface-variant font-bold text-[15px] transition-colors"
+                placeholder="e.g. Front Door Replacement"
+              />
             </div>
 
             {/* Service */}
@@ -637,77 +689,137 @@ function CreateChangeOrderModal({ onClose, onSaved }: { onClose: () => void; onS
             </div>
           </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Detailed Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-surface-container-highest border border-transparent hover:border-outline-variant rounded-xl py-4 px-4 text-on-surface focus:ring-1 focus:ring-primary outline-none resize-none placeholder:text-outline font-medium text-sm transition-colors"
-              placeholder="Explain the change requirements, materials, and labor implications..."
-              rows={4}
-            />
-          </div>
-
-          {/* Upload area */}
+          {/* ── Line Items ── */}
           <div className="space-y-3">
-            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Attachments</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Line Items</label>
+              {totalAmount > 0 && (
+                <span className="text-sm font-black text-primary tracking-wide">
+                  Total: ${totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </span>
+              )}
+            </div>
+
+            {items.map((item, idx) => (
+              <div key={idx} className="bg-surface-container-highest border border-outline-variant/20 rounded-xl p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  {/* Item number badge */}
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-primary font-black text-xs">{idx + 1}</span>
+                  </div>
+
+                  {/* Description */}
+                  <div className="flex-1 min-w-0">
+                    <input
+                      value={item.description}
+                      onChange={(e) => updateItem(idx, "description", e.target.value)}
+                      className="w-full bg-transparent border-b border-outline-variant/30 focus:border-primary pb-2 text-on-surface outline-none placeholder:text-outline-variant font-medium text-sm transition-colors"
+                      placeholder="Item description..."
+                    />
+                  </div>
+
+                  {/* Price */}
+                  <div className="relative w-28 shrink-0">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary font-black text-xs pointer-events-none">$</span>
+                    <input
+                      value={item.amount}
+                      onChange={(e) => updateItem(idx, "amount", e.target.value)}
+                      className="w-full bg-surface-container border border-outline-variant/20 focus:border-primary rounded-lg py-1.5 pl-7 pr-2 text-on-surface outline-none font-bold text-sm text-right transition-colors"
+                      placeholder="0.00"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                    />
+                  </div>
+
+                  {/* Photo button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRefs.current[idx]?.click()}
+                    className="w-8 h-8 rounded-lg bg-surface-container border border-outline-variant/20 flex items-center justify-center hover:border-primary/50 hover:bg-primary/5 transition-colors shrink-0"
+                    title="Add photos"
+                  >
+                    <span className="material-symbols-outlined text-[16px] text-on-surface-variant" translate="no">photo_camera</span>
+                  </button>
+                  <input
+                    ref={(el) => { fileInputRefs.current[idx] = el; }}
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf"
+                    onChange={(e) => { if (e.target.files) addFilesToItem(idx, e.target.files); e.target.value = ""; }}
+                    className="hidden"
+                  />
+
+                  {/* Remove button */}
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(idx)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors shrink-0"
+                    >
+                      <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Item files preview */}
+                {item.files.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pl-10">
+                    {item.files.map((file, fi) => (
+                      <div key={fi} className="flex items-center gap-1.5 bg-surface-container border border-white/5 rounded-lg px-2.5 py-1.5 text-xs">
+                        <span className="material-symbols-outlined text-primary text-[14px]" translate="no">{getFileIcon(file)}</span>
+                        <span className="text-on-surface-variant truncate max-w-[100px]">{file.name}</span>
+                        <span className="text-outline-variant">{formatBytes(file.size)}</span>
+                        <button type="button" onClick={() => removeFileFromItem(idx, fi)} className="text-on-surface-variant hover:text-error ml-1">
+                          <span className="material-symbols-outlined text-[12px]" translate="no">close</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Add item button */}
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full border-2 border-dashed border-outline-variant/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-surface-container hover:border-primary/70 hover:bg-primary/5 transition-colors cursor-pointer group/drop"
+              onClick={addItem}
+              className="w-full border-2 border-dashed border-outline-variant/30 rounded-xl py-3 flex items-center justify-center gap-2 text-on-surface-variant hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors"
             >
-              <span className="material-symbols-outlined text-4xl text-outline-variant group-hover/drop:text-primary mb-3 transition-colors" translate="no">cloud_upload</span>
-              <p className="text-sm font-bold text-on-surface">Click to add files</p>
-              <p className="text-[11px] font-medium text-on-surface-variant mt-1">PDF, JPG, PNG, DOC up to 20MB each</p>
+              <span className="material-symbols-outlined text-lg" translate="no">add</span>
+              <span className="text-sm font-bold">Add Line Item</span>
             </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx"
-              onChange={(e) => { if (e.target.files) setFiles(prev => [...prev, ...Array.from(e.target.files!)]); }}
-              className="hidden"
-            />
-            {files.length > 0 && (
-              <div className="space-y-2">
-                {files.map((file, idx) => (
-                  <div key={idx} className="flex items-center gap-3 bg-surface-container-highest border border-white/5 rounded-xl px-4 py-2.5">
-                    <span className="material-symbols-outlined text-primary text-lg" translate="no">{getFileIcon(file)}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-on-surface font-medium truncate">{file.name}</p>
-                      <p className="text-[10px] text-on-surface-variant">{formatBytes(file.size)}</p>
-                    </div>
-                    <button type="button" onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))} className="text-on-surface-variant hover:text-error transition-colors">
-                      <span className="material-symbols-outlined text-lg" translate="no">close</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-8 pb-8 pt-2 border-t border-outline-variant/30 flex justify-end gap-5">
-          <button
-            onClick={onClose}
-            className="px-6 py-3.5 rounded-xl border border-outline-variant text-on-surface font-bold hover:bg-surface-container-highest transition-colors text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={saving || !title.trim()}
-            className="px-10 py-3.5 rounded-xl bg-primary text-[#3a5400] font-black tracking-wide shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:scale-95 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-          >
-            {saving ? "Saving..." : files.length > 0 ? `Save & Upload ${files.length} file${files.length > 1 ? "s" : ""}` : "Save as Draft"}
-          </button>
+        <div className="px-8 pb-8 pt-2 border-t border-outline-variant/30 flex items-center justify-between">
+          <div className="text-sm text-on-surface-variant">
+            {items.filter(i => i.description.trim()).length} item{items.filter(i => i.description.trim()).length !== 1 ? 's' : ''}
+            {totalAmount > 0 && <span className="text-primary font-black ml-2">${totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>}
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={onClose}
+              className="px-6 py-3.5 rounded-xl border border-outline-variant text-on-surface font-bold hover:bg-surface-container-highest transition-colors text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={saving || !title.trim() || items.every(i => !i.description.trim())}
+              className="px-10 py-3.5 rounded-xl bg-primary text-[#3a5400] font-black tracking-wide shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:scale-95 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            >
+              {saving ? "Saving..." : "Save as Draft"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
+
 
 // ─── Drawer: Change Order Detail ───────────────────────────────────
 function ChangeOrderDrawer({

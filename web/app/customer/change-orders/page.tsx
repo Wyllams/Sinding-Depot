@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
+import { useRealtimeSubscription } from "../../../lib/hooks/useRealtimeSubscription";
 
 interface ChangeOrderItem {
   id: string;
@@ -98,6 +99,15 @@ export default function CustomerChangeOrders() {
   }
 
   useEffect(() => { fetchOrders(); }, []);
+
+  // ── Realtime: auto-refresh quando admin criar ou enviar CO
+  useRealtimeSubscription({
+    table: "change_orders",
+    event: "*",
+    onPayload: () => {
+      fetchOrders();
+    },
+  });
 
   async function handleApprove(orderId: string): Promise<void> {
     setActing(orderId);

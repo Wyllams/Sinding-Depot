@@ -13,20 +13,17 @@ export function ThemeSwitcher() {
   }, []);
 
   if (!mounted) {
-    return <div className="w-10 h-6"></div>; // Placeholder
+    return <div className="w-9 h-9 sm:w-10 sm:h-10"></div>; // Placeholder
   }
 
   return (
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="flex items-center gap-3 p-2 rounded-xl transition-colors hover:bg-surface-container-high"
+      className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full text-on-surface-variant bg-transparent hover:bg-white/5 transition-all"
       title="Toggle Dark/Light Mode"
     >
-      <span className="material-symbols-outlined text-on-surface-variant" translate="no">
+      <span className="material-symbols-outlined text-[18px] sm:text-[22px]" translate="no">
         {theme === "dark" ? "light_mode" : "dark_mode"}
-      </span>
-      <span className="text-on-surface font-bold text-sm hidden md:inline">
-        {theme === "dark" ? "Light Mode" : "Dark Mode"}
       </span>
     </button>
   );

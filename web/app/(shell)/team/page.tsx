@@ -316,8 +316,7 @@ export default function TeamPage() {
             ].map((kpi) => (
               <div
                 key={kpi.label}
-                className="flex-1 p-5 rounded-2xl flex items-center gap-4"
-                style={{ background: "rgba(36,38,36,0.4)", backdropFilter: "blur(24px)", border: "1px solid rgba(174,238,42,0.08)" }}
+                className="flex-1 p-5 rounded-2xl flex items-center gap-4 bg-surface-container-low border border-outline-variant/20 shadow-sm transition-colors"
               >
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${kpi.color}15` }}>
                   <span className="material-symbols-outlined text-[20px]" style={{ color: kpi.color }} translate="no">{kpi.icon}</span>

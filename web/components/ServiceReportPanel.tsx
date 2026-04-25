@@ -69,8 +69,8 @@ export function ServiceReportPanel({ isOpen, service, onClose, onSuccess }: Serv
           <div>
             <div className="flex gap-3 items-center">
               <h3 className="text-xl font-extrabold text-on-surface">Service Report</h3>
-              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${service.status === 'open' ? 'bg-[#b92902] text-[#ffd2c8]' : 'bg-surface-container-highest text-on-surface-variant'}`}>
-                {service.status}
+              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${service.status === 'inspection_date' || service.status === 'service_date' ? 'bg-[#b92902] text-[#ffd2c8]' : 'bg-surface-container-highest text-on-surface-variant'}`}>
+                {service.status.replace(/_/g, ' ')}
               </span>
             </div>
             <p className="text-sm text-on-surface-variant mt-1 font-mono">#{service.id.substring(0,8).toUpperCase()}</p>
@@ -155,7 +155,7 @@ export function ServiceReportPanel({ isOpen, service, onClose, onSuccess }: Serv
           </section>
 
           {/* Resolution Form (only if Open) */}
-          {service.status === "open" && (
+          {service.status !== "resolved" && (
             <section className="space-y-4 pt-4">
               <h4 className="text-sm font-bold text-primary border-b border-white/5 pb-2">Resolution</h4>
               
@@ -196,10 +196,10 @@ export function ServiceReportPanel({ isOpen, service, onClose, onSuccess }: Serv
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl text-sm font-bold text-on-surface hover:bg-surface-container-highest transition-colors"
           >
-            {service.status === 'open' ? 'Cancel' : 'Close'}
+            {service.status !== 'resolved' ? 'Cancel' : 'Close'}
           </button>
           
-          {service.status === "open" && (
+          {service.status !== "resolved" && (
             <button
               onClick={handleResolve}
               disabled={isLoading || !resolutionNotes.trim()}
