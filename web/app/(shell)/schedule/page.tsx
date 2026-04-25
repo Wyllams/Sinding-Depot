@@ -258,6 +258,11 @@ export default function SchedulePage() {
 
   useEffect(() => {
     fetchSchedule();
+
+    const channel = supabase.channel('schedule-realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => { fetchSchedule(); }).subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ─── Real-time duration recalculation when SQ or crew changes ───

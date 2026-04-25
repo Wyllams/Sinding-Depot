@@ -159,6 +159,22 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     fetchJobs();
+
+    // Realtime Listener
+    const channel = supabase
+      .channel('projects-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'jobs' },
+        () => {
+          fetchJobs();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchJobs]);
 
   // Reset to page 1 whenever filters change

@@ -605,6 +605,24 @@ export default function ReportsPage() {
     // Reset expanded jobs when month changes
     setSpJobs({});
     setExpandedSp(null);
+
+    // Realtime Listener
+    const channel = supabase
+      .channel('sales-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'jobs' },
+        () => {
+          fetchData(selectedYear, selectedMonth);
+          loadSummary(selectedYear, selectedMonth);
+          loadAnnualReport(selectedYear);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedYear, selectedMonth, fetchData, loadSummary, loadAnnualReport]);
 
   // ── Computed ─────────────────────────────────────────────────────────────

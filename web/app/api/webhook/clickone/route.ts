@@ -222,24 +222,11 @@ export async function POST(req: Request) {
     // ── Salesperson: VendedorOP vs VendedorUser comparison logic ──
     // VendedorOP = opportunity.assignedToUsersName (deal owner)
     // VendedorUser = user.name (CRM user who triggered)
-    // Rules: same name → use it; only one filled → use it; different names → null
+    // Rules: Prioritize Deal Owner (VendedorOP). Fallback to CRM user (VendedorUser).
     const vendedorOP = nonEmpty(cd.VendedorOP) || nonEmpty(cd.vendedorOP) || nonEmpty(payload.VendedorOP) || nonEmpty(payload.vendedorOP);
     const vendedorUser = nonEmpty(cd.VendedorUser) || nonEmpty(cd.vendedorUser) || nonEmpty(payload.VendedorUser) || nonEmpty(payload.vendedorUser);
 
-    let salespersonName: string | null = null;
-    if (vendedorOP && vendedorUser) {
-      // Both filled: only use if they match (case-insensitive)
-      if (vendedorOP.toLowerCase() === vendedorUser.toLowerCase()) {
-        salespersonName = vendedorOP;
-      } else {
-        // Different names → DO NOT assign
-        console.warn(`⚠️ VendedorOP (${vendedorOP}) ≠ VendedorUser (${vendedorUser}) — skipping salesperson`);
-        salespersonName = null;
-      }
-    } else {
-      // Only one filled → use whichever has a value
-      salespersonName = vendedorOP || vendedorUser || null;
-    }
+    let salespersonName: string | null = vendedorOP || vendedorUser || null;
 
     // Legacy fallbacks (for older webhook formats)
     if (!salespersonName) {
@@ -522,9 +509,9 @@ export async function POST(req: Request) {
     // 2. Resolve Salesperson Mapping
     // ClickOne names → System names alias map
     const SP_ALIASES: Record<string, string> = {
-      'matheus': 'Matt',
-      'matheus araujo': 'Matt',
-      'matt': 'Matt',
+      'matheus': 'Matheus',
+      'matheus araujo': 'Matheus',
+      'matt': 'Matheus',
       'armando': 'Armando',
       'armando magalhaes': 'Armando',
       'armando magalhães': 'Armando',
@@ -572,7 +559,7 @@ export async function POST(req: Request) {
         salesperson_id: spId,
         job_number: jobNumber,
         title: jobTitle,
-        status: "tentative",
+        status: "pending",
         gate_status: "NOT_CONTACTED",
         requested_start_date: startDateIso,
         service_address_line_1: finalAddress,
