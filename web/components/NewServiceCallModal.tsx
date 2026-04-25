@@ -6,7 +6,7 @@ import { compressImage } from "../lib/compressImage";
 import CustomDatePicker from "./CustomDatePicker";
 import { CustomDropdown } from "./CustomDropdown";
 
-interface Job { id: string; job_number: string; title: string; customer?: { full_name: string } }
+interface Job { id: string; job_number: string; title: string; customer?: any; }
 interface Crew { id: string; name: string; }
 
 interface NewServiceCallModalProps {
@@ -180,7 +180,7 @@ export function NewServiceCallModal({ isOpen, onClose, onSuccess }: NewServiceCa
                   searchable={true}
                   options={[
                     { value: "", label: "Select Project" },
-                    ...jobs.map((job) => ({ value: job.id, label: job.customer?.full_name || job.title }))
+                    ...jobs.map((job) => ({ value: job.id, label: (Array.isArray(job.customer) ? job.customer[0]?.full_name : job.customer?.full_name) || job.title }))
                   ]}
                   className="w-full bg-surface-container border border-white/10 rounded-xl px-4 py-3 text-sm text-on-surface hover:border-primary transition-colors flex justify-between items-center"
                 />
