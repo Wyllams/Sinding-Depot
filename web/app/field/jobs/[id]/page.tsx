@@ -366,7 +366,7 @@ export default function FieldJobDetail({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: '📦 Extra Material Request',
-            body: `${profile?.full_name ?? 'Partner'} requested: ${itemSummary} for ${job?.jobTitle || 'a project'}`,
+            body: `${profile?.full_name ?? 'Partner'} requested: ${itemSummary} for ${job?.customerName || 'a customer'}`,
             url: `/projects/${jobId}`,
             tag: 'extra-material-request',
             notificationType: 'extra_material_request',
