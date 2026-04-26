@@ -86,8 +86,8 @@ export default function FieldJobsList() {
 
         // 3. Define status filters per tab
         const statusFilters: Record<TabFilter, string[]> = {
-          today:     ["pending", "scheduled", "in_progress", "assigned"],
-          upcoming:  ["pending", "planned", "assigned", "scheduled"],
+          today:     ["scheduled", "in_progress", "assigned"],
+          upcoming:  ["planned", "assigned", "scheduled"],
           completed: ["completed"],
         };
 
