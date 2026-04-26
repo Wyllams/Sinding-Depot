@@ -1882,41 +1882,10 @@ export default function ProjectDetailPage() {
               />
             </section>
 
-            {/* ── Section: Operational Status & Salesperson (side-by-side) ── */}
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8">
-              <div className="flex flex-col">
-                <SectionHeader icon="traffic" title="Operational Status" />
-                <div className="p-6 sm:p-8 rounded-xl bg-surface-container-low border border-outline-variant/15 h-full">
-                  <div className="space-y-4">
-                    <label className={detailLabelCls}>Current Gate Status</label>
-                    <div className="relative group w-full">
-                      <CustomDropdown
-                        value={gateStatus}
-                        onChange={(val) => handleGateChange(val)}
-                        options={Object.entries(GATE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }))}
-                        className="w-full bg-[#0a0a0a] border border-outline-variant rounded-xl pl-12 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-on-surface shadow-inner transition-colors flex justify-between items-center hover:border-primary/50"
-                      />
-                      <div
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 pointer-events-none"
-                        style={{
-                          backgroundColor: `${gateConf.color}25`,
-                          border: `1px solid ${gateConf.color}40`,
-                        }}
-                      >
-                        <span className="material-symbols-outlined text-[15px]" style={{ color: gateConf.color }} translate="no">
-                          {gateConf.icon}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Paint Colors */}
-              <div className="flex flex-col">
-                <SectionHeader icon="palette" title="Paint Colors" />
-                <PaintColorsCard jobId={job.id} />
-              </div>
+            {/* ── Section: Paint Colors ── */}
+            <section>
+              <SectionHeader icon="palette" title="Paint Colors" />
+              <PaintColorsCard jobId={job.id} />
             </section>
 
             {/* ── Section: Internal Notes ── */}

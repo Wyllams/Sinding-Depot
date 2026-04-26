@@ -131,6 +131,22 @@ export default function SettingsPage() {
 
       // Notify TopBar so the name updates immediately in the header
       window.dispatchEvent(new Event("profile-updated"));
+
+      // Push system notification to admins about profile update
+      try {
+        await fetch('/api/push/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: '👤 Profile Updated',
+            body: `${editName.trim()} updated their profile information.`,
+            url: '/settings',
+            tag: 'profile-update',
+            notificationType: 'profile_update',
+            relatedEntityId: myProfile.id,
+          }),
+        });
+      } catch { /* non-blocking */ }
     } catch (err: any) {
       console.error("Save profile error:", err);
       alert(`Failed to save profile: ${err?.message || "Please try again."}`);

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { FieldServiceReportModal } from "@/components/field/FieldServiceReportModal";
 
 interface ServiceCall {
   id: string;
@@ -15,58 +16,80 @@ interface ServiceCall {
   jobs?: {
     job_number: string;
     title: string;
+    customers?: { full_name: string } | null;
   };
   blocker_attachments?: { url: string }[];
 }
+
+const STATUS_FLOW: Record<string, { next: string; label: string; color: string; icon: string }> = {
+  open:        { next: "in_progress", label: "Start Work",      color: "#aeee2a", icon: "play_arrow" },
+  in_progress: { next: "resolved",   label: "Mark Resolved",   color: "#22c55e", icon: "check_circle" },
+  resolved:    { next: "resolved",   label: "Resolved",        color: "#22c55e", icon: "verified" },
+};
 
 export default function FieldServicesPage() {
   const t = useTranslations("FieldServicesPage");
   const [services, setServices] = useState<ServiceCall[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Expanded accordion state
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  // Lightbox for full-screen image/video preview
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [reportModalId, setReportModalId] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadServices() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  async function loadServices(): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-      // Find the crew linked to this user
-      const { data: crew } = await supabase
-        .from("crews")
-        .select("id")
-        .eq("profile_id", user.id)
-        .maybeSingle();
+    const { data: crew } = await supabase
+      .from("crews")
+      .select("id")
+      .eq("profile_id", user.id)
+      .maybeSingle();
 
-      if (!crew) {
-        setLoading(false);
-        return;
-      }
-
-      // Get services (blockers) assigned to this crew
-      const { data, error } = await supabase
-        .from("blockers")
-        .select(`
-          id, title, description, status, type, reported_at,
-          jobs ( job_number, title ),
-          blocker_attachments ( url )
-        `)
-        .eq("crew_id", crew.id)
-        .order("reported_at", { ascending: false });
-
-      if (!error && data) {
-        setServices(data as any);
-      }
+    if (!crew) {
       setLoading(false);
+      return;
     }
-    loadServices();
-  }, []);
 
-  const formatDate = (dateStr: string) => {
+    const { data, error } = await supabase
+      .from("blockers")
+      .select(`
+        id, title, description, status, type, reported_at,
+        jobs ( job_number, title, customers ( full_name ) ),
+        blocker_attachments ( url )
+      `)
+      .eq("crew_id", crew.id)
+      .order("reported_at", { ascending: false });
+
+    if (!error && data) {
+      setServices(data as any);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { loadServices(); }, []);
+
+  async function handleStatusChange(serviceId: string, newStatus: string): Promise<void> {
+    setUpdatingStatus(serviceId);
+    try {
+      const { error } = await supabase
+        .from("blockers")
+        .update({ status: newStatus })
+        .eq("id", serviceId);
+
+      if (!error) {
+        setServices((prev) =>
+          prev.map((s) => (s.id === serviceId ? { ...s, status: newStatus } : s))
+        );
+      }
+    } catch (err) {
+      console.error("Status update error:", err);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  }
+
+  const formatDate = (dateStr: string): string => {
     const d = new Date(dateStr);
     return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`;
   };
@@ -107,6 +130,8 @@ export default function FieldServicesPage() {
         ) : (
           services.map(service => {
             const isExpanded = expandedId === service.id;
+            const statusInfo = STATUS_FLOW[service.status] ?? STATUS_FLOW.open;
+            const isUpdating = updatingStatus === service.id;
 
             return (
               <div 
@@ -128,7 +153,11 @@ export default function FieldServicesPage() {
                   {/* Row 1: Customer Name and Date */}
                   <div className="flex justify-between items-start pr-6">
                     <h3 className="text-on-surface font-black text-sm">
-                      {service.jobs?.title?.split(" - ").pop()?.trim() || t("unknownCustomer")}
+                      {(() => {
+                        const custRaw = service.jobs?.customers;
+                        const cust = Array.isArray(custRaw) ? custRaw[0] : custRaw;
+                        return cust?.full_name || service.jobs?.title?.split(" - ").pop()?.trim() || t("unknownCustomer");
+                      })()}
                     </h3>
                     <p className="text-zinc-400 text-xs font-bold">{formatDate(service.reported_at)}</p>
                   </div>
@@ -142,7 +171,7 @@ export default function FieldServicesPage() {
                       backgroundColor: service.status === "open" ? "#ff735120" : service.status === "resolved" ? "#22c55e20" : "#aeee2a20",
                       color: service.status === "open" ? "#ff7351" : service.status === "resolved" ? "#22c55e" : "#aeee2a",
                     }}>
-                      {service.status}
+                      {service.status === "in_progress" ? "In Progress" : service.status}
                     </span>
                   </div>
                 </div>
@@ -162,7 +191,7 @@ export default function FieldServicesPage() {
 
                     {/* Attachments */}
                     {service.blocker_attachments && service.blocker_attachments.length > 0 && (
-                      <div className="pt-4 border-t border-white/5">
+                      <div className="pt-4 border-t border-white/5 mb-4">
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">{t("attachments")}</p>
                         <div className="grid grid-cols-3 gap-2">
                           {service.blocker_attachments.map((att, idx) => {
@@ -196,6 +225,47 @@ export default function FieldServicesPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* ── ACTION BUTTONS ── */}
+                    <div className="flex gap-3 pt-4 border-t border-white/5">
+                      {/* Change Status */}
+                      {service.status !== "resolved" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(service.id, statusInfo.next);
+                          }}
+                          disabled={isUpdating}
+                          className="flex-1 h-12 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all disabled:opacity-50"
+                          style={{
+                            backgroundColor: `${statusInfo.color}15`,
+                            color: statusInfo.color,
+                            border: `1px solid ${statusInfo.color}30`,
+                          }}
+                        >
+                          {isUpdating ? (
+                            <div className="w-4 h-4 border-2 border-current/20 border-t-current rounded-full animate-spin" />
+                          ) : (
+                            <>
+                              <span className="material-symbols-outlined text-lg" translate="no">{statusInfo.icon}</span>
+                              {statusInfo.label}
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {/* Report Service */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setReportModalId(service.id);
+                        }}
+                        className="flex-1 h-12 bg-[#3b82f6]/10 border border-[#3b82f6]/30 text-[#3b82f6] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all"
+                      >
+                        <span className="material-symbols-outlined text-lg" translate="no">assignment</span>
+                        Report
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -215,6 +285,18 @@ export default function FieldServicesPage() {
           </button>
           <img src={lightboxUrl} alt="Preview" className="max-w-full max-h-full object-contain rounded-lg" />
         </div>
+      )}
+
+      {/* REPORT MODAL */}
+      {reportModalId && (
+        <FieldServiceReportModal
+          blockerId={reportModalId}
+          onClose={() => setReportModalId(null)}
+          onSaved={() => {
+            setReportModalId(null);
+            loadServices();
+          }}
+        />
       )}
 
     </div>

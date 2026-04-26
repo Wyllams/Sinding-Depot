@@ -34,23 +34,62 @@ export function FieldChangeOrderModal({
 
   useEffect(() => {
     if (!jobId) return;
-    supabase
-      .from("job_services")
-      .select("id, service_type:service_types(name)")
-      .eq("job_id", jobId)
-      .then(({ data }) => {
-        const mapped = (data || []).map((s: any) => ({
-          id: s.id,
-          name: s.service_type?.name ?? "Unknown",
-        }));
-        setJobServices(mapped);
-        // If serviceId from props exists in the list, pre-select it
-        if (serviceId && mapped.some((s: any) => s.id === serviceId)) {
+
+    (async () => {
+      // Get the crew ID for the logged-in user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: crew } = await supabase
+        .from("crews")
+        .select("id")
+        .eq("profile_id", user.id)
+        .maybeSingle();
+
+      // Fetch all job services for this job
+      const { data } = await supabase
+        .from("job_services")
+        .select("id, service_type:service_types(name)")
+        .eq("job_id", jobId);
+
+      const allServices = (data || []).map((s: any) => ({
+        id: s.id,
+        name: s.service_type?.name ?? "Unknown",
+      }));
+
+      if (crew) {
+        // Restrict: only show services where this crew is assigned
+        const { data: assignments } = await supabase
+          .from("service_assignments")
+          .select("job_service_id")
+          .eq("crew_id", crew.id);
+
+        const assignedServiceIds = new Set(
+          (assignments || []).map((a: any) => a.job_service_id)
+        );
+
+        const filtered = allServices.filter((s: { id: string; name: string }) =>
+          assignedServiceIds.has(s.id)
+        );
+
+        setJobServices(filtered);
+
+        // Auto-select if there's only one or if serviceId prop matches
+        if (serviceId && filtered.some((s: { id: string }) => s.id === serviceId)) {
           setSelectedServiceId(serviceId);
-        } else if (mapped.length === 1) {
-          setSelectedServiceId(mapped[0].id);
+        } else if (filtered.length === 1) {
+          setSelectedServiceId(filtered[0].id);
         }
-      });
+      } else {
+        // Fallback: admin or no crew — show all services
+        setJobServices(allServices);
+        if (serviceId && allServices.some((s: { id: string }) => s.id === serviceId)) {
+          setSelectedServiceId(serviceId);
+        } else if (allServices.length === 1) {
+          setSelectedServiceId(allServices[0].id);
+        }
+      }
+    })();
   }, [jobId, serviceId]);
 
   // ---------- Upload attachments ----------

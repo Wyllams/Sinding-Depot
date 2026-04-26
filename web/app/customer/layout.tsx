@@ -44,9 +44,9 @@ export default function CustomerLayout({
   }
 
   return (
-    <div className="bg-on-surface min-h-screen font-body text-surface-container-low">
+    <div className="bg-background min-h-screen font-body text-on-surface">
       {/* Header */}
-      <header className="safe-area-top bg-white border-b border-[#e5e5e3] sticky top-0 z-50">
+      <header className="safe-area-top bg-surface-container border-b border-outline-variant sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Logo */}
@@ -55,8 +55,8 @@ export default function CustomerLayout({
                 SD
               </div>
               <div className="flex flex-col">
-                <span className="font-headline font-bold text-surface-container-low tracking-tight leading-none text-base">Siding Depot</span>
-                <span className="text-[#a1a19d] text-[9px] font-bold uppercase tracking-widest leading-none mt-1.5">Client Portal</span>
+                <span className="font-headline font-bold text-on-surface tracking-tight leading-none text-base">Siding Depot</span>
+                <span className="text-on-surface-variant text-[9px] font-bold uppercase tracking-widest leading-none mt-1.5">Client Portal</span>
               </div>
             </Link>
           </div>
@@ -71,8 +71,8 @@ export default function CustomerLayout({
                   href={item.href}
                   className={`text-sm font-bold transition-colors flex items-center gap-1.5 pb-0.5 ${
                     active
-                      ? "text-surface-container-low border-b-2 border-surface-container-low"
-                      : "text-[#a1a19d] hover:text-surface-container-low"
+                      ? "text-on-surface border-b-2 border-primary"
+                      : "text-on-surface-variant hover:text-on-surface"
                   }`}
                 >
                   {item.label}
@@ -84,20 +84,20 @@ export default function CustomerLayout({
           <div className="flex items-center gap-3">
             {/* Customer name */}
             {customerName && (
-              <span className="hidden sm:block text-xs font-bold text-[#a1a19d]">{customerName}</span>
+              <span className="hidden sm:block text-xs font-bold text-on-surface-variant">{customerName}</span>
             )}
 
             {/* Sign out */}
             <button
               onClick={handleSignOut}
               disabled={loggingOut}
-              className="flex items-center gap-1.5 text-[#a1a19d] hover:text-error transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 text-on-surface-variant hover:text-error transition-colors disabled:opacity-50"
             >
               <span className="material-symbols-outlined text-[20px]" translate="no">logout</span>
             </button>
 
             {/* Theme Toggle */}
-            <div className="hidden md:block border-l border-[#e5e5e3] pl-6 ml-2">
+            <div className="hidden md:block border-l border-outline-variant pl-6 ml-2">
               <ThemeSwitcher />
             </div>
 
@@ -106,7 +106,7 @@ export default function CustomerLayout({
               className="md:hidden w-9 h-9 flex items-center justify-center"
               onClick={() => setMenuOpen(!menuOpen)}
             >
-              <span className="material-symbols-outlined text-[22px] text-surface-container-low" translate="no">
+              <span className="material-symbols-outlined text-[22px] text-on-surface" translate="no">
                 {menuOpen ? "close" : "menu"}
               </span>
             </button>
@@ -115,7 +115,7 @@ export default function CustomerLayout({
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div className="md:hidden bg-white border-t border-[#e5e5e3] px-4 py-3 space-y-1">
+          <div className="md:hidden bg-surface-container border-t border-outline-variant px-4 py-3 space-y-1">
             {NAV_ITEMS.map((item) => {
               const active = pathname === item.href;
               return (
@@ -125,8 +125,8 @@ export default function CustomerLayout({
                   onClick={() => setMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-colors ${
                     active
-                      ? "bg-[#f0fae1] text-surface-container-low"
-                      : "text-outline-variant hover:bg-on-surface"
+                      ? "bg-primary/10 text-on-surface"
+                      : "text-on-surface-variant hover:bg-surface-container-high"
                   }`}
                 >
                   <span className="material-symbols-outlined text-[20px]" translate="no">{item.icon}</span>
@@ -135,11 +135,11 @@ export default function CustomerLayout({
               );
             })}
             {customerName && (
-              <div className="pt-2 border-t border-[#e5e5e3] mt-2">
-                <p className="px-3 py-2 text-xs font-bold text-[#a1a19d]">Signed in as {customerName}</p>
+              <div className="pt-2 border-t border-outline-variant mt-2">
+                <p className="px-3 py-2 text-xs font-bold text-on-surface-variant">Signed in as {customerName}</p>
               </div>
             )}
-            <div className="pt-2 border-t border-[#e5e5e3] mt-2 px-3 pb-2">
+            <div className="pt-2 border-t border-outline-variant mt-2 px-3 pb-2">
               <ThemeSwitcher />
             </div>
           </div>
@@ -152,8 +152,8 @@ export default function CustomerLayout({
       </main>
       
       {/* Footer */}
-      <footer className="max-w-5xl mx-auto px-4 py-10 border-t border-[#e5e5e3] mt-12 bg-on-surface">
-        <p className="text-[#a1a19d] text-xs font-bold uppercase tracking-widest text-center">
+      <footer className="max-w-5xl mx-auto px-4 py-10 border-t border-outline-variant mt-12">
+        <p className="text-on-surface-variant text-xs font-bold uppercase tracking-widest text-center">
           © {new Date().getFullYear()} Siding Depot. All rights reserved.
         </p>
       </footer>
