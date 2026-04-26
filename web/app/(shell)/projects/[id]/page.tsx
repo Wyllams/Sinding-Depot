@@ -804,7 +804,7 @@ export default function ProjectDetailPage() {
              end_date: a.scheduled_end_at
           }))
         ).filter((c: any) => c.crew && c.crew.id),
-        change_orders: coData ?? [],
+        change_orders: (coData ?? []) as unknown as JobDetail["change_orders"],
       };
 
       setJob(mapped);
