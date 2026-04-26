@@ -253,7 +253,14 @@ interface JobDetail {
     start_date: string | null;
     end_date: string | null;
   }[];
-  change_orders: { id: string; title: string; status: string; proposed_amount: number | null; decided_at: string | null }[];
+  change_orders: {
+    id: string; title: string; description: string | null; status: string;
+    proposed_amount: number | null; approved_amount: number | null;
+    decided_at: string | null; requested_at: string; created_at: string;
+    rejection_reason: string | null;
+    job_service: { service_type: { name: string } | null } | null;
+    requested_by: { full_name: string; role: string } | null;
+  }[];
 }
 
 // ─── Status Map (3 values matching calendar popup) ─────────────────────
@@ -491,6 +498,16 @@ export default function ProjectDetailPage() {
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loadingMilestones, setLoadingMilestones] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+
+  // ── Change Order Drawer state ──
+  const [selectedCO, setSelectedCO] = useState<any>(null);
+  const [coAttachments, setCOAttachments] = useState<{ id: string; url: string; file_name: string; mime_type: string | null }[]>([]);
+  const [coLightboxUrl, setCOLightboxUrl] = useState<string | null>(null);
+  const [coLightboxType, setCOLightboxType] = useState<"image" | "video" | "other">("image");
+  const [coActionLoading, setCOActionLoading] = useState(false);
+  const [coDeleting, setCODeleting] = useState(false);
+  const [coConfirmDelete, setCOConfirmDelete] = useState(false);
+  const [userRole, setUserRole] = useState<string>("");
 
   // ── Daily Log state ──
   interface DailyLogEntry {
@@ -748,8 +765,14 @@ export default function ProjectDetailPage() {
       // Separate query for change_orders (RLS-protected, may fail for non-auth sessions)
       const { data: coData } = await supabase
         .from("change_orders")
-        .select("id, title, status, proposed_amount, decided_at")
-        .eq("job_id", jobId);
+        .select(`
+          id, title, description, status, proposed_amount, approved_amount,
+          decided_at, requested_at, created_at, rejection_reason,
+          job_service:job_services ( service_type:service_types ( name ) ),
+          requested_by:profiles!requested_by_profile_id ( full_name, role )
+        `)
+        .eq("job_id", jobId)
+        .order("created_at", { ascending: false });
 
       const j = data as any;
       const mapped: JobDetail = {
@@ -890,6 +913,20 @@ export default function ProjectDetailPage() {
     const { data } = await supabase.from("salespersons").select("id, full_name").order("full_name");
     if (data) setAllSalespersons(data);
   }
+
+  // Fetch user role for drawer actions
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+        if (data?.role) setUserRole(data.role);
+      } catch (err) {
+        console.error("[ProjectDetail] fetch user role error:", err);
+      }
+    })();
+  }, []);
 
   useEffect(() => { 
     fetchJob(); 
@@ -2022,14 +2059,32 @@ export default function ProjectDetailPage() {
                       cancelled: "#747673",
                     };
                     const c = coColors[co.status] ?? "#ababa8";
+                    const svcName = co.job_service?.service_type?.name;
                     return (
-                      <div key={co.id} className="flex items-center justify-between p-4 bg-surface-container-highest rounded-xl border border-outline-variant/15 hover:border-outline-variant/40 transition-colors">
-                        <div>
-                          <p className="text-sm font-bold text-on-surface">{co.title}</p>
-                          <div className="flex items-center gap-3 mt-1">
+                      <div
+                        key={co.id}
+                        onClick={async () => {
+                          setSelectedCO(co);
+                          // Fetch attachments for this CO
+                          const { data: attData } = await supabase
+                            .from("change_order_attachments")
+                            .select("id, url, file_name, mime_type")
+                            .eq("change_order_id", co.id);
+                          setCOAttachments((attData || []) as { id: string; url: string; file_name: string; mime_type: string | null }[]);
+                        }}
+                        className="flex items-center justify-between p-4 bg-surface-container-highest rounded-xl border border-outline-variant/15 hover:border-primary/30 hover:scale-[1.01] transition-all cursor-pointer group"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{co.title}</p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <span className="text-[10px] font-black uppercase" style={{ color: c }}>
                               {co.status.replace(/_/g, " ")}
                             </span>
+                            {svcName && (
+                              <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+                                {svcName}
+                              </span>
+                            )}
                             {co.decided_at && (
                               <span className="text-[10px] font-bold text-on-surface-variant">
                                 {co.status === "approved" ? "Approved" : co.status === "rejected" ? "Rejected" : "Decided"}{" "}
@@ -2038,9 +2093,12 @@ export default function ProjectDetailPage() {
                             )}
                           </div>
                         </div>
-                        <p className="text-sm font-black text-on-surface">
-                          {co.proposed_amount != null ? `$${co.proposed_amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "—"}
-                        </p>
+                        <div className="flex items-center gap-3 ml-4 shrink-0">
+                          <p className="text-sm font-black text-on-surface">
+                            {co.proposed_amount != null ? `$${co.proposed_amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "—"}
+                          </p>
+                          <span className="material-symbols-outlined text-[16px] text-outline-variant group-hover:text-primary transition-colors" translate="no">chevron_right</span>
+                        </div>
                       </div>
                     );
                   })}
@@ -3762,6 +3820,312 @@ export default function ProjectDetailPage() {
           />
         </div>
       )}
+
+      {/* ══════════════════════════════════════════════════
+          CHANGE ORDER DRAWER — Detail Panel
+      ══════════════════════════════════════════════════ */}
+      {selectedCO && (() => {
+        const CO_STATUS_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {
+          draft:                      { label: "DRAFT",    badge: "bg-[#fff7cf]/10 text-[#fff7cf] border border-[#fff7cf]/20",   dot: "#fff7cf" },
+          pending_customer_approval:  { label: "PENDING",  badge: "bg-[#e3eb5d]/10 text-[#e3eb5d] border border-[#e3eb5d]/20",   dot: "#e3eb5d" },
+          approved:                   { label: "APPROVED", badge: "bg-primary/20 text-primary border border-primary/30",   dot: "#aeee2a" },
+          rejected:                   { label: "REJECTED", badge: "bg-error/10 text-error border border-error/20",   dot: "#ff7351" },
+          cancelled:                  { label: "CANCELLED",badge: "bg-outline-variant/20 text-on-surface-variant border border-outline-variant/30",   dot: "#747673" },
+        };
+        const cfg = CO_STATUS_CONFIG[selectedCO.status] ?? CO_STATUS_CONFIG.draft;
+        const isAdmin = userRole === "admin";
+        const fmtCO$ = (n: number | null): string => n == null ? "—" : "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmtCODate = (iso: string): string => { const dt = new Date(iso); if (isNaN(dt.getTime())) return "—"; return `${(dt.getMonth() + 1).toString().padStart(2, '0')}/${dt.getDate().toString().padStart(2, '0')}/${dt.getFullYear()}`; };
+
+        async function handleCOAction(action: "send" | "approve" | "reject") {
+          setCOActionLoading(true);
+          try {
+            const updates: Record<string, string> = { send: "pending_customer_approval", approve: "approved", reject: "rejected" };
+            const { error } = await supabase.from("change_orders").update({
+              status: updates[action],
+              decided_at: action !== "send" ? new Date().toISOString() : null,
+              ...(action === "approve" ? { approved_amount: selectedCO.proposed_amount } : {}),
+            }).eq("id", selectedCO.id);
+            if (error) throw error;
+            setSelectedCO(null);
+            fetchJob();
+          } catch (err) { console.error("[CODrawer] action error:", err); } finally { setCOActionLoading(false); }
+        }
+
+        async function executeCODelete() {
+          setCODeleting(true);
+          try {
+            await supabase.from("change_order_attachments").delete().eq("change_order_id", selectedCO.id);
+            const { error } = await supabase.from("change_orders").delete().eq("id", selectedCO.id);
+            if (error) throw error;
+            setCOConfirmDelete(false);
+            setSelectedCO(null);
+            fetchJob();
+          } catch (err: any) {
+            console.error("[CODrawer] delete error:", err);
+            alert(`Failed to delete: ${err?.message || "Unknown error"}`);
+          } finally { setCODeleting(false); }
+        }
+
+        return (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedCO(null)} />
+            <div className="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-surface-container border-l border-outline-variant/30 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+
+              {/* Header */}
+              <div className="flex items-start justify-between p-6 border-b border-outline-variant/20 shrink-0">
+                <div className="flex-1 min-w-0 pr-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${cfg.badge}`}>
+                      {cfg.label}
+                    </span>
+                    {job.job_number && (
+                      <span className="text-[10px] text-on-surface-variant font-bold">{job.job_number}</span>
+                    )}
+                  </div>
+                  <h2 className="text-lg font-extrabold text-on-surface leading-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
+                    {selectedCO.title}
+                  </h2>
+                  {job.customer?.full_name && (
+                    <p className="text-xs text-on-surface-variant mt-0.5">{job.customer.full_name}</p>
+                  )}
+                  {selectedCO.requested_by?.full_name && (
+                    <p className="text-[10px] text-outline mt-1 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[11px]" translate="no">person</span>
+                      Created by {selectedCO.requested_by.full_name}
+                      <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[8px] font-bold uppercase">
+                        {selectedCO.requested_by.role}
+                      </span>
+                    </p>
+                  )}
+                </div>
+                <button onClick={() => setSelectedCO(null)} className="w-9 h-9 rounded-full bg-surface-container-highest hover:bg-outline-variant/60 flex items-center justify-center transition-colors text-on-surface-variant shrink-0">
+                  <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-5" style={{ scrollbarWidth: "none" }}>
+
+                {/* Amount */}
+                <div className="bg-surface-container-highest rounded-2xl p-5 border border-outline-variant/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
+                        {selectedCO.status === "approved" ? "Approved Amount" : "Proposed Amount"}
+                      </p>
+                      <p className="text-3xl font-black" style={{ fontFamily: "Manrope, system-ui, sans-serif", color: selectedCO.status === "approved" ? "#aeee2a" : "#faf9f5" }}>
+                        {fmtCO$(selectedCO.status === "approved" ? selectedCO.approved_amount : selectedCO.proposed_amount)}
+                      </p>
+                    </div>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${cfg.dot}15`, border: `1px solid ${cfg.dot}30` }}>
+                      <span className="material-symbols-outlined text-2xl" style={{ color: cfg.dot }} translate="no">
+                        {selectedCO.status === "approved" ? "check_circle" : selectedCO.status === "rejected" ? "cancel" : "request_quote"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Workflow Status Timeline */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Approval Workflow</p>
+                  <div className="space-y-2">
+                    {[
+                      { label: "Created as Draft", done: true, icon: "draft" },
+                      { label: "Reviewed & Sent to Client", done: selectedCO.status !== "draft", icon: "send" },
+                      { label: "Client Decision", done: selectedCO.status === "approved" || selectedCO.status === "rejected", icon: "how_to_vote" },
+                    ].map((step, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: step.done ? "#aeee2a15" : "#24262415", border: `1px solid ${step.done ? "#aeee2a40" : "#47484640"}` }}>
+                          <span className="material-symbols-outlined text-[14px]" style={{ color: step.done ? "#aeee2a" : "#747673" }} translate="no">
+                            {step.done ? "check" : step.icon}
+                          </span>
+                        </div>
+                        <span className={`text-sm font-medium ${step.done ? "text-on-surface" : "text-outline"}`}>
+                          {step.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Description */}
+                {selectedCO.description && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Description</p>
+                    <p className="text-sm text-on-surface leading-relaxed bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20 whitespace-pre-wrap">
+                      {selectedCO.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Customer rejection reason */}
+                {selectedCO.status === "rejected" && selectedCO.rejection_reason && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-error mb-2">Customer Rejection Reason</p>
+                    <p className="text-sm text-on-surface leading-relaxed bg-error/10 rounded-xl p-4 border border-error/20">
+                      {selectedCO.rejection_reason}
+                    </p>
+                  </div>
+                )}
+
+                {/* Attachments — Photos & Videos */}
+                {coAttachments.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Photos & Attachments</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {coAttachments.map((att) => {
+                        const isImage = att.mime_type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(att.url);
+                        const isVideo = att.mime_type?.startsWith("video/") || /\.(mp4|mov|webm|avi|mkv|m4v)/i.test(att.url);
+                        return (
+                          <button
+                            key={att.id}
+                            type="button"
+                            className="relative group rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container-low aspect-square cursor-pointer hover:border-primary/30 transition-colors"
+                            onClick={() => {
+                              if (isImage || isVideo) {
+                                setCOLightboxUrl(att.url);
+                                setCOLightboxType(isImage ? "image" : "video");
+                              } else {
+                                window.open(att.url, "_blank");
+                              }
+                            }}
+                          >
+                            {isImage ? (
+                              <img src={att.url} alt={att.file_name || ""} className="w-full h-full object-cover" />
+                            ) : isVideo ? (
+                              <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-background">
+                                <span className="material-symbols-outlined text-3xl text-[#60b8f5]" translate="no">play_circle</span>
+                                <span className="text-[9px] text-on-surface-variant">Video</span>
+                              </div>
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                                <span className="material-symbols-outlined text-2xl text-on-surface-variant" translate="no">attach_file</span>
+                                <span className="text-[9px] text-on-surface-variant truncate w-full text-center px-1">{att.file_name || "File"}</span>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                              <span className="material-symbols-outlined text-white text-xl opacity-0 group-hover:opacity-100 transition-opacity" translate="no">
+                                {isVideo ? "play_arrow" : "zoom_in"}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Dates */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-surface-container-highest rounded-xl p-3 border border-outline-variant/20">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Requested</p>
+                    <p className="text-sm text-on-surface font-bold">{selectedCO.requested_at ? fmtCODate(selectedCO.requested_at) : fmtCODate(selectedCO.created_at)}</p>
+                  </div>
+                  <div className="bg-surface-container-highest rounded-xl p-3 border border-outline-variant/20">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Service</p>
+                    <p className="text-sm text-on-surface font-bold">
+                      {selectedCO.job_service?.service_type?.name ?? "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-6 border-t border-outline-variant/20 shrink-0 space-y-3">
+                {selectedCO.status === "draft" && (
+                  <button
+                    onClick={() => handleCOAction("send")}
+                    disabled={coActionLoading}
+                    className="w-full py-3 rounded-xl bg-[#e3eb5d] text-[#5f5600] font-black text-sm shadow-lg hover:bg-[#d4da52] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[16px]" translate="no">send</span>
+                    {coActionLoading ? "Sending..." : "Send to Client for Approval"}
+                  </button>
+                )}
+                {selectedCO.status === "pending_customer_approval" && (userRole === "admin" || userRole === "customer" || userRole === "client") && (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleCOAction("reject")}
+                      disabled={coActionLoading}
+                      className="flex-1 py-3 rounded-xl bg-error/10 text-error border border-error/20 font-bold text-sm hover:bg-error/20 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
+                    <button
+                      onClick={() => handleCOAction("approve")}
+                      disabled={coActionLoading}
+                      className="flex-1 py-3 rounded-xl bg-primary text-[#3a5400] font-black text-sm shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[16px]" translate="no">check_circle</span>
+                      {coActionLoading ? "Saving..." : "Approve"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Admin-only Delete */}
+                {isAdmin && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setCOConfirmDelete(true); }}
+                    disabled={coDeleting}
+                    className="w-full py-3 rounded-xl bg-[#ba1212]/10 text-error border border-[#ba1212]/20 font-bold text-sm hover:bg-[#ba1212]/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[16px]" translate="no">delete_forever</span>
+                    {coDeleting ? "Deleting..." : "Delete Change Order"}
+                  </button>
+                )}
+
+                <button onClick={() => setSelectedCO(null)} className="w-full py-2.5 rounded-xl border border-outline-variant text-on-surface-variant font-bold text-sm hover:bg-surface-container-highest transition-colors">
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {/* CONFIRM DELETE POPUP */}
+            {coConfirmDelete && (
+              <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={(e) => { e.stopPropagation(); setCOConfirmDelete(false); }}>
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+                <div className="relative w-full max-w-md bg-surface-container border border-[#ba1212]/30 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex flex-col items-center pt-8 pb-4 px-6">
+                    <div className="w-16 h-16 rounded-full bg-[#ba1212]/10 border border-[#ba1212]/20 flex items-center justify-center mb-4">
+                      <span className="material-symbols-outlined text-3xl text-error" translate="no">delete_forever</span>
+                    </div>
+                    <h3 className="text-lg font-extrabold text-on-surface text-center" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>Delete Change Order?</h3>
+                    <p className="text-sm text-on-surface-variant text-center mt-2 leading-relaxed">
+                      You are about to permanently delete <span className="text-error font-bold">&ldquo;{selectedCO.title}&rdquo;</span>.<br />
+                      This action <span className="text-error font-bold">cannot be undone</span>.
+                    </p>
+                  </div>
+                  <div className="px-6 pb-6 flex gap-3">
+                    <button onClick={() => setCOConfirmDelete(false)} className="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface font-bold text-sm hover:bg-surface-container-highest transition-colors">Cancel</button>
+                    <button onClick={executeCODelete} disabled={coDeleting} className="flex-1 py-3 rounded-xl bg-[#ba1212] text-white font-black text-sm hover:bg-[#a01010] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#ba1212]/30">
+                      <span className="material-symbols-outlined text-[16px]" translate="no">delete_forever</span>
+                      {coDeleting ? "Deleting..." : "Yes, Delete"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CO LIGHTBOX */}
+            {coLightboxUrl && (
+              <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(12px)" }} onClick={() => { setCOLightboxUrl(null); setCOLightboxType("image"); }}>
+                <button className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors" onClick={() => { setCOLightboxUrl(null); setCOLightboxType("image"); }}>
+                  <span className="material-symbols-outlined text-xl text-white" translate="no">close</span>
+                </button>
+                <div className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  {coLightboxType === "image" && (
+                    <img src={coLightboxUrl} alt="" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl" style={{ width: "auto", height: "auto" }} />
+                  )}
+                  {coLightboxType === "video" && (
+                    <video src={coLightboxUrl} controls autoPlay className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl" style={{ width: "auto", height: "auto" }} />
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
 
     </>
   );

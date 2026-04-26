@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { compressImage } from "@/lib/compressImage";
 import { CustomDropdown } from "@/components/CustomDropdown";
@@ -25,6 +25,31 @@ export function FieldChangeOrderModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch available services for the job
+  const [jobServices, setJobServices] = useState<{ id: string; name: string }[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState<string>(serviceId || "");
+
+  useEffect(() => {
+    if (!jobId) return;
+    supabase
+      .from("job_services")
+      .select("id, service_type:service_types(name)")
+      .eq("job_id", jobId)
+      .then(({ data }) => {
+        const mapped = (data || []).map((s: any) => ({
+          id: s.id,
+          name: s.service_type?.name ?? "Unknown",
+        }));
+        setJobServices(mapped);
+        // If serviceId from props exists in the list, pre-select it
+        if (serviceId && mapped.some((s: any) => s.id === serviceId)) {
+          setSelectedServiceId(serviceId);
+        } else if (mapped.length === 1) {
+          setSelectedServiceId(mapped[0].id);
+        }
+      });
+  }, [jobId, serviceId]);
 
   // ---------- Upload attachments ----------
   async function uploadFiles(coId: string): Promise<void> {
@@ -81,7 +106,7 @@ export function FieldChangeOrderModal({
         .from("change_orders")
         .insert({
           job_id: jobId,
-          job_service_id: serviceId || null,
+          job_service_id: selectedServiceId || null,
           title: title.trim(),
           description: finalDescription,
           proposed_amount: null, // Parceiro NUNCA coloca preço
@@ -213,6 +238,20 @@ export function FieldChangeOrderModal({
               onChange={setLocation}
               options={["Front", "Back", "Right", "Left", "Deck", "Porch"]}
               placeholder="Select a location..."
+              className="w-full bg-surface-container-high border border-white/5 hover:border-primary/50 rounded-2xl py-4 px-4 text-on-surface font-bold text-[15px] transition-colors flex justify-between items-center"
+            />
+          </div>
+
+          {/* Service */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+              Service *
+            </label>
+            <CustomDropdown
+              value={selectedServiceId}
+              onChange={setSelectedServiceId}
+              options={jobServices.map(s => ({ value: s.id, label: s.name }))}
+              placeholder="Select a service..."
               className="w-full bg-surface-container-high border border-white/5 hover:border-primary/50 rounded-2xl py-4 px-4 text-on-surface font-bold text-[15px] transition-colors flex justify-between items-center"
             />
           </div>
