@@ -36,6 +36,8 @@ function formatDateShort(iso: string | null): string {
 
 function statusBadge(status: string, t: any): { label: string; color: string; pulse: boolean } {
   switch (status) {
+    case "pending":
+      return { label: t("pending"), color: "#ef4444", pulse: false };
     case "in_progress":
       return { label: t("inProgress"), color: "#aeee2a", pulse: true };
     case "scheduled":
@@ -84,8 +86,8 @@ export default function FieldJobsList() {
 
         // 3. Define status filters per tab
         const statusFilters: Record<TabFilter, string[]> = {
-          today:     ["scheduled", "in_progress", "assigned"],
-          upcoming:  ["planned", "assigned", "scheduled"],
+          today:     ["pending", "scheduled", "in_progress", "assigned"],
+          upcoming:  ["pending", "planned", "assigned", "scheduled"],
           completed: ["completed"],
         };
 
@@ -119,7 +121,8 @@ export default function FieldJobsList() {
             id,
             job_id,
             jobs ( 
-              id, 
+              id,
+              status, 
               service_address_line_1, 
               city, 
               state,
@@ -155,7 +158,7 @@ export default function FieldJobsList() {
 
             return {
               assignmentId: sa.id,
-              assignmentStatus: sa.status,
+              assignmentStatus: (job as any).status || sa.status,
               scheduledStart: sa.scheduled_start_at,
               jobId: job.id,
               customerName: customer?.full_name ?? t("unknownCustomer"),

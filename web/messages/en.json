@@ -213,6 +213,7 @@
     "today": "Today",
     "upcoming": "Upcoming",
     "completed": "Completed",
+    "pending": "Pending",
     "inProgress": "In Progress",
     "scheduled": "Scheduled",
     "assigned": "Assigned",
