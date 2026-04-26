@@ -143,7 +143,7 @@ export default function FieldJobDetail({
         const salesperson = Array.isArray(salesRaw) ? salesRaw[0] : salesRaw;
 
         // Get assignment status
-        let assignmentStatus = "scheduled";
+        let assignmentStatus = "pending";
         let scheduledStart: string | null = null;
         let scheduledEnd: string | null = null;
         let sTypeCode = "";
@@ -396,10 +396,11 @@ export default function FieldJobDetail({
 
   function statusBadge(status: string): { label: string; color: string; pulse: boolean } {
     switch (status) {
+      case "pending":      return { label: "Pending", color: "#ef4444", pulse: false };
       case "in_progress": return { label: "In Progress", color: "#aeee2a", pulse: true };
       case "scheduled":   return { label: "Scheduled", color: "#60a5fa", pulse: false };
       case "completed":   return { label: "Completed", color: "#6b7280", pulse: false };
-      case "done":        return { label: "Done", color: "#16a34a", pulse: false }; // Verde escuro
+      case "done":        return { label: "Done", color: "#16a34a", pulse: false };
       case "assigned":    return { label: "Assigned", color: "#f59e0b", pulse: false };
       default: return { label: status.replace(/_/g, " "), color: "#6b7280", pulse: false };
     }
