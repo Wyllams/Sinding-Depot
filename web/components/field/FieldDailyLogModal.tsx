@@ -137,6 +137,7 @@ export function FieldDailyLogModal({
       for (const file of newFiles) {
         // Compress image before uploading (mobile photos can be 3-10MB+)
         const compressedFile = await compressImage(file);
+        console.log(`Upload: original=${file.size}b compressed=${compressedFile.size}b name="${compressedFile.name}" type="${compressedFile.type}"`);
 
         const formData = new FormData();
         formData.append("file", compressedFile);
@@ -148,9 +149,16 @@ export function FieldDailyLogModal({
         });
 
         if (!res.ok) {
-          const errorBody = await res.text().catch(() => "Unknown error");
-          console.error("Upload failed:", res.status, errorBody);
-          throw new Error(`Failed to upload image (${res.status})`);
+          let serverMessage = `HTTP ${res.status}`;
+          try {
+            const errorData = await res.json();
+            serverMessage = errorData.error || serverMessage;
+          } catch {
+            const text = await res.text().catch(() => "");
+            if (text) serverMessage = text.substring(0, 200);
+          }
+          console.error("Upload failed:", res.status, serverMessage);
+          throw new Error(`Failed to upload image: ${serverMessage}`);
         }
 
         const data = await res.json();

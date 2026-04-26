@@ -6,6 +6,11 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig: NextConfig = {
   allowedDevOrigins: ['192.168.100.55', 'localhost'],
   serverExternalPackages: ['nodemailer'],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
 };
 
 export default withNextIntl(nextConfig);

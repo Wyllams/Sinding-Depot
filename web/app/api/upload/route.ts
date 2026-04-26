@@ -4,23 +4,34 @@ import { r2 } from "@/lib/r2";
 
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
-    const folder = formData.get("folder") as string || "general"; // optional folder (e.g., 'profiles', 'jobs')
+    // Step 1: Parse form data
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (parseErr: any) {
+      console.error("Upload: Failed to parse formData:", parseErr.message);
+      return NextResponse.json(
+        { error: `Failed to parse upload data: ${parseErr.message}` },
+        { status: 400 }
+      );
+    }
+
+    const file = formData.get("file") as File | null;
+    const folder = (formData.get("folder") as string) || "general";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Convert file to buffer
+    console.log(`Upload: Received file "${file.name}", type="${file.type}", size=${file.size}, folder="${folder}"`);
+
+    // Step 2: Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Create a unique file name to avoid collisions
-    // Mobile camera captures may not have a proper file extension in the name
-    let fileExtension = file.name?.split('.').pop();
+    // Step 3: Determine file extension
+    let fileExtension = file.name?.split(".").pop();
     if (!fileExtension || fileExtension === file.name) {
-      // Derive extension from MIME type (e.g. image/jpeg -> jpg)
       const mimeToExt: Record<string, string> = {
         "image/jpeg": "jpg",
         "image/png": "png",
@@ -31,35 +42,65 @@ export async function POST(request: Request) {
       };
       fileExtension = mimeToExt[file.type] || "jpg";
     }
+
     const uniqueFileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
 
+    // Step 4: Validate R2 configuration
     const bucketName = process.env.R2_BUCKET_NAME;
     if (!bucketName) {
-      throw new Error("R2_BUCKET_NAME is not properly configured");
+      console.error("Upload: R2_BUCKET_NAME is not configured");
+      return NextResponse.json(
+        { error: "Storage not configured (missing bucket)" },
+        { status: 500 }
+      );
     }
 
-    // Upload to Cloudflare R2
+    if (!process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_ENDPOINT) {
+      console.error("Upload: R2 credentials are missing", {
+        hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
+        hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
+        hasEndpoint: !!process.env.R2_ENDPOINT,
+      });
+      return NextResponse.json(
+        { error: "Storage not configured (missing credentials)" },
+        { status: 500 }
+      );
+    }
+
+    // Step 5: Upload to Cloudflare R2
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: uniqueFileName,
       Body: buffer,
-      ContentType: file.type,
+      ContentType: file.type || "application/octet-stream",
     });
 
-    await r2.send(command);
+    try {
+      await r2.send(command);
+    } catch (r2Err: any) {
+      console.error("Upload: R2 upload failed:", r2Err.message, r2Err.Code, r2Err.$metadata);
+      return NextResponse.json(
+        { error: `Storage upload failed: ${r2Err.message}` },
+        { status: 502 }
+      );
+    }
 
-    // Build the public URL (replace <seu_subdominio> locally then via ENV)
+    console.log(`Upload: Success -> ${uniqueFileName}`);
+
+    // Step 6: Build the public URL
     const publicUrlBase = process.env.NEXT_PUBLIC_R2_PUBLIC_URL?.replace(/\/$/, "");
     if (!publicUrlBase || publicUrlBase.includes("<")) {
-      console.warn("⚠️ NEXT_PUBLIC_R2_PUBLIC_URL is not configured. The returned URL is a placeholder.");
+      console.warn("Upload: NEXT_PUBLIC_R2_PUBLIC_URL is not configured properly.");
     }
-    
-    const fileUrl = `${publicUrlBase || "https://sua-url-r2-nao-configurada.com"}/${uniqueFileName}`;
+
+    const fileUrl = `${publicUrlBase || "https://storage-not-configured.example.com"}/${uniqueFileName}`;
 
     return NextResponse.json({ url: fileUrl, path: uniqueFileName });
-
   } catch (error: any) {
-    console.error("Upload API error:", error);
-    return NextResponse.json({ error: error.message || "Failed to upload file" }, { status: 500 });
+    console.error("Upload: Unexpected error:", error.message, error.stack);
+    return NextResponse.json(
+      { error: error.message || "Failed to upload file" },
+      { status: 500 }
+    );
   }
 }
