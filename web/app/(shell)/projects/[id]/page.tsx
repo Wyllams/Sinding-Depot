@@ -560,7 +560,7 @@ export default function ProjectDetailPage() {
   const [extraMaterials, setExtraMaterials] = useState<{
     id: string; material_name: string; customer_name: string; quantity: number; piece_size: string;
     document_url: string | null; document_name: string | null; notes: string | null;
-    status: string; created_at: string;
+    status: string; created_at: string; batch_id: string | null; requested_by_name: string | null;
   }[]>([]);
   const [loadingExtraMat, setLoadingExtraMat] = useState(false);
   const [showAddExtraMat, setShowAddExtraMat] = useState(false);
@@ -581,6 +581,8 @@ export default function ProjectDetailPage() {
   const editMatDocRef = useRef<HTMLInputElement>(null);
   const [uploadingEditDoc, setUploadingEditDoc] = useState(false);
   const [selectedExtraMat, setSelectedExtraMat] = useState<typeof extraMaterials[number] | null>(null);
+  const [selectedBatchItems, setSelectedBatchItems] = useState<typeof extraMaterials>([]);
+  const [emAttachments, setEmAttachments] = useState<{ id: string; extra_material_id: string; file_url: string; file_name: string | null }[]>([]);
 
   const handleAutoSave = async (
     table: "jobs" | "customers",
@@ -952,7 +954,7 @@ export default function ProjectDetailPage() {
     setLoadingExtraMat(true);
     const { data, error } = await supabase
       .from("extra_materials")
-      .select("id, material_name, customer_name, quantity, piece_size, document_url, document_name, notes, status, created_at")
+      .select("id, material_name, customer_name, quantity, piece_size, document_url, document_name, notes, status, created_at, batch_id, requested_by_name")
       .eq("job_id", jobId)
       .order("created_at", { ascending: false });
     if (!error && data) setExtraMaterials(data);
@@ -2448,63 +2450,84 @@ export default function ProjectDetailPage() {
                   <p className="text-sm font-bold text-on-surface">No requests yet</p>
                   <p className="text-xs">Click &quot;New Request&quot; to add an extra material order.</p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {extraMaterials.map((mat) => {
-                    const emColors: Record<string, string> = {
-                      pending: "#f5a623", ordered: "#60b8f5", delivered: "#aeee2a", cancelled: "#ff7351",
-                    };
-                    const ec = emColors[mat.status] ?? "#ababa8";
-                    return (
-                      <div
-                        key={mat.id}
-                        onClick={() => setSelectedExtraMat(mat)}
-                        className="grid items-center p-4 bg-surface-container-highest rounded-xl border border-outline-variant/15 hover:border-primary/30 hover:scale-[1.01] transition-all cursor-pointer group"
-                        style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr auto" }}
-                      >
-                        {/* Col 1: Material Name + Status */}
-                        <div className="min-w-0 pr-3">
-                          <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors truncate">{mat.material_name}</p>
-                          <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-[10px] font-black uppercase" style={{ color: ec }}>{mat.status}</span>
-                            <span className="text-[9px] text-on-surface-variant">Qty: {mat.quantity} · {mat.piece_size}</span>
+              ) : (() => {
+                // Group by batch_id (fallback to individual id if no batch)
+                const batches = new Map<string, typeof extraMaterials>();
+                extraMaterials.forEach((m) => {
+                  const key = m.batch_id || m.id;
+                  if (!batches.has(key)) batches.set(key, []);
+                  batches.get(key)!.push(m);
+                });
+                return (
+                  <div className="space-y-3">
+                    {Array.from(batches.entries()).map(([batchKey, items]) => {
+                      const first = items[0];
+                      const emColors: Record<string, string> = {
+                        pending: "#f5a623", ordered: "#60b8f5", delivered: "#aeee2a", cancelled: "#ff7351",
+                      };
+                      const ec = emColors[first.status] ?? "#ababa8";
+                      const title = items.length > 1 ? items.map(i => i.material_name).join(" + ") : first.material_name;
+                      return (
+                        <div
+                          key={batchKey}
+                          onClick={async () => {
+                            setSelectedExtraMat(first);
+                            setSelectedBatchItems(items);
+                            // Fetch attachments for all items in this batch
+                            const ids = items.map(i => i.id);
+                            const { data: att } = await supabase
+                              .from("extra_material_attachments")
+                              .select("id, extra_material_id, file_url, file_name")
+                              .in("extra_material_id", ids);
+                            setEmAttachments(att ?? []);
+                          }}
+                          className="grid items-center p-4 bg-surface-container-highest rounded-xl border border-outline-variant/15 hover:border-primary/30 hover:scale-[1.01] transition-all cursor-pointer group"
+                          style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr auto" }}
+                        >
+                          {/* Col 1: Material Name(s) + Status */}
+                          <div className="min-w-0 pr-3">
+                            <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors truncate">{title}</p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="text-[10px] font-black uppercase" style={{ color: ec }}>{first.status}</span>
+                              {items.length > 1 && <span className="text-[9px] text-on-surface-variant bg-surface-container-high px-1.5 py-0.5 rounded">{items.length} items</span>}
+                            </div>
+                          </div>
+                          {/* Col 2: Created Date */}
+                          <div className="min-w-0 pr-3">
+                            <p className="text-[10px] font-bold text-outline-variant uppercase tracking-wider">Created</p>
+                            <p className="text-xs font-bold text-on-surface mt-1 flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[14px] text-on-surface-variant" translate="no">calendar_today</span>
+                              {fmt(first.created_at)}
+                            </p>
+                          </div>
+                          {/* Col 3: Sent By (Crew) */}
+                          <div className="min-w-0 pr-3">
+                            <p className="text-[10px] font-bold text-outline-variant uppercase tracking-wider">Sent by</p>
+                            <p className="text-xs font-bold text-on-surface mt-1 flex items-center gap-1.5 truncate">
+                              <span className="material-symbols-outlined text-[14px] text-on-surface-variant" translate="no">person</span>
+                              <span className="truncate">{first.requested_by_name || "—"}</span>
+                            </p>
+                          </div>
+                          {/* Col 4: Decision */}
+                          <div className="min-w-0 pr-3">
+                            <p className="text-[10px] font-bold text-outline-variant uppercase tracking-wider">Decision</p>
+                            <p className="text-xs font-bold mt-1 flex items-center gap-1.5" style={{ color: ec }}>
+                              <span className="material-symbols-outlined text-[14px]" translate="no">
+                                {first.status === "delivered" ? "check_circle" : first.status === "cancelled" ? "cancel" : first.status === "ordered" ? "local_shipping" : "hourglass_empty"}
+                              </span>
+                              {first.status === "delivered" ? "Delivered" : first.status === "cancelled" ? "Cancelled" : first.status === "ordered" ? "Ordered" : "Pending"}
+                            </p>
+                          </div>
+                          {/* Arrow */}
+                          <div className="flex items-center shrink-0">
+                            <span className="material-symbols-outlined text-[16px] text-outline-variant group-hover:text-primary transition-colors" translate="no">chevron_right</span>
                           </div>
                         </div>
-                        {/* Col 2: Created Date */}
-                        <div className="min-w-0 pr-3">
-                          <p className="text-[10px] font-bold text-outline-variant uppercase tracking-wider">Created</p>
-                          <p className="text-xs font-bold text-on-surface mt-1 flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[14px] text-on-surface-variant" translate="no">calendar_today</span>
-                            {fmt(mat.created_at)}
-                          </p>
-                        </div>
-                        {/* Col 3: Customer */}
-                        <div className="min-w-0 pr-3">
-                          <p className="text-[10px] font-bold text-outline-variant uppercase tracking-wider">Sent by</p>
-                          <p className="text-xs font-bold text-on-surface mt-1 flex items-center gap-1.5 truncate">
-                            <span className="material-symbols-outlined text-[14px] text-on-surface-variant" translate="no">person</span>
-                            <span className="truncate">{mat.customer_name || "—"}</span>
-                          </p>
-                        </div>
-                        {/* Col 4: Status/Decision */}
-                        <div className="min-w-0 pr-3">
-                          <p className="text-[10px] font-bold text-outline-variant uppercase tracking-wider">Decision</p>
-                          <p className={`text-xs font-bold mt-1 flex items-center gap-1.5`} style={{ color: ec }}>
-                            <span className="material-symbols-outlined text-[14px]" translate="no">
-                              {mat.status === "delivered" ? "check_circle" : mat.status === "cancelled" ? "cancel" : mat.status === "ordered" ? "local_shipping" : "hourglass_empty"}
-                            </span>
-                            {mat.status === "delivered" ? "Delivered" : mat.status === "cancelled" ? "Cancelled" : mat.status === "ordered" ? "Ordered" : "Pending"}
-                          </p>
-                        </div>
-                        {/* Arrow */}
-                        <div className="flex items-center shrink-0">
-                          <span className="material-symbols-outlined text-[16px] text-outline-variant group-hover:text-primary transition-colors" translate="no">chevron_right</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Add Request Modal */}
@@ -2599,69 +2622,78 @@ export default function ProjectDetailPage() {
                 cancelled: { label: "CANCELLED", badge: "bg-error/10 text-error border border-error/20", dot: "#ff7351" },
               };
               const emCfg = EM_STATUS_CONFIG[selectedExtraMat.status] ?? EM_STATUS_CONFIG.pending;
+              const items = selectedBatchItems.length > 0 ? selectedBatchItems : [selectedExtraMat];
+              const batchTitle = items.length > 1 ? items.map(i => i.material_name).join(" + ") : items[0].material_name;
               return (
                 <>
-                  <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedExtraMat(null)} />
+                  <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => { setSelectedExtraMat(null); setSelectedBatchItems([]); setEmAttachments([]); }} />
                   <div className="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-surface-container border-l border-outline-variant/30 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
                     {/* Header */}
                     <div className="flex items-start justify-between p-6 border-b border-outline-variant/20 shrink-0">
                       <div className="flex-1 min-w-0 pr-3">
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${emCfg.badge}`}>{emCfg.label}</span>
-                          {job.job_number && <span className="text-[10px] text-on-surface-variant font-bold">{job.job_number}</span>}
+                          {items.length > 1 && <span className="text-[10px] text-on-surface-variant font-bold bg-surface-container-highest px-2 py-0.5 rounded">{items.length} items</span>}
                         </div>
-                        <h2 className="text-lg font-extrabold text-on-surface leading-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{selectedExtraMat.material_name}</h2>
-                        <p className="text-xs text-on-surface-variant mt-0.5">{selectedExtraMat.customer_name}</p>
+                        <h2 className="text-lg font-extrabold text-on-surface leading-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{batchTitle}</h2>
+                        <p className="text-xs text-on-surface-variant mt-0.5">Sent by: {selectedExtraMat.requested_by_name || "—"} · {fmt(selectedExtraMat.created_at)}</p>
                       </div>
-                      <button onClick={() => setSelectedExtraMat(null)} className="w-9 h-9 rounded-full bg-surface-container-highest hover:bg-outline-variant/60 flex items-center justify-center transition-colors text-on-surface-variant shrink-0">
+                      <button onClick={() => { setSelectedExtraMat(null); setSelectedBatchItems([]); setEmAttachments([]); }} className="w-9 h-9 rounded-full bg-surface-container-highest hover:bg-outline-variant/60 flex items-center justify-center transition-colors text-on-surface-variant shrink-0">
                         <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
                       </button>
                     </div>
 
-                    {/* Body */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-5" style={{ scrollbarWidth: "none" }}>
-                      {/* Details Grid */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Quantity</p>
-                          <p className="text-2xl font-black text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{selectedExtraMat.quantity}</p>
-                        </div>
-                        <div className="bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Piece Size</p>
-                          <p className="text-2xl font-black text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{selectedExtraMat.piece_size}</p>
-                        </div>
-                      </div>
-
-                      {/* Notes */}
-                      {selectedExtraMat.notes && (
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Notes</p>
-                          <p className="text-sm text-on-surface leading-relaxed bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20 whitespace-pre-wrap">{selectedExtraMat.notes}</p>
-                        </div>
-                      )}
-
-                      {/* Document */}
-                      {selectedExtraMat.document_url && (
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Document</p>
-                          <a href={selectedExtraMat.document_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20 hover:border-primary/30 transition-colors">
-                            <span className="material-symbols-outlined text-[#60b8f5]" translate="no">attach_file</span>
-                            <span className="text-sm font-bold text-[#60b8f5]">{selectedExtraMat.document_name || "View Document"}</span>
-                          </a>
-                        </div>
-                      )}
-
-                      {/* Dates */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-surface-container-highest rounded-xl p-3 border border-outline-variant/20">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Requested</p>
-                          <p className="text-sm text-on-surface font-bold">{fmt(selectedExtraMat.created_at)}</p>
-                        </div>
-                        <div className="bg-surface-container-highest rounded-xl p-3 border border-outline-variant/20">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Status</p>
-                          <p className="text-sm font-bold capitalize" style={{ color: emCfg.dot }}>{selectedExtraMat.status}</p>
-                        </div>
-                      </div>
+                    {/* Body — itemized list */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4" style={{ scrollbarWidth: "none" }}>
+                      {items.map((item, idx) => {
+                        const itemPhotos = emAttachments.filter(a => a.extra_material_id === item.id);
+                        return (
+                          <div key={item.id} className="bg-surface-container-highest rounded-xl border border-outline-variant/20 p-4 space-y-3">
+                            <div className="flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center text-[10px] font-black">{idx + 1}</span>
+                              <h4 className="text-sm font-bold text-on-surface">{item.material_name}</h4>
+                            </div>
+                            {/* Qty + Size */}
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="bg-surface-container rounded-lg p-3 border border-outline-variant/10">
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Qty</p>
+                                <p className="text-lg font-black text-on-surface">{item.quantity}</p>
+                              </div>
+                              <div className="bg-surface-container rounded-lg p-3 border border-outline-variant/10">
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Piece Size</p>
+                                <p className="text-lg font-black text-on-surface">{item.piece_size}</p>
+                              </div>
+                            </div>
+                            {/* Notes */}
+                            {item.notes && (
+                              <div>
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Notes</p>
+                                <p className="text-xs text-on-surface leading-relaxed whitespace-pre-wrap">{item.notes}</p>
+                              </div>
+                            )}
+                            {/* Document */}
+                            {item.document_url && (
+                              <a href={item.document_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-bold text-[#60b8f5] hover:text-primary transition-colors">
+                                <span className="material-symbols-outlined text-[14px]" translate="no">attach_file</span>
+                                {item.document_name || "View Document"}
+                              </a>
+                            )}
+                            {/* Photos */}
+                            {itemPhotos.length > 0 && (
+                              <div>
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Photos ({itemPhotos.length})</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {itemPhotos.map((photo) => (
+                                    <a key={photo.id} href={photo.file_url} target="_blank" rel="noopener noreferrer" className="block w-20 h-20 rounded-lg overflow-hidden border border-outline-variant/30 hover:border-primary/50 transition-colors">
+                                      <img src={photo.file_url} alt={photo.file_name || ""} className="w-full h-full object-cover" />
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* Footer Actions */}
@@ -2669,11 +2701,11 @@ export default function ProjectDetailPage() {
                       {selectedExtraMat.status === "pending" && (
                         <div className="flex gap-3">
                           <button
-                            onClick={() => { handleExtraMatStatus(selectedExtraMat.id, "cancelled"); setSelectedExtraMat((p: any) => p ? { ...p, status: "cancelled" } : null); }}
+                            onClick={() => { items.forEach(i => handleExtraMatStatus(i.id, "cancelled")); setSelectedExtraMat((p: any) => p ? { ...p, status: "cancelled" } : null); }}
                             className="flex-1 py-3 rounded-xl bg-error/10 text-error border border-error/20 font-bold text-sm hover:bg-error/20 transition-all active:scale-95"
                           >Reject</button>
                           <button
-                            onClick={() => { handleExtraMatStatus(selectedExtraMat.id, "ordered"); setSelectedExtraMat((p: any) => p ? { ...p, status: "ordered" } : null); }}
+                            onClick={() => { items.forEach(i => handleExtraMatStatus(i.id, "ordered")); setSelectedExtraMat((p: any) => p ? { ...p, status: "ordered" } : null); }}
                             className="flex-1 py-3 rounded-xl bg-primary text-[#3a5400] font-black text-sm shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center gap-2"
                           >
                             <span className="material-symbols-outlined text-[16px]" translate="no">check_circle</span>
@@ -2683,7 +2715,7 @@ export default function ProjectDetailPage() {
                       )}
                       {selectedExtraMat.status === "ordered" && (
                         <button
-                          onClick={() => { handleExtraMatStatus(selectedExtraMat.id, "delivered"); setSelectedExtraMat((p: any) => p ? { ...p, status: "delivered" } : null); }}
+                          onClick={() => { items.forEach(i => handleExtraMatStatus(i.id, "delivered")); setSelectedExtraMat((p: any) => p ? { ...p, status: "delivered" } : null); }}
                           className="w-full py-3 rounded-xl bg-primary text-[#3a5400] font-black text-sm shadow-lg hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
                           <span className="material-symbols-outlined text-[16px]" translate="no">local_shipping</span>
@@ -2691,13 +2723,13 @@ export default function ProjectDetailPage() {
                         </button>
                       )}
                       <button
-                        onClick={() => { handleDeleteExtraMat(selectedExtraMat.id); setSelectedExtraMat(null); }}
+                        onClick={() => { items.forEach(i => handleDeleteExtraMat(i.id)); setSelectedExtraMat(null); setSelectedBatchItems([]); }}
                         className="w-full py-3 rounded-xl bg-[#ba1212]/10 text-error border border-[#ba1212]/20 font-bold text-sm hover:bg-[#ba1212]/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                       >
                         <span className="material-symbols-outlined text-[16px]" translate="no">delete_forever</span>
                         Delete Request
                       </button>
-                      <button onClick={() => setSelectedExtraMat(null)} className="w-full py-2.5 rounded-xl border border-outline-variant text-on-surface-variant font-bold text-sm hover:bg-surface-container-highest transition-colors">Close</button>
+                      <button onClick={() => { setSelectedExtraMat(null); setSelectedBatchItems([]); setEmAttachments([]); }} className="w-full py-2.5 rounded-xl border border-outline-variant text-on-surface-variant font-bold text-sm hover:bg-surface-container-highest transition-colors">Close</button>
                     </div>
                   </div>
                 </>

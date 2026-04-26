@@ -84,14 +84,14 @@ export default function FieldJobDetail({
   }, [serviceId]);
 
   // Extra Material modal
-  type ExtraMaterialItem = { name: string; qty: string; size: string; notes: string };
+  type ExtraMaterialItem = { name: string; qty: string; size: string; notes: string; photos: File[] };
   const [showMaterialModal, setShowMaterialModal] = useState(false);
-  const [materialItems, setMaterialItems] = useState<ExtraMaterialItem[]>([{ name: "", qty: "1", size: "", notes: "" }]);
+  const [materialItems, setMaterialItems] = useState<ExtraMaterialItem[]>([{ name: "", qty: "1", size: "", notes: "", photos: [] }]);
   const [submittingMaterial, setSubmittingMaterial] = useState(false);
   const [materialSuccess, setMaterialSuccess] = useState(false);
 
   const addMaterialItem = () => {
-    setMaterialItems([...materialItems, { name: "", qty: "1", size: "", notes: "" }]);
+    setMaterialItems([...materialItems, { name: "", qty: "1", size: "", notes: "", photos: [] }]);
   };
 
   const removeMaterialItem = (index: number) => {
@@ -101,6 +101,19 @@ export default function FieldJobDetail({
   const updateMaterialItem = (index: number, field: keyof ExtraMaterialItem, value: string) => {
     const newItems = [...materialItems];
     newItems[index] = { ...newItems[index], [field]: value };
+    setMaterialItems(newItems);
+  };
+
+  const addPhotosToItem = (index: number, files: FileList | null) => {
+    if (!files) return;
+    const newItems = [...materialItems];
+    newItems[index] = { ...newItems[index], photos: [...newItems[index].photos, ...Array.from(files)] };
+    setMaterialItems(newItems);
+  };
+
+  const removePhotoFromItem = (itemIndex: number, photoIndex: number) => {
+    const newItems = [...materialItems];
+    newItems[itemIndex] = { ...newItems[itemIndex], photos: newItems[itemIndex].photos.filter((_, i) => i !== photoIndex) };
     setMaterialItems(newItems);
   };
 
@@ -399,6 +412,9 @@ export default function FieldJobDetail({
         .eq("id", user.id)
         .single();
 
+      // Generate a single batch_id to group all items from this submission
+      const batchId = crypto.randomUUID();
+
       const itemsToInsert = validItems.map(item => ({
         job_id: jobId,
         material_name: item.name.trim(),
@@ -409,11 +425,40 @@ export default function FieldJobDetail({
         status: "pending",
         requested_by: user.id,
         requested_by_name: profile?.full_name ?? "Partner",
+        batch_id: batchId,
       }));
 
-      const { error } = await supabase.from("extra_materials").insert(itemsToInsert);
+      const { data: insertedRows, error } = await supabase
+        .from("extra_materials")
+        .insert(itemsToInsert)
+        .select("id");
 
       if (error) throw new Error(error.message);
+
+      // Upload photos for each item
+      if (insertedRows) {
+        for (let i = 0; i < validItems.length; i++) {
+          const item = validItems[i];
+          const row = insertedRows[i];
+          if (!row || item.photos.length === 0) continue;
+          for (const photo of item.photos) {
+            try {
+              const formData = new FormData();
+              formData.append("file", photo);
+              formData.append("folder", `extra-materials/${jobId}`);
+              const res = await fetch("/api/upload", { method: "POST", body: formData });
+              const result = await res.json();
+              if (res.ok && result.url) {
+                await supabase.from("extra_material_attachments").insert({
+                  extra_material_id: row.id,
+                  file_url: result.url,
+                  file_name: photo.name,
+                });
+              }
+            } catch { /* non-blocking */ }
+          }
+        }
+      }
 
       // Push notification to admins
       try {
@@ -434,7 +479,7 @@ export default function FieldJobDetail({
 
       // Success
       setShowMaterialModal(false);
-      setMaterialItems([{ name: "", qty: "1", size: "", notes: "" }]);
+      setMaterialItems([{ name: "", qty: "1", size: "", notes: "", photos: [] }]);
       setMaterialSuccess(true);
       setTimeout(() => setMaterialSuccess(false), 8000);
     } catch (e: unknown) {
@@ -945,6 +990,40 @@ export default function FieldJobDetail({
                       rows={2}
                       className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-[#f59e0b]/50 transition-all resize-none"
                     />
+                  </div>
+
+                  {/* Photos */}
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
+                      Photos
+                    </label>
+                    {item.photos.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {item.photos.map((photo, pi) => (
+                          <div key={pi} className="relative w-16 h-16 rounded-lg overflow-hidden border border-outline-variant/30">
+                            <img src={URL.createObjectURL(photo)} alt="" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => removePhotoFromItem(index, pi)}
+                              className="absolute top-0 right-0 w-5 h-5 bg-black/70 flex items-center justify-center rounded-bl-lg"
+                            >
+                              <span className="text-white text-[10px]">✕</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <label className="flex items-center gap-2 text-xs text-on-surface-variant cursor-pointer hover:text-[#f59e0b] transition-colors">
+                      <span className="material-symbols-outlined text-[16px]" translate="no">add_a_photo</span>
+                      Add photos
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => addPhotosToItem(index, e.target.files)}
+                      />
+                    </label>
                   </div>
                 </div>
               ))}
