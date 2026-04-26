@@ -2045,7 +2045,7 @@ export default function ProjectDetailPage() {
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{co.title}</p>
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                             <span className="text-[10px] font-black uppercase" style={{ color: c }}>
                               {co.status.replace(/_/g, " ")}
                             </span>
@@ -2054,10 +2054,29 @@ export default function ProjectDetailPage() {
                                 {svcName}
                               </span>
                             )}
+                          </div>
+                          {/* Metadata: created date, requested by, decided date */}
+                          <div className="flex items-center gap-3 mt-2 flex-wrap">
+                            <span className="text-[10px] text-on-surface-variant flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[12px]" translate="no">calendar_today</span>
+                              Created {fmt(co.created_at)}
+                            </span>
+                            {co.requested_by?.full_name && (
+                              <span className="text-[10px] text-on-surface-variant flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px]" translate="no">person</span>
+                                {co.requested_by.full_name}
+                                {co.requested_by.role && (
+                                  <span className="text-[9px] text-outline-variant capitalize"> ({co.requested_by.role})</span>
+                                )}
+                              </span>
+                            )}
                             {co.decided_at && (
-                              <span className="text-[10px] font-bold text-on-surface-variant">
+                              <span className={`text-[10px] font-bold flex items-center gap-1 ${co.status === "approved" ? "text-primary" : co.status === "rejected" ? "text-error" : "text-on-surface-variant"}`}>
+                                <span className="material-symbols-outlined text-[12px]" translate="no">
+                                  {co.status === "approved" ? "check_circle" : co.status === "rejected" ? "cancel" : "schedule"}
+                                </span>
                                 {co.status === "approved" ? "Approved" : co.status === "rejected" ? "Rejected" : "Decided"}{" "}
-                                {(() => { const d = new Date(co.decided_at); return `${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}/${d.getFullYear()}`; })()}
+                                {fmt(co.decided_at)}
                               </span>
                             )}
                           </div>
