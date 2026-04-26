@@ -26,6 +26,17 @@ interface JobDetail {
   totalDays: number;
 }
 
+interface LaborBillSummary {
+  id: string;
+  status: string;
+  total: number;
+  created_at: string;
+  templateCode: string;
+  templateTitle: string;
+  crewName: string | null;
+  installerName: string | null;
+}
+
 /* ────────────────────────────────────────────────── */
 /*  Component                                         */
 /* ────────────────────────────────────────────────── */
@@ -110,6 +121,10 @@ export default function FieldJobDetail({
   const [paintColors, setPaintColors] = useState<any[]>([]);
   const [serviceTypeCode, setServiceTypeCode] = useState("");
 
+  // Labor Bills
+  const [laborBills, setLaborBills] = useState<LaborBillSummary[]>([]);
+  const [loadingLaborBills, setLoadingLaborBills] = useState(false);
+
 
   // ─── Load real job data ──────────────────────────
   useEffect(() => {
@@ -158,6 +173,7 @@ export default function FieldJobDetail({
             .maybeSingle();
 
           if (crew) {
+
             const { data: sa } = await supabase
               .from("service_assignments")
               .select("scheduled_start_at, scheduled_end_at")
@@ -231,6 +247,47 @@ export default function FieldJobDetail({
     };
     loadJob();
   }, [jobId, serviceId]);
+
+  // ─── Load Labor Bills for this job ─────────────
+  useEffect(() => {
+    const loadLaborBills = async (): Promise<void> => {
+      setLoadingLaborBills(true);
+      try {
+        const { data } = await supabase
+          .from("job_labor_bills")
+          .select(`
+            id, status, total, created_at,
+            labor_bill_templates:labor_bill_templates!job_labor_bills_template_id_fkey(title, code),
+            crews(name),
+            installer_name
+          `)
+          .eq("job_id", jobId)
+          .order("created_at", { ascending: false });
+
+        if (data) {
+          const mapped: LaborBillSummary[] = data.map((b: any) => {
+            const tmpl = Array.isArray(b.labor_bill_templates) ? b.labor_bill_templates[0] : b.labor_bill_templates;
+            const crewData = Array.isArray(b.crews) ? b.crews[0] : b.crews;
+            return {
+              id: b.id,
+              status: b.status,
+              total: Number(b.total || 0),
+              created_at: b.created_at,
+              templateCode: tmpl?.code || "",
+              templateTitle: tmpl?.title || "",
+              crewName: crewData?.name || null,
+              installerName: b.installer_name || null,
+            };
+          });
+          setLaborBills(mapped);
+        }
+      } catch {
+        // silent
+      }
+      setLoadingLaborBills(false);
+    };
+    loadLaborBills();
+  }, [jobId]);
 
   // ─── Handle Duration Change ───────────────────
   const [updatingDuration, setUpdatingDuration] = useState(false);
@@ -471,6 +528,71 @@ export default function FieldJobDetail({
                 <span className="material-symbols-outlined text-[14px]" translate="no">calendar_month</span>
                 <span>Start: {formatDateShort(job.scheduledStart)}</span>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Labor Bills */}
+        <div className="pt-2">
+          <h3 className="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-2 pl-1 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[14px]" translate="no">receipt_long</span>
+            Labor Bills
+            {loadingLaborBills && <span className="w-3 h-3 border border-t-[var(--color-siding-green)] rounded-full animate-spin ml-1"></span>}
+          </h3>
+
+          {!loadingLaborBills && laborBills.length === 0 && (
+            <div className="bg-surface-container-high border border-white/5 rounded-2xl p-5 flex flex-col items-center justify-center gap-2">
+              <div className="w-11 h-11 rounded-full bg-surface-container-highest flex items-center justify-center">
+                <span className="material-symbols-outlined text-on-surface-variant text-xl" translate="no">receipt_long</span>
+              </div>
+              <p className="text-on-surface-variant text-xs font-medium">No labor bills for this job yet.</p>
+            </div>
+          )}
+
+          {laborBills.length > 0 && (
+            <div className="space-y-2">
+              {laborBills.map((bill) => {
+                const d = new Date(bill.created_at);
+                const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                const isSiding = bill.templateCode.includes("siding");
+                const statusStyles: Record<string, { bg: string; text: string }> = {
+                  draft: { bg: "bg-surface-container-highest", text: "text-on-surface-variant" },
+                  submitted: { bg: "bg-[#60b8f5]/15", text: "text-[#60b8f5]" },
+                  approved: { bg: "bg-[#22c55e]/15", text: "text-[#22c55e]" },
+                };
+                const st = statusStyles[bill.status] || statusStyles.draft;
+
+                return (
+                  <div key={bill.id} className="bg-surface-container-high border border-white/5 rounded-2xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isSiding ? "bg-[#ff7351]/10" : "bg-[#60b8f5]/10"}`}>
+                          <span className={`material-symbols-outlined text-lg ${isSiding ? "text-[#ff7351]" : "text-[#60b8f5]"}`} translate="no">
+                            {isSiding ? "home_repair_service" : "format_paint"}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-on-surface font-bold text-sm">{bill.templateTitle || (isSiding ? "Siding" : "Paint")}</p>
+                          <p className="text-on-surface-variant text-[10px]">{dateStr}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${st.bg} ${st.text}`}>
+                        {bill.status}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-white/5 pt-3">
+                      <div className="flex items-center gap-1.5 text-on-surface-variant text-xs">
+                        <span className="material-symbols-outlined text-[14px]" translate="no">person</span>
+                        <span>{bill.crewName || bill.installerName || "—"}</span>
+                      </div>
+                      <span className="text-primary font-black text-base">
+                        ${bill.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
