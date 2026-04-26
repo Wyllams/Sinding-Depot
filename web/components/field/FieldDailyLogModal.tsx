@@ -3,6 +3,69 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
+/**
+ * Compresses an image file to reduce size before upload.
+ * Mobile camera photos are typically 3-10MB+ which exceeds platform limits.
+ * This resizes to max 1920px and compresses to 80% JPEG quality (~200-500KB).
+ */
+async function compressImage(file: File, maxWidth = 1920, quality = 0.8): Promise<File> {
+  // Skip compression for small files (<1MB) or non-image files
+  if (file.size < 1024 * 1024 || !file.type.startsWith("image/")) {
+    return file;
+  }
+
+  return new Promise<File>((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file); // Fallback: return original
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file); // Fallback: return original
+            return;
+          }
+          // Derive a safe filename with .jpg extension
+          const baseName = file.name?.replace(/\.[^.]+$/, "") || `photo_${Date.now()}`;
+          const compressedFile = new File([blob], `${baseName}.jpg`, {
+            type: "image/jpeg",
+            lastModified: Date.now(),
+          });
+          resolve(compressedFile);
+        },
+        "image/jpeg",
+        quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file); // Fallback: return original on error
+    };
+
+    img.src = url;
+  });
+}
+
 export function FieldDailyLogModal({
   jobId,
   serviceId,
@@ -52,7 +115,7 @@ export function FieldDailyLogModal({
 
   const handleSubmit = async () => {
     if (existingImages.length === 0 && newFiles.length === 0) {
-      alert("Por favor, adicione pelo menos uma foto.");
+      alert("Please add at least one photo.");
       return;
     }
     
@@ -69,11 +132,14 @@ export function FieldDailyLogModal({
 
       if (!crew) throw new Error("Crew not found for this user");
 
-      // 1. Upload New Images
+      // 1. Compress & Upload New Images
       const uploadedUrls: string[] = [];
       for (const file of newFiles) {
+        // Compress image before uploading (mobile photos can be 3-10MB+)
+        const compressedFile = await compressImage(file);
+
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", compressedFile);
         formData.append("folder", `daily_logs/${jobId}/day_${dayNumber}`);
 
         const res = await fetch("/api/upload", {
@@ -82,7 +148,9 @@ export function FieldDailyLogModal({
         });
 
         if (!res.ok) {
-          throw new Error("Failed to upload image");
+          const errorBody = await res.text().catch(() => "Unknown error");
+          console.error("Upload failed:", res.status, errorBody);
+          throw new Error(`Failed to upload image (${res.status})`);
         }
 
         const data = await res.json();

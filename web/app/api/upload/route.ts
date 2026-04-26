@@ -17,7 +17,20 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Create a unique file name to avoid collisions
-    const fileExtension = file.name.split('.').pop();
+    // Mobile camera captures may not have a proper file extension in the name
+    let fileExtension = file.name?.split('.').pop();
+    if (!fileExtension || fileExtension === file.name) {
+      // Derive extension from MIME type (e.g. image/jpeg -> jpg)
+      const mimeToExt: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "image/heic": "heic",
+        "image/heif": "heif",
+        "image/gif": "gif",
+      };
+      fileExtension = mimeToExt[file.type] || "jpg";
+    }
     const uniqueFileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
 
     const bucketName = process.env.R2_BUCKET_NAME;
