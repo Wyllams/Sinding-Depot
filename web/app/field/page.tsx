@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { MobileWeatherWidget } from "@/components/field/MobileWeatherWidget";
+import { useTranslations } from "next-intl";
 
 export default function FieldHome() {
+  const t = useTranslations("Dashboard");
   const [profile, setProfile] = useState<{ full_name: string } | null>(null);
   const [jobCount, setJobCount] = useState(0);
   const [issueCount, setIssueCount] = useState(0);
@@ -53,20 +55,20 @@ export default function FieldHome() {
     load();
   }, []);
 
-  const crewName = profile?.full_name ?? "Crew Partner";
+  const crewName = profile?.full_name ?? t("crewPartner");
 
   return (
     <div className="p-5 space-y-8 bg-mobile-frame min-h-[100dvh]">
       {/* Greeting */}
       <section className="pt-2">
         <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-[0.15em] mb-1">
-          Welcome Back
+          {t("welcomeBack")}
         </p>
         <h1 className="text-[32px] font-black font-headline text-on-surface leading-none tracking-tight mb-2">
           {crewName}
         </h1>
         <p className="text-[14px] text-primary font-medium">
-          You have {jobCount} active job{jobCount !== 1 ? "s" : ""} in the field.
+          {t("youHave")} {jobCount} {t("activeJobsInField")}
         </p>
       </section>
 
@@ -78,7 +80,7 @@ export default function FieldHome() {
           </div>
           <div>
             <p className="text-3xl font-black font-headline text-on-surface tracking-tighter">{jobCount}</p>
-            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1">My Jobs</p>
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1">{t("myJobs")}</p>
           </div>
         </Link>
 
@@ -88,7 +90,7 @@ export default function FieldHome() {
           </div>
           <div>
             <p className="text-3xl font-black font-headline text-on-surface tracking-tighter">{issueCount}</p>
-            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1">Services</p>
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1">{t("services")}</p>
           </div>
         </Link>
       </div>

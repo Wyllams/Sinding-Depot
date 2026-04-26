@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useTranslations } from "next-intl";
 
 /* ────────────────────────────────────────────────── */
 /*  Types                                             */
@@ -33,18 +34,18 @@ function formatDateShort(iso: string | null): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function statusBadge(status: string): { label: string; color: string; pulse: boolean } {
+function statusBadge(status: string, t: any): { label: string; color: string; pulse: boolean } {
   switch (status) {
     case "in_progress":
-      return { label: "In Progress", color: "#aeee2a", pulse: true };
+      return { label: t("inProgress"), color: "#aeee2a", pulse: true };
     case "scheduled":
-      return { label: "Scheduled", color: "#60a5fa", pulse: false };
+      return { label: t("scheduled"), color: "#60a5fa", pulse: false };
     case "completed":
-      return { label: "Completed", color: "#6b7280", pulse: false };
+      return { label: t("completed"), color: "#6b7280", pulse: false };
     case "assigned":
-      return { label: "Assigned", color: "#f59e0b", pulse: false };
+      return { label: t("assigned"), color: "#f59e0b", pulse: false };
     case "planned":
-      return { label: "Planned", color: "#a78bfa", pulse: false };
+      return { label: t("planned"), color: "#a78bfa", pulse: false };
     default:
       return { label: status.replace(/_/g, " "), color: "#6b7280", pulse: false };
   }
@@ -55,6 +56,7 @@ function statusBadge(status: string): { label: string; color: string; pulse: boo
 /* ────────────────────────────────────────────────── */
 
 export default function FieldJobsList() {
+  const t = useTranslations("JobsList");
   const [jobs, setJobs] = useState<MyJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +70,7 @@ export default function FieldJobsList() {
       try {
         // 1. Get logged-in user
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { setError("Not authenticated"); setLoading(false); return; }
+        if (!user) { setError(t("notAuthenticated")); setLoading(false); return; }
 
         // 2. Find the crew linked to this profile
         const { data: crew, error: crewErr } = await supabase
@@ -78,7 +80,7 @@ export default function FieldJobsList() {
           .maybeSingle();
 
         if (crewErr) { setError(crewErr.message); setLoading(false); return; }
-        if (!crew) { setError("No crew profile linked"); setLoading(false); return; }
+        if (!crew) { setError(t("noCrewProfileLinked")); setLoading(false); return; }
 
         // 3. Define status filters per tab
         const statusFilters: Record<TabFilter, string[]> = {
@@ -156,8 +158,8 @@ export default function FieldJobsList() {
               assignmentStatus: sa.status,
               scheduledStart: sa.scheduled_start_at,
               jobId: job.id,
-              customerName: customer?.full_name ?? "Unknown Customer",
-              salespersonName: salesperson?.full_name ?? "Unknown Rep",
+              customerName: customer?.full_name ?? t("unknownCustomer"),
+              salespersonName: salesperson?.full_name ?? t("unknownRep"),
               address: job.service_address_line_1,
               city: job.city,
               state: job.state,
@@ -177,26 +179,26 @@ export default function FieldJobsList() {
   }, [tab]);
 
   const tabs: { key: TabFilter; label: string }[] = [
-    { key: "today", label: "Today" },
-    { key: "upcoming", label: "Upcoming" },
-    { key: "completed", label: "Completed" },
+    { key: "today", label: t("today") },
+    { key: "upcoming", label: t("upcoming") },
+    { key: "completed", label: t("completed") },
   ];
 
   return (
     <div className="p-4 space-y-4 bg-mobile-frame min-h-full">
       {/* Tab Pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-        {tabs.map((t) => (
+        {tabs.map((t_tab) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={t_tab.key}
+            onClick={() => setTab(t_tab.key)}
             className={`font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-full whitespace-nowrap transition-all ${
-              tab === t.key
+              tab === t_tab.key
                 ? "bg-[var(--color-siding-green)] text-[#1a2e00]"
-                : "bg-[#151515] border border-zinc-800 text-zinc-500 hover:text-zinc-300"
+                : "bg-surface-container border border-outline-variant/20 text-on-surface-variant hover:text-on-surface"
             }`}
           >
-            {t.label}
+            {t_tab.label}
           </button>
         ))}
       </div>
@@ -218,13 +220,13 @@ export default function FieldJobsList() {
 
       {/* Job Cards */}
       {!loading && !error && jobs.map((job) => {
-        const badge = statusBadge(job.assignmentStatus);
+        const badge = statusBadge(job.assignmentStatus, t);
 
         return (
           <Link
             key={job.assignmentId}
             href={`/field/jobs/${job.jobId}?service_id=${job.jobServiceId}`}
-            className="block bg-[#151515] border border-zinc-800/50 rounded-3xl p-5 active:scale-[0.98] transition-transform"
+            className="block bg-surface-container-low border border-outline-variant/20 rounded-3xl p-5 active:scale-[0.98] transition-transform"
           >
             {/* Status */}
             <div className="flex justify-between items-start mb-4">
@@ -250,34 +252,34 @@ export default function FieldJobsList() {
 
             {/* Customer & Salesperson */}
             <div className="mb-4">
-              <h3 className="text-white font-headline text-xl font-bold tracking-tight leading-tight mb-1.5">
+              <h3 className="text-on-surface font-headline text-xl font-bold tracking-tight leading-tight mb-1.5">
                 {job.customerName}
               </h3>
               <div className="flex items-center gap-1.5 text-[var(--color-siding-green)] font-medium text-xs">
                 <span className="material-symbols-outlined text-[14px]" translate="no">person</span>
-                <span>Rep: {job.salespersonName}</span>
+                <span>{t("rep")}: {job.salespersonName}</span>
               </div>
             </div>
 
             {/* Address */}
-            <p className="text-zinc-500 text-sm">
+            <p className="text-on-surface-variant text-sm">
               {job.address}
             </p>
-            <p className="text-zinc-600 text-xs mb-3">
+            <p className="text-on-surface-variant/70 text-xs mb-3">
               {job.city}, {job.state}
             </p>
 
             {/* Start Date */}
             {job.scheduledStart && (
-              <div className="mt-3 pt-3 border-t border-zinc-800/50 flex items-center gap-2 text-zinc-400 font-medium text-xs">
+              <div className="mt-3 pt-3 border-t border-outline-variant/20 flex items-center gap-2 text-on-surface-variant font-medium text-xs">
                 <span className="material-symbols-outlined text-[14px]" translate="no">calendar_month</span>
-                <span>Start: {formatDateShort(job.scheduledStart)}</span>
+                <span>{t("start")}: {formatDateShort(job.scheduledStart)}</span>
               </div>
             )}
 
             {/* View Details */}
-            <div className="mt-4 pt-4 border-t border-dashed border-zinc-800 flex justify-between items-center">
-              <span className="text-zinc-600 text-xs font-bold uppercase tracking-widest">View Details</span>
+            <div className="mt-4 pt-4 border-t border-dashed border-outline-variant/20 flex justify-between items-center">
+              <span className="text-on-surface-variant text-xs font-bold uppercase tracking-widest">{t("viewDetails")}</span>
               <span className="material-symbols-outlined text-[var(--color-siding-green)]" translate="no">chevron_right</span>
             </div>
           </Link>
@@ -287,9 +289,9 @@ export default function FieldJobsList() {
       {/* Empty State */}
       {!loading && !error && jobs.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <span className="material-symbols-outlined text-[56px] text-zinc-800" translate="no">construction</span>
-          <p className="text-zinc-500 font-bold text-sm uppercase tracking-wider">No jobs found</p>
-          <p className="text-zinc-600 text-xs">Check back later for new assignments.</p>
+          <span className="material-symbols-outlined text-[56px] text-on-surface-variant/50" translate="no">construction</span>
+          <p className="text-on-surface-variant font-bold text-sm uppercase tracking-wider">{t("noJobsFound")}</p>
+          <p className="text-on-surface-variant/70 text-xs">{t("noJobsFoundMessage")}</p>
         </div>
       )}
     </div>

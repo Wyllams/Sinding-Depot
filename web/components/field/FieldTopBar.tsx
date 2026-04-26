@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { useTranslations } from "next-intl";
 
 // =============================================
 // FieldTopBar — Header padrão mobile do Parceiro
@@ -16,16 +17,17 @@ interface UserProfile {
   avatar_url: string | null;
 }
 
-const ROUTE_TITLES: Record<string, string> = {
-  "/field": "Dashboard",
-  "/field/jobs": "My Jobs",
-  "/field/alerts": "Alerts",
-  "/field/profile": "Profile",
+const ROUTE_KEYS: Record<string, string> = {
+  "/field": "home",
+  "/field/jobs": "myJobs",
+  "/field/alerts": "alerts",
+  "/field/profile": "profile",
 };
 
 export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations("MobileNav");
   const [menuOpen, setMenuOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -35,7 +37,8 @@ export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: b
     && !pathname.endsWith("/profile") && !pathname.endsWith("/alerts");
 
   // Resolve title
-  const title = ROUTE_TITLES[pathname] || _fallback || "Field Crew";
+  const titleKey = ROUTE_KEYS[pathname];
+  const title = titleKey ? t(titleKey) : (_fallback || t("fieldCrew"));
 
   // Load profile from Supabase
   useEffect(() => {
@@ -106,7 +109,7 @@ export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: b
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className="material-symbols-outlined text-[18px] text-on-surface-variant" translate="no">person</span>
-                  Profile
+                  {t("profile")}
                 </Link>
                 <div className="h-px bg-white/5 mx-3" />
                 <button
@@ -114,7 +117,7 @@ export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: b
                   onClick={handleLogout}
                 >
                   <span className="material-symbols-outlined text-[18px]" translate="no">logout</span>
-                  Sign Out
+                  {t("signOut")}
                 </button>
               </div>
             )}

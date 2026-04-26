@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 interface ServiceCall {
   id: string;
@@ -19,6 +20,7 @@ interface ServiceCall {
 }
 
 export default function FieldServicesPage() {
+  const t = useTranslations("FieldServicesPage");
   const [services, setServices] = useState<ServiceCall[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -79,8 +81,8 @@ export default function FieldServicesPage() {
             <span className="material-symbols-outlined" translate="no">arrow_back</span>
           </Link>
           <div className="text-center">
-            <h1 className="text-lg font-black text-on-surface tracking-tight">Services</h1>
-            <p className="text-[10px] text-primary font-bold uppercase tracking-widest">{services.length} items</p>
+            <h1 className="text-lg font-black text-on-surface tracking-tight">{t("services")}</h1>
+            <p className="text-[10px] text-primary font-bold uppercase tracking-widest">{services.length} {t("items")}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
              <span className="material-symbols-outlined text-primary" translate="no">warning</span>
@@ -99,8 +101,8 @@ export default function FieldServicesPage() {
             <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mb-4">
                <span className="material-symbols-outlined text-3xl text-zinc-600" translate="no">assignment_turned_in</span>
             </div>
-            <p className="text-white font-bold text-lg mb-1">No Services Assigned</p>
-            <p className="text-zinc-500 text-xs">You are all caught up.</p>
+            <p className="text-white font-bold text-lg mb-1">{t("noServices")}</p>
+            <p className="text-zinc-500 text-xs">{t("caughtUp")}</p>
           </div>
         ) : (
           services.map(service => {
@@ -126,7 +128,7 @@ export default function FieldServicesPage() {
                   {/* Row 1: Customer Name and Date */}
                   <div className="flex justify-between items-start pr-6">
                     <h3 className="text-on-surface font-black text-sm">
-                      {service.jobs?.title?.split(" - ").pop()?.trim() || "Unknown Customer"}
+                      {service.jobs?.title?.split(" - ").pop()?.trim() || t("unknownCustomer")}
                     </h3>
                     <p className="text-zinc-400 text-xs font-bold">{formatDate(service.reported_at)}</p>
                   </div>
@@ -149,9 +151,9 @@ export default function FieldServicesPage() {
                 {isExpanded && (
                   <div className="px-5 pb-5 pt-2 border-t border-white/5 animate-in slide-in-from-top-2 duration-200">
                     <div className="mb-4">
-                      <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Project ID</p>
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">{t("projectId")}</p>
                       <p className="text-zinc-400 text-xs">
-                        {service.jobs?.job_number ? `#${service.jobs.job_number}` : "N/A"}
+                        {service.jobs?.job_number ? `#${service.jobs.job_number}` : t("na")}
                       </p>
                     </div>
 
@@ -161,7 +163,7 @@ export default function FieldServicesPage() {
                     {/* Attachments */}
                     {service.blocker_attachments && service.blocker_attachments.length > 0 && (
                       <div className="pt-4 border-t border-white/5">
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Attachments</p>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">{t("attachments")}</p>
                         <div className="grid grid-cols-3 gap-2">
                           {service.blocker_attachments.map((att, idx) => {
                             const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(att.url);
@@ -185,7 +187,7 @@ export default function FieldServicesPage() {
                                  ) : (
                                    <a href={att.url} target="_blank" rel="noopener noreferrer" className="w-full h-full flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-white transition-colors">
                                      <span className="material-symbols-outlined text-2xl" translate="no">description</span>
-                                     <span className="text-[9px] truncate w-full px-2 text-center">Doc</span>
+                                     <span className="text-[9px] truncate w-full px-2 text-center">{t("doc")}</span>
                                    </a>
                                  )}
                               </div>
