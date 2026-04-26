@@ -96,15 +96,18 @@ export default function FieldCOCModal({ jobId, serviceId, serviceName, onClose, 
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
+    // Scale from CSS (visual) coordinates to canvas (internal) coordinates
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     if ('touches' in e) {
       return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY
       };
     }
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
     };
   };
 
@@ -155,41 +158,32 @@ export default function FieldCOCModal({ jobId, serviceId, serviceName, onClose, 
     setSaving(true);
     try {
       const signatureDataUrl = canvasRef.current?.toDataURL('image/png');
-      
-      // In a real scenario, this would POST to /api/documents/sign
-      // which handles IP, SHA-256, UTC timestamps and creates the PDF.
-      // For now, we simulate the DB insertion.
-      
-      const { data: session } = await supabase.auth.getSession();
-      
-      const signatureMetadata = {
-        signer_name: customerInfo.name,
-        signer_email: customerInfo.email,
-        ip_address: "captured_server_side",
-        user_agent: navigator.userAgent,
-        geolocation: null, // Would request navigator.geolocation here
-        signed_at: new Date().toISOString(),
-        consent_text: "By signing below, I acknowledge that I have reviewed this document in its entirety. I understand that my electronic signature is legally binding and has the same legal effect as a handwritten signature under federal (ESIGN Act) and Georgia (UETA) law. I consent to conduct this transaction electronically.",
-        consent_accepted_at: new Date().toISOString(),
-        document_hash_sha256: "pending_server_generation",
-        signature_data_url: signatureDataUrl,
-        method: "canvas_touch_draw_field"
-      };
+      if (!signatureDataUrl) {
+        alert("Please provide a signature before submitting.");
+        setSaving(false);
+        return;
+      }
 
-      const { error } = await supabase.from('project_payment_milestones').insert({
-        job_id: jobId,
-        job_service_id: serviceId,
-        title: `Certificate of Completion — ${actualServiceName}`,
-        document_type: 'completion_certificate',
-        status: 'signed',
-        amount: 0, // Admin will set or it inherits from contract logic server-side
-        signed_at: new Date().toISOString(),
-        signature_data_url: signatureDataUrl,
-        signature_metadata: signatureMetadata,
-        customer_notes: customerComments
+      const consentText = "By signing below, I acknowledge that I have reviewed this document in its entirety. I understand that my electronic signature is legally binding and has the same legal effect as a handwritten signature under federal (ESIGN Act) and Georgia (UETA) law. I consent to conduct this transaction electronically.";
+
+      const res = await fetch('/api/documents/field-sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobId,
+          serviceId,
+          serviceName: actualServiceName,
+          signatureDataUrl,
+          customerNotes: customerComments || undefined,
+          consentAcceptedAt: new Date().toISOString(),
+          consentText,
+          userAgent: navigator.userAgent,
+          signerName: customerInfo.name,
+        }),
       });
 
-      if (error) throw error;
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to save certificate');
 
       alert("Certificate of Completion successfully signed and saved.");
       onSaved();
