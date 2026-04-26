@@ -103,11 +103,20 @@ function SignaturePad({ onCapture, readOnly, existingDataUrl }: SignaturePadProp
 
   const getPos = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
+    // Scale from CSS (visual) coordinates to canvas (internal) coordinates
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     if ("touches" in e) {
       const t = e.touches[0];
-      return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+      return {
+        x: (t.clientX - rect.left) * scaleX,
+        y: (t.clientY - rect.top) * scaleY,
+      };
     }
-    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+    return {
+      x: ((e as React.MouseEvent).clientX - rect.left) * scaleX,
+      y: ((e as React.MouseEvent).clientY - rect.top) * scaleY,
+    };
   };
 
   const startDraw = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -125,9 +134,10 @@ function SignaturePad({ onCapture, readOnly, existingDataUrl }: SignaturePadProp
     e.preventDefault();
     const ctx = canvasRef.current.getContext("2d")!;
     const pos = getPos(e, canvasRef.current);
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
-    ctx.strokeStyle = "#e2e8f0";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#f8fafc";
     ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
   }, [readOnly]);
@@ -153,7 +163,7 @@ function SignaturePad({ onCapture, readOnly, existingDataUrl }: SignaturePadProp
       <canvas
         ref={canvasRef}
         width={520}
-        height={120}
+        height={160}
         className={styles.signatureCanvas}
         onMouseDown={startDraw}
         onMouseMove={draw}
@@ -165,11 +175,11 @@ function SignaturePad({ onCapture, readOnly, existingDataUrl }: SignaturePadProp
       />
       {!readOnly && (
         <button type="button" onClick={clear} className={styles.clearBtn}>
-          Limpar
+          Clear
         </button>
       )}
       {!hasSignature && !readOnly && (
-        <span className={styles.signaturePlaceholder}>Assine aqui ↑</span>
+        <span className={styles.signaturePlaceholder}>Sign here</span>
       )}
     </div>
   );

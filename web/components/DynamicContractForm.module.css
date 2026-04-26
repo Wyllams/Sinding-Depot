@@ -427,15 +427,22 @@
 .signaturePadWrapper {
   position: relative;
   background: #0d1018;
-  border: 1px dashed #334155;
+  border: 2px dashed #334155;
   border-radius: 10px;
   overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.signaturePadWrapper:active,
+.signaturePadWrapper:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .signatureCanvas {
   display: block;
   width: 100%;
-  height: 120px;
+  height: 160px;
   touch-action: none;
   cursor: crosshair;
 }
@@ -461,12 +468,14 @@
 
 .signaturePlaceholder {
   position: absolute;
-  bottom: 12px;
-  left: 16px;
-  font-size: 0.75rem;
-  color: #334155;
+  bottom: 50%;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  font-size: 0.85rem;
+  color: #475569;
   pointer-events: none;
   user-select: none;
+  letter-spacing: 0.05em;
 }
 
 .signatureDateRow {
