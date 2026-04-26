@@ -214,6 +214,86 @@ Antes, os nomes apareciam como `"Siding, Painting, Decks - Julie Leonard"` (tít
 
 ---
 
+## 9. Indicador de Report (Bola Colorida) na Tabela Service Calls (`(shell)/services/page.tsx`)
+
+**O que foi feito:**
+Na tabela de Service Calls do admin, uma **bola colorida** agora aparece na coluna "Signal" de cada service call que possui reports enviados por crews:
+
+| Cor | Estado | Significado |
+|---|---|---|
+| 🔴 **Vermelha** (pulsante) | `pending` | Crew enviou report, aguarda review do admin |
+| 🟢 **Verde** | `resolved` | Admin marcou como "Resolved" |
+| 🟡 **Amarela** | `not_resolved` | Admin marcou como "Not Resolved" (reaberto) |
+
+**Como foi feito:**
+1. **`reportStatusMap`** — Um `Map<string, "pending" | "resolved" | "not_resolved">` é calculado a partir dos `serviceReports` carregados. Ele mapeia `blocker_id → status` com prioridade: `pending > not_resolved > resolved`
+2. **Pré-carregamento** — Os reports são buscados junto com os service calls (`fetchServiceReports()` chamado dentro de `fetchData()`)
+3. **Renderização** — Na coluna Signal, se `reportStatusMap.has(issue.id)`, renderiza um `<button>` circular com cor e ícone correspondentes
+4. **Navegação direta** — Clicar na bola chama `goToReportForBlocker(issue.id)` que:
+   - Muda para a tab "Reports" (`setServicesTab("reports")`)
+   - Define filtro "All" (`setReportsFilter("all")`)
+   - Auto-expande o report correspondente (`setExpandedReportId(match.id)`) via `setTimeout` de 100ms
+
+**Por que foi feito:**
+O admin precisa de feedback visual imediato quando um crew envia um report. Antes, ele tinha que clicar na aba "Reports" manualmente para ver se havia algo novo. Agora a bola vermelha pulsante indica urgência diretamente na listagem principal.
+
+**Arquivos modificados:**
+- `web/app/(shell)/services/page.tsx`
+
+---
+
+## 10. Botões "Resolved" / "Not Resolved" nos Reports (`(shell)/services/page.tsx`)
+
+**O que foi feito:**
+O antigo botão "Mark Reviewed" foi substituído por **dois botões grandes e distintos** dentro de cada report card expandido:
+
+| Botão | Cor | Ação no Report | Ação no Blocker | Efeito na Bola |
+|---|---|---|---|---|
+| ✅ **Resolved** | Verde | Marca `reviewed_at` + `reviewed_by` | Status → `resolved` | Bola fica **verde** |
+| ⚠️ **Not Resolved** | Amarelo | Marca `reviewed_at` + `reviewed_by` | Status → `open` | Bola fica **amarela** |
+
+**Como foi feito:**
+Nova função `handleReportDecision(reportId, blockerId, resolved: boolean)`:
+1. Busca `user.id` via `supabase.auth.getUser()`
+2. Atualiza `service_reports` com `reviewed_by` e `reviewed_at`
+3. Atualiza `blockers.status` para `resolved` ou `open` conforme a decisão
+4. Atualiza o estado local `setServiceCalls()` para refletir imediatamente sem reload
+5. Re-fetch dos reports via `fetchServiceReports()` para atualizar o `reportStatusMap`
+
+Os botões só aparecem quando o report **não foi revisado** (`!isReviewed`). Após clicar, os botões desaparecem e um badge "Resolved" (verde) ou "Not Resolved" (amarelo) é exibido no header do card.
+
+**Por que foi feito:**
+O fluxo anterior era genérico — "Mark Reviewed" não indicava resultado. Agora o admin toma uma **decisão binária clara**: resolveu ou não. Isso alimenta automaticamente o indicador visual na tabela principal e atualiza o status do blocker, sem necessidade de editar manualmente.
+
+**Arquivos modificados:**
+- `web/app/(shell)/services/page.tsx`
+
+---
+
+## 11. Cards de Report Colapsáveis — Accordion (`(shell)/services/page.tsx`)
+
+**O que foi feito:**
+Os cards de report agora são **colapsáveis por padrão**. Apenas o header é visível (título, data, reporter, nome do cliente, badges de status). Ao clicar no header, o conteúdo expande com animação suave, revelando:
+- Notas do crew
+- Grid de fotos com anotações
+- Botões de decisão (Resolved / Not Resolved)
+
+**Como foi feito:**
+1. **Estado:** Novo state `expandedReportId: string | null` — apenas um report aberto por vez
+2. **Header:** Todo o `<div>` do header agora é clicável (`cursor-pointer`, `onClick`)
+3. **Chevron:** Ícone `expand_more` com rotação de 180° via `transition-transform duration-300`
+4. **Conteúdo:** Renderizado condicionalmente `{expandedReportId === report.id && (...)}`
+5. **Animação:** `animate-in slide-in-from-top-2 duration-200` para entrada suave
+6. **Auto-expand:** Quando o admin clica na bola da tabela, o report correspondente é auto-expandido
+
+**Por que foi feito:**
+Com múltiplos reports, a página ficava muito longa com todas as fotos visíveis de uma vez. O padrão accordion permite ao admin escanear rapidamente os reports pelo header e abrir apenas o que precisa revisar, melhorando significativamente a usabilidade.
+
+**Arquivos modificados:**
+- `web/app/(shell)/services/page.tsx`
+
+---
+
 ## Resumo Técnico
 
 | Componente | Tipo de Mudança | Status |
@@ -222,13 +302,14 @@ Antes, os nomes apareciam como `"Siding, Painting, Decks - Julie Leonard"` (tít
 | `customer/layout.tsx` | Refactor CSS | ✅ Deploy |
 | `settings/page.tsx` | Nova notificação | ✅ Deploy |
 | `FieldChangeOrderModal.tsx` | Lógica de negócio | ✅ Deploy |
-| `field/services/page.tsx` | Novos botões + query | ✅ Deploy |
+| `field/services/page.tsx` | Status flow + badges | ✅ Deploy |
 | `FieldServiceReportModal.tsx` | Componente novo | ✅ Deploy |
+| `(shell)/services/page.tsx` | Reports UX overhaul | ✅ Deploy |
 | PostgreSQL trigger (COC) | Migration | ✅ Aplicada |
 | `service_report_photos` table | Migration + RLS | ✅ Aplicada |
 
 **Ambiente e Deploy:**
 - Build validado com `next build` — zero erros de compilação
-- Commit atômico com 6 arquivos (565 inserções, 107 remoções)
-- Push para `main` do GitHub (`df4c3d9`)
+- Commits: `df4c3d9`, `1e1ba90`, `8e5c74b`
+- Push para `main` do GitHub
 - 3 migrations aplicadas no Supabase (produção)
