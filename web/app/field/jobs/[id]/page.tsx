@@ -399,8 +399,8 @@ export default function FieldJobDetail({
       case "pending":      return { label: "Pending", color: "#ef4444", pulse: false };
       case "in_progress": return { label: "In Progress", color: "#aeee2a", pulse: true };
       case "scheduled":   return { label: "Scheduled", color: "#60a5fa", pulse: false };
-      case "completed":   return { label: "Completed", color: "#6b7280", pulse: false };
-      case "done":        return { label: "Done", color: "#16a34a", pulse: false };
+      case "completed":   return { label: "Completed", color: "#22c55e", pulse: false };
+      case "done":        return { label: "Done", color: "#22c55e", pulse: false };
       case "assigned":    return { label: "Assigned", color: "#f59e0b", pulse: false };
       default: return { label: status.replace(/_/g, " "), color: "#6b7280", pulse: false };
     }
