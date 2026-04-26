@@ -580,6 +580,7 @@ export default function ProjectDetailPage() {
   }>({ material_name: "", quantity: "1", piece_size: "", document_url: null, document_name: null });
   const editMatDocRef = useRef<HTMLInputElement>(null);
   const [uploadingEditDoc, setUploadingEditDoc] = useState(false);
+  const [selectedExtraMat, setSelectedExtraMat] = useState<typeof extraMaterials[number] | null>(null);
 
   const handleAutoSave = async (
     table: "jobs" | "customers",
@@ -2433,153 +2434,77 @@ export default function ProjectDetailPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/15">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-container-high/50">
-                    {["Date", "Material", "Qty", "Piece Size", "Document", "Status", ""].map((col) => (
-                      <th key={col} className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-on-surface-variant">{col}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/10">
-                  {loadingExtraMat ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center gap-2 text-on-surface-variant">
-                          <span className="material-symbols-outlined text-2xl animate-spin" translate="no">progress_activity</span>
-                          <p className="text-xs font-bold">Loading requests...</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : extraMaterials.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center gap-2 text-on-surface-variant">
-                          <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center">
-                            <span className="material-symbols-outlined text-xl text-primary" translate="no">inventory_2</span>
+            <div className="p-8 rounded-xl bg-surface-container-low border border-outline-variant/15">
+              {loadingExtraMat ? (
+                <div className="flex flex-col items-center gap-3 py-12 text-on-surface-variant">
+                  <span className="material-symbols-outlined text-2xl animate-spin" translate="no">progress_activity</span>
+                  <p className="text-xs font-bold">Loading requests...</p>
+                </div>
+              ) : extraMaterials.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 py-12 text-on-surface-variant">
+                  <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center">
+                    <span className="material-symbols-outlined text-2xl text-primary" translate="no">inventory_2</span>
+                  </div>
+                  <p className="text-sm font-bold text-on-surface">No requests yet</p>
+                  <p className="text-xs">Click &quot;New Request&quot; to add an extra material order.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {extraMaterials.map((mat) => {
+                    const emColors: Record<string, string> = {
+                      pending: "#f5a623", ordered: "#60b8f5", delivered: "#aeee2a", cancelled: "#ff7351",
+                    };
+                    const ec = emColors[mat.status] ?? "#ababa8";
+                    return (
+                      <div
+                        key={mat.id}
+                        onClick={() => setSelectedExtraMat(mat)}
+                        className="grid items-center p-4 bg-surface-container-highest rounded-xl border border-outline-variant/15 hover:border-primary/30 hover:scale-[1.01] transition-all cursor-pointer group"
+                        style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr auto" }}
+                      >
+                        {/* Col 1: Material Name + Status */}
+                        <div className="min-w-0 pr-3">
+                          <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors truncate">{mat.material_name}</p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-[10px] font-black uppercase" style={{ color: ec }}>{mat.status}</span>
+                            <span className="text-[9px] text-on-surface-variant">Qty: {mat.quantity} · {mat.piece_size}</span>
                           </div>
-                          <p className="text-sm font-bold text-on-surface">No requests yet</p>
-                          <p className="text-xs">Click &quot;New Request&quot; to add an extra material order.</p>
                         </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    extraMaterials.map((mat) => {
-                      const statusColors: Record<string, string> = {
-                        pending: "bg-[#f5a623]/15 text-[#f5a623]",
-                        ordered: "bg-[#60b8f5]/15 text-[#60b8f5]",
-                        delivered: "bg-primary/15 text-primary",
-                        cancelled: "bg-error/15 text-error",
-                      };
-                      const isEditing = editingMatId === mat.id;
-                      return (
-                        <tr key={mat.id} className={`transition-colors group ${isEditing ? "bg-primary/[0.04]" : "hover:bg-surface-container-high"}`}>
-                          <td className="px-5 py-4 text-xs text-on-surface-variant">{fmt(mat.created_at)}</td>
-                          <td className="px-5 py-4">
-                            {isEditing ? (
-                              <input
-                                value={editMatFields.material_name}
-                                onChange={(e) => setEditMatFields((p) => ({ ...p, material_name: e.target.value }))}
-                                className="bg-surface-container-high border border-outline-variant/40 rounded-lg px-3 py-1.5 text-sm text-on-surface w-full outline-none focus:border-primary/50"
-                              />
-                            ) : (
-                              <span className="text-sm text-on-surface font-medium">{mat.material_name || "—"}</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4">
-                            {isEditing ? (
-                              <input
-                                type="number" min="1"
-                                value={editMatFields.quantity}
-                                onChange={(e) => setEditMatFields((p) => ({ ...p, quantity: e.target.value }))}
-                                className="bg-surface-container-high border border-outline-variant/40 rounded-lg px-3 py-1.5 text-xs text-on-surface w-20 outline-none focus:border-primary/50"
-                              />
-                            ) : (
-                              <span className="bg-surface-container-highest px-3 py-1 rounded-lg text-xs font-bold text-on-surface">{mat.quantity}</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4">
-                            {isEditing ? (
-                              <input
-                                value={editMatFields.piece_size}
-                                onChange={(e) => setEditMatFields((p) => ({ ...p, piece_size: e.target.value }))}
-                                className="bg-surface-container-high border border-outline-variant/40 rounded-lg px-3 py-1.5 text-sm text-on-surface w-full outline-none focus:border-primary/50"
-                              />
-                            ) : (
-                              <span className="text-sm text-on-surface-variant">{mat.piece_size}</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4">
-                            {isEditing ? (
-                              <div className="flex items-center gap-2">
-                                <input ref={editMatDocRef} type="file" className="hidden" onChange={(e) => handleEditMatDocUpload(e.target.files)} />
-                                {editMatFields.document_url ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="material-symbols-outlined text-[14px] text-primary" translate="no">check_circle</span>
-                                    <span className="text-xs text-on-surface truncate max-w-[100px]">{editMatFields.document_name}</span>
-                                    <button onClick={() => setEditMatFields((p) => ({ ...p, document_url: null, document_name: null }))} className="text-on-surface-variant hover:text-error cursor-pointer">
-                                      <span className="material-symbols-outlined text-[14px]" translate="no">close</span>
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <button
-                                    onClick={() => editMatDocRef.current?.click()}
-                                    disabled={uploadingEditDoc}
-                                    className="text-xs text-on-surface-variant hover:text-primary transition-colors cursor-pointer flex items-center gap-1"
-                                  >
-                                    {uploadingEditDoc ? (
-                                      <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                                    ) : (
-                                      <span className="material-symbols-outlined text-[14px]" translate="no">upload_file</span>
-                                    )}
-                                    Attach
-                                  </button>
-                                )}
-                              </div>
-                            ) : mat.document_url ? (
-                              <a
-                                href={mat.document_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#60b8f5] hover:text-primary transition-colors"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <span className="material-symbols-outlined text-[14px]" translate="no">attach_file</span>
-                                {mat.document_name || "View"}
-                              </a>
-                            ) : (
-                              <span className="text-xs text-outline-variant">—</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4">
-                            <select
-                              value={mat.status}
-                              onChange={(e) => handleExtraMatStatus(mat.id, e.target.value)}
-                              onClick={(e) => e.stopPropagation()}
-                              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border-none outline-none cursor-pointer ${statusColors[mat.status] || statusColors.pending}`}
-                              style={{ background: "transparent" }}
-                            >
-                              <option value="pending" className="bg-surface-container-low text-on-surface">Pending</option>
-                              <option value="ordered" className="bg-surface-container-low text-on-surface">Ordered</option>
-                              <option value="delivered" className="bg-surface-container-low text-on-surface">Delivered</option>
-                              <option value="cancelled" className="bg-surface-container-low text-on-surface">Cancelled</option>
-                            </select>
-                          </td>
-                          <td className="px-5 py-4 text-right">
-                            <button
-                              onClick={() => handleDeleteExtraMat(mat.id)}
-                              className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
-                            >
-                              <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                        {/* Col 2: Created Date */}
+                        <div className="min-w-0 pr-3">
+                          <p className="text-[10px] font-bold text-outline-variant uppercase tracking-wider">Created</p>
+                          <p className="text-xs font-bold text-on-surface mt-1 flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-[14px] text-on-surface-variant" translate="no">calendar_today</span>
+                            {fmt(mat.created_at)}
+                          </p>
+                        </div>
+                        {/* Col 3: Customer */}
+                        <div className="min-w-0 pr-3">
+                          <p className="text-[10px] font-bold text-outline-variant uppercase tracking-wider">Sent by</p>
+                          <p className="text-xs font-bold text-on-surface mt-1 flex items-center gap-1.5 truncate">
+                            <span className="material-symbols-outlined text-[14px] text-on-surface-variant" translate="no">person</span>
+                            <span className="truncate">{mat.customer_name || "—"}</span>
+                          </p>
+                        </div>
+                        {/* Col 4: Status/Decision */}
+                        <div className="min-w-0 pr-3">
+                          <p className="text-[10px] font-bold text-outline-variant uppercase tracking-wider">Decision</p>
+                          <p className={`text-xs font-bold mt-1 flex items-center gap-1.5`} style={{ color: ec }}>
+                            <span className="material-symbols-outlined text-[14px]" translate="no">
+                              {mat.status === "delivered" ? "check_circle" : mat.status === "cancelled" ? "cancel" : mat.status === "ordered" ? "local_shipping" : "hourglass_empty"}
+                            </span>
+                            {mat.status === "delivered" ? "Delivered" : mat.status === "cancelled" ? "Cancelled" : mat.status === "ordered" ? "Ordered" : "Pending"}
+                          </p>
+                        </div>
+                        {/* Arrow */}
+                        <div className="flex items-center shrink-0">
+                          <span className="material-symbols-outlined text-[16px] text-outline-variant group-hover:text-primary transition-colors" translate="no">chevron_right</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Add Request Modal */}
@@ -2664,6 +2589,120 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Extra Material Detail Drawer */}
+            {selectedExtraMat && (() => {
+              const EM_STATUS_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {
+                pending:   { label: "PENDING",   badge: "bg-[#f5a623]/10 text-[#f5a623] border border-[#f5a623]/20", dot: "#f5a623" },
+                ordered:   { label: "ORDERED",   badge: "bg-[#60b8f5]/10 text-[#60b8f5] border border-[#60b8f5]/20", dot: "#60b8f5" },
+                delivered: { label: "DELIVERED", badge: "bg-primary/20 text-primary border border-primary/30", dot: "#aeee2a" },
+                cancelled: { label: "CANCELLED", badge: "bg-error/10 text-error border border-error/20", dot: "#ff7351" },
+              };
+              const emCfg = EM_STATUS_CONFIG[selectedExtraMat.status] ?? EM_STATUS_CONFIG.pending;
+              return (
+                <>
+                  <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedExtraMat(null)} />
+                  <div className="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-surface-container border-l border-outline-variant/30 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+                    {/* Header */}
+                    <div className="flex items-start justify-between p-6 border-b border-outline-variant/20 shrink-0">
+                      <div className="flex-1 min-w-0 pr-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${emCfg.badge}`}>{emCfg.label}</span>
+                          {job.job_number && <span className="text-[10px] text-on-surface-variant font-bold">{job.job_number}</span>}
+                        </div>
+                        <h2 className="text-lg font-extrabold text-on-surface leading-tight" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{selectedExtraMat.material_name}</h2>
+                        <p className="text-xs text-on-surface-variant mt-0.5">{selectedExtraMat.customer_name}</p>
+                      </div>
+                      <button onClick={() => setSelectedExtraMat(null)} className="w-9 h-9 rounded-full bg-surface-container-highest hover:bg-outline-variant/60 flex items-center justify-center transition-colors text-on-surface-variant shrink-0">
+                        <span className="material-symbols-outlined text-[18px]" translate="no">close</span>
+                      </button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-5" style={{ scrollbarWidth: "none" }}>
+                      {/* Details Grid */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Quantity</p>
+                          <p className="text-2xl font-black text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{selectedExtraMat.quantity}</p>
+                        </div>
+                        <div className="bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Piece Size</p>
+                          <p className="text-2xl font-black text-on-surface" style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>{selectedExtraMat.piece_size}</p>
+                        </div>
+                      </div>
+
+                      {/* Notes */}
+                      {selectedExtraMat.notes && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Notes</p>
+                          <p className="text-sm text-on-surface leading-relaxed bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20 whitespace-pre-wrap">{selectedExtraMat.notes}</p>
+                        </div>
+                      )}
+
+                      {/* Document */}
+                      {selectedExtraMat.document_url && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Document</p>
+                          <a href={selectedExtraMat.document_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20 hover:border-primary/30 transition-colors">
+                            <span className="material-symbols-outlined text-[#60b8f5]" translate="no">attach_file</span>
+                            <span className="text-sm font-bold text-[#60b8f5]">{selectedExtraMat.document_name || "View Document"}</span>
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Dates */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-surface-container-highest rounded-xl p-3 border border-outline-variant/20">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Requested</p>
+                          <p className="text-sm text-on-surface font-bold">{fmt(selectedExtraMat.created_at)}</p>
+                        </div>
+                        <div className="bg-surface-container-highest rounded-xl p-3 border border-outline-variant/20">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Status</p>
+                          <p className="text-sm font-bold capitalize" style={{ color: emCfg.dot }}>{selectedExtraMat.status}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="p-6 border-t border-outline-variant/20 shrink-0 space-y-3">
+                      {selectedExtraMat.status === "pending" && (
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => { handleExtraMatStatus(selectedExtraMat.id, "cancelled"); setSelectedExtraMat((p: any) => p ? { ...p, status: "cancelled" } : null); }}
+                            className="flex-1 py-3 rounded-xl bg-error/10 text-error border border-error/20 font-bold text-sm hover:bg-error/20 transition-all active:scale-95"
+                          >Reject</button>
+                          <button
+                            onClick={() => { handleExtraMatStatus(selectedExtraMat.id, "ordered"); setSelectedExtraMat((p: any) => p ? { ...p, status: "ordered" } : null); }}
+                            className="flex-1 py-3 rounded-xl bg-primary text-[#3a5400] font-black text-sm shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center gap-2"
+                          >
+                            <span className="material-symbols-outlined text-[16px]" translate="no">check_circle</span>
+                            Approve
+                          </button>
+                        </div>
+                      )}
+                      {selectedExtraMat.status === "ordered" && (
+                        <button
+                          onClick={() => { handleExtraMatStatus(selectedExtraMat.id, "delivered"); setSelectedExtraMat((p: any) => p ? { ...p, status: "delivered" } : null); }}
+                          className="w-full py-3 rounded-xl bg-primary text-[#3a5400] font-black text-sm shadow-lg hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                          <span className="material-symbols-outlined text-[16px]" translate="no">local_shipping</span>
+                          Mark as Delivered
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { handleDeleteExtraMat(selectedExtraMat.id); setSelectedExtraMat(null); }}
+                        className="w-full py-3 rounded-xl bg-[#ba1212]/10 text-error border border-[#ba1212]/20 font-bold text-sm hover:bg-[#ba1212]/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-[16px]" translate="no">delete_forever</span>
+                        Delete Request
+                      </button>
+                      <button onClick={() => setSelectedExtraMat(null)} className="w-full py-2.5 rounded-xl border border-outline-variant text-on-surface-variant font-bold text-sm hover:bg-surface-container-highest transition-colors">Close</button>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
