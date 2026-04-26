@@ -44,6 +44,8 @@ function statusBadge(status: string, t: any): { label: string; color: string; pu
       return { label: t("scheduled"), color: "#60a5fa", pulse: false };
     case "completed":
       return { label: t("completed"), color: "#22c55e", pulse: false };
+    case "done":
+      return { label: "Done", color: "#22c55e", pulse: false };
     case "assigned":
       return { label: t("assigned"), color: "#f59e0b", pulse: false };
     case "planned":
