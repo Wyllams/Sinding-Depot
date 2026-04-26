@@ -294,6 +294,20 @@ Com múltiplos reports, a página ficava muito longa com todas as fotos visívei
 
 ---
 
+## 12. Correção de Overlay no Dropdown da Tabela (`(shell)/services/page.tsx`)
+
+**O que foi feito:**
+Corrigido o problema em que o dropdown de "Edit" nas últimas linhas da tabela de Service Calls ficava oculto/cortado (clipping) dentro do container scrollável.
+
+**Como foi feito:**
+1. A altura mínima do container da tabela foi aumentada para garantir que haja espaço em listas pequenas (`min-h-[320px]`).
+2. O posicionamento do dropdown agora é **dinâmico**: ele verifica em qual `index` a linha está renderizada. Se for uma das duas últimas linhas e a lista for maior que 2, o menu abre para cima (`bottom-[calc(100%+4px)]`); caso contrário, abre para baixo (`top-[calc(100%+4px)]`).
+
+**Por que foi feito:**
+Containers com `overflow-x-auto` forçam `overflow-y` escondido no CSS padrão quando o conteúdo transborda, cortando menus absolutos que ultrapassam a borda inferior. Essa inversão garante que o menu fique visível dentro da área útil da tela sem afetar o scroll horizontal da tabela.
+
+---
+
 ## Resumo Técnico
 
 | Componente | Tipo de Mudança | Status |
@@ -304,12 +318,12 @@ Com múltiplos reports, a página ficava muito longa com todas as fotos visívei
 | `FieldChangeOrderModal.tsx` | Lógica de negócio | ✅ Deploy |
 | `field/services/page.tsx` | Status flow + badges | ✅ Deploy |
 | `FieldServiceReportModal.tsx` | Componente novo | ✅ Deploy |
-| `(shell)/services/page.tsx` | Reports UX overhaul | ✅ Deploy |
+| `(shell)/services/page.tsx` | Reports UX & Dropdown Fix | ✅ Deploy |
 | PostgreSQL trigger (COC) | Migration | ✅ Aplicada |
 | `service_report_photos` table | Migration + RLS | ✅ Aplicada |
 
 **Ambiente e Deploy:**
 - Build validado com `next build` — zero erros de compilação
-- Commits: `df4c3d9`, `1e1ba90`, `8e5c74b`
+- Commits: `df4c3d9`, `1e1ba90`, `8e5c74b`, `fix-dropdown`
 - Push para `main` do GitHub
 - 3 migrations aplicadas no Supabase (produção)

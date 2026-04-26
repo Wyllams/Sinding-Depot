@@ -556,7 +556,7 @@ export default function ServicesPage() {
         {servicesTab === "calls" && (<>
         {/* Data Table */}
         <div className="bg-surface-container-low rounded-xl shadow-2xl border border-outline-variant/10">
-          <div className="overflow-x-auto overflow-y-visible min-h-[220px]">
+          <div className="overflow-x-auto overflow-y-visible min-h-[320px]">
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-surface-container-high/50">
@@ -608,7 +608,7 @@ export default function ServicesPage() {
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((issue) => {
+                  filtered.map((issue, index) => {
                     const statusColor = getStatusColor(issue.status);
 
                     return (
@@ -731,7 +731,11 @@ export default function ServicesPage() {
                           </button>
                           
                           {dropdownOpen === issue.id && (
-                            <div className="absolute top-[calc(100%+4px)] right-0 w-32 bg-surface-container border border-error/0 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[9999] text-left border-primary/20" onClick={(e) => e.stopPropagation()}>
+                            <div className={`absolute right-0 w-32 bg-surface-container border border-error/0 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[9999] text-left border-primary/20 ${
+                              index >= filtered.length - 2 && filtered.length > 2
+                                ? "bottom-[calc(100%+4px)]"
+                                : "top-[calc(100%+4px)]"
+                            }`} onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => { setDropdownOpen(null); openEdit(issue); }}
                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-on-surface hover:bg-surface-container-highest transition-colors"
