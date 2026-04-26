@@ -15,6 +15,7 @@ interface FieldChangeOrderModalProps {
 }
 
 interface COItem {
+  location: string;
   material: string;
   notes: string;
   files: File[];
@@ -29,13 +30,12 @@ export function FieldChangeOrderModal({
   onClose,
   onSaved,
 }: FieldChangeOrderModalProps) {
-  const [location, setLocation] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Items list (like Extra Material pattern)
   const [items, setItems] = useState<COItem[]>([
-    { material: "", notes: "", files: [], previewUrls: [] },
+    { location: "", material: "", notes: "", files: [], previewUrls: [] },
   ]);
 
   // Service dropdown
@@ -97,7 +97,7 @@ export function FieldChangeOrderModal({
 
   /* ─── Item CRUD ───────────────────────────────── */
   const addItem = (): void => {
-    setItems([...items, { material: "", notes: "", files: [], previewUrls: [] }]);
+    setItems([...items, { location: "", material: "", notes: "", files: [], previewUrls: [] }]);
   };
 
   const removeItem = (index: number): void => {
@@ -106,7 +106,7 @@ export function FieldChangeOrderModal({
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof Pick<COItem, "material" | "notes">, value: string): void => {
+  const updateItem = (index: number, field: keyof Pick<COItem, "location" | "material" | "notes">, value: string): void => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
@@ -145,14 +145,15 @@ export function FieldChangeOrderModal({
 
   /* ─── Submit ──────────────────────────────────── */
   async function handleSubmit(): Promise<void> {
-    if (!location) {
-      setError("Please select a location on the house.");
-      return;
-    }
-
     const validItems = items.filter((item) => item.material.trim() !== "");
     if (validItems.length === 0) {
       setError("Please enter at least one material.");
+      return;
+    }
+
+    const missingLocation = validItems.some((item) => !item.location);
+    if (missingLocation) {
+      setError("Please select a location for every item.");
       return;
     }
 
@@ -169,7 +170,8 @@ export function FieldChangeOrderModal({
         ? itemNames.join(" + ")
         : `${itemNames[0]} + ${itemNames.length - 1} more`;
 
-      const coDescription = `Location: ${location}`;
+      const locations = [...new Set(validItems.map((i) => i.location))];
+      const coDescription = `Location: ${locations.join(", ")}`;
 
       // 1. Create the change_orders record
       const { data: co, error: coErr } = await supabase
@@ -197,8 +199,8 @@ export function FieldChangeOrderModal({
           .insert({
             change_order_id: co.id,
             description: item.notes.trim()
-              ? `${item.material.trim()}\n${item.notes.trim()}`
-              : item.material.trim(),
+              ? `[${item.location}] ${item.material.trim()}\n${item.notes.trim()}`
+              : `[${item.location}] ${item.material.trim()}`,
             amount: null,
             sort_order: i,
           })
@@ -278,7 +280,7 @@ export function FieldChangeOrderModal({
 
   const validCount = items.filter((i) => i.material.trim()).length;
   const totalPhotos = items.reduce((sum, i) => sum + i.files.length, 0);
-  const canSubmit = validCount > 0 && location !== "";
+  const canSubmit = validCount > 0 && items.filter((i) => i.material.trim()).every((i) => i.location !== "");
 
   return (
     <div
@@ -330,19 +332,7 @@ export function FieldChangeOrderModal({
             </p>
           </div>
 
-          {/* Location */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-              Location on House *
-            </label>
-            <CustomDropdown
-              value={location}
-              onChange={setLocation}
-              options={["Front", "Back", "Right", "Left", "Deck", "Porch"]}
-              placeholder="Select a location..."
-              className="w-full bg-surface-container-high border border-white/5 hover:border-primary/50 rounded-2xl py-4 px-4 text-on-surface font-bold text-[15px] transition-colors flex justify-between items-center"
-            />
-          </div>
+
 
           {/* Service */}
           <div className="space-y-2">
@@ -374,10 +364,24 @@ export function FieldChangeOrderModal({
                   </button>
                 )}
 
-                {/* Material Name */}
+                {/* Location per item */}
                 <div className={items.length > 1 ? "pr-8" : ""}>
                   <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
-                    Material {items.length > 1 ? `#${idx + 1}` : ""}
+                    Location on House {items.length > 1 ? `#${idx + 1}` : ""} *
+                  </label>
+                  <CustomDropdown
+                    value={item.location}
+                    onChange={(val: string) => updateItem(idx, "location", val)}
+                    options={["Front", "Back", "Right", "Left", "Deck", "Porch"]}
+                    placeholder="Select a location..."
+                    className="w-full bg-[#0a0a0a] border border-surface-container-highest hover:border-error/30 rounded-xl py-3 px-4 text-on-surface font-bold text-sm transition-colors flex justify-between items-center"
+                  />
+                </div>
+
+                {/* Material Name */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
+                    Material
                   </label>
                   <input
                     type="text"
