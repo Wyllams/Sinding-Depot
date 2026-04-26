@@ -22,9 +22,10 @@ interface ServiceCall {
 }
 
 const STATUS_FLOW: Record<string, { next: string; label: string; color: string; icon: string }> = {
-  open:        { next: "in_progress", label: "Start Work",      color: "#aeee2a", icon: "play_arrow" },
-  in_progress: { next: "resolved",   label: "Mark Resolved",   color: "#22c55e", icon: "check_circle" },
-  resolved:    { next: "resolved",   label: "Resolved",        color: "#22c55e", icon: "verified" },
+  open:      { next: "inspected",  label: "Start Work",      color: "#e3eb5d", icon: "play_arrow" },
+  inspected: { next: "repairing",  label: "Start Repair",    color: "#60b8f5", icon: "build" },
+  repairing: { next: "resolved",   label: "Mark Resolved",   color: "#22c55e", icon: "check_circle" },
+  resolved:  { next: "resolved",   label: "Resolved",        color: "#22c55e", icon: "verified" },
 };
 
 export default function FieldServicesPage() {
@@ -167,9 +168,9 @@ export default function FieldServicesPage() {
                     <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase text-on-surface-variant bg-surface-container-highest">
                       {service.type}
                     </span>
-                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase text-white" style={{
-                      backgroundColor: service.status === "open" ? "#ff735120" : service.status === "resolved" ? "#22c55e20" : "#aeee2a20",
-                      color: service.status === "open" ? "#ff7351" : service.status === "resolved" ? "#22c55e" : "#aeee2a",
+                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase" style={{
+                      backgroundColor: (STATUS_FLOW[service.status]?.color ?? "#ababa8") + "20",
+                      color: STATUS_FLOW[service.status]?.color ?? "#ababa8",
                     }}>
                       {service.status === "in_progress" ? "In Progress" : service.status}
                     </span>

@@ -342,8 +342,8 @@ export default function ServicesPage() {
         .select(`
           id, blocker_id, is_our_fault, notes, reported_at, reviewed_by, reviewed_at,
           reporter:profiles!service_reports_reporter_id_fkey ( full_name ),
-          blocker:blockers!service_reports_blocker_id_fkey ( id, title, type, status, jobs ( job_number, title ) ),
-          service_report_attachments ( url, file_name )
+          blocker:blockers!service_reports_blocker_id_fkey ( id, title, type, status, jobs ( job_number, title, customer:customers ( full_name ) ) ),
+          service_report_photos ( id, url, annotation )
         `)
         .order("reported_at", { ascending: false });
       if (error) console.error("[ServiceReports] fetch error:", error);
@@ -747,7 +747,14 @@ export default function ServicesPage() {
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold">{dateStr}</span>
                               {reporterName && <span className="text-[10px] text-on-surface-variant">by {reporterName}</span>}
-                              {jobData && <span className="text-[10px] text-primary font-bold">{Array.isArray(jobData) ? jobData[0]?.job_number : jobData?.job_number}</span>}
+                              {(() => {
+                                const job = Array.isArray(jobData) ? jobData[0] : jobData;
+                                const custRaw = job?.customer;
+                                const custName = Array.isArray(custRaw) ? custRaw[0]?.full_name : custRaw?.full_name;
+                                return custName
+                                  ? <span className="text-[10px] text-primary font-bold">{custName}</span>
+                                  : job?.job_number ? <span className="text-[10px] text-primary font-bold">{job.job_number}</span> : null;
+                              })()}
                             </div>
                           </div>
                         </div>
@@ -767,14 +774,23 @@ export default function ServicesPage() {
                       </div>
                       <div className="px-5 py-4">
                         {report.notes && <p className="text-sm text-on-surface whitespace-pre-wrap leading-relaxed">{report.notes}</p>}
-                        {report.service_report_attachments?.length > 0 && (
-                          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                            {report.service_report_attachments.map((att: any, imgIdx: number) => (
-                              <a key={imgIdx} href={att.url} target="_blank" rel="noopener noreferrer"
-                                className="block aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-primary/50 transition-colors group">
-                                <img src={att.url} alt={att.file_name || `Photo ${imgIdx + 1}`}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy" />
-                              </a>
+                        {report.service_report_photos?.length > 0 && (
+                          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            {report.service_report_photos.map((photo: any, imgIdx: number) => (
+                              <div key={photo.id || imgIdx} className="rounded-xl overflow-hidden border border-white/10 hover:border-primary/50 transition-colors group">
+                                <a href={photo.url} target="_blank" rel="noopener noreferrer" className="block aspect-square">
+                                  <img src={photo.url} alt={photo.annotation || `Photo ${imgIdx + 1}`}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy" />
+                                </a>
+                                {photo.annotation && (
+                                  <div className="px-3 py-2 bg-surface-container-high/80 border-t border-white/5">
+                                    <p className="text-[11px] text-on-surface-variant leading-snug">
+                                      <span className="material-symbols-outlined text-[12px] text-primary mr-1 align-middle" translate="no">edit_note</span>
+                                      {photo.annotation}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
                             ))}
                           </div>
                         )}
