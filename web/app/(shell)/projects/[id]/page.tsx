@@ -501,7 +501,8 @@ export default function ProjectDetailPage() {
 
   // ── Change Order Drawer state ──
   const [selectedCO, setSelectedCO] = useState<any>(null);
-  const [coAttachments, setCOAttachments] = useState<{ id: string; url: string; file_name: string; mime_type: string | null }[]>([]);
+  const [coAttachments, setCOAttachments] = useState<{ id: string; url: string; file_name: string; mime_type: string | null; change_order_item_id?: string | null }[]>([]);
+  const [coItems, setCOItems] = useState<{ id: string; description: string; amount: number | null; sort_order: number }[]>([]);
   const [coLightboxUrl, setCOLightboxUrl] = useState<string | null>(null);
   const [coLightboxType, setCOLightboxType] = useState<"image" | "video" | "other">("image");
   const [coActionLoading, setCOActionLoading] = useState(false);
@@ -2034,12 +2035,19 @@ export default function ProjectDetailPage() {
                         key={co.id}
                         onClick={async () => {
                           setSelectedCO(co);
-                          // Fetch attachments for this CO
+                          // Fetch items for this CO
+                          const { data: itemsData } = await supabase
+                            .from("change_order_items")
+                            .select("id, description, amount, sort_order")
+                            .eq("change_order_id", co.id)
+                            .order("sort_order", { ascending: true });
+                          setCOItems((itemsData || []) as { id: string; description: string; amount: number | null; sort_order: number }[]);
+                          // Fetch attachments (with item_id link)
                           const { data: attData } = await supabase
                             .from("change_order_attachments")
-                            .select("id, url, file_name, mime_type")
+                            .select("id, url, file_name, mime_type, change_order_item_id")
                             .eq("change_order_id", co.id);
-                          setCOAttachments((attData || []) as { id: string; url: string; file_name: string; mime_type: string | null }[]);
+                          setCOAttachments((attData || []) as { id: string; url: string; file_name: string; mime_type: string | null; change_order_item_id?: string | null }[]);
                         }}
                         className="grid items-center p-4 bg-surface-container-highest rounded-xl border border-outline-variant/15 hover:border-primary/30 hover:scale-[1.01] transition-all cursor-pointer group"
                         style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr auto" }}
@@ -3960,14 +3968,125 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
 
-                {/* Description */}
-                {selectedCO.description && (
+                {/* Items List — itemized with per-item photos */}
+                {coItems.length > 0 ? (
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Description</p>
-                    <p className="text-sm text-on-surface leading-relaxed bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20 whitespace-pre-wrap">
-                      {selectedCO.description}
-                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Items ({coItems.length})</p>
+                    <div className="space-y-3">
+                      {coItems.map((item, idx) => {
+                        const itemAtts = coAttachments.filter((a) => a.change_order_item_id === item.id);
+                        // Parse description: may have [Location] prefix and material\nnotes
+                        const descLines = item.description.split("\n");
+                        const firstLine = descLines[0] || "";
+                        const locationMatch = firstLine.match(/^\[(.+?)\]\s*(.*)$/);
+                        const itemLocation = locationMatch ? locationMatch[1] : null;
+                        const itemMaterial = locationMatch ? locationMatch[2] : firstLine;
+                        const itemNotes = descLines.slice(1).join("\n").trim();
+
+                        return (
+                          <div key={item.id} className="bg-surface-container-highest rounded-2xl border border-outline-variant/20 overflow-hidden">
+                            <div className="p-4 space-y-3">
+                              {/* Item header */}
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-3 flex-1 min-w-0">
+                                  <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
+                                    <span className="text-primary font-black text-xs">{idx + 1}</span>
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    {itemLocation && (
+                                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#f5a623] bg-[#f5a623]/10 px-2 py-0.5 rounded-full border border-[#f5a623]/20 mb-1 inline-block">
+                                        {itemLocation}
+                                      </span>
+                                    )}
+                                    <p className="text-sm font-bold text-on-surface">{itemMaterial}</p>
+                                    {itemNotes && (
+                                      <p className="text-xs text-on-surface-variant mt-1 leading-relaxed whitespace-pre-wrap">{itemNotes}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                {item.amount != null && (
+                                  <span className="text-sm font-black text-on-surface shrink-0">
+                                    {fmtCO$(item.amount)}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Item photos */}
+                              {itemAtts.length > 0 && (
+                                <div className="pl-10">
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {itemAtts.map((att) => {
+                                      const isImg = att.mime_type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(att.url);
+                                      const isVid = att.mime_type?.startsWith("video/") || /\.(mp4|mov|webm|avi|mkv|m4v)/i.test(att.url);
+                                      return (
+                                        <button
+                                          key={att.id}
+                                          type="button"
+                                          className="relative group rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container-low aspect-square cursor-pointer hover:border-primary/30 transition-colors"
+                                          onClick={() => {
+                                            if (isImg || isVid) { setCOLightboxUrl(att.url); setCOLightboxType(isImg ? "image" : "video"); }
+                                            else window.open(att.url, "_blank");
+                                          }}
+                                        >
+                                          {isImg ? (
+                                            <img src={att.url} alt={att.file_name || ""} className="w-full h-full object-cover" />
+                                          ) : isVid ? (
+                                            <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-background">
+                                              <span className="material-symbols-outlined text-3xl text-[#60b8f5]" translate="no">play_circle</span>
+                                              <span className="text-[9px] text-on-surface-variant">Video</span>
+                                            </div>
+                                          ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                                              <span className="material-symbols-outlined text-2xl text-on-surface-variant" translate="no">attach_file</span>
+                                              <span className="text-[9px] text-on-surface-variant truncate w-full text-center px-1">{att.file_name || "File"}</span>
+                                            </div>
+                                          )}
+                                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-white text-xl opacity-0 group-hover:opacity-100 transition-opacity" translate="no">
+                                              {isVid ? "play_arrow" : "zoom_in"}
+                                            </span>
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
+                ) : (
+                  /* Legacy: No items — show global description + all attachments */
+                  <>
+                    {selectedCO.description && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Description</p>
+                        <p className="text-sm text-on-surface leading-relaxed bg-surface-container-highest rounded-xl p-4 border border-outline-variant/20 whitespace-pre-wrap">
+                          {selectedCO.description}
+                        </p>
+                      </div>
+                    )}
+                    {coAttachments.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Photos & Attachments</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {coAttachments.map((att) => {
+                            const isImg = att.mime_type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(att.url);
+                            const isVid = att.mime_type?.startsWith("video/") || /\.(mp4|mov|webm|avi|mkv|m4v)/i.test(att.url);
+                            return (
+                              <button key={att.id} type="button" className="relative group rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container-low aspect-square cursor-pointer hover:border-primary/30 transition-colors" onClick={() => { if (isImg || isVid) { setCOLightboxUrl(att.url); setCOLightboxType(isImg ? "image" : "video"); } else window.open(att.url, "_blank"); }}>
+                                {isImg ? <img src={att.url} alt={att.file_name || ""} className="w-full h-full object-cover" /> : isVid ? <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-background"><span className="material-symbols-outlined text-3xl text-[#60b8f5]" translate="no">play_circle</span></div> : <div className="w-full h-full flex flex-col items-center justify-center gap-1"><span className="material-symbols-outlined text-2xl text-on-surface-variant" translate="no">attach_file</span><span className="text-[9px] text-on-surface-variant truncate w-full text-center px-1">{att.file_name || "File"}</span></div>}
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center"><span className="material-symbols-outlined text-white text-xl opacity-0 group-hover:opacity-100 transition-opacity" translate="no">{isVid ? "play_arrow" : "zoom_in"}</span></div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* Customer rejection reason */}
@@ -3977,53 +4096,6 @@ export default function ProjectDetailPage() {
                     <p className="text-sm text-on-surface leading-relaxed bg-error/10 rounded-xl p-4 border border-error/20">
                       {selectedCO.rejection_reason}
                     </p>
-                  </div>
-                )}
-
-                {/* Attachments — Photos & Videos */}
-                {coAttachments.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Photos & Attachments</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {coAttachments.map((att) => {
-                        const isImage = att.mime_type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(att.url);
-                        const isVideo = att.mime_type?.startsWith("video/") || /\.(mp4|mov|webm|avi|mkv|m4v)/i.test(att.url);
-                        return (
-                          <button
-                            key={att.id}
-                            type="button"
-                            className="relative group rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container-low aspect-square cursor-pointer hover:border-primary/30 transition-colors"
-                            onClick={() => {
-                              if (isImage || isVideo) {
-                                setCOLightboxUrl(att.url);
-                                setCOLightboxType(isImage ? "image" : "video");
-                              } else {
-                                window.open(att.url, "_blank");
-                              }
-                            }}
-                          >
-                            {isImage ? (
-                              <img src={att.url} alt={att.file_name || ""} className="w-full h-full object-cover" />
-                            ) : isVideo ? (
-                              <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-background">
-                                <span className="material-symbols-outlined text-3xl text-[#60b8f5]" translate="no">play_circle</span>
-                                <span className="text-[9px] text-on-surface-variant">Video</span>
-                              </div>
-                            ) : (
-                              <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                                <span className="material-symbols-outlined text-2xl text-on-surface-variant" translate="no">attach_file</span>
-                                <span className="text-[9px] text-on-surface-variant truncate w-full text-center px-1">{att.file_name || "File"}</span>
-                              </div>
-                            )}
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                              <span className="material-symbols-outlined text-white text-xl opacity-0 group-hover:opacity-100 transition-opacity" translate="no">
-                                {isVideo ? "play_arrow" : "zoom_in"}
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
                 )}
 
@@ -4044,7 +4116,7 @@ export default function ProjectDetailPage() {
 
               {/* Footer Actions */}
               <div className="p-6 border-t border-outline-variant/20 shrink-0 space-y-3">
-                {selectedCO.status === "draft" && (
+                {selectedCO.status === "draft" && (isAdmin || userRole === "salesperson" || userRole === "partner") && (
                   <button
                     onClick={() => handleCOAction("send")}
                     disabled={coActionLoading}
