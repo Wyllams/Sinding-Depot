@@ -25,6 +25,8 @@ export function FieldChangeOrderModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   // Fetch available services for the job
   const [jobServices, setJobServices] = useState<{ id: string; name: string }[]>([]);
@@ -135,15 +137,29 @@ export function FieldChangeOrderModal({
 
   // ---------- File helpers ----------
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    if (e.target.files) {
-      setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setFiles((prev) => [...prev, ...newFiles]);
+      setPreviewUrls((prev) => [...prev, ...newFiles.map((f) => URL.createObjectURL(f))]);
     }
-    // Reset input so the same file can be picked again if removed
-    e.target.value = "";
+    // Defer reset to prevent iOS race condition where files get cleared
+    setTimeout(() => { e.target.value = ""; }, 300);
+  }
+
+  function handleCameraCapture(e: React.ChangeEvent<HTMLInputElement>): void {
+    if (e.target.files && e.target.files.length > 0) {
+      const photo = e.target.files[0];
+      setFiles((prev) => [...prev, photo]);
+      setPreviewUrls((prev) => [...prev, URL.createObjectURL(photo)]);
+    }
+    setTimeout(() => { e.target.value = ""; }, 300);
   }
 
   function removeFile(index: number): void {
+    // Revoke the blob URL to free memory
+    if (previewUrls[index]) URL.revokeObjectURL(previewUrls[index]);
     setFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   }
 
   function getFileIcon(file: File): string {
@@ -288,74 +304,94 @@ export function FieldChangeOrderModal({
           {/* Photo upload */}
           <div className="space-y-3">
             <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-              Photos from site
+              Photos from site {files.length > 0 && `(${files.length})`}
             </label>
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full border-2 border-dashed border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center bg-surface-container-low active:bg-white/5 transition-colors"
-            >
-              <span
-                className="material-symbols-outlined text-3xl text-outline-variant mb-2"
-                translate="no"
+            {/* Camera + Gallery buttons side by side */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="flex-1 border-2 border-dashed border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center bg-surface-container-low active:bg-white/5 transition-colors"
               >
-                add_a_photo
-              </span>
-              <p className="text-sm font-bold text-on-surface">
-                Take or Choose Photos
-              </p>
-              <p className="text-[10px] font-medium text-outline-variant mt-1 uppercase tracking-wider">
-                JPG, PNG, PDF up to 20MB
-              </p>
-            </button>
+                <span className="material-symbols-outlined text-2xl text-outline-variant mb-1" translate="no">photo_camera</span>
+                <p className="text-xs font-bold text-on-surface">Take Photo</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 border-2 border-dashed border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center bg-surface-container-low active:bg-white/5 transition-colors"
+              >
+                <span className="material-symbols-outlined text-2xl text-outline-variant mb-1" translate="no">photo_library</span>
+                <p className="text-xs font-bold text-on-surface">Choose Files</p>
+              </button>
+            </div>
 
+            {/* Camera input — single photo, no multiple */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleCameraCapture}
+              className="hidden"
+            />
+
+            {/* Gallery/file input — multiple, no capture */}
             <input
               ref={fileInputRef}
               type="file"
               multiple
               accept="image/*,.pdf"
-              capture="environment"
               onChange={handleFileChange}
               className="hidden"
             />
 
-            {/* File list */}
-            {files.length > 0 && (
-              <div className="space-y-2">
-                {files.map((file, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-3 bg-surface-container-high border border-white/5 rounded-2xl px-4 py-3"
-                  >
-                    <span
-                      className="material-symbols-outlined text-primary text-lg"
-                      translate="no"
-                    >
-                      {getFileIcon(file)}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-on-surface font-medium truncate">
-                        {file.name}
-                      </p>
-                      <p className="text-[10px] text-on-surface-variant">
-                        {formatBytes(file.size)}
-                      </p>
-                    </div>
+            {/* Thumbnail previews */}
+            {previewUrls.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {previewUrls.map((url, idx) => (
+                  <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-primary/30 group">
+                    <img src={url} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => removeFile(idx)}
-                      className="text-on-surface-variant active:text-error transition-colors"
+                      className="absolute top-0.5 right-0.5 bg-black/70 w-6 h-6 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-95 transition-transform"
                     >
-                      <span
-                        className="material-symbols-outlined text-lg"
-                        translate="no"
-                      >
-                        close
-                      </span>
+                      <span className="material-symbols-outlined text-[14px]" translate="no">close</span>
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* File list (non-image files like PDFs) */}
+            {files.filter(f => !f.type.startsWith("image/")).length > 0 && (
+              <div className="space-y-2">
+                {files.map((file, idx) => {
+                  if (file.type.startsWith("image/")) return null;
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-3 bg-surface-container-high border border-white/5 rounded-2xl px-4 py-3"
+                    >
+                      <span className="material-symbols-outlined text-primary text-lg" translate="no">
+                        {getFileIcon(file)}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-on-surface font-medium truncate">{file.name}</p>
+                        <p className="text-[10px] text-on-surface-variant">{formatBytes(file.size)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(idx)}
+                        className="text-on-surface-variant active:text-error transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-lg" translate="no">close</span>
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
