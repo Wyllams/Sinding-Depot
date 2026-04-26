@@ -5,7 +5,15 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useRealtimeSubscription } from "../../../lib/hooks/useRealtimeSubscription";
 
-interface ChangeOrderItem {
+interface COItemDetail {
+  id: string;
+  description: string;
+  amount: number | null;
+  sort_order: number;
+  attachments: { id: string; url: string; mime_type: string | null; file_name: string }[];
+}
+
+interface ChangeOrderEntry {
   id: string;
   title: string;
   description: string | null;
@@ -15,6 +23,8 @@ interface ChangeOrderItem {
   rejection_reason: string | null;
   requested_at: string;
   requested_by: { full_name: string; role: string } | null;
+  items: COItemDetail[];
+  // Legacy attachments (COs without items)
   attachments: { id: string; url: string; mime_type: string | null; file_name: string }[];
 }
 
@@ -27,7 +37,7 @@ const STATUS_CFG: Record<string, { label: string; badge: string }> = {
 };
 
 export default function CustomerChangeOrders() {
-  const [orders, setOrders] = useState<ChangeOrderItem[]>([]);
+  const [orders, setOrders] = useState<ChangeOrderEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ url: string; type: "image" | "video" } | null>(null);
@@ -39,7 +49,6 @@ export default function CustomerChangeOrders() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get customer
       const { data: customer } = await supabase
         .from("customers")
         .select("id")
@@ -47,7 +56,6 @@ export default function CustomerChangeOrders() {
         .single();
       if (!customer) return;
 
-      // Get job IDs for this customer
       const { data: jobs } = await supabase
         .from("jobs")
         .select("id")
@@ -56,7 +64,6 @@ export default function CustomerChangeOrders() {
 
       const jobIds = jobs.map((j) => j.id);
 
-      // Get change orders for those jobs
       const { data: cos } = await supabase
         .from("change_orders")
         .select(`
@@ -70,25 +77,55 @@ export default function CustomerChangeOrders() {
 
       if (!cos) { setOrders([]); return; }
 
-      // Get attachments for these change orders
       const coIds = cos.map((c) => c.id);
-      const { data: attachments } = await supabase
+
+      // Fetch items for all COs
+      const { data: allItems } = await supabase
+        .from("change_order_items")
+        .select("id, change_order_id, description, amount, sort_order")
+        .in("change_order_id", coIds)
+        .order("sort_order", { ascending: true });
+
+      // Fetch all attachments
+      const { data: allAtts } = await supabase
         .from("change_order_attachments")
-        .select("id, change_order_id, url, mime_type, file_name")
+        .select("id, change_order_id, change_order_item_id, url, mime_type, file_name")
         .in("change_order_id", coIds);
 
-      const attMap = new Map<string, typeof attachments>();
-      (attachments || []).forEach((att: any) => {
-        const arr = attMap.get(att.change_order_id) || [];
+      // Map items by CO id
+      const itemsByCO = new Map<string, COItemDetail[]>();
+      (allItems || []).forEach((item: any) => {
+        const arr = itemsByCO.get(item.change_order_id) || [];
+        arr.push({ ...item, attachments: [] });
+        itemsByCO.set(item.change_order_id, arr);
+      });
+
+      // Map attachments to items or to global
+      const globalAttsByCO = new Map<string, ChangeOrderEntry["attachments"]>();
+      (allAtts || []).forEach((att: any) => {
+        if (att.change_order_item_id) {
+          // Find the item and attach
+          const coItems = itemsByCO.get(att.change_order_id);
+          if (coItems) {
+            const item = coItems.find((i) => i.id === att.change_order_item_id);
+            if (item) {
+              item.attachments.push(att);
+              return;
+            }
+          }
+        }
+        // Global attachment (legacy)
+        const arr = globalAttsByCO.get(att.change_order_id) || [];
         arr.push(att);
-        attMap.set(att.change_order_id, arr);
+        globalAttsByCO.set(att.change_order_id, arr);
       });
 
       setOrders(
         cos.map((c: any) => ({
           ...c,
           requested_by: c.requested_by ?? null,
-          attachments: (attMap.get(c.id) || []) as ChangeOrderItem["attachments"],
+          items: itemsByCO.get(c.id) || [],
+          attachments: globalAttsByCO.get(c.id) || [],
         }))
       );
     } catch (err) {
@@ -100,13 +137,10 @@ export default function CustomerChangeOrders() {
 
   useEffect(() => { fetchOrders(); }, []);
 
-  // ── Realtime: auto-refresh quando admin criar ou enviar CO
   useRealtimeSubscription({
     table: "change_orders",
     event: "*",
-    onPayload: () => {
-      fetchOrders();
-    },
+    onPayload: () => { fetchOrders(); },
   });
 
   async function handleApprove(orderId: string): Promise<void> {
@@ -161,6 +195,48 @@ export default function CustomerChangeOrders() {
   const isVideo = (url: string, mime: string | null): boolean =>
     (mime?.startsWith("video/") || /\.(mp4|mov|webm|avi)/i.test(url)) ?? false;
 
+  function renderAttachmentGrid(atts: ChangeOrderEntry["attachments"]): React.ReactNode {
+    if (atts.length === 0) return null;
+    return (
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        {atts.map((att) => {
+          const img = isImage(att.url, att.mime_type);
+          const vid = isVideo(att.url, att.mime_type);
+          return (
+            <button
+              key={att.id}
+              type="button"
+              className="relative group rounded-xl overflow-hidden border border-[#e5e5e3] bg-on-surface aspect-square cursor-pointer hover:border-surface-container-low transition-colors"
+              onClick={() => {
+                if (img || vid) setLightbox({ url: att.url, type: img ? "image" : "video" });
+                else window.open(att.url, "_blank");
+              }}
+            >
+              {img ? (
+                <img src={att.url} alt={att.file_name || ""} className="w-full h-full object-cover" />
+              ) : vid ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                  <span className="material-symbols-outlined text-3xl text-surface-container-low" translate="no">play_circle</span>
+                  <span className="text-[9px] text-[#a1a19d]">Video</span>
+                </div>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                  <span className="material-symbols-outlined text-2xl text-[#a1a19d]" translate="no">attach_file</span>
+                  <span className="text-[9px] text-[#a1a19d] truncate w-full text-center px-1">{att.file_name || "File"}</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <span className="material-symbols-outlined text-white text-xl opacity-0 group-hover:opacity-100 transition-opacity" translate="no">
+                  {vid ? "play_arrow" : "zoom_in"}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
@@ -191,7 +267,8 @@ export default function CustomerChangeOrders() {
           {orders.map((order) => {
             const cfg = STATUS_CFG[order.status] ?? STATUS_CFG.draft;
             const isPending = order.status === "pending_customer_approval";
-            const amount = order.status === "approved" ? order.approved_amount : order.proposed_amount;
+            const hasItems = order.items.length > 0;
+            const displayAmount = order.status === "approved" ? order.approved_amount : order.proposed_amount;
 
             return (
               <div key={order.id} className="bg-white border border-[#e5e5e3] rounded-3xl shadow-sm overflow-hidden">
@@ -217,56 +294,66 @@ export default function CustomerChangeOrders() {
                   {order.description && (
                     <p className="text-outline-variant text-sm leading-relaxed mb-4">{order.description}</p>
                   )}
-
-                  {/* Amount */}
-                  <div className="bg-on-surface border border-[#e5e5e3] rounded-2xl p-4 mb-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-1">
-                      {order.status === "approved" ? "Approved Amount" : "Proposed Amount"}
-                    </p>
-                    <p className="font-headline text-2xl font-bold text-surface-container-low">{fmt$(amount)}</p>
-                  </div>
                 </div>
 
-                {/* Attachments */}
-                {order.attachments.length > 0 && (
+                {/* Items list (new format) */}
+                {hasItems ? (
                   <div className="px-6 pb-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-3">Photos & Attachments</p>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                      {order.attachments.map((att) => {
-                        const img = isImage(att.url, att.mime_type);
-                        const vid = isVideo(att.url, att.mime_type);
-                        return (
-                          <button
-                            key={att.id}
-                            type="button"
-                            className="relative group rounded-xl overflow-hidden border border-[#e5e5e3] bg-on-surface aspect-square cursor-pointer hover:border-surface-container-low transition-colors"
-                            onClick={() => {
-                              if (img || vid) setLightbox({ url: att.url, type: img ? "image" : "video" });
-                              else window.open(att.url, "_blank");
-                            }}
-                          >
-                            {img ? (
-                              <img src={att.url} alt={att.file_name || ""} className="w-full h-full object-cover" />
-                            ) : vid ? (
-                              <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                                <span className="material-symbols-outlined text-3xl text-surface-container-low" translate="no">play_circle</span>
-                                <span className="text-[9px] text-[#a1a19d]">Video</span>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-3 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[14px]" translate="no">list_alt</span>
+                      Items ({order.items.length})
+                    </p>
+                    <div className="space-y-3">
+                      {order.items.map((item, idx) => (
+                        <div key={item.id} className="bg-on-surface border border-[#e5e5e3] rounded-2xl p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                              <div className="w-7 h-7 rounded-full bg-[#f0fae1] flex items-center justify-center shrink-0 mt-0.5">
+                                <span className="text-[#5c8a00] font-black text-xs">{idx + 1}</span>
                               </div>
-                            ) : (
-                              <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                                <span className="material-symbols-outlined text-2xl text-[#a1a19d]" translate="no">attach_file</span>
-                                <span className="text-[9px] text-[#a1a19d] truncate w-full text-center px-1">{att.file_name || "File"}</span>
-                              </div>
-                            )}
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                              <span className="material-symbols-outlined text-white text-xl opacity-0 group-hover:opacity-100 transition-opacity" translate="no">
-                                {vid ? "play_arrow" : "zoom_in"}
-                              </span>
+                              <p className="text-sm font-medium text-surface-container-low leading-snug whitespace-pre-wrap">{item.description}</p>
                             </div>
-                          </button>
-                        );
-                      })}
+                            {item.amount != null && (
+                              <span className="text-surface-container-low font-bold text-sm whitespace-nowrap shrink-0">
+                                {fmt$(item.amount)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Item photos */}
+                          {item.attachments.length > 0 && (
+                            <div className="pl-10">
+                              {renderAttachmentGrid(item.attachments)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Total */}
+                      <div className="bg-on-surface border-2 border-[#e5e5e3] rounded-2xl p-4 flex items-center justify-between">
+                        <span className="text-[#a1a19d] font-bold text-sm uppercase tracking-widest">Total</span>
+                        <span className="font-headline text-2xl font-bold text-surface-container-low">
+                          {fmt$(displayAmount)}
+                        </span>
+                      </div>
                     </div>
+                  </div>
+                ) : (
+                  /* Legacy format — single amount + global attachments */
+                  <div className="px-6 pb-4">
+                    <div className="bg-on-surface border border-[#e5e5e3] rounded-2xl p-4 mb-4">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-1">
+                        {order.status === "approved" ? "Approved Amount" : "Proposed Amount"}
+                      </p>
+                      <p className="font-headline text-2xl font-bold text-surface-container-low">{fmt$(displayAmount)}</p>
+                    </div>
+
+                    {order.attachments.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-3">Photos & Attachments</p>
+                        {renderAttachmentGrid(order.attachments)}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -352,7 +439,6 @@ export default function CustomerChangeOrders() {
             className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="px-6 pt-6 pb-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-[#fff1ec] text-error rounded-full flex items-center justify-center">
@@ -368,7 +454,6 @@ export default function CustomerChangeOrders() {
               </p>
             </div>
 
-            {/* Textarea */}
             <div className="px-6 pb-4">
               <textarea
                 value={rejectReason}
@@ -379,7 +464,6 @@ export default function CustomerChangeOrders() {
               />
             </div>
 
-            {/* Actions */}
             <div className="px-6 pb-6 flex gap-3">
               <button
                 onClick={() => setRejectModal(null)}

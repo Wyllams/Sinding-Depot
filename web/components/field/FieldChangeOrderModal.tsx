@@ -5,12 +5,23 @@ import { supabase } from "@/lib/supabase";
 import { compressImage } from "@/lib/compressImage";
 import { CustomDropdown } from "@/components/CustomDropdown";
 
+/* ────────────────────────────────────── Types ── */
+
 interface FieldChangeOrderModalProps {
   jobId: string;
   serviceId: string | null;
   onClose: () => void;
   onSaved: () => void;
 }
+
+interface COItem {
+  material: string;
+  notes: string;
+  files: File[];
+  previewUrls: string[];
+}
+
+/* ────────────────────────────────────── Component ── */
 
 export function FieldChangeOrderModal({
   jobId,
@@ -19,24 +30,26 @@ export function FieldChangeOrderModal({
   onSaved,
 }: FieldChangeOrderModalProps) {
   const [location, setLocation] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
-  // Fetch available services for the job
+  // Items list (like Extra Material pattern)
+  const [items, setItems] = useState<COItem[]>([
+    { material: "", notes: "", files: [], previewUrls: [] },
+  ]);
+
+  // Service dropdown
   const [jobServices, setJobServices] = useState<{ id: string; name: string }[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState<string>(serviceId || "");
 
+  // Hidden file inputs per item
+  const cameraRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const galleryRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  /* ─── Load services ───────────────────────────── */
   useEffect(() => {
     if (!jobId) return;
-
     (async () => {
-      // Get the crew ID for the logged-in user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -46,7 +59,6 @@ export function FieldChangeOrderModal({
         .eq("profile_id", user.id)
         .maybeSingle();
 
-      // Fetch all job services for this job
       const { data } = await supabase
         .from("job_services")
         .select("id, service_type:service_types(name)")
@@ -58,30 +70,21 @@ export function FieldChangeOrderModal({
       }));
 
       if (crew) {
-        // Restrict: only show services where this crew is assigned
         const { data: assignments } = await supabase
           .from("service_assignments")
           .select("job_service_id")
           .eq("crew_id", crew.id);
 
-        const assignedServiceIds = new Set(
-          (assignments || []).map((a: any) => a.job_service_id)
-        );
-
-        const filtered = allServices.filter((s: { id: string; name: string }) =>
-          assignedServiceIds.has(s.id)
-        );
-
+        const assignedIds = new Set((assignments || []).map((a: any) => a.job_service_id));
+        const filtered = allServices.filter((s: { id: string }) => assignedIds.has(s.id));
         setJobServices(filtered);
 
-        // Auto-select if there's only one or if serviceId prop matches
         if (serviceId && filtered.some((s: { id: string }) => s.id === serviceId)) {
           setSelectedServiceId(serviceId);
         } else if (filtered.length === 1) {
           setSelectedServiceId(filtered[0].id);
         }
       } else {
-        // Fallback: admin or no crew — show all services
         setJobServices(allServices);
         if (serviceId && allServices.some((s: { id: string }) => s.id === serviceId)) {
           setSelectedServiceId(serviceId);
@@ -92,81 +95,180 @@ export function FieldChangeOrderModal({
     })();
   }, [jobId, serviceId]);
 
-  // ---------- Upload attachments ----------
-  async function uploadFiles(coId: string): Promise<void> {
-    for (const rawFile of files) {
-      const file = await compressImage(rawFile);
-      const ext = file.name.split(".").pop();
-      const path = `change-orders/${coId}/${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2)}.${ext}`;
+  /* ─── Item CRUD ───────────────────────────────── */
+  const addItem = (): void => {
+    setItems([...items, { material: "", notes: "", files: [], previewUrls: [] }]);
+  };
 
-      const { error: upErr } = await supabase.storage
-        .from("attachments")
-        .upload(path, file);
+  const removeItem = (index: number): void => {
+    // Revoke blob URLs to free memory
+    items[index].previewUrls.forEach((u) => URL.revokeObjectURL(u));
+    setItems(items.filter((_, i) => i !== index));
+  };
 
-      if (upErr) {
-        console.error("[FieldCO] upload error:", upErr);
-        continue;
-      }
+  const updateItem = (index: number, field: keyof Pick<COItem, "material" | "notes">, value: string): void => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
 
-      const { data } = supabase.storage.from("attachments").getPublicUrl(path);
+  /* ─── File helpers per item ───────────────────── */
+  const handleItemFiles = (index: number, fileList: FileList | null): void => {
+    if (!fileList || fileList.length === 0) return;
+    const newFiles = Array.from(fileList);
+    const newPreviews = newFiles
+      .filter((f) => f.type.startsWith("image/"))
+      .map((f) => URL.createObjectURL(f));
 
-      await supabase.from("change_order_attachments").insert({
-        change_order_id: coId,
-        file_name: file.name,
-        url: data.publicUrl,
-        mime_type: file.type,
-        size_bytes: file.size,
-      });
-    }
-  }
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        files: [...updated[index].files, ...newFiles],
+        previewUrls: [...updated[index].previewUrls, ...newPreviews],
+      };
+      return updated;
+    });
+  };
 
-  // ---------- Submit ----------
+  const removeItemFile = (itemIdx: number, fileIdx: number): void => {
+    setItems((prev) => {
+      const updated = [...prev];
+      const item = { ...updated[itemIdx] };
+      if (item.previewUrls[fileIdx]) URL.revokeObjectURL(item.previewUrls[fileIdx]);
+      item.files = item.files.filter((_, i) => i !== fileIdx);
+      item.previewUrls = item.previewUrls.filter((_, i) => i !== fileIdx);
+      updated[itemIdx] = item;
+      return updated;
+    });
+  };
+
+  /* ─── Submit ──────────────────────────────────── */
   async function handleSubmit(): Promise<void> {
     if (!location) {
       setError("Please select a location on the house.");
       return;
     }
-    if (!title.trim() || !description.trim()) return;
+
+    const validItems = items.filter((item) => item.material.trim() !== "");
+    if (validItems.length === 0) {
+      setError("Please enter at least one material.");
+      return;
+    }
 
     setSaving(true);
     setError(null);
 
     try {
-      // Resolve profile_id do parceiro logado
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const finalDescription = `Location: ${location}\n\n${description.trim()}`;
+      // Build the CO title from items
+      const itemNames = validItems.map((i) => i.material.trim());
+      const coTitle = itemNames.length <= 2
+        ? itemNames.join(" + ")
+        : `${itemNames[0]} + ${itemNames.length - 1} more`;
 
-      const { data: co, error: insertErr } = await supabase
+      const coDescription = `Location: ${location}`;
+
+      // 1. Create the change_orders record
+      const { data: co, error: coErr } = await supabase
         .from("change_orders")
         .insert({
           job_id: jobId,
           job_service_id: selectedServiceId || null,
-          title: title.trim(),
-          description: finalDescription,
-          proposed_amount: null, // Parceiro NUNCA coloca preço
+          title: coTitle,
+          description: coDescription,
+          proposed_amount: null,
           status: "draft",
           requested_by_profile_id: user.id,
         })
         .select("id")
         .single();
 
-      if (insertErr) throw insertErr;
+      if (coErr) throw coErr;
+      if (!co) throw new Error("Failed to create change order");
 
-      if (co && files.length > 0) {
-        await uploadFiles(co.id);
+      // 2. Create change_order_items for each valid item
+      for (let i = 0; i < validItems.length; i++) {
+        const item = validItems[i];
+        const { data: coItem, error: itemErr } = await supabase
+          .from("change_order_items")
+          .insert({
+            change_order_id: co.id,
+            description: item.notes.trim()
+              ? `${item.material.trim()}\n${item.notes.trim()}`
+              : item.material.trim(),
+            amount: null,
+            sort_order: i,
+          })
+          .select("id")
+          .single();
+
+        if (itemErr) {
+          console.error("[FieldCO] item insert error:", itemErr);
+          continue;
+        }
+
+        // 3. Upload photos for this item
+        if (coItem && item.files.length > 0) {
+          for (const rawFile of item.files) {
+            const file = await compressImage(rawFile);
+            const ext = file.name.split(".").pop();
+            const path = `change-orders/${co.id}/${coItem.id}/${Date.now()}-${Math.random()
+              .toString(36)
+              .slice(2)}.${ext}`;
+
+            const { error: upErr } = await supabase.storage
+              .from("attachments")
+              .upload(path, file);
+
+            if (upErr) {
+              console.error("[FieldCO] upload error:", upErr);
+              continue;
+            }
+
+            const { data: urlData } = supabase.storage.from("attachments").getPublicUrl(path);
+
+            await supabase.from("change_order_attachments").insert({
+              change_order_id: co.id,
+              change_order_item_id: coItem.id,
+              file_name: file.name,
+              url: urlData.publicUrl,
+              mime_type: file.type,
+              size_bytes: file.size,
+            });
+          }
+        }
+      }
+
+      // 4. Push notification to admins + salesperson
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user.id)
+          .single();
+
+        await fetch("/api/push/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: "📋 Change Order Request",
+            body: `${profile?.full_name ?? "Partner"} submitted: ${coTitle}`,
+            url: `/mobile/sales/orders/${co.id}`,
+            tag: "change-order-request",
+            notificationType: "change_order_request",
+            relatedEntityId: jobId,
+          }),
+        });
+      } catch {
+        /* non-blocking */
       }
 
       onSaved();
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to create change order";
+      const message = err instanceof Error ? err.message : "Failed to create change order";
       console.error("[FieldCO] save error:", err);
       setError(message);
     } finally {
@@ -174,47 +276,9 @@ export function FieldChangeOrderModal({
     }
   }
 
-  // ---------- File helpers ----------
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-      setFiles((prev) => [...prev, ...newFiles]);
-      setPreviewUrls((prev) => [...prev, ...newFiles.map((f) => URL.createObjectURL(f))]);
-    }
-    // Defer reset to prevent iOS race condition where files get cleared
-    setTimeout(() => { e.target.value = ""; }, 300);
-  }
-
-  function handleCameraCapture(e: React.ChangeEvent<HTMLInputElement>): void {
-    if (e.target.files && e.target.files.length > 0) {
-      const photo = e.target.files[0];
-      setFiles((prev) => [...prev, photo]);
-      setPreviewUrls((prev) => [...prev, URL.createObjectURL(photo)]);
-    }
-    setTimeout(() => { e.target.value = ""; }, 300);
-  }
-
-  function removeFile(index: number): void {
-    // Revoke the blob URL to free memory
-    if (previewUrls[index]) URL.revokeObjectURL(previewUrls[index]);
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function getFileIcon(file: File): string {
-    if (file.type.startsWith("image/")) return "image";
-    if (file.type.startsWith("video/")) return "videocam";
-    if (file.type.includes("pdf")) return "picture_as_pdf";
-    return "attach_file";
-  }
-
-  function formatBytes(b: number): string {
-    return b < 1024 * 1024
-      ? `${(b / 1024).toFixed(0)} KB`
-      : `${(b / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  const canSubmit = title.trim().length > 0 && description.trim().length > 0;
+  const validCount = items.filter((i) => i.material.trim()).length;
+  const totalPhotos = items.reduce((sum, i) => sum + i.files.length, 0);
+  const canSubmit = validCount > 0 && location !== "";
 
   return (
     <div
@@ -226,7 +290,7 @@ export function FieldChangeOrderModal({
         style={{ scrollbarWidth: "none" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle bar (mobile sheet affordance) */}
+        {/* Handle bar */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-outline-variant" />
         </div>
@@ -235,12 +299,7 @@ export function FieldChangeOrderModal({
         <div className="flex items-center justify-between px-6 pt-2 pb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center">
-              <span
-                className="material-symbols-outlined text-error"
-                translate="no"
-              >
-                inventory_2
-              </span>
+              <span className="material-symbols-outlined text-error" translate="no">inventory_2</span>
             </div>
             <div>
               <h2 className="text-on-surface font-bold text-lg leading-tight">
@@ -255,12 +314,7 @@ export function FieldChangeOrderModal({
             onClick={onClose}
             className="w-9 h-9 rounded-full bg-surface-container-high border border-white/5 flex items-center justify-center text-on-surface-variant active:scale-95 transition-transform"
           >
-            <span
-              className="material-symbols-outlined text-lg"
-              translate="no"
-            >
-              close
-            </span>
+            <span className="material-symbols-outlined text-lg" translate="no">close</span>
           </button>
         </div>
 
@@ -268,17 +322,10 @@ export function FieldChangeOrderModal({
         <div className="px-6 pb-6 space-y-5">
           {/* Info banner */}
           <div className="flex items-start gap-3 bg-[#1a2e00] border border-primary/15 rounded-2xl p-4">
-            <span
-              className="material-symbols-outlined text-primary shrink-0 mt-0.5 text-lg"
-              translate="no"
-            >
-              info
-            </span>
+            <span className="material-symbols-outlined text-primary shrink-0 mt-0.5 text-lg" translate="no">info</span>
             <p className="text-xs text-on-surface-variant leading-relaxed">
-              Describe what you found on site. The{" "}
-              <span className="text-primary font-bold">
-                Home Office
-              </span>{" "}
+              Describe what you found on site. Add multiple items if needed. The{" "}
+              <span className="text-primary font-bold">Home Office</span>{" "}
               will add pricing and send to the customer for approval.
             </p>
           </div>
@@ -305,145 +352,142 @@ export function FieldChangeOrderModal({
             <CustomDropdown
               value={selectedServiceId}
               onChange={setSelectedServiceId}
-              options={jobServices.map(s => ({ value: s.id, label: s.name }))}
+              options={jobServices.map((s) => ({ value: s.id, label: s.name }))}
               placeholder="Select a service..."
               className="w-full bg-surface-container-high border border-white/5 hover:border-primary/50 rounded-2xl py-4 px-4 text-on-surface font-bold text-[15px] transition-colors flex justify-between items-center"
             />
           </div>
 
-          {/* Title */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-              What needs to change? *
-            </label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-surface-container-high border border-white/5 focus:border-primary rounded-2xl py-4 px-4 text-on-surface outline-none placeholder:text-outline-variant font-bold text-[15px] transition-colors"
-              placeholder="e.g. Rotten wood behind fascia"
-              maxLength={100}
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-              Describe in detail *
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-surface-container-high border border-white/5 focus:border-primary rounded-2xl py-4 px-4 text-on-surface outline-none placeholder:text-outline-variant font-medium text-sm resize-none transition-colors"
-              placeholder="Describe the issue, what materials are needed, and estimated scope..."
-              rows={4}
-              maxLength={1000}
-            />
-          </div>
-
-          {/* Photo upload */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-              Photos from site {files.length > 0 && `(${files.length})`}
-            </label>
-
-            {/* Camera + Gallery buttons side by side */}
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => cameraInputRef.current?.click()}
-                className="flex-1 border-2 border-dashed border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center bg-surface-container-low active:bg-white/5 transition-colors"
+          {/* Items List */}
+          <div className="space-y-4">
+            {items.map((item, idx) => (
+              <div
+                key={idx}
+                className="bg-surface-container-high border border-white/5 rounded-2xl p-4 relative space-y-4"
               >
-                <span className="material-symbols-outlined text-2xl text-outline-variant mb-1" translate="no">photo_camera</span>
-                <p className="text-xs font-bold text-on-surface">Take Photo</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex-1 border-2 border-dashed border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center bg-surface-container-low active:bg-white/5 transition-colors"
-              >
-                <span className="material-symbols-outlined text-2xl text-outline-variant mb-1" translate="no">photo_library</span>
-                <p className="text-xs font-bold text-on-surface">Choose Files</p>
-              </button>
-            </div>
+                {items.length > 1 && (
+                  <button
+                    onClick={() => removeItem(idx)}
+                    className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 rounded-full hover:bg-red-500/20 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]" translate="no">delete</span>
+                  </button>
+                )}
 
-            {/* Camera input — single photo, no multiple */}
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleCameraCapture}
-              className="hidden"
-            />
+                {/* Material Name */}
+                <div className={items.length > 1 ? "pr-8" : ""}>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
+                    Material {items.length > 1 ? `#${idx + 1}` : ""}
+                  </label>
+                  <input
+                    type="text"
+                    value={item.material}
+                    onChange={(e) => updateItem(idx, "material", e.target.value)}
+                    placeholder="e.g. Rotten wood behind fascia"
+                    maxLength={100}
+                    className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-error/50 transition-all"
+                  />
+                </div>
 
-            {/* Gallery/file input — multiple, no capture */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,.pdf"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+                {/* Notes */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
+                    Description / Notes
+                  </label>
+                  <textarea
+                    value={item.notes}
+                    onChange={(e) => updateItem(idx, "notes", e.target.value)}
+                    placeholder="Describe the issue, materials needed..."
+                    rows={2}
+                    maxLength={500}
+                    className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl px-4 py-3 text-sm font-medium text-on-surface placeholder-outline-variant focus:outline-none focus:border-error/50 transition-all resize-none"
+                  />
+                </div>
 
-            {/* Thumbnail previews */}
-            {previewUrls.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {previewUrls.map((url, idx) => (
-                  <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-primary/30 group">
-                    <img src={url} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                {/* Photos for this item */}
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant pl-1">
+                    Photos {item.files.length > 0 && `(${item.files.length})`}
+                  </label>
+
+                  <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => removeFile(idx)}
-                      className="absolute top-0.5 right-0.5 bg-black/70 w-6 h-6 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-95 transition-transform"
+                      onClick={() => cameraRefs.current[idx]?.click()}
+                      className="flex-1 border border-dashed border-white/10 rounded-xl p-3 flex flex-col items-center justify-center bg-surface-container-low active:bg-white/5 transition-colors"
                     >
-                      <span className="material-symbols-outlined text-[14px]" translate="no">close</span>
+                      <span className="material-symbols-outlined text-xl text-outline-variant mb-0.5" translate="no">photo_camera</span>
+                      <p className="text-[10px] font-bold text-on-surface">Camera</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => galleryRefs.current[idx]?.click()}
+                      className="flex-1 border border-dashed border-white/10 rounded-xl p-3 flex flex-col items-center justify-center bg-surface-container-low active:bg-white/5 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-xl text-outline-variant mb-0.5" translate="no">photo_library</span>
+                      <p className="text-[10px] font-bold text-on-surface">Gallery</p>
                     </button>
                   </div>
-                ))}
-              </div>
-            )}
 
-            {/* File list (non-image files like PDFs) */}
-            {files.filter(f => !f.type.startsWith("image/")).length > 0 && (
-              <div className="space-y-2">
-                {files.map((file, idx) => {
-                  if (file.type.startsWith("image/")) return null;
-                  return (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-3 bg-surface-container-high border border-white/5 rounded-2xl px-4 py-3"
-                    >
-                      <span className="material-symbols-outlined text-primary text-lg" translate="no">
-                        {getFileIcon(file)}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-on-surface font-medium truncate">{file.name}</p>
-                        <p className="text-[10px] text-on-surface-variant">{formatBytes(file.size)}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeFile(idx)}
-                        className="text-on-surface-variant active:text-error transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-lg" translate="no">close</span>
-                      </button>
+                  {/* Hidden file inputs */}
+                  <input
+                    ref={(el) => { cameraRefs.current[idx] = el; }}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      handleItemFiles(idx, e.target.files);
+                      setTimeout(() => { e.target.value = ""; }, 300);
+                    }}
+                  />
+                  <input
+                    ref={(el) => { galleryRefs.current[idx] = el; }}
+                    type="file"
+                    accept="image/*,.pdf"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      handleItemFiles(idx, e.target.files);
+                      setTimeout(() => { e.target.value = ""; }, 300);
+                    }}
+                  />
+
+                  {/* Thumbnails */}
+                  {item.previewUrls.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {item.previewUrls.map((url, fIdx) => (
+                        <div key={fIdx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-primary/30 group">
+                          <img src={url} alt={`Preview ${fIdx + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeItemFile(idx, fIdx)}
+                            className="absolute top-0.5 right-0.5 bg-black/70 w-5 h-5 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-95 transition-transform"
+                          >
+                            <span className="material-symbols-outlined text-[12px]" translate="no">close</span>
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
-            )}
+            ))}
+
+            {/* Add More Button */}
+            <button
+              onClick={addItem}
+              className="w-full bg-[#0a0a0a] border border-dashed border-error/30 text-error rounded-xl py-3.5 font-bold text-xs flex items-center justify-center gap-2 hover:bg-error/10 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[16px]" translate="no">add</span>
+              Add Another Item
+            </button>
           </div>
 
           {/* Error */}
           {error && (
             <div className="flex items-center gap-2 bg-error/10 border border-error/20 rounded-2xl p-4">
-              <span
-                className="material-symbols-outlined text-error text-lg shrink-0"
-                translate="no"
-              >
-                error
-              </span>
+              <span className="material-symbols-outlined text-error text-lg shrink-0" translate="no">error</span>
               <p className="text-xs text-error font-medium">{error}</p>
             </div>
           )}
@@ -458,15 +502,10 @@ export function FieldChangeOrderModal({
               <div className="w-5 h-5 border-2 border-[#1a2e00]/20 border-t-[#1a2e00] rounded-full animate-spin" />
             ) : (
               <>
-                <span
-                  className="material-symbols-outlined text-xl"
-                  translate="no"
-                >
-                  send
-                </span>
-                {files.length > 0
-                  ? `Submit with ${files.length} Photo${files.length > 1 ? "s" : ""}`
-                  : "Submit Change Order"}
+                <span className="material-symbols-outlined text-xl" translate="no">send</span>
+                {totalPhotos > 0
+                  ? `Submit ${validCount} Item${validCount > 1 ? "s" : ""} with ${totalPhotos} Photo${totalPhotos > 1 ? "s" : ""}`
+                  : `Submit ${validCount} Item${validCount > 1 ? "s" : ""}`}
               </>
             )}
           </button>
