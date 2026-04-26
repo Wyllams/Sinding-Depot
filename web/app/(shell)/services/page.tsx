@@ -113,6 +113,26 @@ export default function ServicesPage() {
   const [serviceReports, setServiceReports] = useState<any[]>([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportsFilter, setReportsFilter] = useState<"all" | "pending" | "reviewed">("all");
+  const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
+
+  // Map blocker_id → report status for dot indicator in Service Calls table
+  const reportStatusMap = new Map<string, "pending" | "resolved" | "not_resolved">();
+  serviceReports.forEach((r: any) => {
+    const blockerId = r.blocker_id;
+    if (!blockerId) return;
+    const existing = reportStatusMap.get(blockerId);
+    // Priority: pending (red) > not_resolved (yellow) > resolved (green)
+    if (!r.reviewed_at) {
+      reportStatusMap.set(blockerId, "pending");
+    } else if (existing !== "pending") {
+      const blocker = Array.isArray(r.blocker) ? r.blocker[0] : r.blocker;
+      if (blocker?.status === "resolved") {
+        if (existing !== "not_resolved") reportStatusMap.set(blockerId, "resolved");
+      } else {
+        reportStatusMap.set(blockerId, "not_resolved");
+      }
+    }
+  });
 
   // Edit modal
   const [editService, setEditService] = useState<ServiceCall | null>(null);
@@ -179,6 +199,9 @@ export default function ServicesPage() {
 
     setCrews((crewData || []) as CrewRef[]);
     setIsLoading(false);
+
+    // Also pre-fetch reports for the dot indicators
+    fetchServiceReports();
   }, []);
 
   useEffect(() => {
@@ -364,6 +387,34 @@ export default function ServicesPage() {
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("service_reports").update({ reviewed_by: user?.id, reviewed_at: new Date().toISOString() }).eq("id", reportId);
     fetchServiceReports();
+  };
+
+  // ── Resolve / Not Resolved action for reports ──
+  const handleReportDecision = async (reportId: string, blockerId: string, resolved: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    // 1. Mark report as reviewed
+    await supabase.from("service_reports").update({
+      reviewed_by: user?.id,
+      reviewed_at: new Date().toISOString(),
+    }).eq("id", reportId);
+    // 2. Update blocker status
+    const newStatus = resolved ? "resolved" : "open";
+    await supabase.from("blockers").update({ status: newStatus }).eq("id", blockerId);
+    // 3. Update local service calls state
+    setServiceCalls((prev) => prev.map((s) => s.id === blockerId ? { ...s, status: newStatus } : s));
+    // 4. Refresh reports
+    fetchServiceReports();
+  };
+
+  // ── Navigate from dot to reports tab ──
+  const goToReportForBlocker = (blockerId: string) => {
+    setServicesTab("reports");
+    setReportsFilter("all");
+    // Auto-expand the report matching this blocker
+    setTimeout(() => {
+      const match = serviceReports.find((r: any) => r.blocker_id === blockerId);
+      if (match) setExpandedReportId(match.id);
+    }, 100);
   };
   return (
     <>
@@ -625,9 +676,10 @@ export default function ServicesPage() {
                           {(() => { const _d = new Date(issue.reported_at); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })()}
                         </td>
 
-                        {/* Signal indicator */}
+                        {/* Signal / Report indicator */}
                         <td className="px-5 py-4">
-                          <div className="flex justify-center">
+                          <div className="flex justify-center gap-1.5">
+                            {/* Existing signal indicator */}
                             {issue.is_signal && !issue.signal_acknowledged && (
                               <button
                                 onClick={() => acknowledgeSignal(issue.id)}
@@ -641,6 +693,30 @@ export default function ServicesPage() {
                               <div className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#22c55e]/10">
                                 <span className="material-symbols-outlined text-[#22c55e] text-[14px]" translate="no">check</span>
                               </div>
+                            )}
+                            {/* Report dot indicator */}
+                            {reportStatusMap.has(issue.id) && (
+                              <button
+                                onClick={() => goToReportForBlocker(issue.id)}
+                                title={reportStatusMap.get(issue.id) === "pending" ? "Report pending — click to review" : reportStatusMap.get(issue.id) === "resolved" ? "Report resolved" : "Report reviewed — not resolved"}
+                                className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${
+                                  reportStatusMap.get(issue.id) === "pending"
+                                    ? "bg-error/20 border-2 border-error animate-pulse hover:animate-none"
+                                    : reportStatusMap.get(issue.id) === "resolved"
+                                      ? "bg-[#22c55e]/20 border-2 border-[#22c55e]"
+                                      : "bg-[#e3eb5d]/20 border-2 border-[#e3eb5d]"
+                                }`}
+                              >
+                                <span className={`material-symbols-outlined text-[14px] ${
+                                  reportStatusMap.get(issue.id) === "pending"
+                                    ? "text-error"
+                                    : reportStatusMap.get(issue.id) === "resolved"
+                                      ? "text-[#22c55e]"
+                                      : "text-[#e3eb5d]"
+                                }`} translate="no">
+                                  {reportStatusMap.get(issue.id) === "pending" ? "summarize" : reportStatusMap.get(issue.id) === "resolved" ? "check_circle" : "warning"}
+                                </span>
+                              </button>
                             )}
                           </div>
                         </td>
@@ -734,8 +810,12 @@ export default function ServicesPage() {
                   const jobData = blockerData?.jobs;
                   const isReviewed = !!report.reviewed_at;
                   return (
-                    <div key={report.id} className={`rounded-xl border overflow-hidden transition-all ${isReviewed ? "bg-surface-container border-outline-variant/15" : "bg-surface-container border-primary/30 shadow-lg shadow-primary/5"}`}>
-                      <div className="px-5 py-3.5 bg-surface-container-high/50 flex items-center justify-between border-b border-white/5">
+                    <div key={report.id} id={`report-${report.id}`} className={`rounded-xl border overflow-hidden transition-all ${isReviewed ? "bg-surface-container border-outline-variant/15" : "bg-surface-container border-primary/30 shadow-lg shadow-primary/5"}`}>
+                      {/* ── Clickable Header (Accordion) ── */}
+                      <div
+                        className="px-5 py-3.5 bg-surface-container-high/50 flex items-center justify-between cursor-pointer hover:bg-surface-container-highest/50 transition-colors"
+                        onClick={() => setExpandedReportId(expandedReportId === report.id ? null : report.id)}
+                      >
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${report.is_our_fault === true ? "bg-error/10" : report.is_our_fault === false ? "bg-[#22c55e]/10" : "bg-surface-container-highest"}`}>
                             <span className={`material-symbols-outlined text-lg ${report.is_our_fault === true ? "text-error" : report.is_our_fault === false ? "text-[#22c55e]" : "text-on-surface-variant"}`} translate="no">
@@ -759,42 +839,75 @@ export default function ServicesPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          {/* Status badges */}
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${report.is_our_fault === true ? "bg-error/15 text-error" : report.is_our_fault === false ? "bg-[#22c55e]/15 text-[#22c55e]" : "bg-surface-container-highest text-on-surface-variant"}`}>
                             {report.is_our_fault === true ? "Our Fault" : report.is_our_fault === false ? "Not Ours" : "TBD"}
                           </span>
-                          {isReviewed ? (
-                            <span className="px-2.5 py-1 rounded-full bg-[#22c55e]/15 text-[#22c55e] text-[10px] font-bold uppercase tracking-widest">Reviewed</span>
-                          ) : (
-                            <button onClick={() => markReportReviewed(report.id)}
-                              className="px-3 py-1.5 rounded-lg bg-primary text-[#3a5400] text-[10px] font-black uppercase tracking-wider hover:opacity-90 transition-opacity">
-                              Mark Reviewed
-                            </button>
+                          {isReviewed && (
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                              blockerData?.status === "resolved" ? "bg-[#22c55e]/15 text-[#22c55e]" : "bg-[#e3eb5d]/15 text-[#e3eb5d]"
+                            }`}>
+                              {blockerData?.status === "resolved" ? "Resolved" : "Not Resolved"}
+                            </span>
                           )}
+                          {/* Chevron */}
+                          <span className={`material-symbols-outlined text-on-surface-variant text-lg transition-transform duration-300 ${expandedReportId === report.id ? "rotate-180" : ""}`} translate="no">
+                            expand_more
+                          </span>
                         </div>
                       </div>
-                      <div className="px-5 py-4">
-                        {report.notes && <p className="text-sm text-on-surface whitespace-pre-wrap leading-relaxed">{report.notes}</p>}
-                        {report.service_report_photos?.length > 0 && (
-                          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                            {report.service_report_photos.map((photo: any, imgIdx: number) => (
-                              <div key={photo.id || imgIdx} className="rounded-xl overflow-hidden border border-white/10 hover:border-primary/50 transition-colors group">
-                                <a href={photo.url} target="_blank" rel="noopener noreferrer" className="block aspect-square">
-                                  <img src={photo.url} alt={photo.annotation || `Photo ${imgIdx + 1}`}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy" />
-                                </a>
-                                {photo.annotation && (
-                                  <div className="px-3 py-2 bg-surface-container-high/80 border-t border-white/5">
-                                    <p className="text-[11px] text-on-surface-variant leading-snug">
-                                      <span className="material-symbols-outlined text-[12px] text-primary mr-1 align-middle" translate="no">edit_note</span>
-                                      {photo.annotation}
-                                    </p>
+
+                      {/* ── Expandable Content ── */}
+                      {expandedReportId === report.id && (
+                        <div className="border-t border-white/5 animate-in slide-in-from-top-2 duration-200">
+                          {/* Notes + Photos */}
+                          <div className="px-5 py-4">
+                            {report.notes && <p className="text-sm text-on-surface whitespace-pre-wrap leading-relaxed">{report.notes}</p>}
+                            {report.service_report_photos?.length > 0 && (
+                              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                {report.service_report_photos.map((photo: any, imgIdx: number) => (
+                                  <div key={photo.id || imgIdx} className="rounded-xl overflow-hidden border border-white/10 hover:border-primary/50 transition-colors group">
+                                    <a href={photo.url} target="_blank" rel="noopener noreferrer" className="block aspect-square">
+                                      <img src={photo.url} alt={photo.annotation || `Photo ${imgIdx + 1}`}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy" />
+                                    </a>
+                                    {photo.annotation && (
+                                      <div className="px-3 py-2 bg-surface-container-high/80 border-t border-white/5">
+                                        <p className="text-[11px] text-on-surface-variant leading-snug">
+                                          <span className="material-symbols-outlined text-[12px] text-primary mr-1 align-middle" translate="no">edit_note</span>
+                                          {photo.annotation}
+                                        </p>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
+                                ))}
                               </div>
-                            ))}
+                            )}
                           </div>
-                        )}
-                      </div>
+
+                          {/* ── Decision Buttons ── */}
+                          {!isReviewed && (
+                            <div className="px-5 pb-5 pt-1 flex gap-3">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleReportDecision(report.id, report.blocker_id, true); }}
+                                className="flex-1 py-4 bg-[#22c55e]/10 border-2 border-[#22c55e]/40 rounded-2xl flex flex-col items-center gap-1.5 hover:bg-[#22c55e]/20 active:scale-[0.98] transition-all"
+                              >
+                                <span className="material-symbols-outlined text-[#22c55e] text-2xl" translate="no">check_circle</span>
+                                <span className="text-[#22c55e] font-black text-sm uppercase tracking-wider">Resolved</span>
+                                <span className="text-[#22c55e]/60 text-[10px] font-medium">Mark as fixed & close</span>
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleReportDecision(report.id, report.blocker_id, false); }}
+                                className="flex-1 py-4 bg-[#e3eb5d]/10 border-2 border-[#e3eb5d]/40 rounded-2xl flex flex-col items-center gap-1.5 hover:bg-[#e3eb5d]/20 active:scale-[0.98] transition-all"
+                              >
+                                <span className="material-symbols-outlined text-[#e3eb5d] text-2xl" translate="no">warning</span>
+                                <span className="text-[#e3eb5d] font-black text-sm uppercase tracking-wider">Not Resolved</span>
+                                <span className="text-[#e3eb5d]/60 text-[10px] font-medium">Reopen for further action</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
