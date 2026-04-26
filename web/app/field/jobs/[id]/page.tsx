@@ -125,6 +125,7 @@ export default function FieldJobDetail({
           .select(`
             id, 
             title, 
+            status,
             service_address_line_1, 
             city, 
             state,
@@ -142,8 +143,8 @@ export default function FieldJobDetail({
         const salesRaw = jobData.salespersons;
         const salesperson = Array.isArray(salesRaw) ? salesRaw[0] : salesRaw;
 
-        // Get assignment status
-        let assignmentStatus = "pending";
+        // Get assignment status — use jobs.status as the primary status (same as Desktop)
+        let assignmentStatus = (jobData as any).status || "pending";
         let scheduledStart: string | null = null;
         let scheduledEnd: string | null = null;
         let sTypeCode = "";
@@ -159,13 +160,12 @@ export default function FieldJobDetail({
           if (crew) {
             const { data: sa } = await supabase
               .from("service_assignments")
-              .select("status, scheduled_start_at, scheduled_end_at")
+              .select("scheduled_start_at, scheduled_end_at")
               .eq("job_service_id", serviceId)
               .eq("crew_id", crew.id)
               .maybeSingle();
 
             if (sa) {
-              assignmentStatus = sa.status;
               scheduledStart = sa.scheduled_start_at;
               scheduledEnd = sa.scheduled_end_at;
             }
