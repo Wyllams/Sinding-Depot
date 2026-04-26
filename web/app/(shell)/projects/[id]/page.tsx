@@ -505,6 +505,7 @@ export default function ProjectDetailPage() {
   }
   const [dailyLogs, setDailyLogs] = useState<DailyLogEntry[]>([]);
   const [dailyLogsLoading, setDailyLogsLoading] = useState(false);
+  const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
 
   // States para gerenciar a edição global
   const [allSalespersons, setAllSalespersons] = useState<{ id: string; full_name: string }[]>([]);
@@ -2633,7 +2634,10 @@ export default function ProjectDetailPage() {
                   return (
                     <div key={log.id} className="rounded-xl bg-surface-container-low border border-outline-variant/15 overflow-hidden">
                       {/* Log Header */}
-                      <div className="px-5 py-3.5 bg-surface-container flex items-center justify-between border-b border-white/5">
+                      <div 
+                        className="px-5 py-3.5 bg-surface-container flex items-center justify-between border-b border-white/5 cursor-pointer hover:bg-surface-container-high transition-colors"
+                        onClick={() => setExpandedLogs(prev => ({ ...prev, [log.id]: !prev[log.id] }))}
+                      >
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                             <span className="text-primary font-extrabold text-xs">{dayName}</span>
@@ -2645,42 +2649,51 @@ export default function ProjectDetailPage() {
                             )}
                           </div>
                         </div>
-                        {log.crew_on_site && (
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-highest text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
-                            <span className="material-symbols-outlined text-[12px]" translate="no">group</span>
-                            {log.crew_on_site}
+                        <div className="flex items-center gap-3">
+                          {log.crew_on_site && (
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-highest text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+                              <span className="material-symbols-outlined text-[12px]" translate="no">group</span>
+                              {log.crew_on_site}
+                            </div>
+                          )}
+                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant group-hover:text-primary transition-colors">
+                            <span className="material-symbols-outlined text-[18px]" translate="no">
+                              {expandedLogs[log.id] ? "remove" : "add"}
+                            </span>
                           </div>
-                        )}
+                        </div>
                       </div>
 
                       {/* Log Content */}
-                      <div className="px-5 py-4">
-                        {log.notes && (
-                          <p className="text-sm text-on-surface whitespace-pre-wrap leading-relaxed">{log.notes}</p>
-                        )}
+                      {expandedLogs[log.id] && (
+                        <div className="px-5 py-4">
+                          {log.notes && (
+                            <p className="text-sm text-on-surface whitespace-pre-wrap leading-relaxed">{log.notes}</p>
+                          )}
 
-                        {/* Images Grid */}
-                        {allImages.length > 0 && (
-                          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                            {allImages.map((url, imgIdx) => (
-                              <a
-                                key={imgIdx}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-primary/50 transition-colors group"
-                              >
-                                <img
-                                  src={url}
-                                  alt={`Daily log photo ${imgIdx + 1}`}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                  loading="lazy"
-                                />
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                          {/* Images Grid */}
+                          {allImages.length > 0 && (
+                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                              {allImages.map((url, imgIdx) => (
+                                <a
+                                  key={imgIdx}
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-primary/50 transition-colors group"
+                                >
+                                  <img
+                                    src={url}
+                                    alt={`Daily log photo ${imgIdx + 1}`}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    loading="lazy"
+                                  />
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
