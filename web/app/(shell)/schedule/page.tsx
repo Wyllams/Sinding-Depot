@@ -105,6 +105,14 @@ const shiftDate = (iso: string, delta: number): string => {
 
 const isSundayIso = (iso: string) => fromIso(iso).getDay() === 0;
 
+// Advance to the NEXT working day (skip Sundays)
+const nextWorkDay = (iso: string): string => {
+  const d = fromIso(iso);
+  d.setDate(d.getDate() + 1);
+  if (d.getDay() === 0) d.setDate(d.getDate() + 1); // Skip Sunday
+  return toIso(d);
+};
+
 // Convert working days (no Sundays) → calendar days from a start date
 const workToCalDays = (startIso: string, workDays: number): number => {
   const s = fromIso(startIso);
@@ -482,11 +490,9 @@ export default function SchedulePage() {
 
     const shiftJobByReference = (targetJob: ScheduledJob | undefined, refStartDate: string, refDuration: number) => {
        if (!targetJob) return targetJob;
-       // targetJob starts 1 working day after ref finishes
-       let nextDate = shiftDate(refStartDate, refDuration);
-       if (isSundayIso(nextDate)) {
-          nextDate = shiftDate(nextDate, 1);
-       }
+       // targetJob starts the NEXT working day after ref finishes
+       const refEndDate = shiftDate(refStartDate, refDuration); // last day of predecessor
+       const nextDate = nextWorkDay(refEndDate); // +1 working day
        const idx = updatedJobs.findIndex(j => j.id === targetJob.id);
        if (idx >= 0) {
           updatedJobs[idx] = { ...updatedJobs[idx], startDate: nextDate };
@@ -509,13 +515,13 @@ export default function SchedulePage() {
        let guttersJob = getJobByService("gutters");
        let roofJob = getJobByService("roofing");
 
-       // Painting starts after MAX(Siding end, Decks end)
+       // Painting starts the NEXT working day after MAX(Siding end, Decks end)
        const decksJob = getJobByService("doors_windows_decks");
        const sidingEnd = shiftDate(newDate, dragJob.durationDays);
        const decksEnd = getJobEnd(decksJob);
-       let paintStartDate = sidingEnd;
-       if (decksEnd && decksEnd > paintStartDate) paintStartDate = decksEnd;
-       if (isSundayIso(paintStartDate)) paintStartDate = shiftDate(paintStartDate, 1);
+       let latestPredEnd = sidingEnd;
+       if (decksEnd && decksEnd > latestPredEnd) latestPredEnd = decksEnd;
+       let paintStartDate = nextWorkDay(latestPredEnd); // +1 working day after predecessor ends
 
        if (paintJob) {
          const idx = updatedJobs.findIndex(j => j.id === paintJob!.id);
@@ -541,9 +547,9 @@ export default function SchedulePage() {
 
        const sidingEnd = getJobEnd(sidingJob);
        const decksEnd = shiftDate(newDate, dragJob.durationDays);
-       let paintStartDate = decksEnd;
-       if (sidingEnd && sidingEnd > paintStartDate) paintStartDate = sidingEnd;
-       if (isSundayIso(paintStartDate)) paintStartDate = shiftDate(paintStartDate, 1);
+       let latestPredEnd = decksEnd;
+       if (sidingEnd && sidingEnd > latestPredEnd) latestPredEnd = sidingEnd;
+       let paintStartDate = nextWorkDay(latestPredEnd); // +1 working day after predecessor ends
 
        if (paintJob) {
          const idx = updatedJobs.findIndex(j => j.id === paintJob!.id);
@@ -717,8 +723,8 @@ export default function SchedulePage() {
     );
     
     if (paintJob) {
-      let paintDate = shiftDate(newDate, editDur || job.durationDays);
-      if (isSundayIso(paintDate)) paintDate = shiftDate(paintDate, 1);
+      const sidingEndDate = shiftDate(newDate, editDur || job.durationDays);
+      const paintDate = nextWorkDay(sidingEndDate); // +1 working day after siding ends
       return [{ ...paintJob, startDate: paintDate }];
     }
     
@@ -829,10 +835,9 @@ export default function SchedulePage() {
 
       const shiftInReschedule = (targetJob: ScheduledJob | undefined, refStartDate: string, refDuration: number) => {
          if (!targetJob) return targetJob;
-         let nextDate = shiftDate(refStartDate, refDuration);
-         if (isSundayIso(nextDate)) {
-            nextDate = shiftDate(nextDate, 1);
-         }
+         // Next working day AFTER the predecessor ends
+         const refEndDate = shiftDate(refStartDate, refDuration); // last day of predecessor
+         const nextDate = nextWorkDay(refEndDate); // +1 working day
          const idx = newJobs.findIndex(j => j.id === targetJob.id);
          if (idx >= 0) newJobs[idx] = { ...newJobs[idx], startDate: nextDate };
          return newJobs[idx];
@@ -846,7 +851,7 @@ export default function SchedulePage() {
         return shiftDate(j.startDate, j.durationDays);
       };
 
-      // Helper: shift paint job to start after the LATEST of Siding and Decks
+      // Helper: shift paint job to start the NEXT working day after the LATEST of Siding and Decks
       const computePaintStart = (sidingJob: ScheduledJob | undefined, decksJob: ScheduledJob | undefined): string | null => {
         const sidingEnd = getEndDate(sidingJob);
         const decksEnd = getEndDate(decksJob);
@@ -857,8 +862,7 @@ export default function SchedulePage() {
           latestEnd = sidingEnd || decksEnd;
         }
         if (!latestEnd) return null;
-        if (isSundayIso(latestEnd)) latestEnd = shiftDate(latestEnd, 1);
-        return latestEnd;
+        return nextWorkDay(latestEnd); // +1 working day after predecessor ends
       };
 
       if (editJob.serviceType === "siding") {
