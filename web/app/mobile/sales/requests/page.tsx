@@ -140,7 +140,11 @@ export default function SalesRequestsPage() {
         .select("id")
         .eq("salesperson_id", spId);
 
-      if (jobsError) throw jobsError;
+      if (jobsError) {
+        console.error("[Requests] jobs fetch error:", jobsError);
+        setOrders([]);
+        return;
+      }
 
       const jobIds = (jobsData ?? []).map(j => j.id);
 
@@ -149,16 +153,25 @@ export default function SalesRequestsPage() {
         return;
       }
 
-      // Step 2: fetch change orders scoped to those jobs (including items + their attachments)
+      // Step 2: fetch change orders for those jobs
+      // Note: change_orders has job_service_id FK to job_services
       const { data, error } = await supabase
         .from("change_orders")
         .select(`
           id, title, description, status,
           proposed_amount, approved_amount,
           rejection_reason, requested_at, decided_at,
-          job:jobs (id, job_number, customer:customers (full_name)),
-          job_service:job_services (service_type:service_types (name)),
-          requested_by_profile:profiles (full_name),
+          job_service_id,
+          job:jobs (
+            id, job_number,
+            customer:customers (full_name)
+          ),
+          job_service:job_services!change_orders_job_service_id_fkey (
+            service_type:service_types (name)
+          ),
+          requested_by_profile:profiles!change_orders_requested_by_profile_id_fkey (
+            full_name
+          ),
           items:change_order_items (
             id, description, amount, sort_order,
             change_order_attachments (id, file_name, url, mime_type, change_order_item_id)
@@ -168,8 +181,39 @@ export default function SalesRequestsPage() {
         .in("job_id", jobIds)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      // Sort items by sort_order
+      if (error) {
+        console.error("[Requests] change_orders fetch error:", error);
+        // Fallback: simpler query without nested service_type
+        const { data: fallback, error: fallbackErr } = await supabase
+          .from("change_orders")
+          .select(`
+            id, title, description, status,
+            proposed_amount, approved_amount,
+            rejection_reason, requested_at, decided_at,
+            job:jobs (id, job_number, customer:customers (full_name)),
+            items:change_order_items (
+              id, description, amount, sort_order,
+              change_order_attachments (id, file_name, url, mime_type, change_order_item_id)
+            ),
+            attachments:change_order_attachments (id, file_name, url, mime_type, change_order_item_id)
+          `)
+          .in("job_id", jobIds)
+          .order("created_at", { ascending: false });
+
+        if (fallbackErr) {
+          console.error("[Requests] fallback error:", fallbackErr);
+          return;
+        }
+        const normalized = (fallback ?? []).map((o: any) => ({
+          ...o,
+          job_service: null,
+          requested_by_profile: null,
+          items: (o.items ?? []).slice().sort((a: any, b: any) => a.sort_order - b.sort_order),
+        }));
+        setOrders(normalized as any[]);
+        return;
+      }
+
       const normalized = (data ?? []).map((o: any) => ({
         ...o,
         items: (o.items ?? []).slice().sort((a: any, b: any) => a.sort_order - b.sort_order),
