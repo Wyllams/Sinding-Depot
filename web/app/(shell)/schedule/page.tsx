@@ -6,64 +6,33 @@ import CustomDatePicker from "../../../components/CustomDatePicker";
 import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
 import { calculateServiceDuration } from "../../../lib/duration-calculator";
+import { computeCascadeShifts, getCascadePreview, shiftDate, fromIso, toIso, isSundayIso } from "../../../lib/cascade-scheduler";
+import {
+  type ServiceId,
+  type ScheduledJob,
+  SERVICE_CATEGORIES,
+  STATUS_CONFIG,
+  SALES_COLORS,
+  getSalesColors,
+  getInitials,
+  mapCodeToServiceId,
+  SPECIALTY_CODE_MAP,
+  DAY_LABELS,
+  MS_DAY,
+  MAX_UNDO,
+} from "../../../lib/constants";
 
 // =============================================
 // JOB SCHEDULE — Weekly Gantt with Drag & Drop
 // Partners & Services — Real Data
 // Global Undo System (50 actions)
+//
+// Types & constants: lib/constants.ts
+// Cascade logic:     lib/cascade-scheduler.ts
+// Duration calc:     lib/duration-calculator.ts
 // =============================================
 
-// ─── Service Categories ───────────────────────
-type ServiceId = "siding" | "doors_windows_decks" | "paint" | "gutters" | "roofing";
-
-const SERVICE_CATEGORIES: {
-  id: ServiceId;
-  label: string;
-  color: string;
-  icon: string;
-  partners: string[];
-}[] = [
-  { id: "siding",             label: "Siding",                  color: "#aeee2a", icon: "home_work",    partners: ["XICARA", "XICARA 02", "WILMAR", "WILMAR 02", "SULA", "LUIS"] },
-  { id: "doors_windows_decks",label: "Doors / Windows / Decks", color: "#f5a623", icon: "sensor_door",  partners: ["SERGIO"] },
-  { id: "paint",              label: "Paint",                   color: "#60b8f5", icon: "format_paint", partners: ["OSVIN", "OSVIN 02", "VICTOR", "JUAN"] },
-  { id: "gutters",            label: "Gutters",                 color: "#c084fc", icon: "water_drop",   partners: ["LEANDRO"] },
-  { id: "roofing",            label: "Roofing",                 color: "#ef4444", icon: "roofing",      partners: ["JOSUE"] },
-];
-
-// ─── Job Model (real dates) ──────────────────
-interface ScheduledJob {
-  id: string;
-  jobId?: string;
-  clientName: string;
-  serviceType: ServiceId;
-  partnerName: string;
-  salesperson?: string;
-  startDate: string;
-  durationDays: number;
-  status: "tentative" | "scheduled" | "in_progress" | "done";
-  jobStartStatus?: "pending" | "tentative" | "scheduled" | "in_progress" | "done";
-  address?: string;
-  contract_amount?: number;
-  phone?: string;
-  email?: string;
-  title?: string;
-  serviceNames?: string[];
-  jobServiceIds?: string[];
-  serviceCodes?: string[];
-  isPending?: boolean;
-  crewId?: string;
-  sq?: number | null;
-  city?: string;
-  state?: string;
-  zip?: string;
-  street?: string;
-  source?: "jobs" | "service_assignments";
-}
-
-
-// ─── Helpers ────────────────────────────────────
-const DAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-const MS_DAY = 86_400_000;
+// ─── Local Helpers (schedule-specific) ────────────────────────────
 
 const getMondayOf = (date: Date): Date => {
   const d = new Date(date);
@@ -83,34 +52,10 @@ const getWeekDates = (monday: Date): Date[] =>
 const fmtDate = (d: Date) =>
   `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`;
 
-const toIso = (d: Date) => d.toISOString().split("T")[0];
-const fromIso = (s: string): Date => new Date(s + "T12:00:00");
-
 const dayIndex = (job: ScheduledJob, monday: Date): number => {
   const start = fromIso(job.startDate).setHours(0, 0, 0, 0);
   const base  = new Date(monday).setHours(0, 0, 0, 0);
   return Math.round((start - base) / MS_DAY);
-};
-
-const shiftDate = (iso: string, delta: number): string => {
-  const d = fromIso(iso);
-  const sign = delta > 0 ? 1 : -1;
-  let remaining = Math.abs(delta);
-  while (remaining > 0) {
-    d.setDate(d.getDate() + sign);
-    if (d.getDay() !== 0) remaining--;
-  }
-  return toIso(d);
-};
-
-const isSundayIso = (iso: string) => fromIso(iso).getDay() === 0;
-
-// Advance to the NEXT working day (skip Sundays)
-const nextWorkDay = (iso: string): string => {
-  const d = fromIso(iso);
-  d.setDate(d.getDate() + 1);
-  if (d.getDay() === 0) d.setDate(d.getDate() + 1); // Skip Sunday
-  return toIso(d);
 };
 
 // Convert working days (no Sundays) → calendar days from a start date
@@ -126,24 +71,13 @@ const workToCalDays = (startIso: string, workDays: number): number => {
   return cal;
 };
 
-// ─── Dynamic Status Colors (6.3) ─────────────────
-const STATUS_CONFIG: Record<string, { color: string; label: string; bg: string }> = {
-  pending:     { color: "#ef4444", label: "Pending",     bg: "rgba(239,68,68,0.12)" },
-  tentative:   { color: "#f5a623", label: "Tentative",   bg: "rgba(245,166,35,0.12)" },
-  scheduled:   { color: "#60b8f5", label: "Confirmed",   bg: "rgba(96,184,245,0.12)" },
-  in_progress: { color: "#aeee2a", label: "In Progress", bg: "rgba(174,238,42,0.12)" },
-  done:        { color: "#22c55e", label: "Done",        bg: "rgba(34,197,94,0.12)" },
-};
-
-// ─── Undo System (6.7) ────────────────────────────
+// ─── Undo System ──────────────────────────────────
 interface UndoAction {
   id: string;
   label: string;
   timestamp: number;
   previousState: ScheduledJob[];
 }
-
-const MAX_UNDO = 50;
 
 const getJobEndDate = (startDateIso: string, durationDays: number): Date => {
   const [y, m, d] = startDateIso.split("-").map(Number);
@@ -191,24 +125,6 @@ const getVisualStatus = (job: ScheduledJob): "pending" | "tentative" | "schedule
   } catch (e) {}
 
   return job.status || "scheduled";
-};
-
-const getInitials = (name?: string) => {
-  if (!name) return "S";
-  const clean = name.replace(/[^a-zA-Z\s]/g, "").trim();
-  const w = clean.split(/\s+/);
-  if (w.length === 0 || w[0] === "") return "S";
-  return w[0][0].toUpperCase();
-};
-
-const SALES_COLORS: Record<string, { color: string, border: string, bg: string }> = {
-  R: { color: "#9f7aea", border: "rgba(159, 122, 234, 0.4)", bg: "rgba(159, 122, 234, 0.08)" }, // Ruby - Purple
-  A: { color: "#fc5c65", border: "rgba(252, 92, 101, 0.4)", bg: "rgba(252, 92, 101, 0.08)" }, // Armando - Red
-  M: { color: "#2bcbba", border: "rgba(43, 203, 186, 0.4)", bg: "rgba(43, 203, 186, 0.08)" }, // Matheus - Green
-};
-
-const getSalesColors = (initial: string) => {
-  return SALES_COLORS[initial] || { color: "#ababa8", border: "rgba(171,171,168,0.4)", bg: "rgba(171,171,168,0.08)" };
 };
 
 // ─── Main Component ─────────────────────────────
@@ -400,16 +316,7 @@ export default function SchedulePage() {
     setJobs(mapped);
   };
 
-  const mapCodeToServiceId = (code: string): ServiceId => {
-    if (!code) return "siding";
-    const c = code.toLowerCase();
-    if (c.includes("siding") || c.includes("ext")) return "siding";
-    if (c.includes("roof")) return "roofing";
-    if (c.includes("paint")) return "paint";
-    if (c.includes("gutter") || c.includes("downspout")) return "gutters";
-    if (c.includes("deck") || c.includes("window") || c.includes("door")) return "doors_windows_decks";
-    return "siding";
-  };
+
 
   const weekDates    = getWeekDates(weekBase);
   const today        = new Date();
@@ -495,116 +402,31 @@ export default function SchedulePage() {
     const prevJobs = [...jobs];
     pushUndo(`Moved "${dragJob.clientName}" to ${fmtDate(weekDates[dayIdx])}`, prevJobs);
 
-    // ── Cascade Shifting Logic (Siding -> Window -> Paint -> Gutters -> Roofing) ─────────────
+    // ── CASCADE via centralized module (lib/cascade-scheduler.ts) ──
+    // Uses jobId (not clientName) for precise sibling matching
+    const movedJob = { ...dragJob, startDate: newDate, partnerName: newPartnerName, crewId: targetCrewId };
+    const cascadeShifts = computeCascadeShifts(jobs, dragJob, newDate, dragJob.durationDays);
+
+    // Apply shifts to local state
     const updatedJobs = jobs.map(j => {
-      if (j.id === dragJob.id) return { ...j, startDate: newDate, partnerName: newPartnerName, crewId: targetCrewId };
+      if (j.id === dragJob.id) return movedJob;
+      const shift = cascadeShifts.find(s => s.id === j.id);
+      if (shift) return { ...j, startDate: shift.newStartDate };
       return j;
     });
 
-    const getJobByService = (type: ServiceId) => 
-       updatedJobs.find(pj => pj.serviceType === type && pj.clientName === dragJob.clientName && pj.id !== dragJob.id);
-
-    const shiftJobByReference = (targetJob: ScheduledJob | undefined, refStartDate: string, refDuration: number) => {
-       if (!targetJob) return targetJob;
-       // shiftDate(start, duration) = start + duration working days = the day AFTER the service ends
-       const nextDate = shiftDate(refStartDate, refDuration);
-       const idx = updatedJobs.findIndex(j => j.id === targetJob.id);
-       if (idx >= 0) {
-          updatedJobs[idx] = { ...updatedJobs[idx], startDate: nextDate };
-       }
-       return updatedJobs[idx];
-    };
-
-    const jobsToPersist: ScheduledJob[] = [];
-
-    // Helper: get end date ISO string for a job
-    const getJobEnd = (j: ScheduledJob | undefined): string | null => {
-      if (!j) return null;
-      return shiftDate(j.startDate, j.durationDays);
-    };
-
-    if (dragJob.serviceType === "siding") {
-       // Decks is INDEPENDENT — do NOT move it when Siding moves
-       
-       let paintJob = getJobByService("paint");
-       let guttersJob = getJobByService("gutters");
-       let roofJob = getJobByService("roofing");
-
-       // Painting starts the day after MAX(Siding end, Decks end)
-       // shiftDate already gives the day AFTER the service ends
-       const decksJob = getJobByService("doors_windows_decks");
-       const sidingEnd = shiftDate(newDate, dragJob.durationDays);
-       const decksEnd = getJobEnd(decksJob);
-       let paintStartDate = sidingEnd;
-       if (decksEnd && decksEnd > paintStartDate) paintStartDate = decksEnd;
-
-       if (paintJob) {
-         const idx = updatedJobs.findIndex(j => j.id === paintJob!.id);
-         if (idx >= 0) {
-           updatedJobs[idx] = { ...updatedJobs[idx], startDate: paintStartDate };
-           paintJob = updatedJobs[idx];
-         }
-         jobsToPersist.push(paintJob);
-       }
-
-       if (paintJob && guttersJob) guttersJob = shiftJobByReference(guttersJob, paintJob.startDate, paintJob.durationDays);
-       if (guttersJob) jobsToPersist.push(guttersJob);
-
-       if (guttersJob && roofJob) roofJob = shiftJobByReference(roofJob, guttersJob.startDate, guttersJob.durationDays);
-       if (roofJob) jobsToPersist.push(roofJob);
-
-    } else if (dragJob.serviceType === "doors_windows_decks") {
-       // When Decks is dragged, recalculate Painting from MAX(Siding end, Decks end)
-       let paintJob = getJobByService("paint");
-       let guttersJob = getJobByService("gutters");
-       let roofJob = getJobByService("roofing");
-       const sidingJob = getJobByService("siding");
-
-       const sidingEnd = getJobEnd(sidingJob);
-       const decksEnd = shiftDate(newDate, dragJob.durationDays);
-       let paintStartDate = decksEnd;
-       if (sidingEnd && sidingEnd > paintStartDate) paintStartDate = sidingEnd;
-
-       if (paintJob) {
-         const idx = updatedJobs.findIndex(j => j.id === paintJob!.id);
-         if (idx >= 0) {
-           updatedJobs[idx] = { ...updatedJobs[idx], startDate: paintStartDate };
-           paintJob = updatedJobs[idx];
-         }
-         jobsToPersist.push(paintJob);
-       }
-
-       if (paintJob && guttersJob) guttersJob = shiftJobByReference(guttersJob, paintJob.startDate, paintJob.durationDays);
-       if (guttersJob) jobsToPersist.push(guttersJob);
-
-       if (guttersJob && roofJob) roofJob = shiftJobByReference(roofJob, guttersJob.startDate, guttersJob.durationDays);
-       if (roofJob) jobsToPersist.push(roofJob);
-
-    } else if (dragJob.serviceType === "paint") {
-       let guttersJob = getJobByService("gutters");
-       let roofJob = getJobByService("roofing");
-       
-       guttersJob = shiftJobByReference(guttersJob, newDate, dragJob.durationDays);
-       if (guttersJob) jobsToPersist.push(guttersJob);
-
-       if (guttersJob && roofJob) roofJob = shiftJobByReference(roofJob, guttersJob.startDate, guttersJob.durationDays);
-       if (roofJob) jobsToPersist.push(roofJob);
-
-    } else if (dragJob.serviceType === "gutters") {
-       let roofJob = getJobByService("roofing");
-       roofJob = shiftJobByReference(roofJob, newDate, dragJob.durationDays);
-       if (roofJob) jobsToPersist.push(roofJob);
-    }
-
     setJobs(updatedJobs);
 
-    // Persist to DB
-    persistDateChange(dragJob, newDate, dragJob.durationDays, targetCrewId);
+    // Persist moved job to DB
+    persistDateChange(movedJob, newDate, dragJob.durationDays, targetCrewId);
 
-    // Also persist cascaded jobs
-    jobsToPersist.forEach(j => {
-       persistDateChange(j, j.startDate, j.durationDays, j.crewId);
-    });
+    // Persist all cascaded jobs to DB
+    for (const shift of cascadeShifts) {
+      const cascadedJob = updatedJobs.find(j => j.id === shift.id);
+      if (cascadedJob) {
+        persistDateChange(cascadedJob, shift.newStartDate, shift.durationDays, shift.crewId);
+      }
+    }
   };
 
   const persistDateChange = async (job: ScheduledJob, newDate: string, duration: number, newCrewId?: string) => {
@@ -663,13 +485,7 @@ export default function SchedulePage() {
     setConfirmingSchedule(false);
     setDeleteStep("idle");
 
-    const specialtyCodeMap: Record<string, string> = {
-      siding:              "siding_installation",
-      doors_windows_decks: "windows",
-      paint:               "painting",
-      gutters:             "gutters",
-      roofing:             "roofing",
-    };
+    // Uses SPECIALTY_CODE_MAP from lib/constants.ts
 
     if (job.jobServiceIds && job.jobServiceIds.length > 0) {
       const { data: allCrews } = await supabase
@@ -685,7 +501,7 @@ export default function SchedulePage() {
         const svcName   = job.serviceNames?.[i]  || "Service";
         const rawCode   = job.serviceCodes?.[i]  || "siding";
         const serviceId = mapCodeToServiceId(rawCode);
-        const specCode  = specialtyCodeMap[serviceId] || "siding_installation";
+        const specCode  = SPECIALTY_CODE_MAP[serviceId] || "siding_installation";
 
         const { data: specialty } = await supabase
           .from("specialties")
@@ -726,22 +542,14 @@ export default function SchedulePage() {
     }
   };
 
-  const getAffected = (job: ScheduledJob, newDate: string): ScheduledJob[] => {
-    if (job.serviceType !== "siding") return [];
-    
-    // Only show the Paint job shifting for the same client
-    const paintJob = jobs.find(pj =>
-      pj.serviceType === "paint" &&
-      pj.clientName === job.clientName &&
-      pj.id !== job.id
-    );
-    
-    if (paintJob) {
-      const paintDate = shiftDate(newDate, editDur || job.durationDays);
-      return [{ ...paintJob, startDate: paintDate }];
-    }
-    
-    return [];
+  // ── CASCADE PREVIEW — uses centralized module for full chain ──
+  const getAffected = (job: ScheduledJob, newDate: string): { clientName: string; serviceType: ServiceId; startDate: string }[] => {
+    const preview = getCascadePreview(jobs, job, newDate, editDur || job.durationDays);
+    return preview.map(p => ({
+      clientName: p.clientName,
+      serviceType: p.serviceType,
+      startDate: p.newStartDate,
+    }));
   };
 
   const confirmReschedule = async () => {
@@ -772,7 +580,6 @@ export default function SchedulePage() {
       }
 
       // ── All DB writes now use finalDur for end date calculation (skip Sundays) ──
-      // endAt = last working day (inclusive boundary), matching calculateEndDate()
       const startAt = new Date(editDate + "T08:00:00").toISOString();
       const endAt = new Date(editDate + "T08:00:00");
       let daysToAdd = Math.max(1, finalDur) - 1;
@@ -790,7 +597,6 @@ export default function SchedulePage() {
           if (!crewId || !svcOpt.specialtyId) continue;
           anyCrewSelected = true;
 
-          // In operational view, all jobs should originate from service_assignments.
           if (editJob.source === "service_assignments") {
              const { error: updateErr } = await supabase.from("service_assignments").update({
                 crew_id: crewId,
@@ -837,126 +643,36 @@ export default function SchedulePage() {
         await supabase.from("jobs").update({ status: editStatus }).eq("id", editJob.jobId);
       }
 
+      // ── CASCADE via centralized module (lib/cascade-scheduler.ts) ──
+      // Uses jobId (not clientName) for precise sibling matching
+      const cascadeShifts = computeCascadeShifts(jobs, editJob, editDate, finalDur);
+
+      // Apply all changes to local state
       const newJobs = jobs.map(j => {
         if (j.id === editJob.id)
           return { ...j, startDate: editDate, durationDays: finalDur, jobStartStatus: editStatus, status: "scheduled" as const, crewId: selectedCrewId || j.crewId, partnerName: newCrewName };
+        const shift = cascadeShifts.find(s => s.id === j.id);
+        if (shift) return { ...j, startDate: shift.newStartDate };
         return j;
       });
 
-      const getJobBySvc = (type: ServiceId) => 
-         newJobs.find(pj => pj.serviceType === type && pj.clientName === editJob.clientName && pj.id !== editJob.id);
-
-      const shiftInReschedule = (targetJob: ScheduledJob | undefined, refStartDate: string, refDuration: number) => {
-         if (!targetJob) return targetJob;
-         // shiftDate(start, duration) = the day AFTER the service ends
-         const nextDate = shiftDate(refStartDate, refDuration);
-         const idx = newJobs.findIndex(j => j.id === targetJob.id);
-         if (idx >= 0) newJobs[idx] = { ...newJobs[idx], startDate: nextDate };
-         return newJobs[idx];
-      };
-
-      const jobsToUpdate: ScheduledJob[] = [];
-
-      // Helper: compute the latest end date between two jobs (MAX)
-      const getEndDate = (j: ScheduledJob | undefined): string | null => {
-        if (!j) return null;
-        return shiftDate(j.startDate, j.durationDays);
-      };
-
-      // Helper: shift paint job to start after the LATEST of Siding and Decks
-      // getEndDate uses shiftDate which already gives the day AFTER the service ends
-      const computePaintStart = (sidingJob: ScheduledJob | undefined, decksJob: ScheduledJob | undefined): string | null => {
-        const sidingEnd = getEndDate(sidingJob);
-        const decksEnd = getEndDate(decksJob);
-        let latestEnd: string | null = null;
-        if (sidingEnd && decksEnd) {
-          latestEnd = sidingEnd > decksEnd ? sidingEnd : decksEnd;
-        } else {
-          latestEnd = sidingEnd || decksEnd;
-        }
-        return latestEnd;
-      };
-
-      if (editJob.serviceType === "siding") {
-         // Decks is INDEPENDENT — do NOT move it when Siding is rescheduled
-         
-         let paintJob = getJobBySvc("paint");
-         let guttersJob = getJobBySvc("gutters");
-         let roofJob = getJobBySvc("roofing");
-
-         // Painting starts after the LATEST of Siding and Decks
-         const currentSiding = newJobs.find(j => j.id === editJob.id)!;
-         const currentDecks = getJobBySvc("doors_windows_decks");
-         const paintStart = computePaintStart(currentSiding, currentDecks);
-         if (paintJob && paintStart) {
-            const idx = newJobs.findIndex(j => j.id === paintJob!.id);
-            if (idx >= 0) {
-              newJobs[idx] = { ...newJobs[idx], startDate: paintStart };
-              paintJob = newJobs[idx];
-            }
-            jobsToUpdate.push(paintJob);
-         }
-
-         if (paintJob && guttersJob) guttersJob = shiftInReschedule(guttersJob, paintJob.startDate, paintJob.durationDays);
-         if (guttersJob) jobsToUpdate.push(guttersJob);
-
-         if (guttersJob && roofJob) roofJob = shiftInReschedule(roofJob, guttersJob.startDate, guttersJob.durationDays);
-         if (roofJob) jobsToUpdate.push(roofJob);
-
-      } else if (editJob.serviceType === "doors_windows_decks") {
-         // When Decks is rescheduled, Painting may need to shift too
-         let paintJob = getJobBySvc("paint");
-         let guttersJob = getJobBySvc("gutters");
-         let roofJob = getJobBySvc("roofing");
-         const sidingJob = getJobBySvc("siding");
-
-         // Recalculate paint start from MAX(siding end, decks end)
-         const currentDecks = newJobs.find(j => j.id === editJob.id)!;
-         const paintStart = computePaintStart(sidingJob, currentDecks);
-         if (paintJob && paintStart) {
-            const idx = newJobs.findIndex(j => j.id === paintJob!.id);
-            if (idx >= 0) {
-              newJobs[idx] = { ...newJobs[idx], startDate: paintStart };
-              paintJob = newJobs[idx];
-            }
-            jobsToUpdate.push(paintJob);
-         }
-
-         if (paintJob && guttersJob) guttersJob = shiftInReschedule(guttersJob, paintJob.startDate, paintJob.durationDays);
-         if (guttersJob) jobsToUpdate.push(guttersJob);
-
-         if (guttersJob && roofJob) roofJob = shiftInReschedule(roofJob, guttersJob.startDate, guttersJob.durationDays);
-         if (roofJob) jobsToUpdate.push(roofJob);
-
-      } else if (editJob.serviceType === "paint") {
-         let guttersJob = getJobBySvc("gutters");
-         let roofJob = getJobBySvc("roofing");
-         
-         guttersJob = shiftInReschedule(guttersJob, editDate, finalDur);
-         if (guttersJob) jobsToUpdate.push(guttersJob);
-
-         if (guttersJob && roofJob) roofJob = shiftInReschedule(roofJob, guttersJob.startDate, guttersJob.durationDays);
-         if (roofJob) jobsToUpdate.push(roofJob);
-
-      } else if (editJob.serviceType === "gutters") {
-         let roofJob = getJobBySvc("roofing");
-         roofJob = shiftInReschedule(roofJob, editDate, finalDur);
-         if (roofJob) jobsToUpdate.push(roofJob);
-      }
-
       setJobs(newJobs);
 
-      // Persist the edited job because finalDur might have changed via SQ computation
+      // Persist the edited job (finalDur might have changed via SQ computation)
       await persistDateChange(newJobs.find(j => j.id === editJob.id)!, editDate, finalDur, selectedCrewId);
       
-      // Update cascades to db
-      for (const j of jobsToUpdate) {
-          await persistDateChange(j, j.startDate, j.durationDays);
+      // Persist all cascaded jobs to DB
+      for (const shift of cascadeShifts) {
+        await persistDateChange(
+          newJobs.find(j => j.id === shift.id)!,
+          shift.newStartDate,
+          shift.durationDays,
+          shift.crewId
+        );
       }
 
-      setJobs(newJobs);
       setEditJob(null);
-      fetchSchedule(); // Refresh to catch actual DB updates and generated paint jobs
+      fetchSchedule(); // Refresh to catch actual DB updates
       
     } catch (err) {
       console.error("Failed to persist reschedule:", err);
@@ -1527,7 +1243,7 @@ export default function SchedulePage() {
                   </div>
                 </div>
 
-                {/* Cascade preview */}
+                {/* Cascade preview — shows ALL affected services in the chain */}
                 {editDate && editDate !== editJob.startDate && (() => {
                   const affected = getAffected(editJob, editDate);
                   return affected.length > 0 ? (
@@ -1536,8 +1252,8 @@ export default function SchedulePage() {
                       <div>
                         <p className="text-xs text-[#60b8f5] font-bold">This will shift {affected.length} other job{affected.length > 1 ? "s" : ""}:</p>
                         <ul className="mt-1 text-[10px] text-on-surface font-bold">
-                          {affected.slice(0, 2).map(a => <li key={a.id} className="truncate">• {a.clientName} (new: {fmtDate(fromIso(a.startDate))})</li>)}
-                          {affected.length > 2 && <li className="text-on-surface-variant mt-0.5">...and {affected.length - 2} more</li>}
+                          {affected.slice(0, 4).map((a, idx) => <li key={`${a.serviceType}-${idx}`} className="truncate">• {a.clientName} — {SERVICE_CATEGORIES.find(sc => sc.id === a.serviceType)?.label || a.serviceType} (new: {fmtDate(fromIso(a.startDate))})</li>)}
+                          {affected.length > 4 && <li className="text-on-surface-variant mt-0.5">...and {affected.length - 4} more</li>}
                         </ul>
                       </div>
                     </div>
