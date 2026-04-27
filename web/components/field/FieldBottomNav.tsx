@@ -12,7 +12,7 @@ export function FieldBottomNav() {
     { label: t("home"), href: "/field", icon: "home", isActive: pathname === "/field" },
     { label: t("myJobs"), href: "/field/jobs", icon: "handyman", isActive: pathname.startsWith("/field/jobs") },
     { label: t("services"), href: "/field/services", icon: "warning", isActive: pathname.startsWith("/field/services") },
-    { label: t("profile"), href: "/field/profile", icon: "person", isActive: pathname.startsWith("/field/profile") },
+    { label: t("myRequests"), href: "/field/requests", icon: "receipt_long", isActive: pathname.startsWith("/field/requests") },
   ];
 
   return (
