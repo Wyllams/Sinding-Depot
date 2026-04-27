@@ -8,6 +8,7 @@ import { CustomDropdown } from "../../../components/CustomDropdown";
 import { supabase } from "../../../lib/supabase";
 import { calculateServiceDuration } from "../../../lib/duration-calculator";
 import { SCHEDULING_PAUSED } from "../../../lib/scheduling-flag";
+import { shiftDate, fromIso, toIso } from "../../../lib/cascade-scheduler";
 
 // =============================================
 // Create New Job | Iron & Lime
@@ -390,7 +391,7 @@ export default function NewProjectPage() {
   
   const [jobTitle, setJobTitle] = useState("");
   const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  // End Date removed — auto-calculated from cascade
   const [sq, setSq] = useState("");
   const [contractAmount, setContractAmount] = useState("");
   const [soldDate, setSoldDate] = useState(new Date().toISOString().split("T")[0]);
@@ -478,7 +479,7 @@ export default function NewProjectPage() {
         state: state,
         postal_code: zipCode,
         requested_start_date: startDate || null,
-        target_completion_date: endDate || null,
+        target_completion_date: null,
         contract_amount: contractAmount ? parseFloat(contractAmount) : null,
         contract_signed_at: soldDate || new Date().toISOString().split("T")[0],
         sq: sq ? parseFloat(sq) : null,
@@ -532,24 +533,15 @@ export default function NewProjectPage() {
          return calculateServiceDuration(partnerName, serviceId, parsedSq);
       };
 
-      const dateHelpers = {
-         addWorkingDays: (startIso: string, duration: number) => {
-            const d = new Date(startIso + "T12:00:00");
-            let added = 0;
-            // duration 1 means start and end on the same day (added = 0)
-            while (added < duration - 1) {
-               d.setDate(d.getDate() + 1);
-               if (d.getDay() !== 0) added++; // Skip Sundays
-            }
-            return d;
-         },
-         nextWorkingDay: (dateObj: Date) => {
-            const d = new Date(dateObj);
-            d.setDate(d.getDate() + 1);
-            if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-            return d;
-         }
-      };
+      // ── Date helpers using centralized shiftDate (timezone-safe, string-only) ──
+      // shiftDate(iso, N) advances N working days (skipping Sundays).
+      // A service of duration D starting on startIso occupies startIso + (D-1) working days.
+      // The last working day (inclusive) = shiftDate(startIso, D - 1)
+      // The next available day for successor = shiftDate(startIso, D)
+      const getLastDayInclusive = (startIso: string, duration: number): string =>
+        shiftDate(startIso, duration - 1);
+      const getNextAvailableDay = (startIso: string, duration: number): string =>
+        shiftDate(startIso, duration);
 
       const prevEndpoints: Record<string, string> = {}; 
       const { data: allCrews } = await supabase.from("crews").select("id, name, code");
@@ -577,8 +569,8 @@ export default function NewProjectPage() {
               job_id: newJob.id,
               service_type_id: serviceTypeId,
               scope_of_work: "Standard exterior work",
-              quantity: sq ? parseFloat(sq) : null,
-              unit_of_measure: "SQ",
+              quantity: (svcId === "siding" || svcId === "painting") && sq ? parseFloat(sq) : null,
+              unit_of_measure: (svcId === "siding" || svcId === "painting") ? "SQ" : null,
               contracted_amount: contractedAmount
             }).select("id").single();
 
@@ -586,10 +578,18 @@ export default function NewProjectPage() {
                let startAt: Date | null = null;
                let endAt: Date | null = null;
 
-               // Compute dates if standard startDate was provided
-               if (startDate) {
+               // ALWAYS compute dates — if user didn't pick a start date,
+               // default to the next working day from today
+               const effectiveStartDate = startDate || (() => {
+                  const todayStr = toIso(new Date());
+                  // If today is Sunday, skip to Monday
+                  return fromIso(todayStr).getDay() === 0
+                    ? shiftDate(todayStr, 1)
+                    : todayStr;
+               })();
+               {
                   const duration = calcDuration(svcId);
-                  let startIso = startDate; // Default: same as job start
+                  let startIso = effectiveStartDate; // Default: same as job start
 
                   // ── Cascade Chain ──────────────────────────────────────
                   // Each service starts the NEXT WORKING DAY after its
@@ -604,41 +604,47 @@ export default function NewProjectPage() {
                   };
 
                    if (svcId === "windows" || svcId === "doors" || svcId === "decks") {
-                      // Late addition: if project already started, use today
+                      // DWD runs in parallel with Siding — no cascade dependency
                       const todayIso = new Date().toISOString().split("T")[0];
-                      if (todayIso > startDate) {
+                      if (todayIso > effectiveStartDate) {
                          startIso = todayIso;
-                         const d = new Date(startIso + "T12:00:00");
-                         if (d.getDay() === 0) {
-                            d.setDate(d.getDate() + 1);
-                            startIso = d.toISOString().split("T")[0];
+                         if (fromIso(startIso).getDay() === 0) {
+                            startIso = shiftDate(startIso, 1);
                          }
                          console.log("[Cascade] " + svcId + ": late addition, start=" + startIso);
                       }
                    } else {
+                      // ── Find LATEST predecessor end date (MAX across ALL) ──
                       const predecessors = CASCADE_PREDECESSORS[svcId] || [];
+                      let latestNextDay = "";
                       for (const pred of predecessors) {
                          if (prevEndpoints[pred]) {
-                            const predEnd = new Date(prevEndpoints[pred] + "T12:00:00");
-                            startIso = dateHelpers.nextWorkingDay(predEnd).toISOString().split("T")[0];
-                            console.log("[Cascade] " + svcId + ": after " + pred + " -> start=" + startIso);
-                            break;
+                            const nextDay = shiftDate(prevEndpoints[pred], 1);
+                            if (nextDay > latestNextDay) {
+                               latestNextDay = nextDay;
+                            }
+                            console.log("[Cascade] " + svcId + ": pred " + pred + " ends " + prevEndpoints[pred] + " → next=" + nextDay);
                          }
+                      }
+                      if (latestNextDay) {
+                         startIso = latestNextDay;
+                         console.log("[Cascade] " + svcId + ": final start=" + startIso);
                       }
                    }
 
                   // Start at 08:00 (matches schedule page format)
                   startAt = new Date(startIso + "T08:00:00");
 
-                  const lastDayInclusive = dateHelpers.addWorkingDays(startIso, duration);
-                  prevEndpoints[svcId] = lastDayInclusive.toISOString().split("T")[0];
+                  // Last working day (inclusive) — string-based, timezone-safe
+                  const lastDayIso = shiftDate(startIso, duration - 1);
+                  prevEndpoints[svcId] = lastDayIso;
 
                   console.log(
-                    `[Cascade] ${svcId}: dur=${duration} start=${startIso} end=${prevEndpoints[svcId]}`
+                    `[Cascade] ${svcId}: dur=${duration} start=${startIso} end=${lastDayIso}`
                   );
 
-                  // endAt = inclusive last working day
-                  endAt = new Date(prevEndpoints[svcId] + "T12:00:00");
+                  // endAt = inclusive last working day at end of business
+                  endAt = new Date(lastDayIso + "T17:00:00");
                }
 
                const partnerName = assignedPartners[svcId] || (svcId === "painting" ? assignedPartners["siding"] : null) || "Siding Depot";
@@ -672,12 +678,13 @@ export default function NewProjectPage() {
         }
       }
       
-      // Update Job target completion date if it was auto-calculated and missing initially
-      if (!endDate && Object.values(prevEndpoints).length > 0) {
-        const endDates = Object.values(prevEndpoints).map(d => new Date(d + "T12:00:00").getTime());
-        const maxTime = Math.max(...endDates);
-        const maxDateStr = new Date(maxTime).toISOString().split("T")[0];
-        await supabase.from("jobs").update({ target_completion_date: maxDateStr }).eq("id", newJob.id);
+      // Update Job target completion date from cascade endpoints
+      if (Object.values(prevEndpoints).length > 0) {
+        // All values are ISO date strings, so we can just sort
+        const latestEnd = Object.values(prevEndpoints).sort().pop() || null;
+        if (latestEnd) {
+          await supabase.from("jobs").update({ target_completion_date: latestEnd }).eq("id", newJob.id);
+        }
       }
 
       // ── Automação 3.5: Criar window_order ao selecionar serviço de Windows ──
@@ -881,8 +888,8 @@ export default function NewProjectPage() {
                     <CustomDatePicker value={soldDate} onChange={(v) => setSoldDate(v || "")} placeholder="Set date" />
                   </div>
                 </div>
-                {/* Row 2: Contract Value / Start Date / End Date / SQ — 25% each */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                {/* Row 2: Contract Value / Start Date / SQ — 3 columns */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <label className={labelCls}>Contract Value</label>
                     <div className="relative">
@@ -893,10 +900,6 @@ export default function NewProjectPage() {
                   <div className="space-y-2">
                     <label className={labelCls}>Start Date</label>
                     <CustomDatePicker value={startDate} onChange={setStartDate} placeholder="dd/mm/yyyy" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={labelCls}>End Date</label>
-                    <CustomDatePicker value={endDate} onChange={setEndDate} placeholder="dd/mm/yyyy" />
                   </div>
                   <div className="space-y-2">
                     <label className={labelCls}>SQ</label>

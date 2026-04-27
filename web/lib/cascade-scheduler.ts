@@ -41,9 +41,12 @@ export function fromIso(s: string): Date {
   return new Date(s + "T12:00:00");
 }
 
-/** Format Date to "YYYY-MM-DD" */
+/** Format Date to "YYYY-MM-DD" using LOCAL time (avoids UTC conversion shift) */
 export function toIso(d: Date): string {
-  return d.toISOString().split("T")[0];
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 /** Check if an ISO date string falls on a Sunday */
