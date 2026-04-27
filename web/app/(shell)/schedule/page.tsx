@@ -434,7 +434,23 @@ export default function SchedulePage() {
     (e.currentTarget as HTMLElement).style.opacity = "1";
     setDragJob(null);
     setDragOverDay(null);
+    if (edgeScrollTimer.current) clearTimeout(edgeScrollTimer.current);
+    edgeScrollTimer.current = null;
   };
+
+  // Auto-navigate weeks when dragging near edges
+  const edgeScrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleEdgeDrag = useCallback((direction: "prev" | "next") => {
+    if (edgeScrollTimer.current) return; // Already scheduled
+    edgeScrollTimer.current = setTimeout(() => {
+      setWeekBase(prev => {
+        const d = new Date(prev);
+        d.setDate(d.getDate() + (direction === "next" ? 7 : -7));
+        return d;
+      });
+      edgeScrollTimer.current = null;
+    }, 400); // 400ms delay to prevent accidental navigation
+  }, []);
 
   const handleDayDragOver = (e: React.DragEvent, dayIdx: number) => {
     e.preventDefault();
@@ -1116,7 +1132,47 @@ export default function SchedulePage() {
         </div>
 
         {/* ── Gantt Grid ── */}
-        <div className="rounded-2xl overflow-hidden overflow-x-auto flex flex-col flex-1 bg-surface-container-low border border-outline-variant/20">
+        <div className="rounded-2xl overflow-hidden overflow-x-auto flex flex-col flex-1 bg-surface-container-low border border-outline-variant/20 relative">
+
+          {/* ── Edge navigation zones (visible only during drag) ── */}
+          {dragJob && (
+            <>
+              {/* LEFT edge — go to previous week */}
+              <div
+                className="absolute left-0 top-0 bottom-0 w-12 z-30 flex items-center justify-center cursor-pointer"
+                style={{ background: "linear-gradient(to right, rgba(174,238,42,0.15), transparent)" }}
+                onDragOver={e => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  handleEdgeDrag("prev");
+                }}
+                onDragLeave={() => {
+                  if (edgeScrollTimer.current) { clearTimeout(edgeScrollTimer.current); edgeScrollTimer.current = null; }
+                }}
+                onDrop={e => { e.preventDefault(); }}
+              >
+                <span className="material-symbols-outlined text-primary text-2xl animate-pulse" translate="no">chevron_left</span>
+              </div>
+
+              {/* RIGHT edge — go to next week */}
+              <div
+                className="absolute right-0 top-0 bottom-0 w-12 z-30 flex items-center justify-center cursor-pointer"
+                style={{ background: "linear-gradient(to left, rgba(174,238,42,0.15), transparent)" }}
+                onDragOver={e => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  handleEdgeDrag("next");
+                }}
+                onDragLeave={() => {
+                  if (edgeScrollTimer.current) { clearTimeout(edgeScrollTimer.current); edgeScrollTimer.current = null; }
+                }}
+                onDrop={e => { e.preventDefault(); }}
+              >
+                <span className="material-symbols-outlined text-primary text-2xl animate-pulse" translate="no">chevron_right</span>
+              </div>
+            </>
+          )}
+
           <div className="min-w-[800px] flex flex-col flex-1 min-h-0">
             {/* Day headers — STICKY (6.2) */}
             <div className="grid sticky top-0 z-20 bg-surface-container-low border-b border-outline-variant/20" style={{ gridTemplateColumns: "200px repeat(7, 1fr)" }}>
