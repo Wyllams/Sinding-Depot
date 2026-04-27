@@ -281,6 +281,19 @@ export default function SalesMobileDashboard() {
             </div>
           </div>
         </Link>
+
+        <Link href="/mobile/sales/calendar">
+          <div className="bg-surface-container-low active:scale-[0.98] transition-transform duration-200 rounded-3xl p-6 flex justify-between items-center border border-outline-variant/20 shadow-lg relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#60b8f5]" />
+            <div className="flex flex-col">
+              <span className="text-sm font-black text-on-surface uppercase tracking-wide">My Schedule</span>
+              <span className="text-xs font-bold text-[#7B7B78] uppercase tracking-wider mt-1">View Calendar</span>
+            </div>
+            <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center text-[#60b8f5] border border-[#60b8f5]/20">
+              <span className="material-symbols-outlined text-[28px]">calendar_today</span>
+            </div>
+          </div>
+        </Link>
       </div>
 
       <MobileBottomNav items={SALES_NAV} />
