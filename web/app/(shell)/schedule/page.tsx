@@ -469,7 +469,7 @@ export default function SchedulePage() {
     setEditJob(job);
     setEditDate(job.isPending ? "" : job.startDate);
     setEditDur(job.durationDays);
-    setDurManuallySet(true);
+    setDurManuallySet(false);
     // Auto-confirm if start date is today or earlier
     const todayStr = new Date().toISOString().split('T')[0];
     const baseStatus = job.jobStartStatus ?? "scheduled";
