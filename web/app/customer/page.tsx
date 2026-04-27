@@ -23,12 +23,12 @@ interface CustomerData {
 }
 
 const STATUS_DISPLAY: Record<string, { label: string; icon: string; bgClass: string; textClass: string }> = {
-  draft:              { label: "Preparing",        icon: "assignment",     bgClass: "bg-[#f5f5f5]",          textClass: "text-outline-variant" },
-  pending_scheduling: { label: "Preparing",        icon: "assignment",     bgClass: "bg-[#f5f5f5]",          textClass: "text-outline-variant" },
-  active:             { label: "In Progress",      icon: "engineering",    bgClass: "bg-[#f0fae1]",          textClass: "text-[#5c8a00]" },
-  on_hold:            { label: "On Hold",          icon: "pause_circle",   bgClass: "bg-[#fff1ec]",          textClass: "text-error" },
-  completed:          { label: "Completed",        icon: "check_circle",   bgClass: "bg-[#f0fae1]",          textClass: "text-[#5c8a00]" },
-  cancelled:          { label: "Cancelled",        icon: "cancel",         bgClass: "bg-[#fce4ec]",          textClass: "text-[#c62828]" },
+  draft:              { label: "Preparing",        icon: "assignment",     bgClass: "bg-surface-container-high",          textClass: "text-outline-variant" },
+  pending_scheduling: { label: "Preparing",        icon: "assignment",     bgClass: "bg-surface-container-high",          textClass: "text-outline-variant" },
+  active:             { label: "In Progress",      icon: "engineering",    bgClass: "bg-primary/10",          textClass: "text-primary" },
+  on_hold:            { label: "On Hold",          icon: "pause_circle",   bgClass: "bg-error/10",          textClass: "text-error" },
+  completed:          { label: "Completed",        icon: "check_circle",   bgClass: "bg-primary/10",          textClass: "text-primary" },
+  cancelled:          { label: "Cancelled",        icon: "cancel",         bgClass: "bg-error/10",          textClass: "text-error" },
 };
 
 export default function CustomerDashboard() {
@@ -120,7 +120,7 @@ export default function CustomerDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
-        <div className="w-8 h-8 border-3 border-[#e5e5e3] border-t-surface-container-low rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-[var(--color-outline-variant)] border-t-surface-container-low rounded-full animate-spin" />
       </div>
     );
   }
@@ -128,10 +128,10 @@ export default function CustomerDashboard() {
   if (error || !data) {
     return (
       <div className="text-center py-20">
-        <div className="w-16 h-16 bg-[#fff1ec] text-error rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="material-symbols-outlined text-3xl" translate="no">error</span>
         </div>
-        <h2 className="font-headline text-xl font-bold text-surface-container-low">{error || "Something went wrong"}</h2>
+        <h2 className="font-headline text-xl font-bold text-on-surface">{error || "Something went wrong"}</h2>
         <p className="text-outline-variant mt-2">Please contact the office for assistance.</p>
       </div>
     );
@@ -144,11 +144,11 @@ export default function CustomerDashboard() {
     <div className="space-y-8">
       
       {/* Welcome Section */}
-      <section className="bg-white p-8 rounded-3xl border border-[#e5e5e3] shadow-sm">
+      <section className="bg-surface-container p-8 rounded-3xl border border-[var(--color-outline-variant)] shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h2 className="text-[#a1a19d] text-xs font-bold uppercase tracking-widest mb-1">Project Status</h2>
-            <h1 className="font-headline text-3xl font-bold tracking-tight text-surface-container-low">
+            <h2 className="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-1">Project Status</h2>
+            <h1 className="font-headline text-3xl font-bold tracking-tight text-on-surface">
               Welcome, {data.customerName.split(" ")[0]}!
             </h1>
             <p className="text-outline-variant mt-2 max-w-lg">
@@ -158,12 +158,12 @@ export default function CustomerDashboard() {
           </div>
           
           <div className={`${status.bgClass} border border-black/5 p-4 rounded-2xl flex items-center gap-4 shrink-0`}>
-            <div className={`w-12 h-12 ${data.jobStatus === "active" ? "bg-primary text-surface-container-low" : "bg-surface-container-low/10 text-surface-container-low"} rounded-full flex items-center justify-center`}>
+            <div className={`w-12 h-12 ${data.jobStatus === "active" ? "bg-primary text-on-surface" : "bg-surface-container-low/10 text-on-surface"} rounded-full flex items-center justify-center`}>
               <span className="material-symbols-outlined" translate="no">{status.icon}</span>
             </div>
             <div>
               <span className={`block font-headline font-bold ${status.textClass}`}>{status.label}</span>
-              <span className="block text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mt-0.5">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mt-0.5">
                 {data.jobNumber}
               </span>
             </div>
@@ -173,19 +173,19 @@ export default function CustomerDashboard() {
 
       {/* Project Info */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-[#e5e5e3] shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-1">Contract Amount</p>
-          <p className="font-headline text-2xl font-bold text-surface-container-low">{fmt$(data.contractAmount)}</p>
+        <div className="bg-surface-container p-5 rounded-2xl border border-[var(--color-outline-variant)] shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Contract Amount</p>
+          <p className="font-headline text-2xl font-bold text-on-surface">{fmt$(data.contractAmount)}</p>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-[#e5e5e3] shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-1">Services</p>
-          <p className="text-sm font-bold text-surface-container-low leading-relaxed">
+        <div className="bg-surface-container p-5 rounded-2xl border border-[var(--color-outline-variant)] shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Services</p>
+          <p className="text-sm font-bold text-on-surface leading-relaxed">
             {data.serviceNames.length > 0 ? data.serviceNames.join(", ") : "—"}
           </p>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-[#e5e5e3] shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-1">Target Completion</p>
-          <p className="font-headline text-lg font-bold text-surface-container-low">
+        <div className="bg-surface-container p-5 rounded-2xl border border-[var(--color-outline-variant)] shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Target Completion</p>
+          <p className="font-headline text-lg font-bold text-on-surface">
             {data.targetCompletion ? (() => { const _d = new Date(data.targetCompletion); return `${(_d.getMonth() + 1).toString().padStart(2, '0')}/${_d.getDate().toString().padStart(2, '0')}/${_d.getFullYear()}`; })() : "To be scheduled"}
           </p>
         </div>
@@ -195,15 +195,15 @@ export default function CustomerDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Change Orders */}
-        <Link href="/customer/change-orders" className="group bg-white p-6 rounded-3xl border border-[#e5e5e3] shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-56 relative overflow-hidden">
+        <Link href="/customer/change-orders" className="group bg-surface-container p-6 rounded-3xl border border-[var(--color-outline-variant)] shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-56 relative overflow-hidden">
           {data.pendingCOs > 0 && (
             <div className="absolute top-4 right-4 w-3 h-3 bg-error rounded-full animate-pulse shadow-[0_0_8px_rgba(255,115,81,0.6)]" />
           )}
           <div>
-            <div className="w-10 h-10 bg-[#f5f5f5] text-surface-container-low rounded-full flex items-center justify-center mb-4">
+            <div className="w-10 h-10 bg-surface-container-high text-on-surface rounded-full flex items-center justify-center mb-4">
               <span className="material-symbols-outlined" translate="no">request_quote</span>
             </div>
-            <h3 className="font-headline font-bold text-xl text-surface-container-low">Change Orders</h3>
+            <h3 className="font-headline font-bold text-xl text-on-surface">Change Orders</h3>
             <p className="text-outline-variant text-sm mt-2 line-clamp-2">
               {data.pendingCOs > 0
                 ? `You have ${data.pendingCOs} change order${data.pendingCOs > 1 ? "s" : ""} waiting for your approval.`
@@ -211,40 +211,40 @@ export default function CustomerDashboard() {
             </p>
           </div>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-widest ${data.pendingCOs > 0 ? "text-error" : "text-[#a1a19d]"}`}>
+            <span className={`text-xs font-bold uppercase tracking-widest ${data.pendingCOs > 0 ? "text-error" : "text-on-surface-variant"}`}>
               {data.pendingCOs} Pending
             </span>
-            <span className="material-symbols-outlined text-surface-container-low group-hover:translate-x-1 transition-transform" translate="no">arrow_forward</span>
+            <span className="material-symbols-outlined text-on-surface group-hover:translate-x-1 transition-transform" translate="no">arrow_forward</span>
           </div>
         </Link>
         
         {/* Documents */}
-        <Link href="/customer/documents" className="group bg-white p-6 rounded-3xl border border-[#e5e5e3] shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-56">
+        <Link href="/customer/documents" className="group bg-surface-container p-6 rounded-3xl border border-[var(--color-outline-variant)] shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-56">
           <div>
-            <div className="w-10 h-10 bg-[#f5f5f5] text-surface-container-low rounded-full flex items-center justify-center mb-4">
+            <div className="w-10 h-10 bg-surface-container-high text-on-surface rounded-full flex items-center justify-center mb-4">
               <span className="material-symbols-outlined" translate="no">folder_open</span>
             </div>
-            <h3 className="font-headline font-bold text-xl text-surface-container-low">My Documents</h3>
+            <h3 className="font-headline font-bold text-xl text-on-surface">My Documents</h3>
             <p className="text-outline-variant text-sm mt-2 line-clamp-2">
               Access your contracts, completion certificates, and project files.
             </p>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#a1a19d] uppercase tracking-widest">{data.documentCount} Document{data.documentCount !== 1 ? "s" : ""}</span>
-            <span className="material-symbols-outlined text-surface-container-low group-hover:translate-x-1 transition-transform" translate="no">arrow_forward</span>
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">{data.documentCount} Document{data.documentCount !== 1 ? "s" : ""}</span>
+            <span className="material-symbols-outlined text-on-surface group-hover:translate-x-1 transition-transform" translate="no">arrow_forward</span>
           </div>
         </Link>
 
         {/* Colors Card */}
-        <Link href="/customer/colors" className={`group bg-white p-6 rounded-3xl border border-[#e5e5e3] shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-56 relative overflow-hidden ${!data.colorsDone ? "hover:border-surface-container-low" : ""}`}>
+        <Link href="/customer/colors" className={`group bg-surface-container p-6 rounded-3xl border border-[var(--color-outline-variant)] shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-56 relative overflow-hidden ${!data.colorsDone ? "hover:border-primary" : ""}`}>
           {!data.colorsDone && (
             <div className="absolute top-4 right-4 w-3 h-3 bg-error rounded-full animate-pulse shadow-[0_0_8px_rgba(255,115,81,0.6)]" />
           )}
           <div>
-            <div className={`w-10 h-10 ${data.colorsDone ? "bg-[#f0fae1] text-[#5c8a00]" : "bg-[#fff1ec] text-error"} rounded-full flex items-center justify-center mb-4`}>
+            <div className={`w-10 h-10 ${data.colorsDone ? "bg-primary/10 text-primary" : "bg-error/10 text-error"} rounded-full flex items-center justify-center mb-4`}>
               <span className="material-symbols-outlined" translate="no">format_paint</span>
             </div>
-            <h3 className="font-headline font-bold text-xl text-surface-container-low">Color Selection</h3>
+            <h3 className="font-headline font-bold text-xl text-on-surface">Color Selection</h3>
             <p className="text-outline-variant text-sm mt-2 line-clamp-2">
               {data.colorsDone
                 ? "Your color selections have been submitted. Our team is preparing your materials."
@@ -252,10 +252,10 @@ export default function CustomerDashboard() {
             </p>
           </div>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-widest ${data.colorsDone ? "text-[#5c8a00]" : "text-error"}`}>
+            <span className={`text-xs font-bold uppercase tracking-widest ${data.colorsDone ? "text-primary" : "text-error"}`}>
               {data.colorsDone ? "✓ Submitted" : "Action Needed"}
             </span>
-            <span className="material-symbols-outlined text-surface-container-low group-hover:translate-x-1 transition-transform" translate="no">arrow_forward</span>
+            <span className="material-symbols-outlined text-on-surface group-hover:translate-x-1 transition-transform" translate="no">arrow_forward</span>
           </div>
         </Link>
       </div>

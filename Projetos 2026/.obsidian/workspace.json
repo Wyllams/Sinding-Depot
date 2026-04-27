@@ -49,7 +49,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "tag:#home",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -70,7 +70,8 @@
               "title": "Marcadores"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -179,6 +180,8 @@
   },
   "active": "df297713fb304766",
   "lastOpenFiles": [
+    "Siding Depot/Vendor Mobile App.md",
+    "Field App — Portal de Campo.md",
     "Siding Depot/🏗️ Siding Depot — Home.md",
     "Siding Depot/Autenticação e Controle de Acesso.md",
     "Siding Depot/Assinatura Digital e Compliance.md",
@@ -208,8 +211,6 @@
     "Siding Depot/2. Arquitetura Técnica Base/Visão Geral da Stack.md",
     "Siding Depot/2. Arquitetura Técnica Base/Arquitetura do Banco de Dados.md",
     "Siding Depot/2. Arquitetura Técnica Base",
-    "Siding Depot/1. Regras de Negócio e Domínio/Autenticação e Permissões (Roles).md",
-    "Siding Depot/1. Regras de Negócio e Domínio/Regras de Agendamento (Scheduling).md",
     "Siding Depot/1. Regras de Negócio e Domínio",
     "Siding Depot"
   ]

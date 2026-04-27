@@ -33,7 +33,7 @@ const TYPE_ICONS: Record<string, string> = {
 const STATUS_STYLES: Record<string, { label: string; bg: string; text: string }> = {
   draft:   { label: "Preparing",   bg: "bg-outline-variant/10", text: "text-outline-variant" },
   active:  { label: "Active",  bg: "bg-[#60a5fa]/10", text: "text-[#2563eb]" },
-  signed:  { label: "Signed",  bg: "bg-[#5c8a00]/10", text: "text-[#5c8a00]" },
+  signed:  { label: "Signed",  bg: "bg-[#5c8a00]/10", text: "text-primary" },
   paid:    { label: "Paid",    bg: "bg-[#818cf8]/10", text: "text-[#6366f1]" },
   archived:{ label: "Archived",bg: "bg-outline-variant/10", text: "text-outline-variant" },
   voided:  { label: "Voided",  bg: "bg-error/10", text: "text-[#dc2626]" },
@@ -157,31 +157,31 @@ export default function CustomerDocuments(): React.ReactElement {
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
-        <Link href="/customer" className="inline-flex items-center text-[#a1a19d] hover:text-surface-container-low text-sm font-bold transition-colors mb-4">
+        <Link href="/customer" className="inline-flex items-center text-on-surface-variant hover:text-on-surface text-sm font-bold transition-colors mb-4">
           <span className="material-symbols-outlined text-[18px] mr-1" translate="no">arrow_back</span>
           Back to Dashboard
         </Link>
-        <h1 className="font-headline text-3xl font-bold tracking-tight text-surface-container-low">My Documents</h1>
+        <h1 className="font-headline text-3xl font-bold tracking-tight text-on-surface">My Documents</h1>
         <p className="text-outline-variant mt-2">Access all your contracts, certificates, and project files.</p>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-3 border-[#e5e5e3] border-t-surface-container-low rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-[var(--color-outline-variant)] border-t-surface-container-low rounded-full animate-spin" />
         </div>
       ) : docs.length === 0 ? (
-        <div className="text-center py-20 bg-white border border-[#e5e5e3] rounded-3xl shadow-sm">
-          <div className="w-20 h-20 bg-[#f5f5f5] text-[#a1a19d] rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="text-center py-20 bg-surface-container border border-[var(--color-outline-variant)] rounded-3xl shadow-sm">
+          <div className="w-20 h-20 bg-surface-container-high text-on-surface-variant rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="material-symbols-outlined text-[40px]" translate="no">folder_off</span>
           </div>
-          <h3 className="font-headline font-bold text-xl text-surface-container-low">No documents yet</h3>
+          <h3 className="font-headline font-bold text-xl text-on-surface">No documents yet</h3>
           <p className="text-outline-variant mt-2 max-w-sm mx-auto">
             Documents will appear here once they are added to your project by our team.
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-[#e5e5e3] rounded-3xl overflow-hidden shadow-sm">
-          <ul className="divide-y divide-[#e5e5e3]">
+        <div className="bg-surface-container border border-[var(--color-outline-variant)] rounded-3xl overflow-hidden shadow-sm">
+          <ul className="divide-y divide-[var(--color-outline-variant)]">
             {docs.map((doc) => {
               const icon = TYPE_ICONS[doc.document_type] ?? "attach_file";
               const st = STATUS_STYLES[doc.status] ?? STATUS_STYLES.draft;
@@ -189,14 +189,14 @@ export default function CustomerDocuments(): React.ReactElement {
               const isMilestone = doc.source === "milestone";
 
               return (
-                <li key={doc.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-on-surface transition-colors">
+                <li key={doc.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-container-high transition-colors">
                   <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${needsSignature ? "bg-[#fff1ec] text-error" : st.bg + " " + st.text}`}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${needsSignature ? "bg-error/10 text-error" : st.bg + " " + st.text}`}>
                       <span className="material-symbols-outlined" translate="no">{icon}</span>
                     </div>
                     <div>
-                      <h3 className="font-headline font-bold text-base text-surface-container-low">{doc.title}</h3>
-                      <p className="text-[#a1a19d] text-sm">{fmtDate(doc.created_at)}</p>
+                      <h3 className="font-headline font-bold text-base text-on-surface">{doc.title}</h3>
+                      <p className="text-on-surface-variant text-sm">{fmtDate(doc.created_at)}</p>
                       {doc.summary && (
                         <p className="text-outline-variant text-xs mt-1 line-clamp-2">{doc.summary}</p>
                       )}
@@ -238,7 +238,7 @@ export default function CustomerDocuments(): React.ReactElement {
                         View
                       </Link>
                     ) : doc.signed_at ? (
-                      <span className="text-xs text-[#5c8a00] font-bold flex items-center gap-1">
+                      <span className="text-xs text-primary font-bold flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px]" translate="no">check_circle</span>
                         Signed {fmtDate(doc.signed_at)}
                       </span>

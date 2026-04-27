@@ -399,7 +399,7 @@ export default function CustomerColors() {
   if (loading) {
     return (
       <div className="flex justify-center py-32">
-        <div className="w-8 h-8 border-3 border-[#e5e5e3] border-t-surface-container-low rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-[var(--color-outline-variant)] border-t-surface-container-low rounded-full animate-spin" />
       </div>
     );
   }
@@ -409,20 +409,20 @@ export default function CustomerColors() {
     return (
       <div className="space-y-8 max-w-3xl">
         <div>
-          <Link href="/customer" className="inline-flex items-center text-[#a1a19d] hover:text-surface-container-low text-sm font-bold transition-colors mb-4">
+          <Link href="/customer" className="inline-flex items-center text-on-surface-variant hover:text-on-surface text-sm font-bold transition-colors mb-4">
             <span className="material-symbols-outlined text-[18px] mr-1" translate="no">arrow_back</span>
             Back to Dashboard
           </Link>
-          <h1 className="font-headline text-3xl font-bold tracking-tight text-surface-container-low">Color Selection</h1>
+          <h1 className="font-headline text-3xl font-bold tracking-tight text-on-surface">Color Selection</h1>
         </div>
 
-        <div className="bg-[#fff1ec] border border-error/30 p-6 rounded-2xl">
+        <div className="bg-error/10 border border-error/30 p-6 rounded-2xl">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-error text-white rounded-full flex items-center justify-center shrink-0">
               <span className="material-symbols-outlined text-2xl" translate="no">lock</span>
             </div>
             <div>
-              <h2 className="font-headline font-bold text-lg text-surface-container-low">Editing Locked</h2>
+              <h2 className="font-headline font-bold text-lg text-on-surface">Editing Locked</h2>
               <p className="text-outline-variant mt-1 text-sm">{lockMessage}</p>
               <p className="text-outline-variant mt-2 text-sm">
                 If you need to make changes, you can request permission from our office.
@@ -452,13 +452,13 @@ export default function CustomerColors() {
 
         {/* Show saved colors read-only */}
         {savedColors.length > 0 && (
-          <div className="bg-white border border-[#e5e5e3] rounded-2xl p-6">
-            <h3 className="font-headline font-bold text-lg text-surface-container-low mb-4">Your Submitted Colors</h3>
+          <div className="bg-surface-container border border-[var(--color-outline-variant)] rounded-2xl p-6">
+            <h3 className="font-headline font-bold text-lg text-on-surface mb-4">Your Submitted Colors</h3>
             <div className="space-y-2">
               {savedColors.filter((c) => c.color_code !== "NOT_PAINTED").map((c) => (
-                <div key={c.surface_area} className="flex justify-between items-center py-2 border-b border-[#e5e5e3] last:border-0">
+                <div key={c.surface_area} className="flex justify-between items-center py-2 border-b border-[var(--color-outline-variant)] last:border-0">
                   <span className="text-sm font-medium text-outline-variant capitalize">{c.surface_area.replace(/_/g, " ")}</span>
-                  <span className="text-sm font-bold text-surface-container-low font-mono">{c.color_code}</span>
+                  <span className="text-sm font-bold text-on-surface font-mono">{c.color_code}</span>
                 </div>
               ))}
             </div>
@@ -469,27 +469,27 @@ export default function CustomerColors() {
   }
 
   // ─── Input helper ──────────────────────────────────────────────
-  const inputClass = "w-full h-12 bg-on-surface border border-[#e5e5e3] rounded-xl px-4 text-sm font-medium focus:border-surface-container-low focus:ring-1 focus:ring-surface-container-low outline-none transition-all";
-  const labelClass = "block text-[10px] font-bold text-[#a1a19d] uppercase tracking-widest mb-2";
-  const sectionClass = "bg-white border border-[#e5e5e3] rounded-2xl p-6 shadow-sm";
-  const checkboxClass = "w-4 h-4 rounded border-[#e5e5e3] text-surface-container-low focus:ring-surface-container-low cursor-pointer accent-surface-container-low";
+  const inputClass = "w-full h-12 bg-surface-container-high border border-[var(--color-outline-variant)] rounded-xl px-4 text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all";
+  const labelClass = "block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2";
+  const sectionClass = "bg-surface-container border border-[var(--color-outline-variant)] rounded-2xl p-6 shadow-sm";
+  const checkboxClass = "w-4 h-4 rounded border-[var(--color-outline-variant)] text-on-surface focus:ring-primary cursor-pointer accent-primary";
 
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <Link href="/customer" className="inline-flex items-center text-[#a1a19d] hover:text-surface-container-low text-sm font-bold transition-colors mb-4">
+        <Link href="/customer" className="inline-flex items-center text-on-surface-variant hover:text-on-surface text-sm font-bold transition-colors mb-4">
           <span className="material-symbols-outlined text-[18px] mr-1" translate="no">arrow_back</span>
           Back to Dashboard
         </Link>
-        <h1 className="font-headline text-3xl font-bold tracking-tight text-surface-container-low">Color Selection</h1>
+        <h1 className="font-headline text-3xl font-bold tracking-tight text-on-surface">Color Selection</h1>
         <p className="text-outline-variant mt-2">Submit your paint color choices for <strong>{address}</strong>.</p>
       </div>
 
       {/* Override banner */}
       {hasOverride && (
-        <div className="bg-[#fff7cf] border border-[#f5a623]/30 p-4 rounded-xl flex items-center gap-3">
-          <span className="material-symbols-outlined text-[#f5a623]" translate="no">edit</span>
-          <p className="text-sm font-medium text-surface-container-low">
+        <div className="bg-primary/10 border border-primary/30 p-4 rounded-xl flex items-center gap-3">
+          <span className="material-symbols-outlined text-primary" translate="no">edit</span>
+          <p className="text-sm font-medium text-on-surface">
             Edit temporarily allowed — you have <strong>{overrideMinutes} minutes</strong> remaining.
           </p>
         </div>
@@ -497,23 +497,23 @@ export default function CustomerColors() {
 
       {success ? (
         /* ─── SUCCESS VIEW ───────────────────────────────────────── */
-        <div className="bg-[#f0fae1] border border-primary/40 p-8 rounded-3xl text-center">
-          <div className="w-20 h-20 bg-primary text-surface-container-low rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_10px_30px_rgba(174,238,42,0.4)]">
+        <div className="bg-primary/10 border border-primary/40 p-8 rounded-3xl text-center">
+          <div className="w-20 h-20 bg-primary text-on-surface rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_10px_30px_rgba(174,238,42,0.4)]">
             <span className="material-symbols-outlined text-[40px]" translate="no">check</span>
           </div>
-          <h2 className="font-headline text-2xl font-bold text-surface-container-low">Colors Submitted!</h2>
+          <h2 className="font-headline text-2xl font-bold text-on-surface">Colors Submitted!</h2>
           <p className="text-outline-variant mt-2 max-w-md mx-auto">
             Our team has been notified. They will review and prepare your materials.
           </p>
 
           {/* Summary */}
-          <div className="mt-6 bg-white/60 rounded-2xl p-6 text-left max-w-lg mx-auto">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#a1a19d] mb-3">Your Selections</h3>
+          <div className="mt-6 bg-surface-container/60 rounded-2xl p-6 text-left max-w-lg mx-auto">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Your Selections</h3>
             <div className="space-y-1.5">
               {savedColors.filter((c) => c.color_code !== "NOT_PAINTED").map((c) => (
-                <div key={c.surface_area} className="flex justify-between py-1.5 border-b border-[#e5e5e3]/50 last:border-0">
+                <div key={c.surface_area} className="flex justify-between py-1.5 border-b border-[var(--color-outline-variant)]/50 last:border-0">
                   <span className="text-sm text-outline-variant capitalize">{c.surface_area.replace(/_/g, " ")}</span>
-                  <span className="text-sm font-bold text-surface-container-low font-mono">{c.color_code}</span>
+                  <span className="text-sm font-bold text-on-surface font-mono">{c.color_code}</span>
                 </div>
               ))}
             </div>
@@ -521,7 +521,7 @@ export default function CustomerColors() {
 
           <button
             onClick={() => setSuccess(false)}
-            className="mt-8 text-sm font-bold text-surface-container-low underline underline-offset-4 hover:text-outline-variant transition-colors"
+            className="mt-8 text-sm font-bold text-on-surface underline underline-offset-4 hover:text-outline-variant transition-colors"
           >
             Edit Selection
           </button>
@@ -532,7 +532,7 @@ export default function CustomerColors() {
 
           {/* SECTION 1: Paint Brand */}
           <div className={sectionClass}>
-            <h3 className="font-headline font-bold text-lg text-surface-container-low flex items-center gap-2 mb-4">
+            <h3 className="font-headline font-bold text-lg text-on-surface flex items-center gap-2 mb-4">
               <span className="w-6 h-6 bg-surface-container-low text-white text-[10px] font-bold rounded-full flex items-center justify-center">1</span>
               Paint Brand
             </h3>
@@ -559,7 +559,7 @@ export default function CustomerColors() {
 
           {/* SECTION 2: Main Body (Siding) */}
           <div className={sectionClass}>
-            <h3 className="font-headline font-bold text-lg text-surface-container-low flex items-center gap-2 mb-4">
+            <h3 className="font-headline font-bold text-lg text-on-surface flex items-center gap-2 mb-4">
               <span className="w-6 h-6 bg-surface-container-low text-white text-[10px] font-bold rounded-full flex items-center justify-center">2</span>
               Main Body (Siding)
             </h3>
@@ -589,13 +589,13 @@ export default function CustomerColors() {
 
           {/* SECTION 3: Trim & Roofline */}
           <div className={sectionClass}>
-            <h3 className="font-headline font-bold text-lg text-surface-container-low flex items-center gap-2 mb-4">
+            <h3 className="font-headline font-bold text-lg text-on-surface flex items-center gap-2 mb-4">
               <span className="w-6 h-6 bg-[#f5a623] text-white text-[10px] font-bold rounded-full flex items-center justify-center">3</span>
               Trim & Roofline
             </h3>
-            <label className="flex items-center gap-3 mb-6 cursor-pointer bg-on-surface px-4 py-3 rounded-xl border border-[#e5e5e3]">
+            <label className="flex items-center gap-3 mb-6 cursor-pointer bg-surface-container-high px-4 py-3 rounded-xl border border-[var(--color-outline-variant)]">
               <input type="checkbox" checked={useOneTrimColor} onChange={(e) => setUseOneTrimColor(e.target.checked)} className={checkboxClass} />
-              <span className="text-sm font-bold text-surface-container-low">Use one color for all trim</span>
+              <span className="text-sm font-bold text-on-surface">Use one color for all trim</span>
             </label>
 
             {useOneTrimColor ? (
@@ -606,7 +606,7 @@ export default function CustomerColors() {
             ) : (
               <div className="space-y-4">
                 {TRIM_SURFACES.map((t) => (
-                  <div key={t.key} className="flex flex-col sm:flex-row sm:items-end gap-3 pb-4 border-b border-[#e5e5e3] last:border-0 last:pb-0">
+                  <div key={t.key} className="flex flex-col sm:flex-row sm:items-end gap-3 pb-4 border-b border-[var(--color-outline-variant)] last:border-0 last:pb-0">
                     <div className="flex-1">
                       <label className={labelClass}>{t.label}</label>
                       <input
@@ -618,7 +618,7 @@ export default function CustomerColors() {
                         disabled={trimSameAs[t.key]}
                       />
                     </div>
-                    <label className="flex items-center gap-2 text-xs text-[#a1a19d] cursor-pointer pb-1 whitespace-nowrap">
+                    <label className="flex items-center gap-2 text-xs text-on-surface-variant cursor-pointer pb-1 whitespace-nowrap">
                       <input type="checkbox" checked={!!trimSameAs[t.key]} onChange={(e) => setTrimSameAs((prev) => ({ ...prev, [t.key]: e.target.checked }))} className={checkboxClass} />
                       Same as {t.sameAs.replace(/_/g, " ")}
                     </label>
@@ -630,7 +630,7 @@ export default function CustomerColors() {
 
           {/* SECTION 4: Doors */}
           <div className={sectionClass}>
-            <h3 className="font-headline font-bold text-lg text-surface-container-low flex items-center gap-2 mb-4">
+            <h3 className="font-headline font-bold text-lg text-on-surface flex items-center gap-2 mb-4">
               <span className="w-6 h-6 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center">4</span>
               Doors
             </h3>
@@ -639,14 +639,14 @@ export default function CustomerColors() {
                 <label className={labelClass}>Front Door — SW Code</label>
                 <input type="text" value={frontDoorSameAsTrim ? "Same as trim" : frontDoorCode} onChange={(e) => setFrontDoorCode(e.target.value.toUpperCase())} className={inputClass} placeholder="SW 0000" disabled={frontDoorSameAsTrim} />
               </div>
-              <label className="flex items-center gap-2 text-xs text-[#a1a19d] cursor-pointer pb-1">
+              <label className="flex items-center gap-2 text-xs text-on-surface-variant cursor-pointer pb-1">
                 <input type="checkbox" checked={frontDoorSameAsTrim} onChange={(e) => setFrontDoorSameAsTrim(e.target.checked)} className={checkboxClass} />
                 Same as trim
               </label>
             </div>
 
             {extraDoors.map((door, i) => (
-              <div key={door.id} className="flex flex-col sm:flex-row sm:items-end gap-3 mb-3 pb-3 border-t border-[#e5e5e3] pt-3">
+              <div key={door.id} className="flex flex-col sm:flex-row sm:items-end gap-3 mb-3 pb-3 border-t border-[var(--color-outline-variant)] pt-3">
                 <div className="w-36">
                   <label className={labelClass}>Location</label>
                   <select value={door.location} onChange={(e) => { const upd = [...extraDoors]; upd[i].location = e.target.value; setExtraDoors(upd); }} className={inputClass}>
@@ -657,7 +657,7 @@ export default function CustomerColors() {
                   <label className={labelClass}>SW Code</label>
                   <input type="text" value={door.same_as_trim ? "Same as trim" : door.color_code} onChange={(e) => { const upd = [...extraDoors]; upd[i].color_code = e.target.value.toUpperCase(); setExtraDoors(upd); }} className={inputClass} placeholder="SW 0000" disabled={door.same_as_trim} />
                 </div>
-                <label className="flex items-center gap-2 text-xs text-[#a1a19d] cursor-pointer pb-1 whitespace-nowrap">
+                <label className="flex items-center gap-2 text-xs text-on-surface-variant cursor-pointer pb-1 whitespace-nowrap">
                   <input type="checkbox" checked={door.same_as_trim} onChange={(e) => { const upd = [...extraDoors]; upd[i].same_as_trim = e.target.checked; setExtraDoors(upd); }} className={checkboxClass} />
                   Same as trim
                 </label>
@@ -667,7 +667,7 @@ export default function CustomerColors() {
               </div>
             ))}
 
-            <button type="button" onClick={() => setExtraDoors([...extraDoors, { id: crypto.randomUUID(), location: "Back", color_code: "", same_as_trim: false }])} className="mt-2 text-sm font-bold text-surface-container-low flex items-center gap-1 hover:text-outline-variant transition-colors">
+            <button type="button" onClick={() => setExtraDoors([...extraDoors, { id: crypto.randomUUID(), location: "Back", color_code: "", same_as_trim: false }])} className="mt-2 text-sm font-bold text-on-surface flex items-center gap-1 hover:text-outline-variant transition-colors">
               <span className="material-symbols-outlined text-[16px]" translate="no">add</span>
               Add Door
             </button>
@@ -675,7 +675,7 @@ export default function CustomerColors() {
 
           {/* SECTION 5: Gutters & Drainage */}
           <div className={sectionClass}>
-            <h3 className="font-headline font-bold text-lg text-surface-container-low flex items-center gap-2 mb-4">
+            <h3 className="font-headline font-bold text-lg text-on-surface flex items-center gap-2 mb-4">
               <span className="w-6 h-6 bg-[#60b8f5] text-white text-[10px] font-bold rounded-full flex items-center justify-center">5</span>
               Gutters & Drainage
             </h3>
@@ -715,18 +715,18 @@ export default function CustomerColors() {
 
           {/* SECTION 6: Accents */}
           <div className={sectionClass}>
-            <h3 className="font-headline font-bold text-lg text-surface-container-low flex items-center gap-2 mb-4">
+            <h3 className="font-headline font-bold text-lg text-on-surface flex items-center gap-2 mb-4">
               <span className="w-6 h-6 bg-[#c084fc] text-white text-[10px] font-bold rounded-full flex items-center justify-center">6</span>
               Accents
             </h3>
             <div className="space-y-4">
               {ACCENT_SURFACES.map((a) => (
-                <div key={a.key} className="flex flex-col sm:flex-row sm:items-end gap-3 pb-4 border-b border-[#e5e5e3] last:border-0 last:pb-0">
+                <div key={a.key} className="flex flex-col sm:flex-row sm:items-end gap-3 pb-4 border-b border-[var(--color-outline-variant)] last:border-0 last:pb-0">
                   <div className="flex-1">
                     <label className={labelClass}>{a.label}</label>
                     <input type="text" value={accentSameAs[a.key] ? `Same as ${a.sameAs}` : (accentCodes[a.key] || "")} onChange={(e) => setAccentCodes((prev) => ({ ...prev, [a.key]: e.target.value.toUpperCase() }))} className={inputClass} placeholder="SW 0000" disabled={accentSameAs[a.key]} />
                   </div>
-                  <label className="flex items-center gap-2 text-xs text-[#a1a19d] cursor-pointer pb-1 whitespace-nowrap">
+                  <label className="flex items-center gap-2 text-xs text-on-surface-variant cursor-pointer pb-1 whitespace-nowrap">
                     <input type="checkbox" checked={!!accentSameAs[a.key]} onChange={(e) => setAccentSameAs((prev) => ({ ...prev, [a.key]: e.target.checked }))} className={checkboxClass} />
                     Same as {a.sameAs}
                   </label>
@@ -734,7 +734,7 @@ export default function CustomerColors() {
               ))}
 
               {/* Deck */}
-              <div className="pt-4 border-t border-[#e5e5e3]">
+              <div className="pt-4 border-t border-[var(--color-outline-variant)]">
                 <label className={labelClass}>Deck</label>
                 <div className="flex flex-col gap-2">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -751,7 +751,7 @@ export default function CustomerColors() {
 
           {/* SECTION 7: Brick / Stucco / Foundation */}
           <div className={sectionClass}>
-            <h3 className="font-headline font-bold text-lg text-surface-container-low flex items-center gap-2 mb-4">
+            <h3 className="font-headline font-bold text-lg text-on-surface flex items-center gap-2 mb-4">
               <span className="w-6 h-6 bg-[#a1724e] text-white text-[10px] font-bold rounded-full flex items-center justify-center">7</span>
               Brick / Stucco / Foundation
             </h3>
@@ -759,7 +759,7 @@ export default function CustomerColors() {
               <label className={labelClass}>Surface Types</label>
               <div className="flex flex-wrap gap-3">
                 {SURFACE_TYPES.map((st) => (
-                  <label key={st} className="flex items-center gap-2 text-sm cursor-pointer bg-on-surface px-3 py-2 rounded-lg border border-[#e5e5e3]">
+                  <label key={st} className="flex items-center gap-2 text-sm cursor-pointer bg-surface-container-high px-3 py-2 rounded-lg border border-[var(--color-outline-variant)]">
                     <input
                       type="checkbox"
                       checked={selectedSurfaces.includes(st)}
@@ -790,9 +790,9 @@ export default function CustomerColors() {
 
                 {surfaceAction === "paint" && (
                   <>
-                    <label className="flex items-center gap-3 mb-4 cursor-pointer bg-on-surface px-4 py-3 rounded-xl border border-[#e5e5e3]">
+                    <label className="flex items-center gap-3 mb-4 cursor-pointer bg-surface-container-high px-4 py-3 rounded-xl border border-[var(--color-outline-variant)]">
                       <input type="checkbox" checked={useOneSurfaceColor} onChange={(e) => setUseOneSurfaceColor(e.target.checked)} className={checkboxClass} />
-                      <span className="text-sm font-bold text-surface-container-low">Use one color for all selected surfaces</span>
+                      <span className="text-sm font-bold text-on-surface">Use one color for all selected surfaces</span>
                     </label>
                     {useOneSurfaceColor ? (
                       <div className="max-w-xs">
@@ -830,12 +830,12 @@ export default function CustomerColors() {
 
           {/* SECTION 8: Custom Areas */}
           <div className={sectionClass}>
-            <h3 className="font-headline font-bold text-lg text-surface-container-low flex items-center gap-2 mb-4">
+            <h3 className="font-headline font-bold text-lg text-on-surface flex items-center gap-2 mb-4">
               <span className="w-6 h-6 bg-outline-variant text-white text-[10px] font-bold rounded-full flex items-center justify-center">8</span>
               Custom Areas
             </h3>
             {customAreas.map((ca, i) => (
-              <div key={ca.id} className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3 pb-3 border-b border-[#e5e5e3]">
+              <div key={ca.id} className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3 pb-3 border-b border-[var(--color-outline-variant)]">
                 <input type="text" value={ca.name} onChange={(e) => { const upd = [...customAreas]; upd[i].name = e.target.value; setCustomAreas(upd); }} className={inputClass} placeholder="Area name" />
                 <input type="text" value={ca.color_code} onChange={(e) => { const upd = [...customAreas]; upd[i].color_code = e.target.value.toUpperCase(); setCustomAreas(upd); }} className={inputClass} placeholder="SW 0000" />
                 <div className="flex gap-2">
@@ -846,7 +846,7 @@ export default function CustomerColors() {
                 </div>
               </div>
             ))}
-            <button type="button" onClick={() => setCustomAreas([...customAreas, { id: crypto.randomUUID(), name: "", color_code: "", notes: "" }])} className="text-sm font-bold text-surface-container-low flex items-center gap-1 hover:text-outline-variant transition-colors">
+            <button type="button" onClick={() => setCustomAreas([...customAreas, { id: crypto.randomUUID(), name: "", color_code: "", notes: "" }])} className="text-sm font-bold text-on-surface flex items-center gap-1 hover:text-outline-variant transition-colors">
               <span className="material-symbols-outlined text-[16px]" translate="no">add</span>
               Add Custom Area
             </button>
@@ -854,16 +854,16 @@ export default function CustomerColors() {
 
           {/* SECTION 9: Final Review */}
           {reviewSelections.length > 0 && (
-            <div className="bg-on-surface border border-[#e5e5e3] rounded-2xl p-6">
-              <h3 className="font-headline font-bold text-lg text-surface-container-low flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-surface-container-low" translate="no">checklist</span>
+            <div className="bg-surface-container-high border border-[var(--color-outline-variant)] rounded-2xl p-6">
+              <h3 className="font-headline font-bold text-lg text-on-surface flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-on-surface" translate="no">checklist</span>
                 Final Review
               </h3>
-              <div className="bg-white rounded-xl p-4 font-mono text-sm space-y-1">
+              <div className="bg-surface-container rounded-xl p-4 font-mono text-sm space-y-1">
                 {reviewSelections.map((s) => (
-                  <div key={s.surface_area} className="flex justify-between py-1 border-b border-[#e5e5e3]/50 last:border-0">
+                  <div key={s.surface_area} className="flex justify-between py-1 border-b border-[var(--color-outline-variant)]/50 last:border-0">
                     <span className="text-outline-variant capitalize">{s.surface_area.replace(/_/g, " ")}</span>
-                    <span className="font-bold text-surface-container-low">{s.color_code}</span>
+                    <span className="font-bold text-on-surface">{s.color_code}</span>
                   </div>
                 ))}
               </div>
@@ -871,10 +871,10 @@ export default function CustomerColors() {
           )}
 
           {/* SECTION 10: Confirmation */}
-          <div className="bg-white border-2 border-[#e5e5e3] rounded-2xl p-6">
+          <div className="bg-surface-container border-2 border-[var(--color-outline-variant)] rounded-2xl p-6">
             <label className="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="w-5 h-5 mt-0.5 rounded border-surface-container-low text-surface-container-low accent-surface-container-low cursor-pointer" />
-              <span className="text-sm font-bold text-surface-container-low leading-relaxed">
+              <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="w-5 h-5 mt-0.5 rounded border-primary text-on-surface accent-primary cursor-pointer" />
+              <span className="text-sm font-bold text-on-surface leading-relaxed">
                 I confirm all paint selections are correct and final. I understand that changes may not be possible within 24 hours of the scheduled paint date.
               </span>
             </label>
