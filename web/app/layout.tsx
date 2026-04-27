@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -70,6 +71,7 @@ export default async function RootLayout({
           <InstallPrompt />
           </ThemeProvider>
         </NextIntlClientProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
