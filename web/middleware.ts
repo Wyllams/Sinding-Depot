@@ -11,7 +11,7 @@ const PUBLIC_CONTRACT_REGEX = /^\/projects\/[^/]+\/contract(\/[^/]+)?/;
 // Rotas não listadas aqui são consideradas restritas a admin.
 const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
   admin:       ['*'],
-  salesperson: ['/mobile/sales', '/sales', '/projects', '/change-orders', '/sales-reports', '/schedule', '/api', '/'],
+  salesperson: ['/mobile/sales', '/projects', '/change-orders', '/sales-reports', '/schedule', '/api', '/'],
   partner:     ['/field', '/projects', '/change-orders', '/schedule', '/api', '/'],
   crew:        ['/field', '/projects', '/change-orders', '/schedule', '/api', '/'],
   customer:    ['/customer', '/api'],

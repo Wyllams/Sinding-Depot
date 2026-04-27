@@ -92,7 +92,7 @@ function LoginFormContent() {
         const role = profile?.role || 'admin';
 
         if (role === 'salesperson') {
-          router.push('/sales');
+          router.push('/mobile/sales');
         } else if (role === 'partner' || role === 'crew') {
           router.push('/field');
         } else if (role === 'customer' || role === 'client') {
@@ -282,7 +282,7 @@ function QuickAccessButtons() {
 
   const quickAccess = [
     { role: "admin",       label: "Admin",      icon: "shield_person",  email: "admin@sidingdepot.com",        password: "Password123!", color: "#aeee2a", redirect: "/" },
-    { role: "salesperson", label: "Vendedor",    icon: "sell",           email: "salesperson@sidingdepot.com",  password: "Password123!", color: "#60a5fa", redirect: "/sales" },
+    { role: "salesperson", label: "Vendedor",    icon: "sell",           email: "salesperson@sidingdepot.com",  password: "Password123!", color: "#60a5fa", redirect: "/mobile/sales" },
     { role: "partner",     label: "Parceiro",    icon: "engineering",    email: "crew@sidingdepot.com",         password: "Password123!", color: "#f59e0b", redirect: "/field" },
     { role: "customer",    label: "Cliente",     icon: "person",         email: "wyllams_bione@customer.sidingdepot.app", password: "WyllamsB*2026", color: "#a78bfa", redirect: "/customer" },
   ];
