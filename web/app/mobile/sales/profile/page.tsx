@@ -261,7 +261,6 @@ export default function SalesMobileProfilePage() {
       {/* Reused Mobile NAV */}
       <MobileBottomNav items={[
         { icon: "dashboard",  label: "Dashboard", href: "/mobile/sales" },
-        { icon: "home_work",  label: "Projects",  href: "/mobile/sales/projects" },
         { icon: "group",      label: "Customers", href: "/mobile/sales/customers" },
         { icon: "assignment", label: "Requests",  href: "/mobile/sales/requests" },
       ]} />

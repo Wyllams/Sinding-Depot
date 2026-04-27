@@ -10,7 +10,6 @@ const MONTHLY_GOAL = 150_000;
 
 const SALES_NAV = [
   { icon: "dashboard",  label: "Dashboard", href: "/mobile/sales" },
-  { icon: "home_work",  label: "Projects",  href: "/mobile/sales/projects" },
   { icon: "group",      label: "Customers", href: "/mobile/sales/customers" },
   { icon: "assignment", label: "Requests",  href: "/mobile/sales/requests" },
 ];
@@ -208,45 +207,7 @@ export default function SalesMobileDashboard() {
         </p>
       </section>
 
-      {/* ── Hero Chart ─────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-br from-surface-container-low to-[#0a0a0a] rounded-3xl p-6 border border-outline-variant/20 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-32 h-32 bg-primary/10 blur-3xl rounded-full pointer-events-none" />
 
-        <div className="flex justify-between items-start mb-6 relative z-10">
-          <div className="flex flex-col">
-            <span className="text-[#7B7B78] font-bold text-[10px] tracking-widest uppercase">My Sales (YTD)</span>
-            <span className="text-3xl font-black text-on-surface mt-1 tracking-tighter">$142,500</span>
-          </div>
-          <div className="bg-primary/15 text-primary px-3 py-1 rounded-full text-xs font-bold font-mono">
-            +12.4%
-          </div>
-        </div>
-
-        {/* Sparkline */}
-        <div className="relative h-16 w-full mt-8">
-          <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#aeee2a" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#aeee2a" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <path d="M0,100 L0,70 L20,50 L40,65 L60,35 L80,45 L100,10 L100,100 Z" fill="url(#salesGradient)" />
-            <polyline
-              points="0,70 20,50 40,65 60,35 80,45 100,10"
-              fill="none" stroke="#aeee2a" strokeWidth="2.5"
-              vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round"
-            />
-          </svg>
-          {[{ x: 0, y: 70 }, { x: 20, y: 50 }, { x: 40, y: 65 }, { x: 60, y: 35 }, { x: 80, y: 45 }, { x: 100, y: 10 }].map((pt, i) => (
-            <div
-              key={i}
-              className="absolute w-2.5 h-2.5 bg-surface-container-low border-2 border-primary rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-sm"
-              style={{ left: `${pt.x}%`, top: `${pt.y}%` }}
-            />
-          ))}
-        </div>
-      </div>
 
       {/* ── Monthly Quota Card ─────────────────────────────────────────── */}
       <div className="bg-[#151515] border border-[var(--color-siding-green)]/20 rounded-3xl p-5 relative overflow-hidden">
