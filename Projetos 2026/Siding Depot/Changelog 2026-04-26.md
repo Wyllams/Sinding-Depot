@@ -325,6 +325,9 @@ Criada a página "My Requests" no aplicativo Field para que os Parceiros/Crews p
 **Por que foi feito:**
 A equipe e os parceiros enviavam Change Orders e Materiais Extras mas não tinham visão se foram aprovados, rejeitados ou não. O novo tracking reduzirá fricções com os administradores. Nenhuma informação financeira da obra é revelada à equipe de mão-de-obra, visando manter a negociação do admin com cliente em caráter privado.
 
+**Hotfix:**
+Foram aplicadas correções no mapeamento de dados do banco que impediam a renderização inicial da página. A query apontava para uma tabela errada (`crew_profiles` ao invés de `crews`) e a desestruturação do cliente falhava em arrays (1 para muitos). Agora o parse lida apropriadamente com Arrays x Objetos no mapeamento local.
+
 **Arquivos modificados:**
 - `web/app/field/requests/page.tsx`
 - `web/components/field/FieldBottomNav.tsx`

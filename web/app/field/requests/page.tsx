@@ -119,27 +119,42 @@ export default function FieldRequestsPage() {
       }
 
       // Get active assignments
-      const { data: assignments, error } = await supabase
+      const { data: assignments, error: assignErr } = await supabase
         .from("service_assignments")
-        .select(`
-          service_id,
-          status,
-          jobs (
-            id,
-            job_number,
-            customers ( first_name, last_name, address, city )
-          )
-        `)
+        .select("job_service_id, status")
         .eq("crew_id", crewProfile.id)
         .in("status", ["scheduled", "in_progress", "assigned"]);
 
-      if (error) throw error;
+      if (assignErr) throw assignErr;
+      if (!assignments || assignments.length === 0) {
+        setActiveJobs([]);
+        return;
+      }
 
-      // Map to unique jobs (in case multiple services on same job)
+      const jsIds = assignments.map(a => a.job_service_id).filter(Boolean) as string[];
+
+      // Fetch jobs related to these job_services
+      const { data: jsData, error: jsErr } = await supabase
+        .from("job_services")
+        .select(`
+          id,
+          jobs (
+            id,
+            job_number,
+            service_address_line_1,
+            city,
+            customers ( full_name )
+          )
+        `)
+        .in("id", jsIds);
+
+      if (jsErr) throw jsErr;
+
+      // Map to unique jobs
       const jobMap = new Map<string, ActiveJob>();
 
-      assignments?.forEach((a: any) => {
-        const jobRaw = a.jobs;
+      jsData?.forEach((js: any) => {
+        const jobRaw = js.jobs;
         if (!jobRaw) return;
         const job = Array.isArray(jobRaw) ? jobRaw[0] : jobRaw;
         if (!job) return;
@@ -152,9 +167,9 @@ export default function FieldRequestsPage() {
           jobMap.set(jId, {
             jobId: jId,
             jobNumber: job.job_number,
-            customerName: customer ? `${customer.first_name || ""} ${customer.last_name || ""}`.trim() : "Unknown",
-            address: customer ? `${customer.address || ""}, ${customer.city || ""}`.replace(/^,\s/, "") : "",
-            serviceId: a.service_id,
+            customerName: customer ? customer.full_name || "Unknown" : "Unknown",
+            address: `${job.service_address_line_1 || ""}, ${job.city || ""}`.replace(/^,\s/, ""),
+            serviceId: js.id, // we just need any valid serviceId
           });
         }
       });
