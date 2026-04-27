@@ -14,6 +14,22 @@ const SALES_NAV = [
 
 type ChangeOrderStatus = "draft" | "pending_customer_approval" | "approved" | "rejected" | "cancelled";
 
+interface COAttachment {
+  id: string;
+  file_name: string;
+  url: string;
+  mime_type: string | null;
+  change_order_item_id: string | null;
+}
+
+interface COItem {
+  id: string;
+  description: string;
+  amount: number | null;
+  sort_order: number;
+  change_order_attachments: COAttachment[];
+}
+
 interface ChangeOrder {
   id: string;
   title: string;
@@ -33,7 +49,8 @@ interface ChangeOrder {
     service_type: { name: string } | null;
   } | null;
   requested_by_profile: { full_name: string } | null;
-  attachments: Array<{ id: string; file_name: string; url: string }> | null;
+  items: COItem[];
+  attachments: COAttachment[];
 }
 
 const STATUS_CONFIG: Record<ChangeOrderStatus, { label: string; bg: string; text: string }> = {
@@ -132,7 +149,7 @@ export default function SalesRequestsPage() {
         return;
       }
 
-      // Step 2: fetch change orders scoped to those jobs
+      // Step 2: fetch change orders scoped to those jobs (including items + their attachments)
       const { data, error } = await supabase
         .from("change_orders")
         .select(`
@@ -141,33 +158,23 @@ export default function SalesRequestsPage() {
           rejection_reason, requested_at, decided_at,
           job:jobs (id, job_number, customer:customers (full_name)),
           job_service:job_services (service_type:service_types (name)),
-          requested_by_profile:profiles!change_orders_requested_by_profile_id_fkey (full_name),
-          attachments:change_order_attachments (id, file_name, url)
+          requested_by_profile:profiles (full_name),
+          items:change_order_items (
+            id, description, amount, sort_order,
+            change_order_attachments (id, file_name, url, mime_type, change_order_item_id)
+          ),
+          attachments:change_order_attachments (id, file_name, url, mime_type, change_order_item_id)
         `)
         .in("job_id", jobIds)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        // Retry without specific fkey hint
-        const { data: retryData, error: retryError } = await supabase
-          .from("change_orders")
-          .select(`
-            id, title, description, status,
-            proposed_amount, approved_amount,
-            rejection_reason, requested_at, decided_at,
-            job:jobs (id, job_number, customer:customers (full_name)),
-            job_service:job_services (service_type:service_types (name)),
-            requested_by_profile:profiles (full_name),
-            attachments:change_order_attachments (id, file_name, url)
-          `)
-          .in("job_id", jobIds)
-          .order("created_at", { ascending: false });
-
-        if (retryError) throw retryError;
-        setOrders((retryData ?? []) as any[]);
-      } else {
-        setOrders((data ?? []) as any[]);
-      }
+      if (error) throw error;
+      // Sort items by sort_order
+      const normalized = (data ?? []).map((o: any) => ({
+        ...o,
+        items: (o.items ?? []).slice().sort((a: any, b: any) => a.sort_order - b.sort_order),
+      }));
+      setOrders(normalized as any[]);
     } catch (err) {
       console.error("[SalesRequests] fetch error:", err);
     } finally {
@@ -527,29 +534,108 @@ export default function SalesRequestsPage() {
                   </div>
                 )}
 
-                {/* Attachments — read-only */}
-                {selectedOrder.attachments && selectedOrder.attachments.length > 0 && (
+                {/* Items — numbered list with per-item photos */}
+                {selectedOrder.items && selectedOrder.items.length > 0 && (
                   <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#7B7B78] mb-2 block">
-                      Attachments ({selectedOrder.attachments.length})
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#7B7B78] mb-3 block">
+                      ITEMS ({selectedOrder.items.length})
                     </label>
-                    <div className="flex flex-col gap-2">
-                      {selectedOrder.attachments.map(att => (
-                        <a
-                          key={att.id}
-                          href={att.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3 bg-surface-container-high rounded-2xl px-4 py-3 border border-outline-variant/20 active:scale-[0.98] transition-transform"
-                        >
-                          <span className="material-symbols-outlined text-primary text-[18px]">attach_file</span>
-                          <span className="text-sm text-on-surface font-medium truncate flex-1">{att.file_name}</span>
-                          <span className="material-symbols-outlined text-[#7B7B78] text-[16px]">open_in_new</span>
-                        </a>
-                      ))}
+                    <div className="flex flex-col gap-3">
+                      {selectedOrder.items.map((item, idx) => {
+                        // Photos that belong specifically to this item
+                        const itemPhotos = item.change_order_attachments?.filter(
+                          a => a.change_order_item_id === item.id
+                        ) ?? [];
+                        const isImage = (url: string) =>
+                          /\.(jpg|jpeg|png|webp|gif|heic)$/i.test(url);
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="bg-surface-container-high rounded-2xl p-4 border border-outline-variant/20"
+                          >
+                            {/* Item header */}
+                            <div className="flex items-start gap-3 mb-3">
+                              <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">
+                                {idx + 1}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-on-surface leading-snug">
+                                  {item.description || "No description"}
+                                </p>
+                                {item.amount != null && (
+                                  <p className="text-xs text-primary font-black mt-1">
+                                    {formatCurrency(item.amount)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Per-item photos */}
+                            {itemPhotos.length > 0 && (
+                              <div className="grid grid-cols-3 gap-2 mt-1">
+                                {itemPhotos.map(photo => (
+                                  <a
+                                    key={photo.id}
+                                    href={photo.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="aspect-square rounded-xl overflow-hidden border border-outline-variant/30 block"
+                                  >
+                                    {isImage(photo.url) ? (
+                                      <img
+                                        src={photo.url}
+                                        alt={photo.file_name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-surface-container flex flex-col items-center justify-center gap-1">
+                                        <span className="material-symbols-outlined text-primary text-[20px]">attach_file</span>
+                                        <span className="text-[8px] text-on-surface-variant font-bold truncate px-1 w-full text-center">
+                                          {photo.file_name}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
+
+                {/* Orphan attachments (not linked to any item) */}
+                {(() => {
+                  const orphans = selectedOrder.attachments?.filter(
+                    a => !a.change_order_item_id
+                  ) ?? [];
+                  if (orphans.length === 0) return null;
+                  return (
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#7B7B78] mb-2 block">
+                        Other Files ({orphans.length})
+                      </label>
+                      <div className="flex flex-col gap-2">
+                        {orphans.map(att => (
+                          <a
+                            key={att.id}
+                            href={att.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-3 bg-surface-container-high rounded-2xl px-4 py-3 border border-outline-variant/20"
+                          >
+                            <span className="material-symbols-outlined text-primary text-[18px]">attach_file</span>
+                            <span className="text-sm text-on-surface font-medium truncate flex-1">{att.file_name}</span>
+                            <span className="material-symbols-outlined text-[#7B7B78] text-[16px]">open_in_new</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Save button */}
                 <button

@@ -36,6 +36,7 @@ export default function SalesMobileDashboard() {
   // Monthly quota
   const [soldThisMonth, setSoldThisMonth]   = useState<number>(0);
   const [loadingQuota, setLoadingQuota]     = useState(true);
+  const [customersCount, setCustomersCount] = useState<number | null>(null);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -87,6 +88,9 @@ export default function SalesMobileDashboard() {
       const jobsRevenue = (jobsData ?? []).reduce(
         (sum, j) => sum + (Number(j.contract_amount) || 0), 0
       );
+
+      // Count customers (distinct jobs) closed this month
+      setCustomersCount((jobsData ?? []).length);
 
       const jobIds = (jobsData ?? []).map(j => j.id);
 
@@ -267,7 +271,9 @@ export default function SalesMobileDashboard() {
           <div className="bg-surface-container-low active:scale-[0.98] transition-transform duration-200 rounded-3xl p-6 flex justify-between items-center border border-outline-variant/20 shadow-lg relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
             <div className="flex flex-col">
-              <span className="text-3xl font-black text-on-surface">—</span>
+              <span className="text-3xl font-black text-on-surface">
+                {customersCount === null ? "—" : customersCount}
+              </span>
               <span className="text-xs font-bold text-[#7B7B78] uppercase tracking-wider mt-1">Customers<br />This Month</span>
             </div>
             <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center text-primary border border-primary/20">
