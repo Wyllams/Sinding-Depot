@@ -245,23 +245,99 @@ export default function SalesRequestsPage() {
 
   const closeOrder = () => setSelectedOrder(null);
 
-  // ── Save changes ───────────────────────────────────────────────────────
-  const handleSave = async () => {
+  // ── Save draft (keeps current status, just updates fields) ───────────────
+  const handleSaveDraft = async () => {
     if (!selectedOrder || !userId) return;
     setSaving(true);
     try {
-      const isDecided = editStatus === "approved" || editStatus === "rejected";
+      const { error } = await supabase
+        .from("change_orders")
+        .update({
+          title:           editTitle.trim(),
+          description:     editDescription.trim(),
+          proposed_amount: editProposed !== "" ? Number(editProposed) : null,
+          updated_at:      new Date().toISOString(),
+        })
+        .eq("id", selectedOrder.id);
 
+      if (error) throw error;
+
+      setOrders(prev =>
+        prev.map(o =>
+          o.id === selectedOrder.id
+            ? { ...o, title: editTitle.trim(), description: editDescription.trim(), proposed_amount: editProposed !== "" ? Number(editProposed) : null }
+            : o
+        )
+      );
+      closeOrder();
+    } catch (err: any) {
+      console.error("[Requests] saveDraft error:", err);
+      alert(`Failed to save: ${err?.message ?? "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Send to Customer (sets status = pending_customer_approval) ────────────
+  const handleSendToCustomer = async () => {
+    if (!selectedOrder || !userId) return;
+    if (!editProposed || Number(editProposed) <= 0) {
+      alert("Please enter the proposed value before sending to the customer.");
+      return;
+    }
+    setSaving(true);
+    try {
       const { error } = await supabase
         .from("change_orders")
         .update({
           title:            editTitle.trim(),
           description:      editDescription.trim(),
-          status:           editStatus,
-          proposed_amount:  editProposed !== "" ? Number(editProposed) : null,
-          approved_amount:  editStatus === "approved" && editApproved !== "" ? Number(editApproved) : null,
-          rejection_reason: editStatus === "rejected" ? editRejection.trim() : null,
-          decided_at:       isDecided ? new Date().toISOString() : null,
+          proposed_amount:  Number(editProposed),
+          status:           "pending_customer_approval",
+          reviewed_by:      userId,
+          reviewed_at:      new Date().toISOString(),
+          updated_at:       new Date().toISOString(),
+        })
+        .eq("id", selectedOrder.id);
+
+      if (error) throw error;
+
+      setOrders(prev =>
+        prev.map(o =>
+          o.id === selectedOrder.id
+            ? { ...o, title: editTitle.trim(), description: editDescription.trim(), proposed_amount: Number(editProposed), status: "pending_customer_approval" as ChangeOrderStatus }
+            : o
+        )
+      );
+      closeOrder();
+    } catch (err: any) {
+      console.error("[Requests] sendToCustomer error:", err);
+      alert(`Failed to send: ${err?.message ?? "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Approve / Reject after customer responds ──────────────────────────────
+  const handleDecision = async (decision: "approved" | "rejected") => {
+    if (!selectedOrder || !userId) return;
+    if (decision === "approved" && (!editApproved || Number(editApproved) <= 0)) {
+      alert("Please enter the approved value.");
+      return;
+    }
+    if (decision === "rejected" && !editRejection.trim()) {
+      alert("Please enter the rejection reason.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("change_orders")
+        .update({
+          status:           decision,
+          approved_amount:  decision === "approved" ? Number(editApproved) : null,
+          rejection_reason: decision === "rejected" ? editRejection.trim() : null,
+          decided_at:       new Date().toISOString(),
           reviewed_by:      userId,
           updated_at:       new Date().toISOString(),
         })
@@ -269,27 +345,17 @@ export default function SalesRequestsPage() {
 
       if (error) throw error;
 
-      // Optimistic update in list
       setOrders(prev =>
         prev.map(o =>
           o.id === selectedOrder.id
-            ? {
-                ...o,
-                title:            editTitle.trim(),
-                description:      editDescription.trim(),
-                status:           editStatus,
-                proposed_amount:  editProposed !== "" ? Number(editProposed) : null,
-                approved_amount:  editStatus === "approved" && editApproved !== "" ? Number(editApproved) : null,
-                rejection_reason: editStatus === "rejected" ? editRejection.trim() : null,
-              }
+            ? { ...o, status: decision as ChangeOrderStatus, approved_amount: decision === "approved" ? Number(editApproved) : null, rejection_reason: decision === "rejected" ? editRejection.trim() : null }
             : o
         )
       );
-
       closeOrder();
     } catch (err: any) {
-      console.error("[SalesRequests] save error:", err);
-      alert(`Failed to save: ${err?.message ?? "Please try again."}`);
+      console.error("[Requests] decision error:", err);
+      alert(`Failed to update: ${err?.message ?? "Please try again."}`);
     } finally {
       setSaving(false);
     }
@@ -681,24 +747,79 @@ export default function SalesRequestsPage() {
                   );
                 })()}
 
-                {/* Save button */}
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="mt-2 w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-primary text-[#1a2e00] font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50 shadow-[0_0_20px_rgba(174,238,42,0.15)]"
-                >
-                  {saving ? (
+                {/* ── Action Buttons — context-aware by status ── */}
+                <div className="mt-4 flex flex-col gap-3">
+
+                  {/* DRAFT or already pending: show Save Draft + Send to Customer */}
+                  {(selectedOrder.status === "draft" || selectedOrder.status === "pending_customer_approval") && (
                     <>
-                      <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-[18px]">save</span>
-                      Save Changes
+                      {/* Send to Customer — primary action */}
+                      <button
+                        onClick={handleSendToCustomer}
+                        disabled={saving}
+                        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-primary text-[#1a2e00] font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50 shadow-[0_0_20px_rgba(174,238,42,0.2)]"
+                      >
+                        {saving ? (
+                          <><span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>Sending...</>
+                        ) : (
+                          <><span className="material-symbols-outlined text-[18px]">send</span>Send to Customer</>
+                        )}
+                      </button>
+
+                      {/* Save Draft — secondary action */}
+                      <button
+                        onClick={handleSaveDraft}
+                        disabled={saving}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-surface-container-high border border-outline-variant/30 text-on-surface font-bold text-sm active:scale-[0.98] transition-transform disabled:opacity-50"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">draft</span>
+                        Save as Draft
+                      </button>
                     </>
                   )}
-                </button>
+
+                  {/* APPROVED: show approved amount field + mark approved */}
+                  {selectedOrder.status === "approved" && (
+                    <>
+                      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-3 text-center">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">Customer Approved ✓</p>
+                        <p className="text-xs text-on-surface-variant">You can update the approved value below.</p>
+                      </div>
+                      <button
+                        onClick={() => handleDecision("approved")}
+                        disabled={saving}
+                        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-primary text-[#1a2e00] font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50"
+                      >
+                        {saving ? <><span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>Saving...</> : <><span className="material-symbols-outlined text-[18px]">check_circle</span>Confirm Approval</>}
+                      </button>
+                    </>
+                  )}
+
+                  {/* REJECTED: show rejection reason + confirm */}
+                  {selectedOrder.status === "rejected" && (
+                    <>
+                      <div className="bg-error/5 border border-error/20 rounded-2xl p-3 text-center">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-error mb-1">Customer Rejected</p>
+                        <p className="text-xs text-on-surface-variant">You can update the rejection reason below.</p>
+                      </div>
+                      <button
+                        onClick={() => handleDecision("rejected")}
+                        disabled={saving}
+                        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-error/90 text-white font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50"
+                      >
+                        {saving ? <><span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>Saving...</> : <><span className="material-symbols-outlined text-[18px]">cancel</span>Confirm Rejection</>}
+                      </button>
+                    </>
+                  )}
+
+                  {/* CANCELLED: read-only notice */}
+                  {selectedOrder.status === "cancelled" && (
+                    <div className="bg-zinc-700/20 border border-zinc-600/20 rounded-2xl p-4 text-center">
+                      <span className="material-symbols-outlined text-zinc-500 text-[24px] mb-1 block">block</span>
+                      <p className="text-sm font-bold text-zinc-400">This change order was cancelled.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
