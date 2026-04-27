@@ -1130,13 +1130,14 @@ export default function ProjectDetailPage() {
 
   async function handleGateChange(gate: string) {
     setGateStatus(gate);
-    // Sync Job Start Status: READY → Active (Confirmed), anything else → Pending
-    const newJobStatus = gate === "READY" ? "scheduled" : "pending";
+    // Only update gate_status (Gating / Operational Status).
+    // Job Start Status (status) is controlled exclusively by the Schedule/Calendar page.
+    // These two fields are INDEPENDENT.
     await supabase
       .from("jobs")
-      .update({ gate_status: gate, status: newJobStatus })
+      .update({ gate_status: gate })
       .eq("id", jobId);
-    setJob((prev: any) => prev ? { ...prev, status: newJobStatus } : prev);
+    // Do NOT update job.status here — it is managed by the calendar
   }
 
   async function handleResolveBlocker(blockerId: string) {

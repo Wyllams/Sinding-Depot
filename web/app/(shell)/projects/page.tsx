@@ -280,22 +280,23 @@ export default function ProjectsPage() {
   }
 
   async function handleGateChange(jobId: string, gate: string) {
-    // Sync Job Start Status: READY → Active (Confirmed), anything else → Pending
-    const newJobStatus = gate === "READY" ? "scheduled" : "pending";
+    // Only update gate_status (Gating / Operational Status).
+    // Job Start Status (status) is controlled exclusively by the Schedule/Calendar page.
+    // These two fields are INDEPENDENT.
 
-    // Optimistic update (gate fields + status)
+    // Optimistic update (gate fields only — status untouched)
     setJobs((prev) =>
       prev.map((j) =>
         j.id === jobId
-          ? { ...j, blocker_type: gate, gate_status: gate, status: newJobStatus }
+          ? { ...j, blocker_type: gate, gate_status: gate }
           : j
       )
     );
 
-    // Persist gate_status + status in DB
+    // Persist only gate_status in DB — do NOT touch the status field
     await supabase
       .from("jobs")
-      .update({ gate_status: gate, status: newJobStatus })
+      .update({ gate_status: gate })
       .eq("id", jobId);
   }
 
