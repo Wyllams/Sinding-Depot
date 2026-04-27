@@ -39,7 +39,7 @@ const STATUS_MAP: Record<string, { label: string; style: string }> = {
 // SP color by salesperson name (first name prefix match)
 function spColor(name: string): string {
   const lower = (name ?? "").toLowerCase();
-  if (lower.startsWith("matt") || lower.startsWith("mat")) return "#22c55e";
+  if (lower.startsWith("matheus") || lower.startsWith("mat")) return "#22c55e";
   if (lower.startsWith("arm"))                              return "#ef4444";
   if (lower.startsWith("rub"))                              return "#a855f7";
   return "#60a5fa";

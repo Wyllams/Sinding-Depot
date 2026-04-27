@@ -29,7 +29,7 @@ const GATE_CONFIG: Record<string, { color: string, icon: string, title: string, 
 type GateConfigKey = keyof typeof GATE_CONFIG;
 
 const SELLER_CONFIG = {
-  MATHEUS: { label: "Matheus (Matt)", color: "#22c55e", initial: "M", dbName: "Matt" },
+  MATHEUS: { label: "Matheus", color: "#22c55e", initial: "M", dbName: "Matheus" },
   ARMANDO: { label: "Armando", color: "#ef4444", initial: "A", dbName: "Armando" },
   RUBY: { label: "Ruby", color: "#a855f7", initial: "R", dbName: "Ruby" },
 };

@@ -47,7 +47,7 @@ interface DashboardData {
 
 // ── Color Map ──────────────────────────────────────────────────────────────
 const SP_COLORS: Record<string, string> = {
-  Matt:    "#22c55e",
+  Matheus: "#22c55e",
   Armando: "#ef4444",
   Ruby:    "#a855f7",
 };
@@ -222,7 +222,7 @@ export default function ReportsPage() {
   const [savedSummary, setSavedSummary] = useState<string | null>(null);
   const [savingSummary, setSavingSummary] = useState(false);
 
-  // ── Annual Report Data (Ruby & Matt) ────────────────────────────────────
+  // ── Annual Report Data (Ruby & Matheus) ────────────────────────────────────
   const [annualData, setAnnualData] = useState<Record<string, number[]>>({});
   const [annualSalespeople, setAnnualSalespeople] = useState<{ id: string; name: string; color: string }[]>([]);
   const [annualTotalByMonth, setAnnualTotalByMonth] = useState<number[]>(Array(12).fill(0));
@@ -656,15 +656,15 @@ export default function ReportsPage() {
   // Helper: find salesperson job count by keyword match on name
   const getSpJobCount = (keyword: string): number => {
     if (!data) return 0;
-    const searchStr = keyword.toLowerCase() === 'matt' ? 'matheus' : keyword.toLowerCase();
-    const sp = data.salespeople.find((s) => s.full_name.toLowerCase().includes(searchStr) || s.full_name.toLowerCase().includes(keyword.toLowerCase()));
+    const searchStr = keyword.toLowerCase();
+    const sp = data.salespeople.find((s) => s.full_name.toLowerCase().includes(searchStr));
     return sp?.jobs_sold_count ?? 0;
   };
 
   const getSpRevenue = (keyword: string): string => {
     if (!data) return fmt(0);
-    const searchStr = keyword.toLowerCase() === 'matt' ? 'matheus' : keyword.toLowerCase();
-    const sp = data.salespeople.find((s) => s.full_name.toLowerCase().includes(searchStr) || s.full_name.toLowerCase().includes(keyword.toLowerCase()));
+    const searchStr = keyword.toLowerCase();
+    const sp = data.salespeople.find((s) => s.full_name.toLowerCase().includes(searchStr));
     return fmt(sp?.total_revenue ?? 0);
   };
 
@@ -673,7 +673,7 @@ export default function ReportsPage() {
 ✅ Total Jobs Closed: {{totalJobs}}
 
 🟪 Ruby: {{rubyJobs}}
-🟩 Matheus: {{mattJobs}}
+🟩 Matheus: {{matheusJobs}}
 🟥 Armando: {{armandoJobs}}
 
 🎯 Monthly Goal: {{monthlyGoal}}
@@ -696,10 +696,10 @@ export default function ReportsPage() {
     "{{topPerformer}}": data?.salespeople.length && data.salespeople[0].total_revenue > 0 ? `${data.salespeople[0].full_name} (${fmt(data.salespeople[0].total_revenue)})` : "N/A",
     "{{daysLeft}}": String(periodDaysLeft),
     "{{rubyJobs}}": String(getSpJobCount("Ruby")),
-    "{{mattJobs}}": String(getSpJobCount("Matt")),
+    "{{matheusJobs}}": String(getSpJobCount("Matheus")),
     "{{armandoJobs}}": String(getSpJobCount("Armando")),
     "{{rubyRevenue}}": getSpRevenue("Ruby"),
-    "{{mattRevenue}}": getSpRevenue("Matt"),
+    "{{matheusRevenue}}": getSpRevenue("Matheus"),
     "{{armandoRevenue}}": getSpRevenue("Armando"),
   };
 
