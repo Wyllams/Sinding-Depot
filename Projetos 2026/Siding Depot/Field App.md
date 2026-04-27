@@ -31,8 +31,8 @@ Layout separado sem Sidebar administrativa.
 |------|----------------|
 | `/field` | Dashboard com contagem de jobs atribuídos |
 | `/field/jobs` | My Jobs — projetos atribuídos ao parceiro logado |
-| `/field/alerts` | Alertas e [[Notificações em Tempo Real]] de campo |
-| `/field/profile` | Perfil do crew/partner |
+| `/field/services` | Service Calls — para acompanhamento e report do Parceiro logado |
+| `/field/requests` | My Requests — Acompanhar status dos Change Orders e Extra Materials enviados |
 
 ---
 

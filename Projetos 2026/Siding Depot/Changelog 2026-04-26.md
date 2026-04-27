@@ -308,6 +308,30 @@ Containers com `overflow-x-auto` forçam `overflow-y` escondido no CSS padrão q
 
 ---
 
+## 13. Mobile Crew "My Requests" Tracker (`field/requests/page.tsx`)
+
+**O que foi feito:**
+Criada a página "My Requests" no aplicativo Field para que os Parceiros/Crews possam rastrear todas as suas solicitações de **Change Orders** e **Extra Materials** enviadas aos administradores. O ícone "Profile" foi removido do bottom navigation menu para dar espaço ao "My Requests".
+
+**Como foi feito:**
+1. **Nova Rota:** `app/field/requests/page.tsx`.
+2. **Bottom Navigation:** Alterado em `FieldBottomNav.tsx`, trocando `Profile` por `My Requests`. Traduzido para os três idiomas (`en.json`, `es.json`, `pt.json`).
+3. **Agrupamento & Acordeões:**
+   - Mostra um dropdown para o Crew selecionar o Projeto Ativo.
+   - Mostra listas separadas para "Change Orders" e "Extra Materials".
+   - Os status são visualizados através de badges ("Pending", "Approved", "Rejected").
+4. **Bottom Sheet Details:** Clicar numa solicitação abre uma visualização que descreve todo o pedido, mostrando informações, notas e as **fotos** enviadas do celular, ocultando estrategicamente todos e quaisquer **valores**.
+
+**Por que foi feito:**
+A equipe e os parceiros enviavam Change Orders e Materiais Extras mas não tinham visão se foram aprovados, rejeitados ou não. O novo tracking reduzirá fricções com os administradores. Nenhuma informação financeira da obra é revelada à equipe de mão-de-obra, visando manter a negociação do admin com cliente em caráter privado.
+
+**Arquivos modificados:**
+- `web/app/field/requests/page.tsx`
+- `web/components/field/FieldBottomNav.tsx`
+- `web/messages/*.json`
+
+---
+
 ## Resumo Técnico
 
 | Componente | Tipo de Mudança | Status |

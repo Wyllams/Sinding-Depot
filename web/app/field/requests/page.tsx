@@ -107,10 +107,10 @@ export default function FieldRequestsPage() {
 
       // Get crew profile
       const { data: crewProfile } = await supabase
-        .from("crew_profiles")
+        .from("crews")
         .select("id")
-        .eq("user_id", session.user.id)
-        .single();
+        .eq("profile_id", session.user.id)
+        .maybeSingle();
 
       if (!crewProfile) {
         console.error("No crew profile");
@@ -139,14 +139,21 @@ export default function FieldRequestsPage() {
       const jobMap = new Map<string, ActiveJob>();
 
       assignments?.forEach((a: any) => {
-        if (!a.jobs) return;
-        const jId = a.jobs.id;
+        const jobRaw = a.jobs;
+        if (!jobRaw) return;
+        const job = Array.isArray(jobRaw) ? jobRaw[0] : jobRaw;
+        if (!job) return;
+
+        const jId = job.id;
         if (!jobMap.has(jId)) {
+          const custRaw = job.customers;
+          const customer = Array.isArray(custRaw) ? custRaw[0] : custRaw;
+
           jobMap.set(jId, {
             jobId: jId,
-            jobNumber: a.jobs.job_number,
-            customerName: a.jobs.customers ? `${a.jobs.customers.first_name} ${a.jobs.customers.last_name}` : "Unknown",
-            address: a.jobs.customers ? `${a.jobs.customers.address}, ${a.jobs.customers.city}` : "",
+            jobNumber: job.job_number,
+            customerName: customer ? `${customer.first_name || ""} ${customer.last_name || ""}`.trim() : "Unknown",
+            address: customer ? `${customer.address || ""}, ${customer.city || ""}`.replace(/^,\s/, "") : "",
             serviceId: a.service_id,
           });
         }
