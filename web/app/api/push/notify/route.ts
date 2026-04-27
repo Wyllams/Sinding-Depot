@@ -14,7 +14,7 @@ import { sendPushToAdmins } from '@/lib/send-push';
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const payload = await request.json();
-    const { title, body, url, tag, notificationType, relatedEntityId, extraUserIds } = payload;
+    const { title, body, url, tag, notificationType, relatedEntityId, extraUserIds, notifyAdmins } = payload;
 
     if (!title || !body || !notificationType) {
       return NextResponse.json(
@@ -31,6 +31,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       notificationType,
       relatedEntityId,
       extraUserIds,
+      notifyAdmins,
     });
 
     return NextResponse.json({ success: true });

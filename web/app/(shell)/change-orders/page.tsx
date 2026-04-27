@@ -31,6 +31,7 @@ interface ChangeOrder {
     customer: any;
   } | null;
   job_service: any;
+  requested_by_profile_id: string | null;
   requested_by: { full_name: string; role: string } | null;
 }
 
@@ -104,6 +105,7 @@ export default function ChangeOrdersPage() {
           job_service:job_services (
             service_type:service_types (name)
           ),
+          requested_by_profile_id,
           requested_by:profiles!requested_by_profile_id (full_name, role)
         `)
         .order("created_at", { ascending: false });
@@ -876,6 +878,25 @@ function ChangeOrderDrawer({
         })
         .eq("id", order.id);
       if (error) throw error;
+
+      if (action === "approve" || action === "reject") {
+        if (order.requested_by_profile_id) {
+          await fetch("/api/push/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: `Change Order ${action === "approve" ? "Approved" : "Rejected"}`,
+              body: `Your Change Order "${order.title}" was ${action}d.`,
+              url: "/field/requests",
+              tag: `change_order_${order.id}`,
+              notificationType: "change_order_status",
+              extraUserIds: [order.requested_by_profile_id],
+              notifyAdmins: false,
+            }),
+          }).catch(console.error);
+        }
+      }
+
       onUpdated();
     } catch (err) {
       console.error("[ChangeOrderDrawer] action error:", err);

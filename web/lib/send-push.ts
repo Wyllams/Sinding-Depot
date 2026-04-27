@@ -14,6 +14,8 @@ interface SendPushOptions {
   relatedEntityId?: string;
   /** IDs adicionais de profiles para notificar (ex: vendedor, crew) */
   extraUserIds?: string[];
+  /** Se false, não enviará para os admins. Default: true */
+  notifyAdmins?: boolean;
 }
 
 export async function sendPushToAdmins(options: SendPushOptions): Promise<void> {
@@ -30,13 +32,16 @@ export async function sendPushToAdmins(options: SendPushOptions): Promise<void> 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // 1. Busca IDs dos admins
-    const { data: admins } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('role', 'admin');
+    // 1. Busca IDs dos admins se solicitado
+    let adminIds: string[] = [];
+    if (options.notifyAdmins !== false) {
+      const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin');
+      adminIds = (admins || []).map((a) => a.id);
+    }
 
-    const adminIds = (admins || []).map((a) => a.id);
     const allUserIds = [...new Set([...adminIds, ...(extraUserIds || [])])];
 
     if (allUserIds.length === 0) {

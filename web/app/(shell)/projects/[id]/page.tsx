@@ -561,6 +561,7 @@ export default function ProjectDetailPage() {
     id: string; material_name: string; customer_name: string; quantity: number; piece_size: string;
     document_url: string | null; document_name: string | null; notes: string | null;
     status: string; created_at: string; batch_id: string | null; requested_by_name: string | null;
+    requested_by: string | null;
   }[]>([]);
   const [loadingExtraMat, setLoadingExtraMat] = useState(false);
   const [showAddExtraMat, setShowAddExtraMat] = useState(false);
@@ -954,7 +955,7 @@ export default function ProjectDetailPage() {
     setLoadingExtraMat(true);
     const { data, error } = await supabase
       .from("extra_materials")
-      .select("id, material_name, customer_name, quantity, piece_size, document_url, document_name, notes, status, created_at, batch_id, requested_by_name")
+      .select("id, material_name, customer_name, quantity, piece_size, document_url, document_name, notes, status, created_at, batch_id, requested_by_name, requested_by")
       .eq("job_id", jobId)
       .order("created_at", { ascending: false });
     if (!error && data) setExtraMaterials(data);
@@ -1062,6 +1063,25 @@ export default function ProjectDetailPage() {
   async function handleExtraMatStatus(id: string, newStatus: string) {
     await supabase.from("extra_materials").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("id", id);
     setExtraMaterials((prev) => prev.map((m) => m.id === id ? { ...m, status: newStatus } : m));
+
+    if (newStatus === "approved" || newStatus === "rejected") {
+      const mat = extraMaterials.find((m) => m.id === id);
+      if (mat?.requested_by) {
+        await fetch("/api/push/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: `Extra Material ${newStatus === "approved" ? "Approved" : "Rejected"}`,
+            body: `Your request for ${mat.material_name} was ${newStatus}.`,
+            url: "/field/requests",
+            tag: `extra_material_${id}`,
+            notificationType: "material_status",
+            extraUserIds: [mat.requested_by],
+            notifyAdmins: false,
+          }),
+        }).catch(console.error);
+      }
+    }
   }
 
   // ── Dumpster Photos Functions ──
@@ -3937,6 +3957,25 @@ export default function ProjectDetailPage() {
               ...(action === "approve" ? { approved_amount: selectedCO.proposed_amount } : {}),
             }).eq("id", selectedCO.id);
             if (error) throw error;
+
+            if (action === "approve" || action === "reject") {
+              if (selectedCO.requested_by_profile_id) {
+                await fetch("/api/push/notify", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    title: `Change Order ${action === "approve" ? "Approved" : "Rejected"}`,
+                    body: `Your Change Order "${selectedCO.title}" was ${action}d.`,
+                    url: "/field/requests",
+                    tag: `change_order_${selectedCO.id}`,
+                    notificationType: "change_order_status",
+                    extraUserIds: [selectedCO.requested_by_profile_id],
+                    notifyAdmins: false,
+                  }),
+                }).catch(console.error);
+              }
+            }
+
             setSelectedCO(null);
             fetchJob();
           } catch (err) { console.error("[CODrawer] action error:", err); } finally { setCOActionLoading(false); }
