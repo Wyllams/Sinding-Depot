@@ -240,10 +240,9 @@ export default function SalesMobileOrdersPage() {
         )}
 
       <MobileBottomNav items={[
-        { icon: "dashboard", label: "Dashboard", href: "/mobile/sales" },
-        { icon: "home_work", label: "Projects", href: "/mobile/sales/projects" },
-        { icon: "request_quote", label: "Orders", href: "/mobile/sales/orders" },
-        { icon: "calendar_today", label: "Calendar", href: "/mobile/sales/calendar" },
+        { icon: "dashboard",  label: "Dashboard", href: "/mobile/sales" },
+        { icon: "group",      label: "Customers", href: "/mobile/sales/customers" },
+        { icon: "assignment", label: "Requests",  href: "/mobile/sales/requests" },
       ]} />
     </div>
   );
