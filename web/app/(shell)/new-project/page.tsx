@@ -1503,7 +1503,7 @@ export default function NewProjectPage() {
                       {/* Doors Price */}
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                          Price / Value
+                          What is the price?
                         </label>
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-outline">$</span>
