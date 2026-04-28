@@ -190,6 +190,12 @@ export default function CustomerChangeOrders() {
   const fmt$ = (v: number | null): string =>
     v != null ? `$${v.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "—";
 
+  const fmtDate = (iso: string): string => {
+    const dt = new Date(iso);
+    if (isNaN(dt.getTime())) return "—";
+    return `${(dt.getMonth() + 1).toString().padStart(2, "0")}/${dt.getDate().toString().padStart(2, "0")}/${dt.getFullYear()}`;
+  };
+
   const isImage = (url: string, mime: string | null): boolean =>
     (mime?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|svg)/i.test(url)) ?? false;
   const isVideo = (url: string, mime: string | null): boolean =>
@@ -198,7 +204,7 @@ export default function CustomerChangeOrders() {
   function renderAttachmentGrid(atts: ChangeOrderEntry["attachments"]): React.ReactNode {
     if (atts.length === 0) return null;
     return (
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
         {atts.map((att) => {
           const img = isImage(att.url, att.mime_type);
           const vid = isVideo(att.url, att.mime_type);
@@ -277,14 +283,19 @@ export default function CustomerChangeOrders() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="font-headline font-bold text-lg text-on-surface">{order.title}</h3>
-                      {order.requested_by?.full_name && (
-                        <p className="text-xs text-on-surface-variant mt-0.5 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[12px]" translate="no">person</span>
-                          {order.requested_by.full_name}
-                          <span className="text-on-surface-variant">•</span>
-                          <span className="capitalize">{order.requested_by.role}</span>
-                        </p>
-                      )}
+                      <p className="text-xs text-on-surface-variant mt-0.5 flex items-center gap-1 flex-wrap">
+                        <span className="material-symbols-outlined text-[12px]" translate="no">calendar_today</span>
+                        {fmtDate(order.requested_at)}
+                        {order.requested_by?.full_name && (
+                          <>
+                            <span className="text-on-surface-variant">•</span>
+                            <span className="material-symbols-outlined text-[12px]" translate="no">person</span>
+                            {order.requested_by.full_name}
+                            <span className="text-on-surface-variant">•</span>
+                            <span className="capitalize">{order.requested_by.role}</span>
+                          </>
+                        )}
+                      </p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${cfg.badge}`}>
                       {cfg.label}
