@@ -363,6 +363,7 @@ export default function NewProjectPage() {
     { value: "railing", label: "Railing", days: 1 },
   ];
   const [deckScope, setDeckScope] = useState("");
+  const [decksPrice, setDecksPrice] = useState("");
   const [decksStep, setDecksStep] = useState<"partner" | "config">("partner");
 
   const handleServiceToggle = (id: string) => {
@@ -564,6 +565,7 @@ export default function NewProjectPage() {
             let contractedAmount: number | null = null;
             if (svcId === "windows" && windowPrice) contractedAmount = parseFloat(windowPrice);
             if (svcId === "doors" && doorsPrice) contractedAmount = parseFloat(doorsPrice);
+            if (svcId === "decks" && decksPrice) contractedAmount = parseFloat(decksPrice);
 
             const { data: newJs } = await supabase.from("job_services").insert({
               job_id: newJob.id,
@@ -1343,6 +1345,7 @@ export default function NewProjectPage() {
                               }
                               if (openPartnerModal.id === "decks") {
                                 setDeckScope("");
+                                setDecksPrice("");
                                 setDecksStep("partner");
                               }
                               setOpenPartnerModal(null);
@@ -1564,6 +1567,25 @@ export default function NewProjectPage() {
                         Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners["decks"]}</span>. Now select the scope of work for this deck project.
                       </p>
 
+                      {/* Price Field */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                          What is the price?
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-outline">$</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={decksPrice}
+                            onChange={(e) => setDecksPrice(e.target.value)}
+                            placeholder="e.g. 3500.00"
+                            className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 pl-8 pr-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]"
+                          />
+                        </div>
+                      </div>
+
                       {/* Scope Dropdown */}
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
@@ -1617,7 +1639,7 @@ export default function NewProjectPage() {
                         </button>
                         <button
                           type="button"
-                          disabled={!deckScope}
+                          disabled={!deckScope || !decksPrice}
                           onClick={() => {
                             setDecksStep("partner");
                             setOpenPartnerModal(null);

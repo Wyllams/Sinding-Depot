@@ -4,13 +4,13 @@
 Milestone 1: Estabilização v1 (14 Itens)
 
 ## Current Phase
-Phase 13: Decks Popup — Campo de Preço acima do Scope
+Phase 14: Doors Popup — Campo de Preço (label + persistence)
 
 ## Phase Status
 Not Started
 
 ## Progress
-- Phases complete: 11 / 14 (Phase 5 skipped for now)
+- Phases complete: 12 / 14 (Phase 5 skipped for now)
 - Current blocker: None
 
 ## History
@@ -30,3 +30,4 @@ Not Started
 - 2026-04-28: **Phase 10 COMPLETE** — Sales Performance accordion sorted oldest → newest (ascending)
 - 2026-04-28: **Phase 11 COMPLETE** — Cash Payments sorted by payment date DESC (latest first)
 - 2026-04-28: **Phase 12 COMPLETE** — Windows popup: label corrected to "What is the price?", persistence verified OK
+- 2026-04-28: **Phase 13 COMPLETE** — Decks popup: price field added above Scope, persisted to contracted_amount
