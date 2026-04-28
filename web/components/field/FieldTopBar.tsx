@@ -3,19 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { useProfile } from "@/components/ProfileContext";
 import { useTranslations } from "next-intl";
 
 // =============================================
 // FieldTopBar — Header padrão mobile do Parceiro
 // Padrão unificado: Hamburger | Título central | Avatar
 // =============================================
-
-interface UserProfile {
-  full_name: string;
-  initials: string;
-  avatar_url: string | null;
-}
 
 const ROUTE_KEYS: Record<string, string> = {
   "/field": "home",
@@ -29,7 +23,7 @@ export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: b
   const router = useRouter();
   const t = useTranslations("MobileNav");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { profile } = useProfile();
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Sub-page detection (e.g., /field/jobs/[id])
@@ -40,30 +34,8 @@ export function FieldTopBar({ title: _fallback }: { title?: string; showBack?: b
   const titleKey = ROUTE_KEYS[pathname];
   const title = titleKey ? t(titleKey) : (_fallback || t("fieldCrew"));
 
-  // Load profile from Supabase
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !mounted) return;
-        const { data } = await supabase
-          .from("profiles")
-          .select("full_name, avatar_url")
-          .eq("id", user.id)
-          .single();
-        if (data && mounted) {
-          const name = data.full_name || user.email?.split("@")[0] || "Crew";
-          const initials = name.split(" ").map((w: string) => w[0]).join("").substring(0, 2).toUpperCase();
-          setProfile({ full_name: name, initials, avatar_url: data.avatar_url });
-        }
-      } catch (e) {
-        console.error("[FieldTopBar] profile load error:", e);
-      }
-    };
-    load();
-    return () => { mounted = false; };
-  }, []);
+  // Derive initials from profile
+  const initials = profile?.initials ?? "SD";
 
   // Click outside to close menu
   useEffect(() => {

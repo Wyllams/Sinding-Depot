@@ -150,6 +150,10 @@ export interface ScheduledJob {
   zip?: string;
   street?: string;
   source?: "jobs" | "service_assignments";
+  /** All service_assignment IDs when multiple services are merged into one card */
+  mergedAssignmentIds?: string[];
+  /** Quantity per service (e.g. 8 windows, 4 doors) — parallel to serviceNames */
+  serviceQuantities?: (number | null)[];
 }
 
 // ─── Service Code → ServiceId Mapper ─────────────────────────────

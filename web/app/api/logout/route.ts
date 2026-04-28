@@ -3,7 +3,8 @@ import { createServerClient } from '@supabase/ssr';
 
 // Server-side logout: signs out via Supabase SSR and clears all session cookies.
 // This is the only reliable way to clear the session when using middleware-based auth.
-export async function GET(request: NextRequest) {
+// Supports both GET (backward compat with window.location.href) and POST (CSRF-safe).
+async function handleLogout(request: NextRequest): Promise<NextResponse> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -36,3 +37,12 @@ export async function GET(request: NextRequest) {
   return response;
 }
 
+// GET — backward compatible (TopBar uses window.location.href)
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  return handleLogout(request);
+}
+
+// POST — CSRF-safe alternative
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  return handleLogout(request);
+}

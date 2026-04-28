@@ -446,7 +446,7 @@ export default function WindowsTrackerPage() {
           <div className="rounded-2xl overflow-hidden border flex flex-col flex-1 min-h-0 bg-surface-container-low border-outline-variant/20 shadow-sm">
             <div className="overflow-auto flex-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#474846 transparent" }}>
               <table className="w-full text-left border-collapse text-sm min-w-[1000px]">
-                <thead>
+                <thead className="sticky top-0 z-20 bg-surface-container-low shadow-[0_1px_2px_rgba(0,0,0,0.1)]">
                   <tr className="border-b border-outline-variant/20">
                     {[
                       { label: "Customer", align: "text-left", width: "w-[12%]" },

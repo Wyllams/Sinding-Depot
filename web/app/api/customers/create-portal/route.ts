@@ -1,63 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { generateUsername, generateSecurePassword } from "@/lib/user-utils";
+import { z } from "zod";
 
-// ── Server-side Supabase (service role — needed for auth.admin) ──
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
-
-// ── Username generator ──────────────────────────────────────
-function generateUsername(fullName: string): string {
-  const normalized = fullName
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z\s]/g, "")
-    .trim();
-
-  const parts = normalized.split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return `Customer_${Date.now()}`;
-
-  const firstName = parts[0];
-  const lastName = parts.length > 1 ? parts[parts.length - 1] : "";
-  return lastName ? `${firstName}_${lastName}` : firstName;
-}
-
-// ── Password generator ──────────────────────────────────────
-function generatePassword(fullName: string): string {
-  const normalized = fullName
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z\s]/g, "")
-    .trim();
-
-  const parts = normalized.split(/\s+/).filter(Boolean);
-  const firstName = parts[0] || "User";
-  const lastInitial =
-    parts.length > 1 ? parts[parts.length - 1][0].toUpperCase() : "X";
-  const year = new Date().getFullYear();
-  return `${firstName}${lastInitial}*${year}`;
-}
-
-// ── Payload ─────────────────────────────────────────────────
-interface CreatePortalPayload {
-  customerId: string;
-  fullName: string;
-  email?: string | null;
-  phone?: string | null;
-}
+// ── Validation Schema ───────────────────────────────────────
+const CreatePortalSchema = z.object({
+  customerId: z.string().uuid("customerId must be a valid UUID"),
+  fullName: z.string().min(2, "fullName must be at least 2 characters"),
+  email: z.string().email().nullish(),
+  phone: z.string().nullish(),
+});
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const body: CreatePortalPayload = await req.json();
+    const raw = await req.json();
+    const parsed = CreatePortalSchema.safeParse(raw);
 
-    if (!body.customerId || !body.fullName) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields: customerId, fullName" },
+        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+
+    const body = parsed.data;
 
     // ── 1. Check if customer already has portal access ──
     const { data: existingCustomer } = await supabaseAdmin
@@ -96,7 +62,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // ── 3. Generate credentials ──
-    const password = generatePassword(body.fullName);
+    const password = generateSecurePassword();
     const portalEmail = `${finalUsername.toLowerCase()}@customer.sidingdepot.app`;
 
     // ── 4. Create auth user in Supabase Auth ──
@@ -143,7 +109,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         profile_id: authUser.user.id,
         username: finalUsername,
         portal_email: portalEmail,
-        portal_password: password,
       })
       .eq("id", body.customerId);
 
@@ -248,6 +213,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       alreadyExists: false,
       username: finalUsername,
       portalEmail,
+      // Password returned ONCE for admin to share with customer.
+      // NOT stored in plaintext in the database.
+      temporaryPassword: password,
       message: `Portal created for ${body.fullName}`,
     });
   } catch (err) {

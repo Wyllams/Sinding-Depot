@@ -140,14 +140,15 @@ export default function SchedulePage() {
   const [editSq,      setEditSq]      = useState<string>("");
   const [selectedCrewIds, setSelectedCrewIds] = useState<Record<string, string>>({});
   const [serviceCrewOptions, setServiceCrewOptions] = useState<{
-    jobServiceId: string;
+    jobServiceIds: string[];
     serviceName: string;
     specialtyId: string;
     crews: { id: string; name: string; partnerName: string }[];
   }[]>([]);
   const [confirmingSchedule, setConfirmingSchedule] = useState(false);
   const [allCrews, setAllCrews] = useState<{ id: string; name: string }[]>([]);
-  const [deleteStep, setDeleteStep] = useState<"idle" | "confirming" | "deleting">("idle");
+  const [deleteStep, setDeleteStep] = useState<"idle" | "selecting" | "confirming" | "deleting">("idle");
+  const [deleteTargetId, setDeleteTargetId] = useState<string | "all" | null>(null);
 
   // ─── Undo Stack ────────────────────────────────
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
@@ -262,6 +263,21 @@ export default function SchedulePage() {
     const { data: crewsData } = await supabase.from("crews").select("id, name");
     if (crewsData) setAllCrews(crewsData);
 
+    // ── Fetch window_orders to get quantity for Windows/Doors services ──
+    const jobIds = [...new Set((assignments || []).map((a: any) => a.job_services?.jobs?.id).filter(Boolean))];
+    const windowOrdersByJob = new Map<string, number>();
+    if (jobIds.length > 0) {
+      const { data: woData } = await supabase
+        .from("window_orders")
+        .select("job_id, quantity")
+        .in("job_id", jobIds);
+      for (const wo of woData || []) {
+        if (wo.job_id && wo.quantity != null) {
+          windowOrdersByJob.set(wo.job_id, Number(wo.quantity));
+        }
+      }
+    }
+
     const mapped: ScheduledJob[] = (assignments || []).map((a: any) => {
       const js = a.job_services;
       const jb = js?.jobs;
@@ -307,13 +323,60 @@ export default function SchedulePage() {
         jobServiceIds: js?.id ? [js.id] : [],
         serviceCodes: js?.service_types?.code ? [js.service_types.code] : [],
         serviceNames: js?.service_types?.name ? [js.service_types.name] : [],
+        serviceQuantities: [(() => {
+          const svcCode = (js?.service_types?.code || "").toLowerCase();
+          // Windows: get quantity from window_orders table
+          if (svcCode.includes("window") && jb?.id) {
+            const woQty = windowOrdersByJob.get(jb.id);
+            if (woQty != null) return woQty;
+          }
+          // Doors / Decks / others: use job_services.quantity directly
+          return js?.quantity != null ? Number(js.quantity) : null;
+        })()],
         crewId: a.crew_id,
         sq: jb?.sq != null ? Number(jb.sq) : (js?.unit_of_measure === 'SQ' && js?.quantity != null ? Number(js.quantity) : null),
         contract_amount: jb?.contract_amount != null ? Number(jb.contract_amount) : undefined,
       };
     });
 
-    setJobs(mapped);
+    // ── Group assignments by jobId + crewId + startDate into single cards ──
+    const groupKey = (j: ScheduledJob) => `${j.jobId || ""}__${j.crewId || ""}__${j.startDate}`;
+    const groups = new Map<string, ScheduledJob[]>();
+    for (const job of mapped) {
+      const key = groupKey(job);
+      const arr = groups.get(key);
+      if (arr) arr.push(job);
+      else groups.set(key, [job]);
+    }
+
+    const merged: ScheduledJob[] = [];
+    for (const group of groups.values()) {
+      if (group.length === 1) {
+        // Single assignment — keep as-is, just mark mergedAssignmentIds
+        merged.push({ ...group[0], mergedAssignmentIds: [group[0].id] });
+      } else {
+        // Multiple assignments for same job+crew+date — merge into one card
+        const first = group[0];
+        const allServiceNames = group.flatMap(g => g.serviceNames || []);
+        const allServiceCodes = group.flatMap(g => g.serviceCodes || []);
+        const allServiceQuantities = group.flatMap(g => g.serviceQuantities || []);
+        const allJobServiceIds = group.flatMap(g => g.jobServiceIds || []);
+        const allAssignmentIds = group.map(g => g.id);
+        const maxDuration = Math.max(...group.map(g => g.durationDays));
+
+        merged.push({
+          ...first,
+          durationDays: maxDuration,
+          serviceNames: allServiceNames,
+          serviceCodes: allServiceCodes,
+          serviceQuantities: allServiceQuantities,
+          jobServiceIds: allJobServiceIds,
+          mergedAssignmentIds: allAssignmentIds,
+        });
+      }
+    }
+
+    setJobs(merged);
   };
 
 
@@ -456,9 +519,15 @@ export default function SchedulePage() {
          payload.crew_id = newCrewId;
       }
       
-      const { error } = await supabase.from("service_assignments").update(payload).eq("id", job.id);
-      
-      if (error) console.error("Update failed:", error);
+      // Update ALL merged assignment IDs (grouped cards)
+      const idsToUpdate = job.mergedAssignmentIds && job.mergedAssignmentIds.length > 0
+        ? job.mergedAssignmentIds
+        : [job.id];
+
+      for (const assignmentId of idsToUpdate) {
+        const { error } = await supabase.from("service_assignments").update(payload).eq("id", assignmentId);
+        if (error) console.error("Update failed for assignment:", assignmentId, error);
+      }
     } catch (err) {
       console.error("Failed to persist date change:", err);
     }
@@ -490,52 +559,103 @@ export default function SchedulePage() {
     if (job.jobServiceIds && job.jobServiceIds.length > 0) {
       const { data: allCrews } = await supabase
         .from("crews")
-        .select("id, name")
+        .select("id, name, partner_name")
         .eq("active", true)
         .order("name");
 
       const options: typeof serviceCrewOptions = [];
 
-      for (let i = 0; i < job.jobServiceIds.length; i++) {
-        const jsId      = job.jobServiceIds[i];
-        const svcName   = job.serviceNames?.[i]  || "Service";
-        const rawCode   = job.serviceCodes?.[i]  || "siding";
-        const serviceId = mapCodeToServiceId(rawCode);
-        const specCode  = SPECIALTY_CODE_MAP[serviceId] || "siding_installation";
+      if (job.serviceType === "doors_windows_decks") {
+        // Group all jobServiceIds for this DWD card into one dropdown
+        const specCode = "siding_installation"; // Using siding as fallback for partner matching
+        const { data: specialty } = await supabase.from("specialties").select("id").eq("code", specCode).maybeSingle();
+        
+        let sergioCrews = (allCrews || [])
+          .filter((c: any) => (c.name || "").toUpperCase().includes("SERGIO") || (c.partner_name || "").toUpperCase().includes("SERGIO"))
+          .map((c: any) => ({ id: c.id, name: c.name, partnerName: c.partner_name || c.name }));
 
-        const { data: specialty } = await supabase
-          .from("specialties")
-          .select("id")
-          .eq("code", specCode)
-          .maybeSingle();
+        const crews = sergioCrews.length > 0 ? sergioCrews : (allCrews || []).map((c: any) => ({ id: c.id, name: c.name, partnerName: c.partner_name || c.name }));
 
-        let filteredCrews: { id: string; name: string; partnerName: string }[] = [];
-
-        if (specialty) {
-          const { data: crewSpecs } = await supabase
-            .from("crew_specialties")
-            .select("crews!crew_specialties_crew_id_fkey(id, name, partner_name)")
-            .eq("specialty_id", specialty.id);
-
-          filteredCrews = (crewSpecs || [])
-            .map((cs: any) => cs.crews)
-            .filter((c: any) => c?.id && c?.name)
-            .map((c: any) => ({ id: c.id, name: c.name, partnerName: c.partner_name || c.name }));
+        // Auto-select Sergio if not already selected
+        if (sergioCrews.length > 0 && job.jobServiceIds && job.jobServiceIds.length > 0) {
+          const sergioId = sergioCrews[0].id;
+          setSelectedCrewIds(prev => {
+            const next = { ...prev };
+            if (!next[job.jobServiceIds![0]]) {
+              for (const id of job.jobServiceIds!) {
+                next[id] = sergioId;
+              }
+            }
+            return next;
+          });
         }
 
-        const fallback = (allCrews || []).map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          partnerName: c.partner_name || c.name,
-        }));
-        const crews = filteredCrews.length > 0 ? filteredCrews : fallback;
-
         options.push({
-          jobServiceId: jsId,
-          serviceName:  svcName,
-          specialtyId:  specialty?.id || "",
+          jobServiceIds: job.jobServiceIds,
+          serviceName: "DOORS / WINDOWS / DECKS",
+          specialtyId: specialty?.id || "fallback-dwd",
           crews,
         });
+      } else {
+        for (let i = 0; i < job.jobServiceIds.length; i++) {
+          const jsId      = job.jobServiceIds[i];
+          const svcName   = job.serviceNames?.[i]  || "Service";
+          const rawCode   = job.serviceCodes?.[i]  || "siding";
+          const serviceId = mapCodeToServiceId(rawCode);
+          const specCode  = SPECIALTY_CODE_MAP[serviceId] || "siding_installation";
+
+          const { data: specialty } = await supabase
+            .from("specialties")
+            .select("id")
+            .eq("code", specCode)
+            .maybeSingle();
+
+          let filteredCrews: { id: string; name: string; partnerName: string }[] = [];
+
+          if (specialty) {
+            const { data: crewSpecs } = await supabase
+              .from("crew_specialties")
+              .select("crews!crew_specialties_crew_id_fkey(id, name, partner_name)")
+              .eq("specialty_id", specialty.id);
+
+            filteredCrews = (crewSpecs || [])
+              .map((cs: any) => cs.crews)
+              .filter((c: any) => c?.id && c?.name)
+              .map((c: any) => ({ id: c.id, name: c.name, partnerName: c.partner_name || c.name }));
+          }
+
+          const fallback = (allCrews || []).map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            partnerName: c.partner_name || c.name,
+          }));
+          let crews = filteredCrews.length > 0 ? filteredCrews : fallback;
+
+          const isDWD = ["windows", "doors", "decks"].includes(serviceId);
+          if (isDWD) {
+            let sergioCrews = (allCrews || [])
+              .filter((c: any) => (c.name || "").toUpperCase().includes("SERGIO") || (c.partner_name || "").toUpperCase().includes("SERGIO"))
+              .map((c: any) => ({ id: c.id, name: c.name, partnerName: c.partner_name || c.name }));
+            
+            crews = sergioCrews.length > 0 ? sergioCrews : fallback;
+
+            if (sergioCrews.length > 0) {
+              const sergioId = sergioCrews[0].id;
+              setSelectedCrewIds(prev => {
+                const next = { ...prev };
+                if (!next[jsId]) next[jsId] = sergioId;
+                return next;
+              });
+            }
+          }
+
+          options.push({
+            jobServiceIds: [jsId],
+            serviceName:  svcName,
+            specialtyId:  specialty?.id || "fallback-dwd",
+            crews,
+          });
+        }
       }
 
       setServiceCrewOptions(options);
@@ -593,19 +713,23 @@ export default function SchedulePage() {
       // Update crews if options are available and selected
       if (serviceCrewOptions.length > 0) {
         for (const svcOpt of serviceCrewOptions) {
-          const crewId = selectedCrewIds[svcOpt.jobServiceId];
+          const crewId = selectedCrewIds[svcOpt.jobServiceIds[0]];
           if (!crewId || !svcOpt.specialtyId) continue;
           anyCrewSelected = true;
 
           if (editJob.source === "service_assignments") {
-             const { error: updateErr } = await supabase.from("service_assignments").update({
-                crew_id: crewId,
-                status: "scheduled",
-                scheduled_start_at: startAt,
-                scheduled_end_at: endAt.toISOString()
-             }).eq("id", editJob.id);
-             
-             if (updateErr) console.error("Crew update error:", updateErr);
+             const assignmentIds = editJob.mergedAssignmentIds && editJob.mergedAssignmentIds.length > 0
+               ? editJob.mergedAssignmentIds
+               : [editJob.id];
+             for (const aId of assignmentIds) {
+               const { error: updateErr } = await supabase.from("service_assignments").update({
+                  crew_id: crewId,
+                  status: "scheduled",
+                  scheduled_start_at: startAt,
+                  scheduled_end_at: endAt.toISOString()
+               }).eq("id", aId);
+               if (updateErr) console.error("Crew update error for", aId, updateErr);
+             }
           }
         }
       }
@@ -615,11 +739,16 @@ export default function SchedulePage() {
         if (editJob.source === "jobs") {
           await supabase.from("jobs").update({ target_completion_date: editDate }).eq("id", editJob.id);
         } else {
-          await supabase.from("service_assignments").update({
-            scheduled_start_at: startAt,
-            scheduled_end_at: endAt.toISOString(),
-            status: "scheduled",
-          }).eq("id", editJob.id);
+          const fallbackIds = editJob.mergedAssignmentIds && editJob.mergedAssignmentIds.length > 0
+            ? editJob.mergedAssignmentIds
+            : [editJob.id];
+          for (const aId of fallbackIds) {
+            await supabase.from("service_assignments").update({
+              scheduled_start_at: startAt,
+              scheduled_end_at: endAt.toISOString(),
+              status: "scheduled",
+            }).eq("id", aId);
+          }
         }
       }
 
@@ -1049,9 +1178,9 @@ export default function SchedulePage() {
                                   backdropFilter: "blur(16px)",
                                 }}
                             >
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="text-[11px] font-bold truncate" style={{ color: sc.color }}>
-                                  {job.clientName}
+                              <div className="flex items-start justify-between gap-1 w-full">
+                                <span className="text-[11px] font-bold truncate shrink" style={{ color: sc.color }}>
+                                  {job.clientName} {job.city && <span className="font-normal opacity-80">— {job.city}</span>}
                                 </span>
                                 {job.salesperson && (
                                   (() => {
@@ -1067,16 +1196,47 @@ export default function SchedulePage() {
                                   })()
                                 )}
                               </div>
-                              <div className="flex items-center justify-between gap-1 w-full mt-0.5">
-                                <span className="text-[9px] truncate" style={{ color: `${sc.color}90` }}>
-                                  <span className="font-semibold uppercase tracking-wider text-[8px]" style={{ color: sc.color }}>{job.serviceNames?.[0] || job.serviceType.replace("_", " ")}</span>
-                                  {job.city && <span className="opacity-80"> • {job.city}</span>}
-                                </span>
-                                {job.sq != null && (
-                                  <span className="px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest rounded-sm border shrink-0 bg-black/20 text-white border-white/20">
-                                    {job.sq} SQ
-                                  </span>
+                              {/* Service list — shows all merged services */}
+                              <div className="flex flex-col gap-0 mt-0.5 min-w-0 w-full">
+                                {(job.serviceNames && job.serviceNames.length > 1) ? (
+                                  /* Multiple services — show each on its own line with quantity */
+                                  <div className="flex flex-col gap-0 w-full">
+                                    {job.serviceNames.map((svcName, idx) => {
+                                      const qty = job.serviceQuantities?.[idx];
+                                      return (
+                                        <div key={idx} className="flex items-center justify-between gap-2 w-full">
+                                          <span className="font-semibold uppercase tracking-wider text-[8px] truncate" style={{ color: sc.color }}>
+                                            {svcName}
+                                          </span>
+                                          {qty != null && qty > 0 && (
+                                            <span className="text-[8px] font-black tabular-nums shrink-0" style={{ color: `${sc.color}cc` }}>
+                                              {qty}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  /* Single service — original layout */
+                                  <div className="flex items-center justify-between gap-2 w-full">
+                                    <span className="font-semibold uppercase tracking-wider text-[8px] truncate" style={{ color: sc.color }}>
+                                      {job.serviceNames?.[0] || job.serviceType.replace("_", " ")}
+                                    </span>
+                                    {job.serviceQuantities?.[0] != null && job.serviceQuantities[0] > 0 && (
+                                      <span className="text-[8px] font-black tabular-nums shrink-0" style={{ color: `${sc.color}cc` }}>
+                                        {job.serviceQuantities[0]}
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
+                                <div className="flex items-center justify-end gap-1 mt-1 w-full">
+                                  {job.sq != null && (job.serviceType === "siding" || job.serviceType === "paint") && (
+                                    <span className="px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest rounded-sm border shrink-0 bg-black/20 text-white border-white/20">
+                                      {job.sq} SQ
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                               <span className="text-[8px] opacity-0 group-hover/card:opacity-100 transition-all font-bold" style={{ color: `${sc.color}90` }}>
                                 drag or click to reschedule
@@ -1288,18 +1448,21 @@ export default function SchedulePage() {
                       }, {});
 
                       return (
-                        <div key={svcOpt.jobServiceId} className="flex flex-col gap-1.5">
+                        <div key={svcOpt.jobServiceIds.join("-")} className="flex flex-col gap-1.5">
                           <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                             <span className="text-on-surface">Assign Crew</span>
                             <span className="text-primary">— {svcOpt.serviceName}</span>
                           </label>
                           <div className="relative z-40">
                             <CustomDropdown
-                              value={selectedCrewIds[svcOpt.jobServiceId] || ""}
-                              onChange={(val) => setSelectedCrewIds(prev => ({
-                                ...prev,
-                                [svcOpt.jobServiceId]: val,
-                              }))}
+                              value={selectedCrewIds[svcOpt.jobServiceIds[0]] || ""}
+                              onChange={(val) => setSelectedCrewIds(prev => {
+                                const next = { ...prev };
+                                for (const id of svcOpt.jobServiceIds) {
+                                  next[id] = val;
+                                }
+                                return next;
+                              })}
                               options={svcOpt.crews.map(c => {
                                 const partnerTeams = grouped[c.partnerName];
                                 return {
@@ -1356,108 +1519,159 @@ export default function SchedulePage() {
 
             {/* Fixed Footer */}
             <div className="px-8 pt-4 pb-6 shrink-0 border-t border-outline-variant/20">
-              <div className="flex justify-between items-center">
-                {/* Delete button — left side */}
-                <button
-                  type="button"
-                  disabled={deleteStep === "deleting"}
-                  onClick={async () => {
-                    if (deleteStep === "idle") {
-                      setDeleteStep("confirming");
-                      return;
-                    }
-                    if (deleteStep === "confirming") {
-                      setDeleteStep("deleting");
-                      try {
-                        if (editJob!.source === "service_assignments") {
-                          const { error } = await supabase.from("service_assignments").delete().eq("id", editJob!.id);
-                          if (error) { console.error("Delete error:", error); setDeleteStep("idle"); return; }
+              {deleteStep === "selecting" ? (
+                <div className="flex flex-col gap-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <p className="text-sm font-bold text-on-surface">Which service do you want to remove?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {editJob?.mergedAssignmentIds?.map((id, idx) => (
+                      <button
+                        key={id}
+                        onClick={() => {
+                          setDeleteTargetId(id);
+                          setDeleteStep("confirming");
+                        }}
+                        className="px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/20 rounded-lg text-xs font-bold text-on-surface cursor-pointer"
+                      >
+                        {editJob?.serviceNames?.[idx] || "Service"}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => {
+                        setDeleteTargetId("all");
+                        setDeleteStep("confirming");
+                      }}
+                      className="px-4 py-2 bg-[#ef4444]/10 hover:bg-[#ef4444]/20 border border-[#ef4444]/20 rounded-lg text-xs font-bold text-[#ef4444] cursor-pointer"
+                    >
+                      Remove All
+                    </button>
+                  </div>
+                  <div className="flex justify-end mt-1">
+                    <button onClick={() => setDeleteStep("idle")} className="text-xs font-bold text-on-surface-variant hover:text-on-surface cursor-pointer">Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center">
+                  {/* Delete button — left side */}
+                  <button
+                    type="button"
+                    disabled={deleteStep === "deleting"}
+                    onClick={async () => {
+                      if (deleteStep === "idle") {
+                        if (editJob!.mergedAssignmentIds && editJob!.mergedAssignmentIds.length > 1) {
+                          setDeleteStep("selecting");
+                        } else {
+                          setDeleteTargetId("all");
+                          setDeleteStep("confirming");
+                        }
+                        return;
+                      }
+                      if (deleteStep === "confirming") {
+                        setDeleteStep("deleting");
+                        try {
+                          if (editJob!.source === "service_assignments") {
+                            if (deleteTargetId && deleteTargetId !== "all") {
+                              const targetIndex = editJob!.mergedAssignmentIds?.indexOf(deleteTargetId) ?? -1;
+                              if (targetIndex >= 0 && editJob!.jobServiceIds && editJob!.jobServiceIds[targetIndex]) {
+                                const jsErr = await supabase.from("job_services").delete().eq("id", editJob!.jobServiceIds[targetIndex]);
+                                if (jsErr.error) console.error("Delete job_services error:", jsErr.error);
+                              }
+                              const { error } = await supabase.from("service_assignments").delete().eq("id", deleteTargetId);
+                              if (error) { console.error("Delete error:", error); setDeleteStep("idle"); return; }
+                            } else {
+                              const idsToDelete = editJob!.mergedAssignmentIds && editJob!.mergedAssignmentIds.length > 0 
+                                ? editJob!.mergedAssignmentIds 
+                                : [editJob!.id];
+                              
+                              if (editJob!.jobServiceIds && editJob!.jobServiceIds.length > 0) {
+                                const jsErr = await supabase.from("job_services").delete().in("id", editJob!.jobServiceIds);
+                                if (jsErr.error) console.error("Delete job_services error:", jsErr.error);
+                              }
 
-                          // Phase 7: If no assignments remain for this job → revert status to "pending"
-                          if (editJob!.jobId) {
-                            const { data: remaining } = await supabase
-                              .from("service_assignments")
-                              .select("id")
-                              .eq("job_service_id", editJob!.jobServiceIds?.[0] || "")
-                              .limit(1);
+                              const { error } = await supabase.from("service_assignments").delete().in("id", idsToDelete);
+                              if (error) { console.error("Delete error:", error); setDeleteStep("idle"); return; }
+                            }
 
-                            // Check ALL assignments for the entire job (not just this service)
-                            const { data: allJobServices } = await supabase
-                              .from("job_services")
-                              .select("id")
-                              .eq("job_id", editJob!.jobId);
-
-                            if (allJobServices && allJobServices.length > 0) {
-                              const jsIds = allJobServices.map((js: any) => js.id);
-                              const { data: anyRemaining } = await supabase
-                                .from("service_assignments")
+                            // Phase 7: If no assignments remain for this job → revert status to "pending"
+                            if (editJob!.jobId) {
+                              // Check ALL assignments for the entire job (not just this service)
+                              const { data: allJobServices } = await supabase
+                                .from("job_services")
                                 .select("id")
-                                .in("job_service_id", jsIds)
-                                .limit(1);
+                                .eq("job_id", editJob!.jobId);
 
-                              if (!anyRemaining || anyRemaining.length === 0) {
-                                await supabase.from("jobs").update({ status: "pending" }).eq("id", editJob!.jobId);
+                              if (allJobServices && allJobServices.length > 0) {
+                                const jsIds = allJobServices.map((js: any) => js.id);
+                                const { data: anyRemaining } = await supabase
+                                  .from("service_assignments")
+                                  .select("id")
+                                  .in("job_service_id", jsIds)
+                                  .limit(1);
+
+                                if (!anyRemaining || anyRemaining.length === 0) {
+                                  await supabase.from("jobs").update({ status: "pending" }).eq("id", editJob!.jobId);
+                                }
                               }
                             }
+                          } else {
+                            const { error } = await supabase.from("jobs").delete().eq("id", editJob!.id);
+                            if (error) { console.error("Delete error:", error); setDeleteStep("idle"); return; }
                           }
-                        } else {
-                          const { error } = await supabase.from("jobs").delete().eq("id", editJob!.id);
-                          if (error) { console.error("Delete error:", error); setDeleteStep("idle"); return; }
+                          setJobs(prev => prev.filter(j => j.id !== editJob!.id)); // Will disappear or refresh via fetchSchedule
+                          setEditJob(null);
+                          setDeleteStep("idle");
+                          setDeleteTargetId(null);
+                          fetchSchedule();
+                        } catch (err) {
+                          console.error("Delete failed:", err);
+                          setDeleteStep("idle");
                         }
-                        setJobs(prev => prev.filter(j => j.id !== editJob!.id));
-                        setEditJob(null);
-                        setDeleteStep("idle");
-                        fetchSchedule();
-                      } catch (err) {
-                        console.error("Delete failed:", err);
-                        setDeleteStep("idle");
                       }
-                    }
-                  }}
-                  onBlur={() => { if (deleteStep === "confirming") setDeleteStep("idle"); }}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 cursor-pointer border ${
-                    deleteStep === "confirming"
-                      ? "bg-[#ef4444] text-white border-[#ef4444] shadow-[0_0_16px_rgba(239,68,68,0.3)]"
-                      : deleteStep === "deleting"
-                      ? "bg-[#ef4444]/50 text-white/60 border-[#ef4444]/30"
-                      : "bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20 hover:bg-[#ef4444]/20 hover:border-[#ef4444]/40"
-                  }`}
-                >
-                  {deleteStep === "deleting" ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <span className="material-symbols-outlined text-sm" translate="no">delete</span>
-                  )}
-                  {deleteStep === "confirming" ? "Confirm Delete?" : deleteStep === "deleting" ? "Deleting..." : "Delete"}
-                </button>
-
-                {/* Cancel + Save — right side */}
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => { setEditJob(null); setDeleteStep("idle"); }}
-                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-on-surface-variant hover:text-on-surface transition-colors bg-surface-container-low border border-outline-variant/20 cursor-pointer"
+                    }}
+                    onBlur={() => { if (deleteStep === "confirming") setDeleteStep("idle"); }}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 cursor-pointer border ${
+                      deleteStep === "confirming"
+                        ? "bg-[#ef4444] text-white border-[#ef4444] shadow-[0_0_16px_rgba(239,68,68,0.3)]"
+                        : deleteStep === "deleting"
+                        ? "bg-[#ef4444]/50 text-white/60 border-[#ef4444]/30"
+                        : "bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20 hover:bg-[#ef4444]/20 hover:border-[#ef4444]/40"
+                    }`}
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!editDate || isSundayIso(editDate) || confirmingSchedule}
-                    onClick={confirmReschedule}
-                    className="px-6 py-2.5 rounded-xl text-sm font-black bg-primary text-[#3a5400] flex items-center gap-2 active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] disabled:opacity-50 cursor-pointer"
-                    style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-                  >
-                    {confirmingSchedule ? (
-                      <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />
+                    {deleteStep === "deleting" ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
-                      <>
-                        <span className="material-symbols-outlined text-sm" translate="no">check_circle</span>
-                        Save Changes
-                      </>
+                      <span className="material-symbols-outlined text-sm" translate="no">delete</span>
                     )}
+                    {deleteStep === "confirming" ? "Confirm Delete?" : deleteStep === "deleting" ? "Deleting..." : "Delete"}
                   </button>
+
+                  {/* Cancel + Save — right side */}
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { setEditJob(null); setDeleteStep("idle"); setDeleteTargetId(null); }}
+                      className="px-5 py-2.5 rounded-xl text-sm font-bold text-on-surface-variant hover:text-on-surface transition-colors bg-surface-container-low border border-outline-variant/20 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!editDate || isSundayIso(editDate) || confirmingSchedule}
+                      onClick={confirmReschedule}
+                      className="px-6 py-2.5 rounded-xl text-sm font-black bg-primary text-[#3a5400] flex items-center gap-2 active:scale-95 transition-all shadow-[0_0_20px_rgba(174,238,42,0.2)] disabled:opacity-50 cursor-pointer"
+                      style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
+                    >
+                      {confirmingSchedule ? (
+                        <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-sm" translate="no">check_circle</span>
+                          Save Changes
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
           </div>

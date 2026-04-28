@@ -67,12 +67,12 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // ─── Verifica sessão ──────────────────────────────────────────
+  // ─── Verifica autenticação (getUser valida JWT no servidor) ───
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const isAuthenticated = !!session;
+  const isAuthenticated = !!user;
 
   // ─── Regras de redirecionamento ───────────────────────────────
 
@@ -81,52 +81,47 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // 2. Usuário autenticado tentando acessar página de auth → redireciona para home do role
-  if (isAuthenticated && isAuthRoute) {
-    // Busca o role do usuário para redirecionar para o home correto
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session!.user.id)
-      .single();
-
-    const role = profile?.role || 'admin';
-    const home = ROLE_HOME[role] || '/';
-    return NextResponse.redirect(new URL(home, request.url));
-  }
-
-  // 3. Controle de acesso por Role — BLOQUEIA acesso indevido a rotas restritas
-  if (isAuthenticated && !isPublicRoute) {
+  // 2+3. Busca o profile uma única vez para auth routes e RBAC
+  if (isAuthenticated) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role, is_active')
-      .eq('id', session!.user.id)
+      .eq('id', user.id)
       .single();
 
     const role = profile?.role || 'admin';
     const isActive = profile?.is_active ?? true;
 
-    // Bloqueia usuários inativos — faz sign out e redireciona
-    if (!isActive) {
-      await supabase.auth.signOut();
-      return NextResponse.redirect(new URL('/login?error=account_disabled', request.url));
-    }
-
-    const allowedRoutes = ROLE_ALLOWED_ROUTES[role] || [];
-
-    // Admin tem acesso irrestrito
-    if (allowedRoutes.includes('*')) {
-      return response;
-    }
-
-    // Verifica se a rota atual está dentro das rotas permitidas para esse role
-    const isAllowed = allowedRoutes.some((route) => pathname.startsWith(route));
-
-    if (!isAllowed) {
-      // Redireciona para a home do role — NUNCA para uma rota que não é dele
+    // Usuário autenticado em página de auth → redireciona para home do role
+    if (isAuthRoute) {
       const home = ROLE_HOME[role] || '/';
-      console.warn(`[Middleware] BLOCKED: role="${role}" tried to access "${pathname}" → redirected to "${home}"`);
       return NextResponse.redirect(new URL(home, request.url));
+    }
+
+    // Controle de acesso por Role — BLOQUEIA acesso indevido a rotas restritas
+    if (!isPublicRoute) {
+      // Bloqueia usuários inativos — faz sign out e redireciona
+      if (!isActive) {
+        await supabase.auth.signOut();
+        return NextResponse.redirect(new URL('/login?error=account_disabled', request.url));
+      }
+
+      const allowedRoutes = ROLE_ALLOWED_ROUTES[role] || [];
+
+      // Admin tem acesso irrestrito
+      if (allowedRoutes.includes('*')) {
+        return response;
+      }
+
+      // Verifica se a rota atual está dentro das rotas permitidas para esse role
+      const isAllowed = allowedRoutes.some((route) => pathname.startsWith(route));
+
+      if (!isAllowed) {
+        // Redireciona para a home do role — NUNCA para uma rota que não é dele
+        const home = ROLE_HOME[role] || '/';
+        console.warn(`[Middleware] BLOCKED: role="${role}" tried to access "${pathname}" → redirected to "${home}"`);
+        return NextResponse.redirect(new URL(home, request.url));
+      }
     }
   }
 

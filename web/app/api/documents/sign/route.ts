@@ -1,27 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
 import { generateSignedPDF, type SignedDocumentPDFData } from "@/lib/pdf/signed-document";
 import { sendSignedDocumentEmail } from "@/lib/email/send-signed-document";
 import { sendPushToAdmins } from "@/lib/send-push";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { z } from "zod";
 
-// ── Server-side Supabase client (service role for bypassing RLS) ──
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-interface SignPayload {
-  milestoneId: string;
-  signatureDataUrl: string;
-  paymentMethod: "check" | "financing" | "credit_card";
-  initials?: string;
-  customerNotes?: string;
-  consentAcceptedAt: string;
-  consentText: string;
-  userAgent: string;
-  geolocation?: { lat: number; lng: number; accuracy_meters?: number } | null;
-}
+const SignPayloadSchema = z.object({
+  milestoneId: z.string().uuid("milestoneId must be a valid UUID"),
+  signatureDataUrl: z.string().min(10, "signatureDataUrl is required"),
+  paymentMethod: z.enum(["check", "financing", "credit_card"]),
+  initials: z.string().optional(),
+  customerNotes: z.string().optional(),
+  consentAcceptedAt: z.string().min(1, "consentAcceptedAt is required"),
+  consentText: z.string().min(1, "consentText is required"),
+  userAgent: z.string().default("unknown"),
+  geolocation: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    accuracy_meters: z.number().optional(),
+  }).nullish(),
+});
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -31,15 +30,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       req.headers.get("x-real-ip") ||
       "unknown";
 
-    // ── 2. Parse body ──
-    const body: SignPayload = await req.json();
+    // ── 2. Parse & validate body ──
+    const raw = await req.json();
+    const parsed = SignPayloadSchema.safeParse(raw);
 
-    if (!body.milestoneId || !body.signatureDataUrl || !body.consentAcceptedAt) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields: milestoneId, signatureDataUrl, consentAcceptedAt" },
+        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+
+    const body = parsed.data;
 
     // ── 3. Fetch existing milestone to validate ──
     const { data: milestone, error: msErr } = await supabaseAdmin

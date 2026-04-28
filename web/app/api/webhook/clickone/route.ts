@@ -2,59 +2,24 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 import { sendPushToAdmins } from '@/lib/send-push';
-
-// NOTE: Client is created inside the handler (not at module level)
-// so that env vars are available at request-time, not build-time.
+import { generateUsername, generateSecurePassword } from '@/lib/user-utils';
 
 // Aumenta o timeout da Vercel Serverless Function para 60s (max no plano Hobby).
 // O webhook faz 15+ queries sequenciais ao Supabase e ultrapassa os 10s padrão.
 export const maxDuration = 60;
 
-/**
- * Gera um username a partir do full_name.
- * Padrão: FirstName_LastName (sem acentos, underscores para espaços)
- * Ex: "Nick Magalhães" -> "Nick_Magalhaes"
- */
-function generateUsername(fullName: string): string {
-  // Remove acentos e caracteres especiais
-  const normalized = fullName
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // remove diacríticos
-    .replace(/[^a-zA-Z\s]/g, '')     // remove não-alfanuméricos
-    .trim();
-
-  const parts = normalized.split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return `Customer_${Date.now()}`;
-
-  // Pega primeiro nome e último sobrenome
-  const firstName = parts[0];
-  const lastName = parts.length > 1 ? parts[parts.length - 1] : '';
-
-  if (!lastName) return firstName;
-  return `${firstName}_${lastName}`;
-}
-
-/**
- * Gera a senha padrão a partir do nome.
- * Padrão: PrimeiroNome + Inicial do Sobrenome + * + Ano
- * Ex: "Nick Magalhães" -> "NickM*2026"
- */
-function generatePassword(fullName: string): string {
-  const normalized = fullName
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z\s]/g, '')
-    .trim();
-
-  const parts = normalized.split(/\s+/).filter(Boolean);
-  const firstName = parts[0] || 'User';
-  const lastInitial = parts.length > 1 ? parts[parts.length - 1][0].toUpperCase() : 'X';
-  const year = new Date().getFullYear();
-
-  return `${firstName}${lastInitial}*${year}`;
-}
-
 export async function POST(req: Request) {
+  // ── Webhook Secret Validation ─────────────────────────────────
+  // Set CLICKONE_WEBHOOK_SECRET in env to require this header.
+  const webhookSecret = process.env.CLICKONE_WEBHOOK_SECRET;
+  if (webhookSecret) {
+    const incomingSecret = req.headers.get('x-webhook-secret') || req.headers.get('X-Webhook-Secret');
+    if (incomingSecret !== webhookSecret) {
+      console.warn('[Webhook] ❌ Invalid or missing X-Webhook-Secret header');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
   // Initialize Supabase client inside the handler to avoid build-time errors
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -423,7 +388,7 @@ export async function POST(req: Request) {
         }
 
         customerUsername = finalUsername;
-        customerPassword = generatePassword(clientName);
+        customerPassword = generateSecurePassword();
         const portalEmail = `${finalUsername.toLowerCase()}@customer.sidingdepot.app`;
 
         // Create auth user with auto-confirm (no email verification needed for customers)

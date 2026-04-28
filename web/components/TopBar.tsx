@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSidebar } from "./SidebarContext";
 import { useUndo } from "./UndoContext";
-import { supabase } from "../lib/supabase";
+import { useProfile } from "./ProfileContext";
 import { NotificationBell } from "./NotificationBell";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 
@@ -24,12 +24,6 @@ interface TopBarProps {
   rightSlot?: React.ReactNode;
 }
 
-interface UserProfile {
-  full_name: string;
-  role: string;
-  avatar_url: string | null;
-}
-
 const ROLE_LABELS: Record<string, string> = {
   admin:       "Admin",
   salesperson: "Salesperson",
@@ -39,52 +33,13 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function TopBar({ title, subtitle, leftSlot, rightSlot }: TopBarProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const { toggle } = useSidebar();
   const { history, executeUndo, clearHistory, removeAction, isUndoing } = useUndo();
+  const { profile } = useProfile();
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [confirmUndo, setConfirmUndo] = useState<any>(null);
-
-  // ── Fetch logged-in user profile ─────────────────────
-  useEffect(() => {
-    let mounted = true;
-
-    const loadProfile = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !mounted) return;
-
-        const { data } = await supabase
-          .from("profiles")
-          .select("full_name, role, avatar_url")
-          .eq("id", user.id)
-          .single();
-
-        if (data && mounted) {
-          setProfile({
-            full_name:  data.full_name  || user.email?.split("@")[0] || "User",
-            role:       data.role       || "admin",
-            avatar_url: data.avatar_url || null,
-          });
-        }
-      } catch (e) {
-        console.error("TopBar: failed to load profile", e);
-      }
-    };
-
-    loadProfile();
-
-    // Re-fetch whenever the settings page saves the profile
-    const handleProfileUpdated = () => loadProfile();
-    window.addEventListener("profile-updated", handleProfileUpdated);
-
-    return () => {
-      mounted = false;
-      window.removeEventListener("profile-updated", handleProfileUpdated);
-    };
-  }, []);
+  const [confirmUndo, setConfirmUndo] = useState<{ id: string; message: string } | null>(null);
 
 
   const handleLogout = async () => {

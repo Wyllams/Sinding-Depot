@@ -1,6 +1,7 @@
 import { Sidebar } from "../../components/Sidebar";
 import { SidebarProvider } from "../../components/SidebarContext";
 import { UndoProvider } from "../../components/UndoContext";
+import { ProfileProvider } from "../../components/ProfileContext";
 import { PushNotificationInit } from "../../components/pwa/PushNotificationInit";
 
 export default function ShellLayout({
@@ -9,16 +10,18 @@ export default function ShellLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-      <UndoProvider>
-        <div className="h-screen overflow-hidden flex">
-          <Sidebar />
-          <div className="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
-            {children}
+    <ProfileProvider>
+      <SidebarProvider>
+        <UndoProvider>
+          <div className="h-screen overflow-hidden flex">
+            <Sidebar />
+            <div className="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
+              {children}
+            </div>
           </div>
-        </div>
-        <PushNotificationInit />
-      </UndoProvider>
-    </SidebarProvider>
+          <PushNotificationInit />
+        </UndoProvider>
+      </SidebarProvider>
+    </ProfileProvider>
   );
 }

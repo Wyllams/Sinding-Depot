@@ -536,8 +536,18 @@ export default function ProjectDetailPage() {
   const [assignedPartners, setAssignedPartners] = useState<Record<string, string>>({});
   const [windowCount, setWindowCount] = useState("");
   const [windowTrim, setWindowTrim] = useState<"yes" | "no" | "">("");
-  const [windowsStep, setWindowsStep] = useState<"partner" | "subservices" | "config" | "deckscope" | "edit_menu" | "edit_windows" | "edit_deckscope">("partner");
+  const [doorCount, setDoorCount] = useState("");
+  const [windowsStep, setWindowsStep] = useState<"partner" | "subservices" | "config" | "doors_config" | "deckscope" | "edit_menu" | "edit_windows" | "edit_doors" | "edit_deckscope">("partner");
   const [selectedSubSvcs, setSelectedSubSvcs] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!openPartnerModal) {
+      setWindowCount("");
+      setWindowTrim("");
+      setDoorCount("");
+      setDeckScope("");
+    }
+  }, [openPartnerModal]);
 
   // ── Decks scope config ──
   const DECK_SCOPE_OPTIONS = [
@@ -1543,7 +1553,11 @@ export default function ProjectDetailPage() {
           notes: windowTrim === "yes" ? "Trim: YES" : windowTrim === "no" ? "Trim: NO" : null,
         });
         if (woErr) console.error("[AddService] Error creating window_order:", woErr);
-        else console.log("[AddService] Auto-created window_order for job:", job.id);
+        else {
+          console.log("[AddService] Auto-created window_order for job:", job.id);
+          setWindowCount("");
+          setWindowTrim(null as any);
+        }
       }
       
       // Re-fetch to update crews/assignments display
@@ -1556,8 +1570,16 @@ export default function ProjectDetailPage() {
 
   async function handleRemoveService(jobServiceId: string) {
     try {
+      const svcToDelete = job?.services?.find((s: any) => s.id === jobServiceId);
+      
       await supabase.from("job_services").delete().eq("id", jobServiceId);
       setJob((j: any) => j ? { ...j, services: j.services.filter((s: any) => s.id !== jobServiceId) } : j);
+      
+      // Cleanup window_orders if this was the DWD service (which contains Windows)
+      if (svcToDelete?.service_type?.name?.toLowerCase() === "doors / windows / decks") {
+         const { error: woErr } = await supabase.from("window_orders").delete().eq("job_id", job.id);
+         if (!woErr) console.log("[RemoveService] Cleaned up window_orders for job:", job.id);
+      }
     } catch (err) {
       console.error("[RemoveService] error:", err);
     }
@@ -3281,7 +3303,7 @@ export default function ProjectDetailPage() {
                     <div>
                       <h2 className="text-xl font-black text-white uppercase tracking-tight">{openPartnerModal.label}</h2>
                       <p className="text-xs text-on-surface-variant mt-1 font-medium">
-                        {windowsStep === "partner" ? "Select a partner" : windowsStep === "subservices" ? "Select services" : windowsStep === "config" ? "Configure windows" : windowsStep === "deckscope" ? "Configure deck scope" : windowsStep === "edit_menu" ? "Edit configuration" : windowsStep === "edit_windows" ? "Edit windows config" : windowsStep === "edit_deckscope" ? "Edit deck scope" : ""}
+                        {windowsStep === "partner" ? "Select a partner" : windowsStep === "subservices" ? "Select services" : windowsStep === "config" ? "Configure windows" : windowsStep === "doors_config" ? "Configure doors" : windowsStep === "deckscope" ? "Configure deck scope" : windowsStep === "edit_menu" ? "Edit configuration" : windowsStep === "edit_windows" ? "Edit windows config" : windowsStep === "edit_doors" ? "Edit doors config" : windowsStep === "edit_deckscope" ? "Edit deck scope" : ""}
                       </p>
                     </div>
                   </div>
@@ -3338,7 +3360,7 @@ export default function ProjectDetailPage() {
                       {assignedPartners[openPartnerModal.id] && (
                         <button type="button" onClick={() => {
                           const c = { ...assignedPartners }; delete c[openPartnerModal.id]; setAssignedPartners(c);
-                          setWindowCount(""); setWindowTrim(""); setSelectedSubSvcs([]); setDeckScope(""); setOpenPartnerModal(null);
+                          setWindowCount(""); setWindowTrim(""); setDoorCount(""); setSelectedSubSvcs([]); setDeckScope(""); setOpenPartnerModal(null);
                         }} className="mt-4 flex items-center justify-center p-3 rounded-xl border border-dashed border-[#ba1212]/30 text-[#ba1212] hover:bg-[#ba1212]/10 transition-colors">
                           <span className="text-xs font-bold uppercase tracking-wider">Unassign Partner</span>
                         </button>
@@ -3395,15 +3417,21 @@ export default function ProjectDetailPage() {
                               types = data || []; setAllServiceTypes(types);
                             }
                             const partnerName = assignedPartners[openPartnerModal.id] || "";
+                            // First: ensure job_services exist for ALL selected sub-services (except decks)
                             for (const subId of selectedSubSvcs) {
-                              // Skip decks here — it will be created in the deckscope step
                               if (subId === "decks") continue;
                               const exists = job?.services?.some((s: any) => s.service_type?.name?.toLowerCase() === subId);
                               if (!exists) {
                                 const match = types.find((st) => st.name.toLowerCase() === subId);
                                 if (match) await handleAddService(match.id);
                               }
-                              // Persist partner assignment to DB
+                            }
+                            // Then: persist assignments ONLY for services without their own config step
+                            // Windows → persisted in "config" step
+                            // Doors → persisted in "doors_config" step
+                            // Decks → persisted in "deckscope" step
+                            for (const subId of selectedSubSvcs) {
+                              if (subId === "decks" || subId === "windows" || subId === "doors") continue;
                               await persistPartnerToAssignment(subId, partnerName);
                             }
                             // Remove sub-services that were deselected
@@ -3414,14 +3442,13 @@ export default function ProjectDetailPage() {
                                 if (existing) await handleRemoveService(existing.id);
                               }
                             }
-                            // If windows is selected, go to config (then deckscope after)
+                            // If windows is selected, go to config first (then doors_config / deckscope after)
                             if (selectedSubSvcs.includes("windows")) { setWindowsStep("config"); return; }
-                            // If only decks is selected (no windows), go to deckscope
+                            // If doors is selected (no windows), go to doors config
+                            if (selectedSubSvcs.includes("doors")) { setWindowsStep("doors_config"); return; }
+                            // If only decks is selected, go to deckscope
                             if (selectedSubSvcs.includes("decks")) { setWindowsStep("deckscope"); return; }
-                            // For doors only — close and persist
-                            for (const subId of selectedSubSvcs) {
-                              await persistPartnerToAssignment(subId, partnerName);
-                            }
+                            // Fallback — close
                             setOpenPartnerModal(null);
                           }}
                           className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
@@ -3473,15 +3500,77 @@ export default function ProjectDetailPage() {
                             // Persist windows assignment with count/trim config
                             const partnerName = assignedPartners[openPartnerModal.id] || "";
                             await persistPartnerToAssignment("windows", partnerName);
-                            // If decks is also selected, go to deckscope next
-                            if (selectedSubSvcs.includes("decks")) { setWindowsStep("deckscope"); return; }
-                            // Persist all other selected sub-services too
-                            for (const subId of selectedSubSvcs) {
-                              if (subId !== "windows" && subId !== "decks") {
-                                await persistPartnerToAssignment(subId, partnerName);
-                              }
+                            
+                            const wQty = parseInt(windowCount) || null;
+                            const notesStr = windowTrim === "yes" ? "Trim: YES" : windowTrim === "no" ? "Trim: NO" : null;
+                            const { data: woData } = await supabase.from("window_orders").select("id").eq("job_id", job.id).limit(1);
+                            if (woData && woData.length > 0) {
+                              await supabase.from("window_orders").update({ quantity: wQty, notes: notesStr }).eq("id", woData[0].id);
+                            } else {
+                              await supabase.from("window_orders").insert({
+                                job_id: job.id, customer_name: job.customer?.full_name || job.title || "",
+                                status: "Measurement", money_collected: "NO", quantity: wQty, notes: notesStr
+                              });
                             }
+
+                            // Next: doors_config if doors selected
+                            if (selectedSubSvcs.includes("doors")) { setWindowsStep("doors_config"); return; }
+                            // Next: deckscope if decks selected
+                            if (selectedSubSvcs.includes("decks")) { setWindowsStep("deckscope"); return; }
+                            // Otherwise close
                             setWindowsStep("partner"); setOpenPartnerModal(null); 
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed">Confirm</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP: Doors Config ── */}
+                  {windowsStep === "doors_config" && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center"><span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span></div>
+                        <div className="w-8 h-px bg-outline-variant"></div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623]/20 border border-[#f5a623] flex items-center justify-center"><span className="text-[10px] font-black text-[#f5a623]">●</span></div>
+                          <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider">Doors Config</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-on-surface-variant">Assigned to <span className="text-[#f5a623] font-bold uppercase">{assignedPartners[openPartnerModal.id]}</span>. Now configure the doors for this project.</p>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">How many doors?</label>
+                        <input type="number" min="1" value={doorCount} onChange={(e) => setDoorCount(e.target.value)} placeholder="e.g. 4"
+                          className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
+                      </div>
+                      {doorCount && (
+                        <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">door_front</span>
+                            <p className="text-sm font-bold text-on-surface">{parseInt(doorCount)} door{parseInt(doorCount) !== 1 ? "s" : ""} to install</p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => {
+                          // Go back to previous step
+                          if (selectedSubSvcs.includes("windows")) setWindowsStep("config");
+                          else setWindowsStep("subservices");
+                        }} className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all">Back</button>
+                        <button type="button" disabled={!doorCount}
+                          onClick={async () => {
+                            const partnerName = assignedPartners[openPartnerModal.id] || "";
+                            // Persist doors assignment
+                            await persistPartnerToAssignment("doors", partnerName);
+                            // Save door count to job_services.quantity
+                            const doorsSvc = job?.services?.find((s: any) => s.service_type?.name?.toLowerCase() === "doors");
+                            if (doorsSvc) {
+                              const qty = parseInt(doorCount) || null;
+                              await supabase.from("job_services").update({ quantity: qty }).eq("id", doorsSvc.id);
+                            }
+                            // Next: deckscope if decks selected
+                            if (selectedSubSvcs.includes("decks")) { setWindowsStep("deckscope"); return; }
+                            // Otherwise close
+                            setWindowsStep("partner"); setOpenPartnerModal(null);
                           }}
                           className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed">Confirm</button>
                       </div>
@@ -3633,14 +3722,25 @@ export default function ProjectDetailPage() {
                                     if (!existing) return;
                                     await handleRemoveService(existing.id);
 
-                                    // Also remove related window_orders if removing "windows" or "doors"
-                                    if (sub.id === "windows" || sub.id === "doors") {
+                                    // Also remove related window_orders if removing "windows" only
+                                    if (sub.id === "windows") {
                                       const { error: woErr } = await supabase
                                         .from("window_orders")
                                         .delete()
                                         .eq("job_id", job.id);
                                       if (woErr) console.error("[EditMenu] Error removing window_orders:", woErr);
-                                      else console.log("[EditMenu] Removed window_orders for job:", job.id);
+                                      else {
+                                        console.log("[EditMenu] Removed window_orders for job:", job.id);
+                                        setWindowCount("");
+                                        setWindowTrim(null as any);
+                                      }
+                                    }
+                                    // If removing doors, clear job_services.quantity
+                                    if (sub.id === "doors") {
+                                      const doorsSvc = job.services.find((s: any) => s.service_type?.name?.toLowerCase() === "doors");
+                                      if (doorsSvc) {
+                                        await supabase.from("job_services").update({ quantity: null }).eq("id", doorsSvc.id);
+                                      }
                                     }
 
                                     await fetchJob();
@@ -3725,8 +3825,8 @@ export default function ProjectDetailPage() {
                                     await fetchJob();
                                     setSelectedSubSvcs((prev) => [...prev, sub.id]);
 
-                                    // Auto-create window_order when re-adding Windows
-                                    if (sub.id === "windows" || sub.id === "doors") {
+                                    // Auto-create window_order when re-adding Windows (NOT doors)
+                                    if (sub.id === "windows") {
                                       const wQty = parseInt(windowCount) || null;
                                       const { error: woErr } = await supabase.from("window_orders").insert({
                                         job_id: job.id,
@@ -3744,6 +3844,11 @@ export default function ProjectDetailPage() {
                                       });
                                       if (woErr) console.error("[EditMenu] Error creating window_order:", woErr);
                                       else console.log("[EditMenu] Auto-created window_order for job:", job.id);
+                                    }
+
+                                    // If re-adding doors, go to edit_doors step
+                                    if (sub.id === "doors") {
+                                      setWindowsStep("edit_doors");
                                     }
 
                                     // If re-adding decks, go to deckscope step
@@ -3782,6 +3887,24 @@ export default function ProjectDetailPage() {
                           <div className="text-left">
                             <p className="text-sm font-bold text-on-surface">Windows Config</p>
                             <p className="text-[10px] text-on-surface-variant">Change window count and trim settings</p>
+                          </div>
+                          <span className="material-symbols-outlined text-[#f5a623] ml-auto" translate="no">chevron_right</span>
+                        </button>
+                      )}
+
+                      {/* Doors Config button (only if doors is active) */}
+                      {job.services.some((s: any) => s.service_type?.name?.toLowerCase() === "doors") && (
+                        <button
+                          type="button"
+                          onClick={() => setWindowsStep("edit_doors")}
+                          className="flex items-center gap-4 w-full p-4 rounded-xl border border-[#f5a623]/30 bg-[#f5a623]/10 hover:bg-[#f5a623]/20 transition-all"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-[#f5a623]/20 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[#f5a623]" translate="no">door_front</span>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-bold text-on-surface">Doors Config</p>
+                            <p className="text-[10px] text-on-surface-variant">Change door count</p>
                           </div>
                           <span className="material-symbols-outlined text-[#f5a623] ml-auto" translate="no">chevron_right</span>
                         </button>
@@ -3891,7 +4014,66 @@ export default function ProjectDetailPage() {
                               if (error) console.error("[EditWindows] update error:", error);
                               else console.log("[EditWindows] Updated windows:", startIso, "->", endIso, `(${newDays} days)`);
                             }
+                            
+                            const wQty2 = parseInt(windowCount) || null;
+                            const notesStr2 = windowTrim === "yes" ? "Trim: YES" : windowTrim === "no" ? "Trim: NO" : null;
+                            const { data: woData2 } = await supabase.from("window_orders").select("id").eq("job_id", job.id).limit(1);
+                            if (woData2 && woData2.length > 0) {
+                              await supabase.from("window_orders").update({ quantity: wQty2, notes: notesStr2 }).eq("id", woData2[0].id);
+                            } else {
+                              await supabase.from("window_orders").insert({
+                                job_id: job.id, customer_name: job.customer?.full_name || job.title || "",
+                                status: "Measurement", money_collected: "NO", quantity: wQty2, notes: notesStr2
+                              });
+                            }
+                            
                             // Re-fetch job data using the full mapping
+                            await fetchJob();
+                            setWindowsStep("edit_menu");
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#e09015] transition-all disabled:opacity-30 disabled:cursor-not-allowed">Save Changes</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── EDIT DOORS: Reconfigure doors ── */}
+                  {windowsStep === "edit_doors" && openPartnerModal && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#f5a623] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">edit</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#f5a623] uppercase tracking-wider">Edit Doors Config</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-on-surface-variant">
+                        Update the doors configuration. Changes will be reflected in the calendar.
+                      </p>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">How many doors?</label>
+                        <input type="number" min="1" value={doorCount} onChange={(e) => setDoorCount(e.target.value)} placeholder="e.g. 4"
+                          className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
+                      </div>
+                      {doorCount && (
+                        <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">door_front</span>
+                            <p className="text-sm font-bold text-on-surface">{parseInt(doorCount)} door{parseInt(doorCount) !== 1 ? "s" : ""} to install</p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setWindowsStep("edit_menu")} className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all">Back</button>
+                        <button type="button" disabled={!doorCount}
+                          onClick={async () => {
+                            // Save door count to job_services.quantity
+                            const doorsSvc = job?.services?.find((s: any) => s.service_type?.name?.toLowerCase() === "doors");
+                            if (doorsSvc) {
+                              const qty = parseInt(doorCount) || null;
+                              await supabase.from("job_services").update({ quantity: qty }).eq("id", doorsSvc.id);
+                              console.log("[EditDoors] Updated doors quantity:", qty);
+                            }
                             await fetchJob();
                             setWindowsStep("edit_menu");
                           }}

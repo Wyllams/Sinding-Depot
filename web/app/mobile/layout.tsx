@@ -1,5 +1,6 @@
 import React from "react";
 import { UndoProvider } from "@/components/UndoContext";
+import { ProfileProvider } from "@/components/ProfileContext";
 
 export default function MobileLayout({
   children,
@@ -7,6 +8,7 @@ export default function MobileLayout({
   children: React.ReactNode;
 }) {
   return (
+    <ProfileProvider>
     <UndoProvider>
       {/* 
         This is the absolute base container for the mobile app via Capacitor.
@@ -23,5 +25,6 @@ export default function MobileLayout({
             or we can inject a global one. For now, pages handle their own nav to easily swap between Sales/Crew/Customer contexts. */}
       </div>
     </UndoProvider>
+    </ProfileProvider>
   );
 }

@@ -3,18 +3,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { useProfile } from "@/components/ProfileContext";
 
 // =============================================
 // SalesTopBar — Header padrão mobile do Vendedor
 // Padrão unificado: Hamburger | Título central | Avatar
 // =============================================
-
-interface UserProfile {
-  full_name: string;
-  initials: string;
-  avatar_url: string | null;
-}
 
 const ROUTE_TITLES: Record<string, string> = {
   "/sales": "Dashboard",
@@ -26,7 +20,7 @@ export default function SalesTopBar() {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { profile } = useProfile();
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Sub-page detection (e.g. /sales/jobs/[id])
@@ -36,30 +30,8 @@ export default function SalesTopBar() {
   // Resolve title
   const title = ROUTE_TITLES[pathname] || (isSubPage ? "Deal Details" : "Sales");
 
-  // Load profile
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !mounted) return;
-        const { data } = await supabase
-          .from("profiles")
-          .select("full_name, avatar_url")
-          .eq("id", user.id)
-          .single();
-        if (data && mounted) {
-          const name = data.full_name || user.email?.split("@")[0] || "Sales";
-          const initials = name.split(" ").map((w: string) => w[0]).join("").substring(0, 2).toUpperCase();
-          setProfile({ full_name: name, initials, avatar_url: data.avatar_url });
-        }
-      } catch (e) {
-        console.error("[SalesTopBar] profile load error:", e);
-      }
-    };
-    load();
-    return () => { mounted = false; };
-  }, []);
+  // Derive initials from profile
+  const initials = profile?.initials ?? "SD";
 
   // Click outside to close menu
   useEffect(() => {

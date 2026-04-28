@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useProfile } from "./ProfileContext";
 
 interface NavItem {
   href: string;
@@ -31,17 +30,9 @@ const navItems: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const { isOpen, close } = useSidebar();
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const { profile } = useProfile();
 
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-        if (data) setUserRole(data.role);
-      }
-    })();
-  }, []);
+  const userRole = profile?.role ?? null;
 
   // Filter nav items based on role
   const visibleItems = navItems.filter(item => {

@@ -1,16 +1,100 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { TopBar } from "../../components/TopBar";
 import { WeeklyWeather } from "../../components/WeeklyWeather";
+import { supabase } from "@/lib/supabase";
 
 // =============================================
-// BuildFlow Dashboard - React/Next.js version
-// Ported from Stitch HTML design (DASHBOARD.txt)
+// Dashboard - Real-time metrics from Supabase
 // =============================================
 
-
+interface DashboardMetrics {
+  activeProjects: number;
+  totalProjects: number;
+  pendingChangeOrders: number;
+  changeOrderValue: number;
+  openBlockers: number;
+  completedThisMonth: number;
+}
 
 export default function Dashboard() {
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchMetrics = async () => {
+      try {
+        // ── 1. Active projects (status NOT completed/cancelled) ──
+        const { count: activeCount } = await supabase
+          .from("jobs")
+          .select("id", { count: "exact", head: true })
+          .not("status", "in", '("completed","cancelled")');
+
+        // ── 2. Total projects ──
+        const { count: totalCount } = await supabase
+          .from("jobs")
+          .select("id", { count: "exact", head: true });
+
+        // ── 3. Pending change orders ──
+        const { data: pendingCOs } = await supabase
+          .from("change_orders")
+          .select("id, total")
+          .eq("status", "pending");
+
+        const pendingCount = pendingCOs?.length ?? 0;
+        const coValue = pendingCOs?.reduce((sum, co) => sum + (Number(co.total) || 0), 0) ?? 0;
+
+        // ── 4. Open blockers ──
+        const { count: blockerCount } = await supabase
+          .from("blockers")
+          .select("id", { count: "exact", head: true })
+          .neq("status", "resolved");
+
+        // ── 5. Completed this month ──
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count: completedCount } = await supabase
+          .from("jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "completed")
+          .gte("updated_at", startOfMonth.toISOString());
+
+        if (mounted) {
+          setMetrics({
+            activeProjects: activeCount ?? 0,
+            totalProjects: totalCount ?? 0,
+            pendingChangeOrders: pendingCount,
+            changeOrderValue: coValue,
+            openBlockers: blockerCount ?? 0,
+            completedThisMonth: completedCount ?? 0,
+          });
+        }
+      } catch (err) {
+        console.error("[Dashboard] Failed to load metrics:", err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchMetrics();
+    return () => { mounted = false; };
+  }, []);
+
+  const fmt = (n: number): string =>
+    n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+
+  const fmtCurrency = (n: number): string =>
+    n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+  const utilization = metrics && metrics.totalProjects > 0
+    ? Math.round((metrics.activeProjects / metrics.totalProjects) * 100)
+    : 0;
+
   return (
     <>
       <TopBar />
@@ -41,49 +125,32 @@ export default function Dashboard() {
             </div>
             <div className="flex items-baseline gap-2 mb-4">
               <span
-                className="text-4xl font-extrabold"
+                className={`text-4xl font-extrabold transition-opacity duration-300 ${loading ? "opacity-30 animate-pulse" : ""}`}
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
               >
-                24
+                {loading ? "—" : fmt(metrics?.activeProjects ?? 0)}
               </span>
               <span className="text-on-surface-variant font-medium">projects</span>
             </div>
 
-            {/* Mini Bar Chart */}
-            <div className="relative h-[80px] w-full mb-4 overflow-hidden rounded-lg bg-surface-container">
-              <div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(90deg, transparent 50%, rgba(174,238,42,0.1) 50%), linear-gradient(0deg, transparent 50%, rgba(174,238,42,0.1) 50%)",
-                  backgroundSize: "10px 10px",
-                }}
-              />
-              <div className="absolute bottom-0 left-0 w-full h-[60%] flex items-end px-2 gap-1">
-                <div className="bg-primary/20 w-full h-[40%] rounded-t-sm" />
-                <div className="bg-primary/40 w-full h-[70%] rounded-t-sm" />
-                <div className="bg-primary w-full h-[55%] rounded-t-sm" />
-                <div className="bg-primary w-full h-[90%] rounded-t-sm" />
-                <div className="bg-primary/60 w-full h-[45%] rounded-t-sm" />
-                <div className="bg-primary w-full h-[75%] rounded-t-sm" />
-                <div
-                  className="bg-primary w-full h-[100%] rounded-t-sm"
-                  style={{ boxShadow: "0 0 15px rgba(174,238,42,0.5)" }}
-                />
-              </div>
-            </div>
-
-            {/* Progress bar */}
+            {/* Progress bar — Fleet Utilization */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <span className="text-on-surface-variant">Fleet Utilization</span>
-                <span className="text-primary font-bold">88%</span>
+                <span className="text-primary font-bold">{loading ? "—" : `${utilization}%`}</span>
               </div>
               <div className="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary w-[88%]"
-                  style={{ boxShadow: "0 0 8px rgba(174,238,42,0.6)" }}
+                  className="h-full bg-primary transition-all duration-700"
+                  style={{
+                    width: loading ? "0%" : `${utilization}%`,
+                    boxShadow: "0 0 8px rgba(174,238,42,0.6)",
+                  }}
                 />
+              </div>
+              <div className="flex justify-between text-[10px] text-on-surface-variant mt-1">
+                <span>{loading ? "—" : `${metrics?.completedThisMonth ?? 0} completed this month`}</span>
+                <span>{loading ? "" : `${metrics?.totalProjects ?? 0} total`}</span>
               </div>
             </div>
           </div>
@@ -94,17 +161,19 @@ export default function Dashboard() {
               <span className="text-[11px] font-bold tracking-[0.2em] text-on-surface-variant uppercase">
                 Pending Change Orders
               </span>
-              <span className="px-3 py-1 bg-[#5e6300] text-[#f9ff8b] text-[10px] font-bold rounded-full">
-                Highlighted
-              </span>
+              {(metrics?.pendingChangeOrders ?? 0) > 0 && (
+                <span className="px-3 py-1 bg-[#5e6300] text-[#f9ff8b] text-[10px] font-bold rounded-full">
+                  Needs Review
+                </span>
+              )}
             </div>
             <div className="flex flex-col gap-1 mb-8">
               <div className="flex items-baseline gap-2">
                 <span
-                  className="text-4xl font-extrabold"
+                  className={`text-4xl font-extrabold transition-opacity duration-300 ${loading ? "opacity-30 animate-pulse" : ""}`}
                   style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
                 >
-                  17
+                  {loading ? "—" : fmt(metrics?.pendingChangeOrders ?? 0)}
                 </span>
                 <span className="text-on-surface-variant font-medium">orders</span>
               </div>
@@ -112,37 +181,17 @@ export default function Dashboard() {
                 className="text-primary text-2xl font-bold"
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
               >
-                $89,450
+                {loading ? "—" : fmtCurrency(metrics?.changeOrderValue ?? 0)}
               </span>
               <span className="text-xs text-on-surface-variant">Total Value Pending Approval</span>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-surface-container-high rounded-xl">
-                <p className="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Average Wait</p>
-                <p
-                  className="text-lg font-bold"
-                  style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-                >
-                  4.2 Days
-                </p>
-              </div>
-              <div className="p-4 bg-surface-container-high rounded-xl">
-                <p className="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Impact Risk</p>
-                <p
-                  className="text-lg font-bold text-[#e3eb5d]"
-                  style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
-                >
-                  Medium
-                </p>
-              </div>
-            </div>
           </div>
 
-          {/* Card 3: Blocking Issues */}
+          {/* Card 3: Open Blockers */}
           <div className="col-span-12 lg:col-span-3 glass-card rounded-2xl p-6 border-t border-white/5">
             <div className="flex justify-between items-start mb-4">
               <span className="text-[11px] font-bold tracking-[0.2em] text-on-surface-variant uppercase">
-                Blocking Issues
+                Open Blockers
               </span>
               <span
                 className="material-symbols-outlined text-error"
@@ -154,40 +203,23 @@ export default function Dashboard() {
             </div>
             <div className="flex items-baseline gap-2 mb-6">
               <span
-                className="text-4xl font-extrabold text-error"
+                className={`text-4xl font-extrabold transition-opacity duration-300 ${
+                  loading ? "opacity-30 animate-pulse" : (metrics?.openBlockers ?? 0) > 0 ? "text-error" : "text-primary"
+                }`}
                 style={{ fontFamily: "Manrope, system-ui, sans-serif" }}
               >
-                9
+                {loading ? "—" : fmt(metrics?.openBlockers ?? 0)}
               </span>
-              <span className="text-on-surface-variant font-medium">critical issues</span>
+              <span className="text-on-surface-variant font-medium">
+                {(metrics?.openBlockers ?? 0) === 0 ? "all clear" : "open issues"}
+              </span>
             </div>
-            <div className="space-y-4">
-              {[
-                { icon: "plumbing", label: "MEP Team", width: "75%" },
-                { icon: "construction", label: "Structural Eng.", width: "50%" },
-                { icon: "electric_bolt", label: "Grid Systems", width: "25%", green: true },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center">
-                    <span
-                      className="material-symbols-outlined text-sm text-on-surface-variant"
-                      translate="no"
-                    >
-                      {item.icon}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold">{item.label}</p>
-                    <div className="h-1 w-full bg-surface-container-highest rounded-full mt-1">
-                      <div
-                        className={`h-full rounded-full ${item.green ? "bg-primary" : "bg-error"}`}
-                        style={{ width: item.width }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {(metrics?.openBlockers ?? 0) === 0 && !loading && (
+              <div className="flex items-center gap-2 text-primary text-sm font-bold">
+                <span className="material-symbols-outlined text-base" translate="no" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                No blockers — great!
+              </div>
+            )}
           </div>
         </div>
 
