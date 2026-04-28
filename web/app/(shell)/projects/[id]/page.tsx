@@ -556,6 +556,10 @@ export default function ProjectDetailPage() {
   const [dumpsterPreview, setDumpsterPreview] = useState<string | null>(null);
   const dumpsterInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Labor Bills (Documents tab) ──
+  const [laborBills, setLaborBills] = useState<{ id: string; total: number; status: string; created_at: string; crew_name: string | null; template_code: string | null }[]>([]);
+  const [loadingLaborBills, setLoadingLaborBills] = useState(false);
+
   // ── Extra Material ──
   const [extraMaterials, setExtraMaterials] = useState<{
     id: string; material_name: string; customer_name: string; quantity: number; piece_size: string;
@@ -944,6 +948,7 @@ export default function ProjectDetailPage() {
     if (activeTab === "documents") {
       fetchMilestones();
       fetchDumpsterPhotos();
+      fetchProjectLaborBills();
     }
     if (activeTab === "extra_material") {
       fetchExtraMaterials();
@@ -1094,6 +1099,32 @@ export default function ProjectDetailPage() {
       .order("created_at", { ascending: false });
     if (!error && data) setDumpsterPhotos(data);
     setLoadingDumpster(false);
+  }
+
+  // ── Labor Bills for Documents tab ──
+  async function fetchProjectLaborBills() {
+    setLoadingLaborBills(true);
+    try {
+      const { data, error } = await supabase
+        .from("job_labor_bills")
+        .select("id, total, status, created_at, crews(name), labor_bill_templates:labor_bill_templates!job_labor_bills_template_id_fkey(code)")
+        .eq("job_id", jobId)
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        setLaborBills((data as any[]).map((b: any) => ({
+          id: b.id,
+          total: b.total ?? 0,
+          status: b.status ?? "draft",
+          created_at: b.created_at,
+          crew_name: (Array.isArray(b.crews) ? b.crews[0]?.name : b.crews?.name) || null,
+          template_code: (Array.isArray(b.labor_bill_templates) ? b.labor_bill_templates[0]?.code : b.labor_bill_templates?.code) || null,
+        })));
+      }
+    } catch (err) {
+      console.error("[ProjectDetail] fetchProjectLaborBills error:", err);
+    } finally {
+      setLoadingLaborBills(false);
+    }
   }
 
   async function handleDumpsterUpload(files: FileList | null) {
@@ -2307,23 +2338,70 @@ export default function ProjectDetailPage() {
                 <p className="text-[10px] text-outline-variant text-center mt-3">No documents yet</p>
               </div>
 
-              {/* Block 2: Photos */}
+              {/* Block 2: Labor Bills */}
               <div className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/15 flex flex-col">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 rounded-xl bg-[#60b8f5]/10 border border-[#60b8f5]/20 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[#60b8f5]" translate="no">photo_library</span>
+                    <span className="material-symbols-outlined text-[#60b8f5]" translate="no">receipt_long</span>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-black text-on-surface">Site Photos</h4>
-                    <p className="text-[10px] text-on-surface-variant">Before, during, after</p>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-black text-on-surface">Labor Bills</h4>
+                    <p className="text-[10px] text-on-surface-variant">Crew payment records for this project</p>
                   </div>
+                  {laborBills.length > 0 && (
+                    <span className="text-[10px] font-bold text-[#60b8f5] bg-[#60b8f5]/10 px-2 py-1 rounded-lg">
+                      {laborBills.length} bill{laborBills.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
                 </div>
-                <div className="flex-1 border-2 border-dashed border-outline-variant/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-background hover:border-[#60b8f5]/40 hover:bg-[#60b8f5]/5 transition-colors cursor-pointer group">
-                  <span className="material-symbols-outlined text-3xl text-outline-variant group-hover:text-[#60b8f5] mb-2 transition-colors" translate="no">add_photo_alternate</span>
-                  <p className="text-xs font-bold text-on-surface">Upload photos</p>
-                  <p className="text-[10px] text-on-surface-variant mt-1">JPG, PNG, HEIC up to 20MB</p>
-                </div>
-                <p className="text-[10px] text-outline-variant text-center mt-3">No photos yet</p>
+
+                {loadingLaborBills ? (
+                  <div className="flex justify-center py-4">
+                    <div className="w-5 h-5 border-2 border-[#60b8f5]/30 border-t-[#60b8f5] rounded-full animate-spin" />
+                  </div>
+                ) : laborBills.length === 0 ? (
+                  <div className="flex-1 border-2 border-dashed border-outline-variant/40 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-background">
+                    <span className="material-symbols-outlined text-2xl text-outline-variant mb-2" translate="no">receipt_long</span>
+                    <p className="text-xs font-bold text-on-surface">No labor bills yet</p>
+                    <p className="text-[10px] text-on-surface-variant mt-1">Labor bills will appear here once created</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar">
+                    {laborBills.map((lb) => {
+                      const d = new Date(lb.created_at);
+                      const dateStr = `${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}/${d.getFullYear()}`;
+                      const lbStatusColor = lb.status === "approved" ? "bg-[#22c55e]/15 text-[#22c55e]" : lb.status === "submitted" ? "bg-[#60b8f5]/15 text-[#60b8f5]" : "bg-surface-container-highest text-on-surface-variant";
+                      return (
+                        <div key={lb.id} className="flex items-center justify-between gap-2 bg-surface-container-high rounded-xl px-4 py-3 border border-outline-variant/10">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className={`material-symbols-outlined text-[16px] shrink-0 ${lb.template_code?.includes("siding") ? "text-[#ff7351]" : "text-[#60b8f5]"}`} translate="no">
+                              {lb.template_code?.includes("siding") ? "home_repair_service" : "format_paint"}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-on-surface truncate">{lb.crew_name || "No crew"}</p>
+                              <p className="text-[10px] text-on-surface-variant">{dateStr}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${lbStatusColor}`}>{lb.status}</span>
+                            <span className="text-xs font-bold text-primary">${Number(lb.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* View All link */}
+                {laborBills.length > 0 && (
+                  <button
+                    onClick={() => window.open("/labor-bills", "_blank")}
+                    className="mt-3 text-[10px] font-bold text-primary uppercase tracking-wider hover:underline cursor-pointer self-center flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[12px]" translate="no">open_in_new</span>
+                    View All Labor Bills
+                  </button>
+                )}
               </div>
 
               {/* Block 3: Videos */}

@@ -4,13 +4,13 @@
 Milestone 1: Estabilização v1 (14 Itens)
 
 ## Current Phase
-Phase 5: Color Selection — Same / Different / Both
+Phase 7: Cancelamento automático → Status Pending
 
 ## Phase Status
 Not Started
 
 ## Progress
-- Phases complete: 4 / 14
+- Phases complete: 5 / 14 (Phase 5 skipped for now)
 - Current blocker: None
 
 ## History
@@ -21,4 +21,6 @@ Not Started
 - 2026-04-28: **Phase 1 COMPLETE** — Change Orders Portal do Cliente: data de solicitação + grid mobile
 - 2026-04-28: **Phase 2 COMPLETE** — Mobile responsivo já coberto pela Phase 1
 - 2026-04-28: **Phase 3 COMPLETE** — COC: Salesperson, Contract Signed Date, Property Address completo
-- 2026-04-28: **Phase 4 COMPLETE** — Labor Bills: Crew dropdown filtrado por disciplina do template (crew_specialties → specialties.code)
+- 2026-04-28: **Phase 4 COMPLETE** — Labor Bills: Crew dropdown filtrado por disciplina do template
+- 2026-04-28: Phase 5 SKIPPED — Color Selection: user deciding on approach
+- 2026-04-28: **Phase 6 COMPLETE** — Labor Bills card in Documents tab: replaces Site Photos, shows list with crew/date/amount/status, links to full page
