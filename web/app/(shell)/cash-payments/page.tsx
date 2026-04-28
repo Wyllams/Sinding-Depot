@@ -235,7 +235,7 @@ export default function CashPaymentsPage() {
     const { data, error } = await supabase
       .from("cash_payments")
       .select("id, date, job_name, store, amount, picked_by, notes")
-      .order("created_at", { ascending: false });
+      .order("date", { ascending: false });
     
     if (data) {
       setPayments(data.map(d => ({
