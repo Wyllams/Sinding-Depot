@@ -20,7 +20,7 @@ export default function FieldCOCModal({ jobId, serviceId, serviceName, onClose, 
   
   // Data state
   const [loading, setLoading] = useState(true);
-  const [customerInfo, setCustomerInfo] = useState({ name: '', address: '', email: '' });
+  const [customerInfo, setCustomerInfo] = useState({ name: '', address: '', email: '', salespersonName: '', contractDate: '' });
   const [actualServiceName, setActualServiceName] = useState(serviceName);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -40,6 +40,9 @@ export default function FieldCOCModal({ jobId, serviceId, serviceName, onClose, 
               service_address_line_1,
               city,
               state,
+              postal_code,
+              contract_signed_at,
+              salesperson:salespersons (full_name),
               customers (
                 full_name
               )
@@ -61,10 +64,26 @@ export default function FieldCOCModal({ jobId, serviceId, serviceName, onClose, 
           const custRaw = job?.customers;
           const customer = Array.isArray(custRaw) ? custRaw[0] : custRaw;
           
+          const spRaw = job?.salesperson;
+          const sp = Array.isArray(spRaw) ? spRaw[0] : spRaw;
+
+          const rawDate = job?.contract_signed_at;
+          let formattedDate = '';
+          if (rawDate) {
+            const dt = new Date(rawDate);
+            if (!isNaN(dt.getTime())) {
+              formattedDate = `${(dt.getMonth() + 1).toString().padStart(2, '0')}/${dt.getDate().toString().padStart(2, '0')}/${dt.getFullYear()}`;
+            }
+          }
+
+          const addressParts = [job?.service_address_line_1, job?.city, job?.state, job?.postal_code].filter(Boolean);
+
           setCustomerInfo({
             name: customer?.full_name || 'Customer Name',
-            email: 'Customer File', // Removed email to prevent RLS/schema issues
-            address: `${job?.service_address_line_1 || ''}, ${job?.city || ''}, ${job?.state || ''}`.replace(/^, /, '')
+            email: 'Customer File',
+            address: addressParts.join(', '),
+            salespersonName: sp?.full_name || '',
+            contractDate: formattedDate,
           });
         }
       } catch (err: any) {
@@ -254,9 +273,21 @@ export default function FieldCOCModal({ jobId, serviceId, serviceName, onClose, 
                     <p className="font-semibold text-sm">{customerInfo.name}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold mb-1">Service Address</p>
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold mb-1">Property Address</p>
                     <p className="text-sm text-zinc-700 leading-snug">{customerInfo.address}</p>
                   </div>
+                  {customerInfo.salespersonName && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold mb-1">Salesperson</p>
+                      <p className="text-sm text-zinc-700 font-semibold">{customerInfo.salespersonName}</p>
+                    </div>
+                  )}
+                  {customerInfo.contractDate && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold mb-1">Contract Signed</p>
+                      <p className="text-sm text-zinc-700">{customerInfo.contractDate}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
