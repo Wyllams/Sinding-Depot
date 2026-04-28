@@ -377,6 +377,13 @@ export default function ReportsPage() {
       customer_name: j.customer?.full_name || "—",
     }));
 
+    // Phase 10: Sort jobs oldest → newest (ascending)
+    mapped.sort((a, b) => {
+      const dateA = (a.contract_signed_at || a.created_at || "").slice(0, 10);
+      const dateB = (b.contract_signed_at || b.created_at || "").slice(0, 10);
+      return dateA.localeCompare(dateB);
+    });
+
     setSpJobs((prev) => ({ ...prev, [spId]: mapped }));
     setLoadingJobs(null);
   };

@@ -4,13 +4,13 @@
 Milestone 1: Estabilização v1 (14 Itens)
 
 ## Current Phase
-Phase 10: Sorting — Sales Performance (oldest first)
+Phase 11: Sorting — Cash Payments (latest first)
 
 ## Phase Status
 Not Started
 
 ## Progress
-- Phases complete: 8 / 14 (Phase 5 skipped for now)
+- Phases complete: 9 / 14 (Phase 5 skipped for now)
 - Current blocker: None
 
 ## History
@@ -27,3 +27,4 @@ Not Started
 - 2026-04-28: **Phase 7 COMPLETE** — Auto-revert job status to "pending" when all assignments removed
 - 2026-04-28: **Phase 8 VERIFIED** — Calendar drag & drop already allows any date. No code change needed.
 - 2026-04-28: **Phase 9 COMPLETE** — Projects table sorted by contract_signed_at DESC (nulls last)
+- 2026-04-28: **Phase 10 COMPLETE** — Sales Performance accordion sorted oldest → newest (ascending)
