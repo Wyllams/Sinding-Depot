@@ -26,6 +26,7 @@ export default function LaborBillsPage() {
   const [itemValues, setItemValues] = useState<ItemValues>({});
   const [jobs, setJobs] = useState<JobOption[]>([]);
   const [crews, setCrews] = useState<CrewOption[]>([]);
+  const [filteredCrews, setFilteredCrews] = useState<CrewOption[]>([]);
   const [salespersons, setSalespersons] = useState<SalespersonOption[]>([]);
   const [selectedJob, setSelectedJob] = useState("");
   const [selectedCrew, setSelectedCrew] = useState("");
@@ -48,6 +49,7 @@ export default function LaborBillsPage() {
       setTemplates(t.data || []);
       setJobs((j.data || []).map((x: any) => ({ id: x.id, title: x.title, job_number: x.job_number, customer_name: Array.isArray(x.customer) ? x.customer[0]?.full_name : x.customer?.full_name })));
       setCrews(c.data || []);
+      setFilteredCrews(c.data || []);
       setSalespersons(s.data || []);
     })();
   }, []);
@@ -65,6 +67,7 @@ export default function LaborBillsPage() {
   // Load template sections when template selected
   const loadTemplate = async (tmpl: Template) => {
     setSelectedTemplate(tmpl);
+    setSelectedCrew("");
     const { data: secs } = await supabase.from("labor_bill_template_sections").select("id, title, sort_order").eq("template_id", tmpl.id).order("sort_order");
     if (!secs) return;
     const sectionsWithItems: Section[] = [];
@@ -80,6 +83,54 @@ export default function LaborBillsPage() {
       vals[it.id] = { qty: it.default_qty?.toString() || "", unit: it.default_unit || "", rate: "" };
     }));
     setItemValues(vals);
+
+    // Filter crews by template discipline
+    const TEMPLATE_TO_SPEC: Record<string, string[]> = {
+      siding: ["siding_installation"],
+      painting: ["painting"],
+      gutters: ["gutters"],
+      roofing: ["roofing"],
+      doors: ["doors"],
+      windows: ["windows"],
+      decks: ["deck_building"],
+    };
+    const tmplCode = tmpl.code.toLowerCase();
+    const specCodes = Object.entries(TEMPLATE_TO_SPEC).find(([key]) => tmplCode.includes(key))?.[1];
+
+    if (specCodes && specCodes.length > 0) {
+      try {
+        // Get specialty IDs matching the template discipline
+        const { data: matchedSpecs } = await supabase
+          .from("specialties")
+          .select("id")
+          .in("code", specCodes);
+
+        if (matchedSpecs && matchedSpecs.length > 0) {
+          const specIds = matchedSpecs.map(s => s.id);
+
+          // Get crew IDs that have this specialty
+          const { data: csRows } = await supabase
+            .from("crew_specialties")
+            .select("crew_id")
+            .in("specialty_id", specIds);
+
+          if (csRows && csRows.length > 0) {
+            const matchedCrewIds = new Set(csRows.map((r: any) => r.crew_id));
+            const filtered = crews.filter(c => matchedCrewIds.has(c.id));
+            setFilteredCrews(filtered.length > 0 ? filtered : crews);
+          } else {
+            setFilteredCrews(crews);
+          }
+        } else {
+          setFilteredCrews(crews);
+        }
+      } catch (err) {
+        console.error("[LaborBills] crew filter error:", err);
+        setFilteredCrews(crews);
+      }
+    } else {
+      setFilteredCrews(crews);
+    }
   };
 
   const toggleSection = (id: string) => {
@@ -211,7 +262,7 @@ export default function LaborBillsPage() {
                       <CustomDropdown
                         value={selectedCrew}
                         onChange={(val: string) => setSelectedCrew(val)}
-                        options={crews.map(c => ({ value: c.id, label: c.name }))}
+                        options={filteredCrews.map(c => ({ value: c.id, label: c.name }))}
                         placeholder="Select crew..."
                         className="bg-surface-container border border-outline-variant/20 text-on-surface rounded-xl px-4 py-3 text-sm flex justify-between items-center transition-colors hover:border-primary w-full"
                       />
