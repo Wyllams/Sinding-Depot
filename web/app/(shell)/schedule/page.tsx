@@ -1372,6 +1372,34 @@ export default function SchedulePage() {
                         if (editJob!.source === "service_assignments") {
                           const { error } = await supabase.from("service_assignments").delete().eq("id", editJob!.id);
                           if (error) { console.error("Delete error:", error); setDeleteStep("idle"); return; }
+
+                          // Phase 7: If no assignments remain for this job → revert status to "pending"
+                          if (editJob!.jobId) {
+                            const { data: remaining } = await supabase
+                              .from("service_assignments")
+                              .select("id")
+                              .eq("job_service_id", editJob!.jobServiceIds?.[0] || "")
+                              .limit(1);
+
+                            // Check ALL assignments for the entire job (not just this service)
+                            const { data: allJobServices } = await supabase
+                              .from("job_services")
+                              .select("id")
+                              .eq("job_id", editJob!.jobId);
+
+                            if (allJobServices && allJobServices.length > 0) {
+                              const jsIds = allJobServices.map((js: any) => js.id);
+                              const { data: anyRemaining } = await supabase
+                                .from("service_assignments")
+                                .select("id")
+                                .in("job_service_id", jsIds)
+                                .limit(1);
+
+                              if (!anyRemaining || anyRemaining.length === 0) {
+                                await supabase.from("jobs").update({ status: "pending" }).eq("id", editJob!.jobId);
+                              }
+                            }
+                          }
                         } else {
                           const { error } = await supabase.from("jobs").delete().eq("id", editJob!.id);
                           if (error) { console.error("Delete error:", error); setDeleteStep("idle"); return; }
