@@ -100,7 +100,7 @@ export default function ProjectsPage() {
             status
           )
         `)
-        .order("created_at", { ascending: false });
+        .order("contract_signed_at", { ascending: false, nullsFirst: false });
 
       if (statusFilter) {
         query = query.eq("status", statusFilter);

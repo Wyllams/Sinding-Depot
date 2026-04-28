@@ -4,13 +4,13 @@
 Milestone 1: Estabilização v1 (14 Itens)
 
 ## Current Phase
-Phase 8: Sorting da tabela do Dashboard
+Phase 10: Sorting — Sales Performance (oldest first)
 
 ## Phase Status
 Not Started
 
 ## Progress
-- Phases complete: 6 / 14 (Phase 5 skipped for now)
+- Phases complete: 8 / 14 (Phase 5 skipped for now)
 - Current blocker: None
 
 ## History
@@ -24,4 +24,6 @@ Not Started
 - 2026-04-28: **Phase 4 COMPLETE** — Labor Bills: Crew dropdown filtrado por disciplina do template
 - 2026-04-28: Phase 5 SKIPPED — Color Selection: user deciding on approach
 - 2026-04-28: **Phase 6 COMPLETE** — Labor Bills card in Documents tab (replaces Site Photos)
-- 2026-04-28: **Phase 7 COMPLETE** — Auto-revert job status to "pending" when all service_assignments removed from calendar
+- 2026-04-28: **Phase 7 COMPLETE** — Auto-revert job status to "pending" when all assignments removed
+- 2026-04-28: **Phase 8 VERIFIED** — Calendar drag & drop already allows any date. No code change needed.
+- 2026-04-28: **Phase 9 COMPLETE** — Projects table sorted by contract_signed_at DESC (nulls last)
