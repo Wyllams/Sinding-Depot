@@ -619,6 +619,61 @@ export default function ProjectDetailPage() {
     }
   };
 
+  // ─── Start Date Shift Handler ───
+  const handleStartDateUpdate = async (newStartDate: string) => {
+    if (!job || !newStartDate) return;
+
+    const oldStartDateStr = job.requested_start_date;
+    if (!oldStartDateStr) {
+      return handleAutoSave("jobs", job.id, "requested_start_date", newStartDate);
+    }
+
+    const oldDate = new Date(oldStartDateStr + "T12:00:00");
+    const newDate = new Date(newStartDate + "T12:00:00");
+    const diffMs = newDate.getTime() - oldDate.getTime();
+    
+    if (diffMs === 0) return;
+
+    let newEndDate = null;
+    if (job.target_completion_date) {
+      const eDate = new Date(job.target_completion_date + "T12:00:00");
+      eDate.setTime(eDate.getTime() + diffMs);
+      newEndDate = eDate.toISOString().split("T")[0];
+    }
+
+    try {
+      // 1. Shift job's start and end date at the same time to avoid check constraint failure
+      const jobUpdatePayload: any = { requested_start_date: newStartDate };
+      if (newEndDate) {
+        jobUpdatePayload.target_completion_date = newEndDate;
+      }
+      const { error: jobErr } = await supabase.from("jobs").update(jobUpdatePayload).eq("id", job.id);
+      if (jobErr) throw jobErr;
+
+      // 2. Shift all service_assignments
+      for (const svc of (job.services || [])) {
+        for (const assignment of (svc.assignments || [])) {
+          if (assignment.scheduled_start_at && assignment.scheduled_end_at) {
+            const asDate = new Date(assignment.scheduled_start_at);
+            const aeDate = new Date(assignment.scheduled_end_at);
+            asDate.setTime(asDate.getTime() + diffMs);
+            aeDate.setTime(aeDate.getTime() + diffMs);
+            
+            await supabase.from("service_assignments").update({
+              scheduled_start_at: asDate.toISOString(),
+              scheduled_end_at: aeDate.toISOString()
+            }).eq("id", assignment.id);
+          }
+        }
+      }
+      
+      fetchJob();
+    } catch (e: any) {
+      console.error("Start Date Update Error:", e);
+      alert("Failed to update Start Date and shift schedules.");
+    }
+  };
+
   // ─── SQ Update Handler (bidirectional sync with schedule popup) ───
   const handleSqUpdate = async (newValue: string): Promise<void> => {
     const raw = newValue.replace(/[^0-9.]/g, '');
@@ -1701,7 +1756,14 @@ export default function ProjectDetailPage() {
               {kpi.label.includes("Date") ? (
                 <CustomDatePicker
                   value={kpi.value ? new Date(kpi.value as string).toISOString().split('T')[0] : ''}
-                  onChange={(iso) => handleAutoSave("jobs", job.id, kpi.key === "estimated_end_date" ? "target_completion_date" : (kpi.key as string), iso || null)}
+                  onChange={(iso) => {
+                    const field = kpi.key === "estimated_end_date" ? "target_completion_date" : (kpi.key as string);
+                    if (field === "requested_start_date" && iso) {
+                      handleStartDateUpdate(iso);
+                    } else {
+                      handleAutoSave("jobs", job.id, field, iso || null);
+                    }
+                  }}
                   variant="ghost"
                   placeholder="Set date"
                   className="text-sm font-black -ml-1 pl-1 py-1 rounded hover:bg-surface-container-highest focus-within:bg-surface-container-high transition-colors"
