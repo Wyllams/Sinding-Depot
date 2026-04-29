@@ -536,8 +536,10 @@ export default function ProjectDetailPage() {
   const [openPartnerModal, setOpenPartnerModal] = useState<ServiceDef | null>(null);
   const [assignedPartners, setAssignedPartners] = useState<Record<string, string>>({});
   const [windowCount, setWindowCount] = useState("");
+  const [windowPrice, setWindowPrice] = useState("");
   const [windowTrim, setWindowTrim] = useState<"yes" | "no" | "">("");
   const [doorCount, setDoorCount] = useState("");
+  const [doorPrice, setDoorPrice] = useState("");
   const [windowsStep, setWindowsStep] = useState<"partner" | "subservices" | "config" | "doors_config" | "deckscope" | "edit_menu" | "edit_windows" | "edit_doors" | "edit_deckscope">("partner");
   const [selectedSubSvcs, setSelectedSubSvcs] = useState<string[]>([]);
 
@@ -559,6 +561,7 @@ export default function ProjectDetailPage() {
     { value: "railing", label: "Railing", days: 1 },
   ];
   const [deckScope, setDeckScope] = useState("");
+  const [deckPrice, setDeckPrice] = useState("");
 
   // ── Dumpster Photos ──
   const [dumpsterPhotos, setDumpsterPhotos] = useState<{ id: string; url: string; file_name: string | null; created_at: string }[]>([]);
@@ -1587,6 +1590,12 @@ export default function ProjectDetailPage() {
       const hasWindows = addedServices.some((s: any) => s.service_type?.name?.toLowerCase() === "windows");
       if (hasWindows && job) {
         const wQty = parseInt(windowCount) || null;
+
+                              const windowsSvc = job?.services?.find((s: any) => s.service_type?.name?.toLowerCase() === "windows");
+                              if (windowsSvc) {
+                                await supabase.from("job_services").update({ quantity: wQty, contracted_amount: parseFloat(windowPrice) || null }).eq("id", windowsSvc.id);
+                              }
+
         const { error: woErr } = await supabase.from("window_orders").insert({
           job_id: job.id,
           customer_name: job.customer?.full_name || job.title || "",
@@ -3529,6 +3538,11 @@ export default function ProjectDetailPage() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Trim?</label>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Price ($)</label>
+                          <input type="number" min="0" step="0.01" value={windowPrice} onChange={(e) => setWindowPrice(e.target.value)} placeholder="e.g. 1500"
+                            className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
+                        </div>
                         <CustomDropdown value={windowTrim} onChange={(val) => setWindowTrim(val as "yes" | "no")}
                           options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} placeholder="Select..."
                           className="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-3 text-[15px] text-on-surface hover:border-[#f5a623]/50 transition-colors flex justify-between items-center" />
@@ -3553,6 +3567,12 @@ export default function ProjectDetailPage() {
                             await persistPartnerToAssignment("windows", partnerName);
                             
                             const wQty = parseInt(windowCount) || null;
+
+                              const windowsSvc = job?.services?.find((s: any) => s.service_type?.name?.toLowerCase() === "windows");
+                              if (windowsSvc) {
+                                await supabase.from("job_services").update({ quantity: wQty, contracted_amount: parseFloat(windowPrice) || null }).eq("id", windowsSvc.id);
+                              }
+
                             const notesStr = windowTrim === "yes" ? "Trim: YES" : windowTrim === "no" ? "Trim: NO" : null;
                             const { data: woData } = await supabase.from("window_orders").select("id").eq("job_id", job.id).limit(1);
                             if (woData && woData.length > 0) {
@@ -3593,7 +3613,13 @@ export default function ProjectDetailPage() {
                         <input type="number" min="1" value={doorCount} onChange={(e) => setDoorCount(e.target.value)} placeholder="e.g. 4"
                           className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
                       </div>
-                      {doorCount && (
+
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Price ($)</label>
+                          <input type="number" min="0" step="0.01" value={doorPrice} onChange={(e) => setDoorPrice(e.target.value)} placeholder="e.g. 1500"
+                            className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
+                        </div>
+                        {doorCount && (
                         <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
                           <div className="flex items-center gap-3">
                             <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">door_front</span>
@@ -3616,7 +3642,7 @@ export default function ProjectDetailPage() {
                             const doorsSvc = job?.services?.find((s: any) => s.service_type?.name?.toLowerCase() === "doors");
                             if (doorsSvc) {
                               const qty = parseInt(doorCount) || null;
-                              await supabase.from("job_services").update({ quantity: qty }).eq("id", doorsSvc.id);
+                              await supabase.from("job_services").update({ quantity: qty, contracted_amount: parseFloat(doorPrice) || null }).eq("id", doorsSvc.id);
                             }
                             // Next: deckscope if decks selected
                             if (selectedSubSvcs.includes("decks")) { setWindowsStep("deckscope"); return; }
@@ -3879,6 +3905,12 @@ export default function ProjectDetailPage() {
                                     // Auto-create window_order when re-adding Windows (NOT doors)
                                     if (sub.id === "windows") {
                                       const wQty = parseInt(windowCount) || null;
+
+                              const windowsSvc = job?.services?.find((s: any) => s.service_type?.name?.toLowerCase() === "windows");
+                              if (windowsSvc) {
+                                await supabase.from("job_services").update({ quantity: wQty, contracted_amount: parseFloat(windowPrice) || null }).eq("id", windowsSvc.id);
+                              }
+
                                       const { error: woErr } = await supabase.from("window_orders").insert({
                                         job_id: job.id,
                                         customer_name: job.customer?.full_name || job.title || "",
@@ -4026,6 +4058,11 @@ export default function ProjectDetailPage() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Trim?</label>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Price ($)</label>
+                          <input type="number" min="0" step="0.01" value={windowPrice} onChange={(e) => setWindowPrice(e.target.value)} placeholder="e.g. 1500"
+                            className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
+                        </div>
                         <CustomDropdown value={windowTrim} onChange={(val) => setWindowTrim(val as "yes" | "no")}
                           options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} placeholder="Select..."
                           className="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-3 text-[15px] text-on-surface hover:border-[#f5a623]/50 transition-colors flex justify-between items-center" />
@@ -4106,7 +4143,13 @@ export default function ProjectDetailPage() {
                         <input type="number" min="1" value={doorCount} onChange={(e) => setDoorCount(e.target.value)} placeholder="e.g. 4"
                           className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
                       </div>
-                      {doorCount && (
+
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Price ($)</label>
+                          <input type="number" min="0" step="0.01" value={doorPrice} onChange={(e) => setDoorPrice(e.target.value)} placeholder="e.g. 1500"
+                            className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
+                        </div>
+                        {doorCount && (
                         <div className="p-4 rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/20">
                           <div className="flex items-center gap-3">
                             <span className="material-symbols-outlined text-[#f5a623] text-lg" translate="no">door_front</span>
@@ -4122,7 +4165,7 @@ export default function ProjectDetailPage() {
                             const doorsSvc = job?.services?.find((s: any) => s.service_type?.name?.toLowerCase() === "doors");
                             if (doorsSvc) {
                               const qty = parseInt(doorCount) || null;
-                              await supabase.from("job_services").update({ quantity: qty }).eq("id", doorsSvc.id);
+                              await supabase.from("job_services").update({ quantity: qty, contracted_amount: parseFloat(doorPrice) || null }).eq("id", doorsSvc.id);
                               console.log("[EditDoors] Updated doors quantity:", qty);
                             }
                             await fetchJob();
