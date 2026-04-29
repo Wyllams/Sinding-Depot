@@ -7,6 +7,7 @@ import { CustomDropdown } from "@/components/CustomDropdown";
 import { useState, useEffect, use, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useTranslations } from "next-intl";
 
 /* ────────────────────────────────────────────────── */
 /*  Types                                             */
@@ -51,6 +52,7 @@ export default function FieldJobDetail({
   const serviceId = searchParams.get("service_id");
   const resolvedParams = use(params);
   const { id: jobId } = resolvedParams;
+  const t = useTranslations("FieldJobDetail");
 
   // Job detail state
   const [job, setJob] = useState<JobDetail | null>(null);
@@ -246,8 +248,8 @@ export default function FieldJobDetail({
           address: jobData.service_address_line_1,
           city: jobData.city,
           state: jobData.state,
-          customerName: customer?.full_name ?? "Unknown Customer",
-          salespersonName: salesperson?.full_name ?? "Unknown Rep",
+          customerName: customer?.full_name ?? t("unknownCustomer"),
+          salespersonName: salesperson?.full_name ?? t("unknownRep"),
           assignmentStatus,
           scheduledStart,
           scheduledEnd,
@@ -348,7 +350,7 @@ export default function FieldJobDetail({
         setJob({ ...job, scheduledEnd: newEndIso, totalDays: newDays });
     } catch (err) {
         console.error("Failed to update duration", err);
-        alert("Failed to update duration.");
+        alert(t("durationFailed"));
     } finally {
         setUpdatingDuration(false);
     }
@@ -357,11 +359,11 @@ export default function FieldJobDetail({
   // ─── Handle Complete ──────────────────────────
   const handleComplete = async (): Promise<void> => {
     if (!serviceId) {
-      alert("Missing service_id to complete the job.");
+      alert(t("missingServiceId"));
       return;
     }
 
-    const confirmMsg = "Are you sure this job is absolutely completed, debris removed, and ready for final customer signature?";
+    const confirmMsg = t("confirmComplete");
     if (!confirm(confirmMsg)) return;
 
     setCompleting(true);
@@ -378,7 +380,7 @@ export default function FieldJobDetail({
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || "Failed to complete service");
 
-      alert(`Success! Service marked as completed. The Certificate of Completion was drafted and sent to the customer for signature.`);
+      alert(t("successComplete"));
       
       // Update optimistic state
       setJob(prev => prev ? { ...prev, assignmentStatus: "done" } : null);
@@ -397,7 +399,7 @@ export default function FieldJobDetail({
     const validItems = materialItems.filter(item => item.name.trim() !== "" && Number(item.qty) > 0);
     
     if (validItems.length === 0) { 
-      alert("Please enter at least one valid material with a quantity greater than 0."); 
+      alert(t("invalidMaterial")); 
       return; 
     }
 
@@ -498,12 +500,12 @@ export default function FieldJobDetail({
 
   function statusBadge(status: string): { label: string; color: string; pulse: boolean } {
     switch (status) {
-      case "pending":      return { label: "Pending", color: "#ef4444", pulse: false };
-      case "in_progress": return { label: "In Progress", color: "#aeee2a", pulse: true };
-      case "scheduled":   return { label: "Scheduled", color: "#60a5fa", pulse: false };
-      case "completed":   return { label: "Completed", color: "#22c55e", pulse: false };
-      case "done":        return { label: "Done", color: "#22c55e", pulse: false };
-      case "assigned":    return { label: "Assigned", color: "#f59e0b", pulse: false };
+      case "pending":      return { label: t("pending"), color: "#ef4444", pulse: false };
+      case "in_progress": return { label: t("inProgress"), color: "#aeee2a", pulse: true };
+      case "scheduled":   return { label: t("scheduled"), color: "#60a5fa", pulse: false };
+      case "completed":   return { label: t("completed"), color: "#22c55e", pulse: false };
+      case "done":        return { label: t("done"), color: "#22c55e", pulse: false };
+      case "assigned":    return { label: t("assigned"), color: "#f59e0b", pulse: false };
       default: return { label: status.replace(/_/g, " "), color: "#6b7280", pulse: false };
     }
   }
@@ -554,14 +556,14 @@ export default function FieldJobDetail({
 
           <div className="mt-6 flex items-center justify-between border-t border-dashed border-white/5 pt-4">
              <div className="flex flex-col">
-               <span className="text-[10px] font-bold text-[var(--color-siding-green)] uppercase tracking-widest mb-1">Rep</span>
+               <span className="text-[10px] font-bold text-[var(--color-siding-green)] uppercase tracking-widest mb-1">{t("rep")}</span>
                <span className="text-on-surface font-medium text-sm flex items-center gap-1.5">
                  <span className="material-symbols-outlined text-[14px]" translate="no">person</span>
                  {job?.salespersonName ?? "—"}
                </span>
              </div>
              <div className="flex flex-col text-right">
-               <span className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-1">Customer</span>
+               <span className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-1">{t("customer")}</span>
                <span className="text-on-surface font-medium text-sm">{job?.customerName ?? "—"}</span>
              </div>
           </div>
@@ -571,7 +573,7 @@ export default function FieldJobDetail({
             <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between gap-2 text-zinc-500 font-medium text-xs">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-[14px]" translate="no">calendar_month</span>
-                <span>Start: {formatDateShort(job.scheduledStart)}</span>
+                <span>{t("start")}: {formatDateShort(job.scheduledStart)}</span>
               </div>
             </div>
           )}
@@ -581,7 +583,7 @@ export default function FieldJobDetail({
         <div className="pt-2">
           <h3 className="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-2 pl-1 flex items-center gap-2">
             <span className="material-symbols-outlined text-[14px]" translate="no">receipt_long</span>
-            Labor Bills
+            {t("laborBills")}
             {loadingLaborBills && <span className="w-3 h-3 border border-t-[var(--color-siding-green)] rounded-full animate-spin ml-1"></span>}
           </h3>
 
@@ -590,7 +592,7 @@ export default function FieldJobDetail({
               <div className="w-11 h-11 rounded-full bg-surface-container-highest flex items-center justify-center">
                 <span className="material-symbols-outlined text-on-surface-variant text-xl" translate="no">receipt_long</span>
               </div>
-              <p className="text-on-surface-variant text-xs font-medium">No labor bills for this job yet.</p>
+              <p className="text-on-surface-variant text-xs font-medium">{t("noLaborBills")}</p>
             </div>
           )}
 
@@ -645,7 +647,7 @@ export default function FieldJobDetail({
         {/* Duration Dropdown */}
         <div className="pt-2">
           <h3 className="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-2 pl-1 flex items-center gap-2">
-            Duration (Days)
+            {t("durationDays")}
             {updatingDuration && <span className="w-3 h-3 border border-t-[var(--color-siding-green)] rounded-full animate-spin ml-2"></span>}
           </h3>
           <CustomDropdown
@@ -667,8 +669,8 @@ export default function FieldJobDetail({
               <span className="material-symbols-outlined text-primary" translate="no">check_circle</span>
             </div>
             <div>
-              <p className="text-on-surface font-bold text-sm">Daily Log Saved!</p>
-              <p className="text-on-surface-variant text-xs mt-0.5">The office has been notified.</p>
+              <p className="text-on-surface font-bold text-sm">{t("dailyLogSaved")}</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">{t("officeNotified")}</p>
             </div>
             <button onClick={() => setLogSuccess(false)} className="ml-auto text-outline-variant active:text-on-surface-variant transition-colors shrink-0">
               <span className="material-symbols-outlined text-lg" translate="no">close</span>
@@ -682,8 +684,8 @@ export default function FieldJobDetail({
               <span className="material-symbols-outlined text-primary" translate="no">check_circle</span>
             </div>
             <div>
-              <p className="text-on-surface font-bold text-sm">Change Order Submitted!</p>
-              <p className="text-on-surface-variant text-xs mt-0.5">Home Office will review and add pricing.</p>
+              <p className="text-on-surface font-bold text-sm">{t("coSubmitted")}</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">{t("officeReviewCO")}</p>
             </div>
             <button onClick={() => setCOSuccess(false)} className="ml-auto text-outline-variant active:text-on-surface-variant transition-colors shrink-0">
               <span className="material-symbols-outlined text-lg" translate="no">close</span>
@@ -697,8 +699,8 @@ export default function FieldJobDetail({
               <span className="material-symbols-outlined text-primary" translate="no">check_circle</span>
             </div>
             <div>
-              <p className="text-on-surface font-bold text-sm">Material Request Sent!</p>
-              <p className="text-on-surface-variant text-xs mt-0.5">The office will review and approve your request.</p>
+              <p className="text-on-surface font-bold text-sm">{t("materialSent")}</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">{t("officeReviewMaterial")}</p>
             </div>
             <button onClick={() => setMaterialSuccess(false)} className="ml-auto text-outline-variant active:text-on-surface-variant transition-colors shrink-0">
               <span className="material-symbols-outlined text-lg" translate="no">close</span>
@@ -710,7 +712,7 @@ export default function FieldJobDetail({
 
         {/* Daily Logs */}
         <div className="pt-2 pb-2">
-          <h3 className="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-2 pl-1">Daily Logs</h3>
+          <h3 className="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-2 pl-1">{t("dailyLogs")}</h3>
           <div className="flex overflow-x-auto gap-3 pt-2 pb-2 px-1 -mx-1 scrollbar-hide">
             {Array.from({ length: job?.totalDays || 1 }).map((_, i) => {
               const dayNum = i + 1;
@@ -740,7 +742,7 @@ export default function FieldJobDetail({
                     className="w-full h-full bg-surface-container-high border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center min-w-[100px] active:scale-95 transition-transform shadow-sm"
                   >
                     <span className="material-symbols-outlined text-primary text-2xl mb-1" translate="no">event_note</span>
-                    <span className="text-on-surface font-bold text-sm">Day {dayNum}</span>
+                    <span className="text-on-surface font-bold text-sm">{t("day")} {dayNum}</span>
                   </button>
                 </div>
               );
@@ -766,9 +768,9 @@ export default function FieldJobDetail({
             <div className="flex flex-col items-start">
                <span className="text-on-surface font-bold text-sm flex items-center gap-2">
                  <span className="material-symbols-outlined text-error text-lg" translate="no">inventory_2</span>
-                 Request Change Order
+                 {t("requestCO")}
                </span>
-               <span className="text-on-surface-variant text-xs mt-1">Report issues or request extras for Home Office</span>
+               <span className="text-on-surface-variant text-xs mt-1">{t("reportIssues")}</span>
             </div>
             <span className="material-symbols-outlined text-outline-variant" translate="no">add_circle</span>
           </button>
@@ -781,9 +783,9 @@ export default function FieldJobDetail({
             <div className="flex flex-col items-start">
                <span className="text-on-surface font-bold text-sm flex items-center gap-2">
                  <span className="material-symbols-outlined text-[#f59e0b] text-lg" translate="no">package_2</span>
-                 Request Extra Material
+                 {t("requestExtra")}
                </span>
-               <span className="text-on-surface-variant text-xs mt-1">Need extra supplies? Send a request to the office.</span>
+               <span className="text-on-surface-variant text-xs mt-1">{t("needSupplies")}</span>
             </div>
                <span className="material-symbols-outlined text-outline-variant" translate="no">add_circle</span>
             </button>
@@ -797,9 +799,9 @@ export default function FieldJobDetail({
                 <div className="flex flex-col items-start">
                    <span className="text-on-surface font-bold text-sm flex items-center gap-2">
                      <span className="material-symbols-outlined text-[#3b82f6] text-lg" translate="no">palette</span>
-                     View Paint Colors
+                     {t("viewPaint")}
                    </span>
-                   <span className="text-on-surface-variant text-xs mt-1">Check the colors selected by the customer</span>
+                   <span className="text-on-surface-variant text-xs mt-1">{t("checkColors")}</span>
                 </div>
                 <span className="material-symbols-outlined text-outline-variant" translate="no">chevron_right</span>
               </button>
@@ -813,8 +815,8 @@ export default function FieldJobDetail({
                <div className="flex items-center gap-4">
                   <span className="material-symbols-outlined text-3xl text-primary" translate="no">verified</span>
                   <div className="text-left">
-                    <h4 className="text-on-surface font-bold text-base">Certificate of Completion</h4>
-                    <p className="text-zinc-500 text-xs mt-1">Submit the signed COC for {job?.jobTitle || 'this service'}</p>
+                    <h4 className="text-on-surface font-bold text-base">{t("coc")}</h4>
+                    <p className="text-zinc-500 text-xs mt-1">{t("submitCOC")} {job?.jobTitle || 'service'}</p>
                   </div>
                </div>
                <span className="material-symbols-outlined text-outline-variant" translate="no">chevron_right</span>
@@ -834,12 +836,12 @@ export default function FieldJobDetail({
             ) : (
               <>
                 <span className="material-symbols-outlined" translate="no">done_all</span>
-                MARK AS COMPLETED
+                {t("markCompleted")}
               </>
             )}
           </button>
           <p className="text-center text-outline-variant text-[10px] uppercase tracking-widest font-bold mt-4">
-            Generates certificate & notifies client
+            {t("generatesCert")}
           </p>
         </div>
 
@@ -918,8 +920,8 @@ export default function FieldJobDetail({
                 <span className="material-symbols-outlined text-[#f59e0b]" translate="no">package_2</span>
               </div>
               <div>
-                <h3 className="text-on-surface font-bold text-lg">Request Extra Material</h3>
-                <p className="text-zinc-500 text-xs">This will be sent to the office for approval.</p>
+                <h3 className="text-on-surface font-bold text-lg">{t("requestExtra")}</h3>
+                <p className="text-zinc-500 text-xs">{t("sentToOffice")}</p>
               </div>
             </div>
 
@@ -938,7 +940,7 @@ export default function FieldJobDetail({
                   {/* Material Name */}
                   <div className={materialItems.length > 1 ? "pr-8" : ""}>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
-                      Material Name {materialItems.length > 1 ? `#${index + 1}` : ""}
+                      {t("materialName")} {materialItems.length > 1 ? `#${index + 1}` : ""}
                     </label>
                     <input
                       type="text"
@@ -953,7 +955,7 @@ export default function FieldJobDetail({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
-                        Quantity
+                        {t("quantity")}
                       </label>
                       <input
                         type="number"
@@ -966,7 +968,7 @@ export default function FieldJobDetail({
                     </div>
                     <div>
                       <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
-                        Piece Size
+                        {t("pieceSize")}
                       </label>
                       <input
                         type="text"
@@ -981,12 +983,12 @@ export default function FieldJobDetail({
                   {/* Notes */}
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
-                      Notes
+                      {t("notes")}
                     </label>
                     <textarea
                       value={item.notes}
                       onChange={(e) => updateMaterialItem(index, 'notes', e.target.value)}
-                      placeholder="Explain the purpose..."
+                      placeholder={t("explainPurpose")}
                       rows={2}
                       className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl px-4 py-3 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-[#f59e0b]/50 transition-all resize-none"
                     />
@@ -995,7 +997,7 @@ export default function FieldJobDetail({
                   {/* Photos */}
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
-                      Photos
+                      {t("addPhotos")}
                     </label>
                     {item.photos.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-2">
@@ -1015,7 +1017,7 @@ export default function FieldJobDetail({
                     )}
                     <label className="flex items-center gap-2 text-xs text-on-surface-variant cursor-pointer hover:text-[#f59e0b] transition-colors">
                       <span className="material-symbols-outlined text-[16px]" translate="no">add_a_photo</span>
-                      Add photos
+                      {t("addPhotos")}
                       <input
                         type="file"
                         accept="image/*"
@@ -1034,7 +1036,7 @@ export default function FieldJobDetail({
                 className="w-full bg-[#0a0a0a] border border-dashed border-[#f59e0b]/30 text-[#f59e0b] rounded-xl py-3.5 font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#f59e0b]/10 transition-colors"
               >
                 <span className="material-symbols-outlined text-[16px]" translate="no">add</span>
-                Add Another Item
+                {t("addAnother")}
               </button>
 
               {/* Submit Button */}
@@ -1048,7 +1050,7 @@ export default function FieldJobDetail({
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-lg" translate="no">send</span>
-                    Send Request ({materialItems.filter(i => i.name.trim()).length} items)
+                    {t("sendRequest")} ({materialItems.filter(i => i.name.trim()).length} {t("items")})
                   </>
                 )}
               </button>
@@ -1069,8 +1071,8 @@ export default function FieldJobDetail({
                   <span className="material-symbols-outlined text-[#3b82f6]" translate="no">palette</span>
                 </div>
                 <div>
-                  <h3 className="text-on-surface font-black text-lg">Paint Colors</h3>
-                  <p className="text-on-surface-variant text-xs">Customer Selections</p>
+                  <h3 className="text-on-surface font-black text-lg">{t("paintColors")}</h3>
+                  <p className="text-on-surface-variant text-xs">{t("customerSelections")}</p>
                 </div>
               </div>
               <button 
@@ -1086,7 +1088,7 @@ export default function FieldJobDetail({
               {paintColors.length === 0 ? (
                 <div className="text-center py-10">
                   <span className="material-symbols-outlined text-4xl text-zinc-600 mb-2" translate="no">format_paint</span>
-                  <p className="text-zinc-400 text-sm">No paint colors selected yet.</p>
+                  <p className="text-zinc-400 text-sm">{t("noPaint")}</p>
                 </div>
               ) : (
                 <div className="bg-surface-container-high border border-white/5 rounded-2xl p-5 space-y-4">

@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { compressImage } from "@/lib/compressImage";
+import { useTranslations } from "next-intl";
 
 interface PhotoWithAnnotation {
   file: File;
@@ -28,6 +29,7 @@ export function FieldServiceReportModal({
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("FieldServiceReport");
 
   // ── Add photos ──
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -68,7 +70,7 @@ export function FieldServiceReportModal({
   // ── Submit ──
   async function handleSubmit(): Promise<void> {
     if (!notes.trim() && photos.length === 0) {
-      setError("Please add notes or at least one photo.");
+      setError(t("addNotesOrPhotos"));
       return;
     }
 
@@ -192,10 +194,10 @@ export function FieldServiceReportModal({
             </div>
             <div>
               <h2 className="text-on-surface font-bold text-lg leading-tight">
-                Service Report
+                {t("serviceReport")}
               </h2>
               <p className="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest mt-0.5">
-                Photos + Annotations
+                {t("photosAnnotations")}
               </p>
             </div>
           </div>
@@ -212,13 +214,13 @@ export function FieldServiceReportModal({
           {/* Notes */}
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-              Report Notes
+              {t("reportNotes")}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full bg-surface-container-high border border-white/5 focus:border-primary rounded-2xl py-4 px-4 text-on-surface outline-none placeholder:text-outline-variant font-medium text-sm resize-none transition-colors"
-              placeholder="Describe the current status, what was done, and any observations..."
+              placeholder={t("notesPlaceholder")}
               rows={3}
               maxLength={2000}
             />
@@ -227,7 +229,7 @@ export function FieldServiceReportModal({
           {/* Photo upload */}
           <div className="space-y-3">
             <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-              Photos {photos.length > 0 && `(${photos.length})`}
+              {t("photos")} {photos.length > 0 && `(${photos.length})`}
             </label>
 
             <div className="flex gap-3">
@@ -237,7 +239,7 @@ export function FieldServiceReportModal({
                 className="flex-1 border-2 border-dashed border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center bg-surface-container-low active:bg-white/5 transition-colors"
               >
                 <span className="material-symbols-outlined text-2xl text-outline-variant mb-1" translate="no">photo_camera</span>
-                <p className="text-xs font-bold text-on-surface">Take Photo</p>
+                <p className="text-xs font-bold text-on-surface">{t("takePhoto")}</p>
               </button>
               <button
                 type="button"
@@ -245,7 +247,7 @@ export function FieldServiceReportModal({
                 className="flex-1 border-2 border-dashed border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center bg-surface-container-low active:bg-white/5 transition-colors"
               >
                 <span className="material-symbols-outlined text-2xl text-outline-variant mb-1" translate="no">photo_library</span>
-                <p className="text-xs font-bold text-on-surface">Choose Files</p>
+                <p className="text-xs font-bold text-on-surface">{t("chooseFiles")}</p>
               </button>
             </div>
 
@@ -289,7 +291,7 @@ export function FieldServiceReportModal({
                         <span className="material-symbols-outlined text-[14px]" translate="no">close</span>
                       </button>
                       <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 rounded-full backdrop-blur-sm">
-                        <span className="text-[10px] font-bold text-white">Photo {idx + 1}</span>
+                        <span className="text-[10px] font-bold text-white">{t("photo")} {idx + 1}</span>
                       </div>
                     </div>
 
@@ -298,14 +300,14 @@ export function FieldServiceReportModal({
                       <div className="flex items-center gap-2 mb-2">
                         <span className="material-symbols-outlined text-[14px] text-[#3b82f6]" translate="no">edit_note</span>
                         <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-                          Annotation
+                          {t("annotation")}
                         </label>
                       </div>
                       <input
                         type="text"
                         value={photo.annotation}
                         onChange={(e) => updateAnnotation(idx, e.target.value)}
-                        placeholder="Describe what this photo shows..."
+                        placeholder={t("annotationPlaceholder")}
                         className="w-full bg-background border border-white/5 focus:border-[#3b82f6] rounded-xl py-2.5 px-3 text-on-surface text-xs outline-none placeholder:text-outline-variant transition-colors"
                         maxLength={500}
                       />
@@ -335,15 +337,17 @@ export function FieldServiceReportModal({
             ) : (
               <>
                 <span className="material-symbols-outlined text-xl" translate="no">send</span>
-                {photos.length > 0
-                  ? `Submit Report with ${photos.length} Photo${photos.length > 1 ? "s" : ""}`
-                  : "Submit Report"}
+                {photos.length > 1
+                  ? t("submitReportWithPhotos", { count: photos.length })
+                  : photos.length === 1
+                    ? t("submitReportWithPhoto")
+                    : t("submitReport")}
               </>
             )}
           </button>
 
           <p className="text-center text-outline-variant text-[10px] uppercase tracking-widest font-bold">
-            Report & photos sent to Home Office
+            {t("sentToOffice")}
           </p>
         </div>
       </div>

@@ -21,11 +21,11 @@ interface ServiceCall {
   blocker_attachments?: { url: string }[];
 }
 
-const STATUS_FLOW: Record<string, { next: string; label: string; color: string; icon: string }> = {
-  open:      { next: "inspected",  label: "Start Work",      color: "#e3eb5d", icon: "play_arrow" },
-  inspected: { next: "repairing",  label: "Start Repair",    color: "#60b8f5", icon: "build" },
-  repairing: { next: "resolved",   label: "Mark Resolved",   color: "#22c55e", icon: "check_circle" },
-  resolved:  { next: "resolved",   label: "Resolved",        color: "#22c55e", icon: "verified" },
+const STATUS_FLOW: Record<string, { next: string; labelKey: string; color: string; icon: string }> = {
+  open:      { next: "inspected",  labelKey: "startWork",      color: "#e3eb5d", icon: "play_arrow" },
+  inspected: { next: "repairing",  labelKey: "startRepair",    color: "#60b8f5", icon: "build" },
+  repairing: { next: "resolved",   labelKey: "markResolved",   color: "#22c55e", icon: "check_circle" },
+  resolved:  { next: "resolved",   labelKey: "resolved",       color: "#22c55e", icon: "verified" },
 };
 
 export default function FieldServicesPage() {
@@ -172,7 +172,7 @@ export default function FieldServicesPage() {
                       backgroundColor: (STATUS_FLOW[service.status]?.color ?? "#ababa8") + "20",
                       color: STATUS_FLOW[service.status]?.color ?? "#ababa8",
                     }}>
-                      {service.status === "in_progress" ? "In Progress" : service.status}
+                      {service.status === "in_progress" ? t("inProgressLabel") : service.status}
                     </span>
                   </div>
                 </div>
@@ -249,7 +249,7 @@ export default function FieldServicesPage() {
                           ) : (
                             <>
                               <span className="material-symbols-outlined text-lg" translate="no">{statusInfo.icon}</span>
-                              {statusInfo.label}
+                              {t(statusInfo.labelKey)}
                             </>
                           )}
                         </button>
@@ -264,7 +264,7 @@ export default function FieldServicesPage() {
                         className="flex-1 h-12 bg-[#3b82f6]/10 border border-[#3b82f6]/30 text-[#3b82f6] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all"
                       >
                         <span className="material-symbols-outlined text-lg" translate="no">assignment</span>
-                        Report
+                        {t("report")}
                       </button>
                     </div>
                   </div>
