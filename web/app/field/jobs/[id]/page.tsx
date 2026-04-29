@@ -1120,6 +1120,7 @@ export default function FieldJobDetail({
       {selectedLaborBill && (
         <FieldLaborBillModal
           billId={selectedLaborBill.id}
+          templateId={selectedLaborBill.template_id}
           billTitle={selectedLaborBill.templateTitle || (selectedLaborBill.templateCode.includes("siding") ? "Siding" : "Paint")}
           billTotal={selectedLaborBill.total}
           billStatus={selectedLaborBill.status}
