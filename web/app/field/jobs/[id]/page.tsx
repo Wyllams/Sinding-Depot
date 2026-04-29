@@ -3,6 +3,7 @@
 import { FieldChangeOrderModal } from "@/components/field/FieldChangeOrderModal";
 import { FieldDailyLogModal } from "@/components/field/FieldDailyLogModal";
 import FieldCOCModal from "@/components/field/FieldCOCModal";
+import { FieldLaborBillModal } from "@/components/field/FieldLaborBillModal";
 import { CustomDropdown } from "@/components/CustomDropdown";
 import { useState, useEffect, use, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -139,6 +140,7 @@ export default function FieldJobDetail({
   // Labor Bills
   const [laborBills, setLaborBills] = useState<LaborBillSummary[]>([]);
   const [loadingLaborBills, setLoadingLaborBills] = useState(false);
+  const [selectedLaborBill, setSelectedLaborBill] = useState<LaborBillSummary | null>(null);
 
 
   // ─── Load real job data ──────────────────────────
@@ -610,7 +612,11 @@ export default function FieldJobDetail({
                 const st = statusStyles[bill.status] || statusStyles.draft;
 
                 return (
-                  <div key={bill.id} className="bg-surface-container-high border border-white/5 rounded-2xl p-4">
+                  <button
+                    key={bill.id}
+                    onClick={() => setSelectedLaborBill(bill)}
+                    className="w-full text-left bg-surface-container-high border border-white/5 rounded-2xl p-4 hover:bg-surface-container-high/80 active:bg-white/5 transition-colors"
+                  >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isSiding ? "bg-[#ff7351]/10" : "bg-[#60b8f5]/10"}`}>
@@ -637,7 +643,7 @@ export default function FieldJobDetail({
                         ${bill.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </span>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -1108,6 +1114,18 @@ export default function FieldJobDetail({
 
           </div>
         </div>
+      )}
+
+      {/* Render the selected Labor Bill Modal */}
+      {selectedLaborBill && (
+        <FieldLaborBillModal
+          billId={selectedLaborBill.id}
+          billTitle={selectedLaborBill.templateTitle || (selectedLaborBill.templateCode.includes("siding") ? "Siding" : "Paint")}
+          billTotal={selectedLaborBill.total}
+          billStatus={selectedLaborBill.status}
+          isSiding={selectedLaborBill.templateCode.includes("siding")}
+          onClose={() => setSelectedLaborBill(null)}
+        />
       )}
     </>
 
