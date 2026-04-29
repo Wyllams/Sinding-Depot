@@ -33,6 +33,7 @@ interface LaborBillSummary {
   status: string;
   total: number;
   created_at: string;
+  template_id: string;
   templateCode: string;
   templateTitle: string;
   crewName: string | null;
