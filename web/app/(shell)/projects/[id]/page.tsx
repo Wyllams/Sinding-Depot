@@ -1694,17 +1694,12 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* ── KPI Strip ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
           {[
             { label: "Start Date",     
               key: "requested_start_date",
               value: job.requested_start_date,          
               icon: "event" 
-            },
-            { label: "End Date",       
-              key: "estimated_end_date",
-              value: job.estimated_end_date, // Note o field chama target_completion_date e é salvo assim, vamos ver.
-              icon: "event_busy" 
             },
             { label: "Sold Date",      
               key: "contract_signed_at",
