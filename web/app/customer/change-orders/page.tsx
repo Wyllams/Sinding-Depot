@@ -10,6 +10,9 @@ interface COItemDetail {
   description: string;
   amount: number | null;
   sort_order: number;
+  status: string;
+  decided_at: string | null;
+  rejection_reason: string | null;
   attachments: { id: string; url: string; mime_type: string | null; file_name: string }[];
 }
 
@@ -41,7 +44,7 @@ export default function CustomerChangeOrders() {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ url: string; type: "image" | "video" } | null>(null);
-  const [rejectModal, setRejectModal] = useState<{ orderId: string; title: string } | null>(null);
+  const [rejectModal, setRejectModal] = useState<{ itemId: string; orderId: string; title: string } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
   async function fetchOrders(): Promise<void> {
@@ -82,7 +85,7 @@ export default function CustomerChangeOrders() {
       // Fetch items for all COs
       const { data: allItems } = await supabase
         .from("change_order_items")
-        .select("id, change_order_id, description, amount, sort_order")
+        .select("id, change_order_id, description, amount, sort_order, status, decided_at, rejection_reason")
         .in("change_order_id", coIds)
         .order("sort_order", { ascending: true });
 
@@ -143,7 +146,90 @@ export default function CustomerChangeOrders() {
     onPayload: () => { fetchOrders(); },
   });
 
-  async function handleApprove(orderId: string): Promise<void> {
+  async function handleApproveItem(orderId: string, itemId: string): Promise<void> {
+    setActing(itemId);
+    try {
+      const { error } = await supabase
+        .from("change_order_items")
+        .update({
+          status: "approved",
+          decided_at: new Date().toISOString(),
+        })
+        .eq("id", itemId);
+      if (error) throw error;
+      await syncParentStatus(orderId);
+      await fetchOrders();
+    } catch (err) {
+      console.error("[CustomerChangeOrders] approve item error:", err);
+    } finally {
+      setActing(null);
+    }
+  }
+
+  async function handleRejectSubmit(): Promise<void> {
+    if (!rejectModal) return;
+    setActing(rejectModal.itemId);
+    try {
+      const { error } = await supabase
+        .from("change_order_items")
+        .update({
+          status: "rejected",
+          decided_at: new Date().toISOString(),
+          rejection_reason: rejectReason.trim() || null,
+        })
+        .eq("id", rejectModal.itemId);
+      if (error) throw error;
+      await syncParentStatus(rejectModal.orderId);
+      setRejectModal(null);
+      setRejectReason("");
+      await fetchOrders();
+    } catch (err) {
+      console.error("[CustomerChangeOrders] reject item error:", err);
+    } finally {
+      setActing(null);
+    }
+  }
+
+  /** After an item decision, sync the parent CO status based on all items */
+  async function syncParentStatus(orderId: string): Promise<void> {
+    const { data: items } = await supabase
+      .from("change_order_items")
+      .select("status")
+      .eq("change_order_id", orderId);
+    if (!items || items.length === 0) return;
+
+    const allDecided = items.every((i) => i.status === "approved" || i.status === "rejected");
+    if (!allDecided) return;
+
+    const allApproved = items.every((i) => i.status === "approved");
+    const approvedTotal = orders
+      .find((o) => o.id === orderId)
+      ?.items.filter((i) => {
+        const fresh = items.find((fi) => fi.status === "approved");
+        return fresh;
+      })
+      .reduce((s, i) => s + (i.amount ?? 0), 0) ?? null;
+
+    // Calculate approved amount from the items that were approved
+    const { data: approvedItems } = await supabase
+      .from("change_order_items")
+      .select("amount")
+      .eq("change_order_id", orderId)
+      .eq("status", "approved");
+    const totalApproved = (approvedItems || []).reduce((s, i) => s + (i.amount ?? 0), 0);
+
+    await supabase
+      .from("change_orders")
+      .update({
+        status: allApproved ? "approved" : "rejected",
+        decided_at: new Date().toISOString(),
+        approved_amount: totalApproved > 0 ? totalApproved : null,
+      })
+      .eq("id", orderId);
+  }
+
+  // Legacy handler for COs without items
+  async function handleApproveLegacy(orderId: string): Promise<void> {
     setActing(orderId);
     try {
       const order = orders.find((o) => o.id === orderId);
@@ -159,29 +245,6 @@ export default function CustomerChangeOrders() {
       await fetchOrders();
     } catch (err) {
       console.error("[CustomerChangeOrders] approve error:", err);
-    } finally {
-      setActing(null);
-    }
-  }
-
-  async function handleRejectSubmit(): Promise<void> {
-    if (!rejectModal) return;
-    setActing(rejectModal.orderId);
-    try {
-      const { error } = await supabase
-        .from("change_orders")
-        .update({
-          status: "rejected",
-          decided_at: new Date().toISOString(),
-          rejection_reason: rejectReason.trim() || null,
-        })
-        .eq("id", rejectModal.orderId);
-      if (error) throw error;
-      setRejectModal(null);
-      setRejectReason("");
-      await fetchOrders();
-    } catch (err) {
-      console.error("[CustomerChangeOrders] reject error:", err);
     } finally {
       setActing(null);
     }
@@ -307,46 +370,110 @@ export default function CustomerChangeOrders() {
                   )}
                 </div>
 
-                {/* Items list (new format) */}
+                {/* Items list — each item has its own approve/reject */}
                 {hasItems ? (
                   <div className="px-6 pb-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3 flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-[14px]" translate="no">list_alt</span>
                       Items ({order.items.length})
                     </p>
-                    <div className="space-y-3">
-                      {order.items.map((item, idx) => (
-                        <div key={item.id} className="bg-surface-container-high border border-[var(--color-outline-variant)] rounded-2xl p-4 space-y-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-start gap-3 flex-1 min-w-0">
-                              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                                <span className="text-primary font-black text-xs">{idx + 1}</span>
+                    <div className="space-y-4">
+                      {order.items.map((item, idx) => {
+                        const itemCfg = STATUS_CFG[item.status] ?? STATUS_CFG.draft;
+                        const itemPending = item.status === "pending" && isPending;
+                        const itemDecided = item.status === "approved" || item.status === "rejected";
+
+                        return (
+                          <div key={item.id} className={`bg-surface-container-high border rounded-2xl overflow-hidden ${
+                            item.status === "approved" ? "border-primary/30" :
+                            item.status === "rejected" ? "border-error/30" :
+                            "border-[var(--color-outline-variant)]"
+                          }`}>
+                            {/* Item header */}
+                            <div className="p-4 space-y-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-3 flex-1 min-w-0">
+                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                                    item.status === "approved" ? "bg-primary/20" :
+                                    item.status === "rejected" ? "bg-error/20" :
+                                    "bg-primary/10"
+                                  }`}>
+                                    {item.status === "approved" ? (
+                                      <span className="material-symbols-outlined text-primary text-[16px]" translate="no">check</span>
+                                    ) : item.status === "rejected" ? (
+                                      <span className="material-symbols-outlined text-[#dc2626] text-[16px]" translate="no">close</span>
+                                    ) : (
+                                      <span className="text-primary font-black text-xs">{idx + 1}</span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm font-medium text-on-surface leading-snug whitespace-pre-wrap">{item.description}</p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {item.amount != null && (
+                                    <span className="text-on-surface font-bold text-sm whitespace-nowrap">
+                                      {fmt$(item.amount)}
+                                    </span>
+                                  )}
+                                  {itemDecided && (
+                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                                      item.status === "approved" ? "bg-[#5c8a00]/15 text-primary" : "bg-error/15 text-[#dc2626]"
+                                    }`}>
+                                      {item.status === "approved" ? "Approved" : "Rejected"}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <p className="text-sm font-medium text-on-surface leading-snug whitespace-pre-wrap">{item.description}</p>
+
+                              {/* Item photos */}
+                              {item.attachments.length > 0 && (
+                                <div className="pl-10">
+                                  {renderAttachmentGrid(item.attachments)}
+                                </div>
+                              )}
+
+                              {/* Item rejection reason */}
+                              {item.status === "rejected" && item.rejection_reason && (
+                                <div className="ml-10 bg-error/5 border border-error/10 rounded-xl px-3 py-2">
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-[#dc2626]/70 mb-0.5">Reason</p>
+                                  <p className="text-xs text-outline-variant">{item.rejection_reason}</p>
+                                </div>
+                              )}
                             </div>
-                            {item.amount != null && (
-                              <span className="text-on-surface font-bold text-sm whitespace-nowrap shrink-0">
-                                {fmt$(item.amount)}
-                              </span>
+
+                            {/* Item action buttons */}
+                            {itemPending && (
+                              <div className="px-4 pb-4 flex gap-2">
+                                <button
+                                  onClick={() => { setRejectModal({ itemId: item.id, orderId: order.id, title: item.description }); setRejectReason(""); }}
+                                  disabled={acting === item.id}
+                                  className="flex-1 h-10 rounded-xl border border-error/30 text-[#dc2626] font-bold text-xs hover:bg-error/10 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]" translate="no">close</span>
+                                  Reject
+                                </button>
+                                <button
+                                  onClick={() => handleApproveItem(order.id, item.id)}
+                                  disabled={acting === item.id}
+                                  className="flex-1 h-10 rounded-xl bg-surface-container-low text-on-surface font-bold text-xs hover:bg-surface-container-highest transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-sm"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]" translate="no">check</span>
+                                  {acting === item.id ? "..." : "Approve"}
+                                </button>
+                              </div>
                             )}
                           </div>
-
-                          {/* Item photos */}
-                          {item.attachments.length > 0 && (
-                            <div className="pl-10">
-                              {renderAttachmentGrid(item.attachments)}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
 
                       {/* Total */}
-                      <div className="bg-surface-container-high border-2 border-[var(--color-outline-variant)] rounded-2xl p-4 flex items-center justify-between">
-                        <span className="text-on-surface-variant font-bold text-sm uppercase tracking-widest">Total</span>
-                        <span className="font-headline text-2xl font-bold text-on-surface">
-                          {fmt$(displayAmount)}
-                        </span>
-                      </div>
+                      {displayAmount != null && (
+                        <div className="bg-surface-container-high border-2 border-[var(--color-outline-variant)] rounded-2xl p-4 flex items-center justify-between">
+                          <span className="text-on-surface-variant font-bold text-sm uppercase tracking-widest">Proposed Total</span>
+                          <span className="font-headline text-2xl font-bold text-on-surface">
+                            {fmt$(displayAmount)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -368,11 +495,11 @@ export default function CustomerChangeOrders() {
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                {isPending && (
+                {/* Legacy Action Buttons (COs without items) */}
+                {isPending && !hasItems && (
                   <div className="px-6 pb-6 flex gap-3">
                     <button
-                      onClick={() => { setRejectModal({ orderId: order.id, title: order.title }); setRejectReason(""); }}
+                      onClick={() => { setRejectModal({ itemId: order.id, orderId: order.id, title: order.title }); setRejectReason(""); }}
                       disabled={acting === order.id}
                       className="flex-1 h-12 rounded-2xl border-2 border-error/30 text-[#dc2626] font-bold text-sm hover:bg-error/10 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
@@ -380,7 +507,7 @@ export default function CustomerChangeOrders() {
                       Reject
                     </button>
                     <button
-                      onClick={() => handleApprove(order.id)}
+                      onClick={() => handleApproveLegacy(order.id)}
                       disabled={acting === order.id}
                       className="flex-1 h-12 rounded-2xl bg-surface-container-low text-on-surface font-bold text-sm hover:bg-surface-container-highest transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
                     >
@@ -401,12 +528,6 @@ export default function CustomerChangeOrders() {
                         {order.status === "approved" ? "You approved this change order" : "You rejected this change order"}
                       </span>
                     </p>
-                    {order.status === "rejected" && order.rejection_reason && (
-                      <div className="mt-2 bg-surface-container/60 rounded-xl px-4 py-3">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Reason</p>
-                        <p className="text-sm text-outline-variant leading-relaxed">{order.rejection_reason}</p>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -484,10 +605,10 @@ export default function CustomerChangeOrders() {
               </button>
               <button
                 onClick={handleRejectSubmit}
-                disabled={acting === rejectModal.orderId}
+                disabled={acting === rejectModal.itemId}
                 className="flex-1 h-12 rounded-2xl bg-error text-white font-bold text-sm hover:bg-error/80 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
               >
-                {acting === rejectModal.orderId ? (
+                {acting === rejectModal.itemId ? (
                   <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>

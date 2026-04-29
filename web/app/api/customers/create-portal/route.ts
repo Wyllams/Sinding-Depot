@@ -41,6 +41,106 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       });
     }
 
+    // ── 1b. Check if ANOTHER customer with same name already has portal access ──
+    // This handles the case where a new project is created for an existing client.
+    // Instead of creating duplicate credentials, we reuse the existing profile.
+    const normalizedName = body.fullName.trim().toLowerCase();
+    const { data: existingPeers } = await supabaseAdmin
+      .from("customers")
+      .select("id, profile_id, username, portal_email, full_name")
+      .not("profile_id", "is", null)
+      .neq("id", body.customerId);
+
+    const matchingPeer = existingPeers?.find((peer) => {
+      const peerNorm = (peer.full_name || "").trim().toLowerCase();
+      return peerNorm === normalizedName && peer.profile_id;
+    });
+
+    if (matchingPeer) {
+      // Link this customer record to the existing profile
+      const { error: linkErr } = await supabaseAdmin
+        .from("customers")
+        .update({
+          profile_id: matchingPeer.profile_id,
+          username: matchingPeer.username,
+          portal_email: matchingPeer.portal_email,
+        })
+        .eq("id", body.customerId);
+
+      if (linkErr) {
+        console.error("[create-portal] Error linking to existing profile:", linkErr.message);
+        return NextResponse.json(
+          { error: `Failed to link to existing profile: ${linkErr.message}` },
+          { status: 500 }
+        );
+      }
+
+      console.log(
+        `[create-portal] Linked customer ${body.customerId} to existing profile of ${matchingPeer.username}`
+      );
+
+      // Send email with existing credentials reminder
+      const resendApiKey = process.env.RESEND_API_KEY;
+      const customerRealEmail = body.email;
+      if (resendApiKey && customerRealEmail) {
+        try {
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://siding-depot.vercel.app";
+          const loginUrl = `${siteUrl}/login?role=customer`;
+          const { Resend } = await import("resend");
+          const resend = new Resend(resendApiKey);
+          const fromEmail = process.env.RESEND_FROM || "Siding Depot <onboarding@resend.dev>";
+
+          await resend.emails.send({
+            from: fromEmail,
+            to: [customerRealEmail],
+            subject: `New Project Added — ${matchingPeer.username}`,
+            html: `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; color: #1a1a1a;">
+                <div style="background: #121412; padding: 32px 40px; text-align: center; border-radius: 16px 16px 0 0;">
+                  <div style="font-size: 28px; font-weight: 900; color: #aeee2a; letter-spacing: -0.5px;">SIDING DEPOT</div>
+                  <div style="font-size: 11px; font-weight: 700; color: #ababa8; text-transform: uppercase; letter-spacing: 3px; margin-top: 6px;">New Project Added</div>
+                </div>
+                <div style="padding: 40px; background: #ffffff;">
+                  <h1 style="font-size: 22px; font-weight: 800; margin: 0 0 8px;">Hello, ${body.fullName}!</h1>
+                  <p style="font-size: 14px; color: #474846; line-height: 1.6; margin: 0 0 28px;">
+                    A new project has been added to your <strong>Customer Portal</strong>. You can log in with your <strong>existing credentials</strong> to view all your projects.
+                  </p>
+                  <div style="background: #f0fae1; border: 2px solid #aeee2a; border-radius: 12px; padding: 24px 28px; margin-bottom: 28px;">
+                    <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #5c8a00; margin-bottom: 12px;">Your Username</div>
+                    <span style="font-size: 18px; font-weight: 900; color: #121412; font-family: monospace; background: #fff; padding: 6px 14px; border-radius: 6px; border: 1px solid #e5e5e3;">${matchingPeer.username}</span>
+                  </div>
+                  <div style="text-align: center; margin-bottom: 28px;">
+                    <a href="${loginUrl}" style="display: inline-block; background: #121412; color: #aeee2a; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; padding: 16px 40px; border-radius: 12px; text-decoration: none;">
+                      Access Your Portal →
+                    </a>
+                  </div>
+                  <p style="font-size: 12px; color: #a1a19d; line-height: 1.5; margin: 0; border-top: 1px solid #e5e5e3; padding-top: 20px;">
+                    Use the same password you already have. If you forgot it, contact us at <strong>(678) 400-2004</strong>.
+                  </p>
+                </div>
+                <div style="background: #faf9f5; padding: 20px 40px; text-align: center; border-top: 1px solid #e5e5e3; border-radius: 0 0 16px 16px;">
+                  <p style="font-size: 10px; color: #a1a19d; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin: 0;">
+                    © ${new Date().getFullYear()} Siding Depot LLC. All rights reserved.
+                  </p>
+                </div>
+              </div>
+            `,
+          });
+          console.log(`[create-portal] Existing-access email sent to ${customerRealEmail}`);
+        } catch (emailErr) {
+          console.error("[create-portal] Email error (non-blocking):", emailErr);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        alreadyExists: true,
+        username: matchingPeer.username,
+        portalEmail: matchingPeer.portal_email,
+        message: `Linked to existing portal access (${matchingPeer.username}). Same credentials apply.`,
+      });
+    }
+
     // ── 2. Generate unique username ──
     const baseUsername = generateUsername(body.fullName);
     let finalUsername = baseUsername;
