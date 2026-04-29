@@ -71,14 +71,26 @@ export async function POST(req: Request): Promise<NextResponse> {
       h('schedule_date') || h('Agendamento') ||
       null;
 
+    // Fallback: use calendar.startTime from ClickOne appointment data
+    const calendarDate: string | null = payload.calendar?.startTime || null;
+
     // Parse the schedule date
     let scheduleDateIso: string | null = null;
-    if (rawDate) {
-      const parsed = new Date(rawDate);
+    const dateSource = rawDate || calendarDate;
+    if (dateSource) {
+      const parsed = new Date(dateSource);
       if (!isNaN(parsed.getTime())) {
         scheduleDateIso = parsed.toISOString().split('T')[0];
       }
     }
+
+    console.log('📅 [Schedule Webhook] Parsed:', {
+      contactId,
+      rawDate,
+      calendarDate,
+      scheduleDateIso,
+      customDataKeys: Object.keys(cd),
+    });
 
     // ── Log raw webhook ──
     await supabaseAdmin.from('webhook_logs').insert({
