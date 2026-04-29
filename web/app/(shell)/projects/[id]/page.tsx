@@ -11,6 +11,7 @@ import { calculateServiceDuration } from "../../../../lib/duration-calculator";
 import { SCHEDULING_PAUSED } from "../../../../lib/scheduling-flag";
 import { ProjectWeatherCard } from "../../../../components/ProjectWeatherCard";
 import { useRealtimeSubscription } from "../../../../lib/hooks/useRealtimeSubscription";
+import { shiftDate, toIso, fromIso } from "../../../../lib/cascade-scheduler";
 
 // ─── Discipline visuals (reused from /crews) ──────────────────────
 const DISCIPLINE_VIS: Record<string, { icon: string; color: string }> = {
@@ -1274,7 +1275,7 @@ export default function ProjectDetailPage() {
         // Create new assignment with calculated dates
         const sq = job.sq ? Number(job.sq) : 0;
         const duration = calculateServiceDuration(partnerName, svcCode, sq);
-        const todayIso = new Date().toISOString().split("T")[0];
+        const todayIso = toIso(new Date());
         const jobStartDate = job.requested_start_date;
 
         // Cascade logic: find the LATEST predecessor end date
@@ -1293,23 +1294,16 @@ export default function ProjectDetailPage() {
           );
           const predAssignment = (predSvc as any)?.assignments?.[0];
           if (predAssignment?.scheduled_end_at) {
-            const predEnd = new Date(predAssignment.scheduled_end_at);
-            if (predEnd.getDay() === 0) predEnd.setDate(predEnd.getDate() + 1);
-            const nextDay = predEnd.toISOString().split("T")[0];
+            const predEndLocal = toIso(new Date(predAssignment.scheduled_end_at));
+            const nextDay = shiftDate(predEndLocal, 1);
             if (nextDay > startIso) startIso = nextDay;
             // Don't break — check ALL predecessors to find the latest
           }
         }
 
-        // Skip Sunday
-        const sd = new Date(startIso + "T12:00:00");
-        if (sd.getDay() === 0) { sd.setDate(sd.getDate() + 1); startIso = sd.toISOString().split("T")[0]; }
-
         // Calculate end date
-        const ed = new Date(startIso + "T12:00:00");
-        let rem = duration - 1;
-        while (rem > 0) { ed.setDate(ed.getDate() + 1); if (ed.getDay() !== 0) rem--; }
-        const endAt = new Date(ed);
+        const edIso = shiftDate(startIso, duration - 1);
+        const endAt = new Date(edIso + "T12:00:00");
 
         const { error } = await supabase.from("service_assignments").insert({
           job_service_id: jobService.id,
@@ -1399,7 +1393,7 @@ export default function ProjectDetailPage() {
       const jobStartDate = job?.requested_start_date
         ? new Date(job.requested_start_date).toISOString().split("T")[0]
         : null;
-      const todayIso = new Date().toISOString().split("T")[0];
+      const todayIso = toIso(new Date());
       const sq = job?.sq ? Number(job.sq) : 0;
 
       // Duration calculator — uses partner-specific SQ tables
@@ -1412,29 +1406,11 @@ export default function ProjectDetailPage() {
         return calculateServiceDuration(partnerName, code, sq);
       };
 
-      // Skip-Sunday helper
-      const skipSunday = (iso: string): string => {
-        const d = new Date(iso + "T12:00:00");
-        if (d.getDay() === 0) { d.setDate(d.getDate() + 1); return d.toISOString().split("T")[0]; }
-        return iso;
-      };
-
-      // Add working days helper
-      const addWorkingDays = (startIso: string, days: number): string => {
-        const d = new Date(startIso + "T12:00:00");
-        let remaining = days - 1;
-        while (remaining > 0) {
-          d.setDate(d.getDate() + 1);
-          if (d.getDay() !== 0) remaining--;
-        }
-        return d.toISOString().split("T")[0];
-      };
-
       // Get existing service end dates for cascade calc
       const existingAssignments = (job?.services ?? []).flatMap((s: any) =>
         (s.assignments ?? []).map((a: any) => ({
           code: s.service_type?.name?.toLowerCase() || "",
-          end: a.scheduled_end_at ? new Date(a.scheduled_end_at).toISOString().split("T")[0] : null,
+          end: a.scheduled_end_at ? toIso(new Date(a.scheduled_end_at)) : null,
         }))
       );
 
@@ -1470,10 +1446,7 @@ export default function ProjectDetailPage() {
           for (const pred of predecessors) {
             const predAssign = existingAssignments.find((a: any) => a.code === pred && a.end);
             if (predAssign && predAssign.end) {
-              const predEnd = new Date(predAssign.end + "T12:00:00");
-              predEnd.setDate(predEnd.getDate() + 1);
-              if (predEnd.getDay() === 0) predEnd.setDate(predEnd.getDate() + 1);
-              const nextDay = predEnd.toISOString().split("T")[0];
+              const nextDay = shiftDate(predAssign.end, 1);
               if (nextDay > startIso) startIso = nextDay;
               // Don't break — check ALL predecessors to find the latest
             }
@@ -1486,10 +1459,15 @@ export default function ProjectDetailPage() {
           }
         }
 
-        startIso = skipSunday(startIso);
-        const endIso = addWorkingDays(startIso, duration);
+        const endIso = shiftDate(startIso, duration - 1);
         const startAt = new Date(startIso + "T08:00:00");
         const endAt = new Date(endIso + "T12:00:00");
+
+        // Push to existingAssignments so subsequent auto-added services can cascade
+        existingAssignments.push({
+          code: svcCode,
+          end: endIso
+        });
 
         const defaultCrew = crewNameMap[svcCode] || "";
         const { data: crewMatch } = defaultCrew

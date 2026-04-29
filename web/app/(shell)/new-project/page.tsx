@@ -9,6 +9,7 @@ import { supabase } from "../../../lib/supabase";
 import { calculateServiceDuration } from "../../../lib/duration-calculator";
 import { SCHEDULING_PAUSED } from "../../../lib/scheduling-flag";
 import { shiftDate, fromIso, toIso } from "../../../lib/cascade-scheduler";
+import CustomDatePicker from "../../../components/CustomDatePicker";
 
 // =============================================
 // Create New Job | Iron & Lime
@@ -171,155 +172,8 @@ function ServicesCarousel({
   );
 }
 
-// ---- Custom Date Picker (Premium Dark) ----
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+// CustomDatePicker is now imported from @/components/CustomDatePicker
 
-function CustomDatePicker({ 
-  value, 
-  onChange, 
-  placeholder = "dd/mm/yyyy" 
-}: { 
-  value: string, 
-  onChange: (val: string) => void, 
-  placeholder?: string 
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  const current = value ? new Date(value + "T12:00:00") : new Date();
-  const [viewMonth, setViewMonth] = useState(current.getMonth());
-  const [viewYear, setViewYear] = useState(current.getFullYear());
-  
-  const popoverRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      const initDate = value ? new Date(value + "T12:00:00") : new Date();
-      setViewMonth(initDate.getMonth());
-      setViewYear(initDate.getFullYear());
-    }
-  }, [isOpen, value]);
-
-  const formattedValue = value ? (() => {
-    const d = new Date(value + "T12:00:00");
-    return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`;
-  })() : "";
-
-  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
-  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const blanks = Array.from({ length: firstDay }, (_, i) => i);
-
-  const selectDate = (day: number) => {
-    const yyyy = viewYear;
-    const mm = (viewMonth + 1).toString().padStart(2, '0');
-    const dd = day.toString().padStart(2, '0');
-    onChange(`${yyyy}-${mm}-${dd}`);
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative w-full" ref={popoverRef}>
-      <div 
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 flex items-center justify-between cursor-pointer hover:border-outline-variant transition-colors h-[48px] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary`}
-      >
-        <span className={`text-[15px] ${value ? "text-on-surface" : "text-outline tracking-wider"}`}>
-          {value ? formattedValue : placeholder}
-        </span>
-        <span className="material-symbols-outlined text-outline text-[18px]" translate="no">
-          calendar_month
-        </span>
-      </div>
-
-      {isOpen && (
-        <div className="absolute top-14 left-0 z-50 w-72 bg-surface-container-high border border-outline-variant/50 rounded-xl shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <span className="font-bold text-on-surface ml-2 text-[15px]">
-              {MONTHS[viewMonth]} {viewYear}
-            </span>
-            <div className="flex gap-1">
-              <button 
-                type="button" 
-                onClick={(e) => { e.stopPropagation(); viewMonth === 0 ? (setViewMonth(11), setViewYear(viewYear - 1)) : setViewMonth(viewMonth - 1); }} 
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface transition cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[20px]" translate="no">chevron_left</span>
-              </button>
-              <button 
-                type="button" 
-                onClick={(e) => { e.stopPropagation(); viewMonth === 11 ? (setViewMonth(0), setViewYear(viewYear + 1)) : setViewMonth(viewMonth + 1); }} 
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface transition cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[20px]" translate="no">chevron_right</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-7 mb-2">
-            {DAYS.map(d => (
-              <div key={d} className="text-center text-[10px] font-black uppercase text-on-surface-variant">{d}</div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-y-1">
-            {blanks.map(b => (
-              <div key={`blank-${b}`} className="w-8 h-8 mx-auto" />
-            ))}
-            {daysArray.map(day => {
-              const today = new Date();
-              const isToday = day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
-              const isSelected = value && (() => {
-                  const s = new Date(value + "T12:00:00");
-                  return s.getDate() === day && s.getMonth() === viewMonth && s.getFullYear() === viewYear;
-              })();
-
-              return (
-                <button
-                  type="button"
-                  key={day}
-                  onClick={(e) => { e.stopPropagation(); selectDate(day); }}
-                  className={`w-8 h-8 mx-auto flex items-center justify-center rounded-lg text-[13px] font-medium transition-colors cursor-pointer
-                    ${isSelected ? "bg-primary text-mobile-frame font-black hover:bg-[#9bdd22]" 
-                      : isToday ? "bg-surface-container-highest text-primary border border-primary/30 hover:bg-[#323632]" 
-                      : "text-on-surface hover:bg-surface-container-highest"
-                    }
-                  `}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex justify-between items-center mt-4 pt-4 border-t border-outline-variant/20">
-             <button type="button" onClick={() => { onChange(""); setIsOpen(false); }} className="text-xs font-bold text-on-surface-variant hover:text-[#e04545] transition-colors cursor-pointer px-2 py-1">
-               Clear
-             </button>
-             <button type="button" onClick={() => { 
-                 const now = new Date(); 
-                 onChange(`${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`);
-                 setIsOpen(false);
-               }} 
-               className="text-xs font-bold text-primary hover:text-[#9bdd22] transition-colors cursor-pointer px-2 py-1">
-               Today
-             </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function SectionHeader({ icon, title }: { icon: string; title: string }) {
   return (
@@ -607,7 +461,7 @@ export default function NewProjectPage() {
 
                    if (svcId === "windows" || svcId === "doors" || svcId === "decks") {
                       // DWD runs in parallel with Siding — no cascade dependency
-                      const todayIso = new Date().toISOString().split("T")[0];
+                      const todayIso = toIso(new Date());
                       if (todayIso > effectiveStartDate) {
                          startIso = todayIso;
                          if (fromIso(startIso).getDay() === 0) {
