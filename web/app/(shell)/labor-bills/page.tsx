@@ -37,6 +37,7 @@ export default function LaborBillsPage() {
   const [billsLoading, setBillsLoading] = useState(true);
   const [jobSearch, setJobSearch] = useState("");
   const [editingBillId, setEditingBillId] = useState<string | null>(null);
+  const [billStatus, setBillStatus] = useState("draft");
 
   // Load templates + jobs + crews + salespersons
   useEffect(() => {
@@ -150,6 +151,7 @@ export default function LaborBillsPage() {
 
   const handleEdit = async (bill: LaborBill) => {
     setEditingBillId(bill.id);
+    setBillStatus(bill.status || "draft");
     setSelectedJob(bill.job_id);
     setSelectedCrew(bill.crew_id || "");
     setInstallerName(bill.installer_name || "");
@@ -224,7 +226,7 @@ export default function LaborBillsPage() {
     if (!selectedTemplate || !selectedJob) return;
     setSaving(true);
     try {
-      const filledItems = Object.entries(itemValues).filter(([, v]) => (parseFloat(v.qty) || 0) > 0 && (parseFloat(v.rate) || 0) > 0);
+      const filledItems = Object.entries(itemValues).filter(([, v]) => (parseFloat(v.qty) || 0) > 0);
       let billId = editingBillId;
 
       if (editingBillId) {
@@ -232,7 +234,7 @@ export default function LaborBillsPage() {
         const { error } = await supabase.from("job_labor_bills").update({
           job_id: selectedJob, crew_id: selectedCrew || null,
           installer_name: installerName || null, completion_date: completionDate || null,
-          total: grandTotal,
+          status: billStatus, total: grandTotal,
         }).eq("id", editingBillId);
         if (error) { console.error(error); setSaving(false); return; }
 
@@ -243,7 +245,7 @@ export default function LaborBillsPage() {
         const { data: bill, error } = await supabase.from("job_labor_bills").insert({
           job_id: selectedJob, template_id: selectedTemplate.id, crew_id: selectedCrew || null,
           installer_name: installerName || null, completion_date: completionDate || null,
-          status: "draft", total: grandTotal,
+          status: billStatus, total: grandTotal,
         }).select("id").single();
         if (error || !bill) { console.error(error); setSaving(false); return; }
         billId = bill.id;
@@ -261,6 +263,7 @@ export default function LaborBillsPage() {
       setTab("list"); setSelectedTemplate(null); setSections([]); setItemValues({});
       setSelectedJob(""); setSelectedCrew(""); setInstallerName(""); setCompletionDate("");
       setEditingBillId(null);
+      setBillStatus("draft");
       fetchBills();
     } finally { setSaving(false); }
   };
@@ -291,6 +294,7 @@ export default function LaborBillsPage() {
           <button onClick={() => {
             if (tab === "list") {
               setEditingBillId(null);
+              setBillStatus("draft");
               setSelectedTemplate(null); setSections([]); setItemValues({});
               setSelectedJob(""); setSelectedCrew(""); setInstallerName(""); setCompletionDate("");
               setTab("create");
@@ -391,6 +395,21 @@ export default function LaborBillsPage() {
                         onChange={(val: string) => setCompletionDate(val)}
                         placeholder="Select date"
                       />
+                    </div>
+
+                    {/* Status */}
+                    <div className="flex flex-col gap-1.5 z-10">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Status</label>
+                      <select 
+                        value={billStatus} 
+                        onChange={(e) => setBillStatus(e.target.value)}
+                        className="bg-surface-container border border-outline-variant/20 text-on-surface rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-colors w-full"
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="submitted">Submitted</option>
+                        <option value="approved">Approved</option>
+                        <option value="paid">Paid</option>
+                      </select>
                     </div>
                   </div>
                 </div>
