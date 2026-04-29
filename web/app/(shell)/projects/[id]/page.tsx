@@ -3537,12 +3537,12 @@ export default function ProjectDetailPage() {
                           className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Trim?</label>
-                        <div className="space-y-2">
                           <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Price ($)</label>
                           <input type="number" min="0" step="0.01" value={windowPrice} onChange={(e) => setWindowPrice(e.target.value)} placeholder="e.g. 1500"
                             className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
                         </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Trim?</label>
                         <CustomDropdown value={windowTrim} onChange={(val) => setWindowTrim(val as "yes" | "no")}
                           options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} placeholder="Select..."
                           className="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-3 text-[15px] text-on-surface hover:border-[#f5a623]/50 transition-colors flex justify-between items-center" />
@@ -4057,12 +4057,12 @@ export default function ProjectDetailPage() {
                           className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Trim?</label>
-                        <div className="space-y-2">
                           <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Price ($)</label>
                           <input type="number" min="0" step="0.01" value={windowPrice} onChange={(e) => setWindowPrice(e.target.value)} placeholder="e.g. 1500"
                             className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
                         </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Trim?</label>
                         <CustomDropdown value={windowTrim} onChange={(val) => setWindowTrim(val as "yes" | "no")}
                           options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} placeholder="Select..."
                           className="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-3 text-[15px] text-on-surface hover:border-[#f5a623]/50 transition-colors flex justify-between items-center" />
