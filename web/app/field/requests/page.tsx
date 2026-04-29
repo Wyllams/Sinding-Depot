@@ -457,34 +457,64 @@ export default function FieldRequestsPage() {
                 </div>
               </div>
 
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">{t("titleLabel")}</p>
-                <h4 className="text-sm font-bold text-on-surface">{selectedCO.title}</h4>
+              <div className="space-y-4">
+                {selectedCO.change_order_items && selectedCO.change_order_items.map((item, idx) => {
+                  let locationStr = "";
+                  let materialStr = "";
+                  let notesStr = "";
+                  
+                  const descLines = (item.description || "").split("\n");
+                  const firstLine = descLines[0] || "";
+                  
+                  const match = firstLine.match(/^\[(.*?)\]\s*(.*)$/);
+                  if (match) {
+                    locationStr = match[1];
+                    materialStr = match[2];
+                  } else {
+                    materialStr = firstLine;
+                  }
+                  
+                  if (descLines.length > 1) {
+                    notesStr = descLines.slice(1).join("\n");
+                  }
+                  
+                  return (
+                    <div key={item.id} className="bg-surface-container-highest p-4 rounded-xl border border-outline-variant/20 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-[#f5a623]/20 text-[#f5a623] flex items-center justify-center text-[9px] font-black">{idx + 1}</span>
+                        <h4 className="text-sm font-bold text-on-surface">{materialStr || "Change Order Item"}</h4>
+                      </div>
+                      
+                      {locationStr && (
+                        <div>
+                          <p className="text-[8px] uppercase tracking-widest text-on-surface-variant font-bold mb-0.5">{t("location") || "Location"}</p>
+                          <p className="text-xs text-on-surface leading-snug">{locationStr}</p>
+                        </div>
+                      )}
+
+                      {notesStr && (
+                        <div>
+                          <p className="text-[8px] uppercase tracking-widest text-on-surface-variant font-bold mb-0.5">{t("notes") || "Notes"}</p>
+                          <p className="text-xs text-on-surface leading-snug whitespace-pre-wrap">{notesStr}</p>
+                        </div>
+                      )}
+
+                      {item.change_order_attachments && item.change_order_attachments.length > 0 && (
+                        <div>
+                          <p className="text-[8px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">{t("photosLabel") || "Photos"}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {item.change_order_attachments.map((photo) => (
+                              <a key={photo.id} href={photo.url} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded overflow-hidden border border-outline-variant/30">
+                                <img src={photo.url} alt="CO Photo" className="w-full h-full object-cover" />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-
-              {selectedCO.description && (
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">{t("descriptionNotes")}</p>
-                  <div className="bg-surface-container-highest p-3 rounded-xl border border-outline-variant/10 text-xs text-on-surface leading-relaxed whitespace-pre-wrap">
-                    {selectedCO.description}
-                  </div>
-                </div>
-              )}
-
-              {selectedCO.change_order_items && selectedCO.change_order_items.length > 0 && (
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-2">{t("photosLabel")}</p>
-                  <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 no-scrollbar">
-                    {selectedCO.change_order_items.flatMap(item => 
-                      item.change_order_attachments?.map((photo, i) => (
-                        <a key={photo.id} href={photo.url} target="_blank" rel="noopener noreferrer" className="shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-outline-variant/30">
-                          <img src={photo.url} alt="CO Photo" className="w-full h-full object-cover" />
-                        </a>
-                      )) || []
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </>

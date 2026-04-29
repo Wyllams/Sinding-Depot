@@ -449,19 +449,22 @@ export default function FieldJobDetail({
           if (!row || item.photos.length === 0) continue;
           for (const photo of item.photos) {
             try {
-              const formData = new FormData();
-              formData.append("file", photo);
-              formData.append("folder", `extra-materials/${jobId}`);
-              const res = await fetch("/api/upload", { method: "POST", body: formData });
-              const result = await res.json();
-              if (res.ok && result.url) {
-                await supabase.from("extra_material_attachments").insert({
-                  extra_material_id: row.id,
-                  file_url: result.url,
-                  file_name: photo.name,
-                });
+              const ext = photo.name.split(".").pop();
+              const path = `extra-materials/${jobId}/${row.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+              const { error: upErr } = await supabase.storage.from("attachments").upload(path, photo);
+              if (upErr) {
+                console.error("Upload error:", upErr);
+                continue;
               }
-            } catch { /* non-blocking */ }
+              const { data: urlData } = supabase.storage.from("attachments").getPublicUrl(path);
+              await supabase.from("extra_material_attachments").insert({
+                extra_material_id: row.id,
+                file_url: urlData.publicUrl,
+                file_name: photo.name,
+              });
+            } catch (err) {
+               console.error("Failed to upload photo", err);
+            }
           }
         }
       }
