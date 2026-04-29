@@ -1,36 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { supabase } from "../../../lib/supabase";
+
+// =============================================
+// Forgot Password — Restricted
+// Only admins can reset passwords. Users must
+// contact their administrator to reset access.
+// =============================================
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (authError) throw authError;
-      setIsSubmitted(true);
-    } catch (err: any) {
-      // Por segurança, Supabase não confirma se o email existe.
-      // Mostramos sucesso de qualquer forma para não vazar info.
-      setIsSubmitted(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="w-full max-w-sm">
       {/* Brand Header */}
@@ -45,111 +23,47 @@ export default function ForgotPasswordPage() {
         </div>
 
         <h1 className="text-2xl font-black text-on-surface tracking-tight">
-          Reset Password
+          Password Reset
         </h1>
         <p className="text-on-surface-variant text-sm mt-3 font-medium">
-          Enter your email to receive recovery instructions.
+          Password resets are managed by administrators.
         </p>
       </div>
 
-      {/* Recovery Form */}
-      <div className="w-full">
-        {isSubmitted ? (
-          <div className="text-center py-4">
-            {/* Animated checkmark */}
-            <div className="relative w-16 h-16 mx-auto mb-5">
-              <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping opacity-40" />
-              <div className="relative w-16 h-16 bg-primary/15 rounded-full flex items-center justify-center border border-primary/25">
-                <span className="material-symbols-outlined text-3xl text-primary" translate="no" style={{ fontVariationSettings: "'FILL' 1" }}>mark_email_read</span>
-              </div>
-            </div>
-
-            <h3 className="text-lg font-black text-on-surface mb-2">Check your Email</h3>
-            <p className="text-on-surface-variant text-sm mb-2 leading-relaxed">
-              If <span className="font-bold text-white">{email}</span> is registered, you'll receive password reset instructions shortly.
-            </p>
-            <p className="text-outline-variant text-xs mb-8">
-              Don't forget to check your spam folder.
-            </p>
-
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center gap-2 w-full bg-primary text-surface-container-low rounded-xl py-4 font-black uppercase tracking-widest text-xs hover:brightness-110 transition-all active:scale-[0.98]"
-            >
-              <span className="material-symbols-outlined text-lg" translate="no">arrow_back</span>
-              Back to Login
-            </Link>
-
-            <button
-              onClick={() => { setIsSubmitted(false); setEmail(""); }}
-              className="mt-4 text-[11px] font-bold text-outline-variant hover:text-on-surface transition-colors flex items-center justify-center gap-1.5 w-full"
-            >
-              <span className="material-symbols-outlined text-sm" translate="no">refresh</span>
-              Try a different email
-            </button>
+      {/* Contact Admin Message */}
+      <div className="text-center py-4">
+        {/* Info Icon */}
+        <div className="relative w-16 h-16 mx-auto mb-5">
+          <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse opacity-40" />
+          <div className="relative w-16 h-16 bg-primary/15 rounded-full flex items-center justify-center border border-primary/25">
+            <span className="material-symbols-outlined text-3xl text-primary" translate="no" style={{ fontVariationSettings: "'FILL' 1" }}>admin_panel_settings</span>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
+        </div>
 
-            {/* Error Banner */}
-            {error && (
-              <div className="flex items-start gap-3 bg-error/10 border border-error/25 rounded-xl px-4 py-3">
-                <span className="material-symbols-outlined text-error shrink-0 text-[18px] mt-0.5" translate="no">error</span>
-                <p className="text-xs text-error font-bold leading-relaxed">{error}</p>
-              </div>
-            )}
+        <h3 className="text-lg font-black text-on-surface mb-3">Contact Your Admin</h3>
+        <p className="text-on-surface-variant text-sm mb-2 leading-relaxed">
+          For security, password resets can only be performed by a{" "}
+          <span className="font-bold text-white">system administrator</span>.
+        </p>
+        <p className="text-on-surface-variant text-sm mb-6 leading-relaxed">
+          Please contact <span className="font-bold text-primary">Nick</span> or your team lead to request a password reset.
+        </p>
 
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 pl-1">
-                Work Email
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant text-xl" translate="no">mail</span>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(null); }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && email) {
-                      e.preventDefault();
-                      handleSubmit(e as any);
-                    }
-                  }}
-                  placeholder="nick@sidingdepot.com"
-                  required
-                  autoComplete="email"
-                  className="w-full bg-[#0a0a0a] border border-surface-container-highest rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold text-on-surface placeholder-outline-variant focus:outline-none focus:border-primary/50 focus:bg-surface-container-low transition-all"
-                />
-              </div>
-            </div>
+        {/* Contact info box */}
+        <div className="bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 mb-6">
+          <div className="flex items-center justify-center gap-2 text-on-surface-variant text-xs font-bold">
+            <span className="material-symbols-outlined text-lg text-primary" translate="no">shield_person</span>
+            Admin-only password reset policy
+          </div>
+        </div>
 
-            <button
-              type="submit"
-              disabled={isLoading || !email}
-              className="w-full relative overflow-hidden group bg-primary text-surface-container-low rounded-xl py-4 font-black uppercase tracking-widest text-xs disabled:opacity-70 transition-all hover:brightness-110 active:scale-[0.98]"
-            >
-              <span className={`flex items-center justify-center gap-2 ${isLoading ? "opacity-0" : "opacity-100"}`}>
-                Send Instructions
-                <span className="material-symbols-outlined text-lg" translate="no">send</span>
-              </span>
-              {isLoading && (
-                <span className="absolute inset-0 flex items-center justify-center">
-                  <span className="w-5 h-5 border-2 border-surface-container-low/30 border-t-surface-container-low rounded-full animate-spin" />
-                </span>
-              )}
-            </button>
-
-            <div className="text-center pt-2">
-              <Link
-                href="/login"
-                className="text-[11px] font-bold text-outline-variant hover:text-on-surface transition-colors flex items-center justify-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-sm" translate="no">arrow_back</span>
-                Return to Login
-              </Link>
-            </div>
-          </form>
-        )}
+        <Link
+          href="/login"
+          className="inline-flex items-center justify-center gap-2 w-full bg-primary text-surface-container-low rounded-xl py-4 font-black uppercase tracking-widest text-xs hover:brightness-110 transition-all active:scale-[0.98]"
+        >
+          <span className="material-symbols-outlined text-lg" translate="no">arrow_back</span>
+          Back to Login
+        </Link>
       </div>
     </div>
   );

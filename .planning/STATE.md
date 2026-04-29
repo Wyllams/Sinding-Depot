@@ -32,3 +32,10 @@ Done
 - 2026-04-28: **Phase 12 COMPLETE** — Windows popup: label corrected to "What is the price?", persistence verified OK
 - 2026-04-28: **Phase 13 COMPLETE** — Decks popup: price field added above Scope, persisted to contracted_amount
 - 2026-04-28: **Phase 14 COMPLETE** — Doors popup: label corrected to "What is the price?", persistence verified OK
+- 2026-04-28: **BUGFIX** — ClickOne Webhook integration: completed /api/webhook/clickone/schedule to update existing client project dates.
+- 2026-04-28: **BUGFIX** — UI: Removed duplicate SQ indicators on job cards and removed confusing "End Date" metric from project KPI strip.
+- 2026-04-28: **BUGFIX** — Cascade Engine: Fixed UTC timezone bug causing start dates to shift to the next day.
+- 2026-04-28: **BUGFIX** — Cascade Engine: Fixed Siding + Paint simultaneous creation bug so Paint strictly cascades to the next working day.
+- 2026-04-28: **INFRA** — Decision made to utilize Supabase Storage (100GB on Pro) over Vercel Blob for heavy media to minimize egress costs and leverage RLS.
+- 2026-04-28: **SECURITY** — Advised on enabling "Have I Been Pwned" (Password Leak Protection) in Supabase Auth (Pro plan feature).
+- 2026-04-28: **SECURITY** — Generated scripts to resolve Supabase Security Advisor warnings (Public Bucket Listing & Security Definer execution privileges).
