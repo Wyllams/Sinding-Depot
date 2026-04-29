@@ -4192,10 +4192,15 @@ export default function ProjectDetailPage() {
                       </p>
 
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Scope</label>
-                        <CustomDropdown
-                          value={deckScope}
-                          onChange={(val) => setDeckScope(val)}
+                          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Price ($)</label>
+                          <input type="number" min="0" step="0.01" value={deckPrice} onChange={(e) => setDeckPrice(e.target.value)} placeholder="e.g. 1500"
+                            className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] transition-all h-[48px] text-[15px]" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Scope</label>
+                          <CustomDropdown
+                            value={deckScope}
+                            onChange={(val) => setDeckScope(val)}
                           options={DECK_SCOPE_OPTIONS.map(o => ({
                             value: o.value,
                             label: `${o.label} — ${o.days >= 7 ? `${Math.round(o.days / 5)} weeks` : `${o.days} day${o.days !== 1 ? "s" : ""}`}`,
