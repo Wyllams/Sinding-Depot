@@ -646,8 +646,8 @@ export default function ProjectDetailPage() {
       if (diffMs === 0) return;
 
       let newEndDate: string | null = null;
-      if (job.target_completion_date) {
-        const eDate = parseDateStr(job.target_completion_date);
+      if (job.estimated_end_date) {
+        const eDate = parseDateStr(job.estimated_end_date);
         eDate.setTime(eDate.getTime() + diffMs);
         newEndDate = eDate.toISOString().split("T")[0];
       }
