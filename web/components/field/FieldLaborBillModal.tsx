@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 
 interface FieldLaborBillModalProps {
   billId: string;
+  templateId: string;
   billTitle: string;
   billTotal: number;
   billStatus: string;
@@ -32,6 +33,7 @@ interface FilledItem {
 
 export function FieldLaborBillModal({
   billId,
+  templateId,
   billTitle,
   billTotal,
   billStatus,
@@ -46,52 +48,48 @@ export function FieldLaborBillModal({
     async function loadDetails() {
       setLoading(true);
       try {
-        // 1. Fetch filled items
+        // 1. Fetch all sections for this template
+        const { data: secsData } = await supabase
+          .from("labor_bill_template_sections")
+          .select("id, title, sort_order")
+          .eq("template_id", templateId)
+          .order("sort_order");
+
+        if (!secsData || secsData.length === 0) {
+          setLoading(false);
+          return;
+        }
+
+        const sectionIds = secsData.map((s) => s.id);
+
+        // 2. Fetch all template items for those sections
+        const { data: tmplItems } = await supabase
+          .from("labor_bill_template_items")
+          .select("id, section_id, label, sub_label, sort_order")
+          .in("section_id", sectionIds);
+
+        // 3. Fetch filled items for this bill
         const { data: billItems } = await supabase
           .from("job_labor_bill_items")
           .select("*")
           .eq("labor_bill_id", billId);
 
-        if (!billItems || billItems.length === 0) {
-          setLoading(false);
-          return;
-        }
+        const filledBillItems = billItems || [];
+        const expanded = new Set<string>();
 
-        const templateItemIds = billItems.map((i) => i.template_item_id);
-
-        // 2. Fetch template items to get labels and section_id
-        const { data: tmplItems } = await supabase
-          .from("labor_bill_template_items")
-          .select("id, section_id, label, sub_label, sort_order")
-          .in("id", templateItemIds);
-
-        if (!tmplItems || tmplItems.length === 0) {
-          setLoading(false);
-          return;
-        }
-
-        const sectionIds = Array.from(new Set(tmplItems.map((i) => i.section_id)));
-
-        // 3. Fetch sections
-        const { data: secsData } = await supabase
-          .from("labor_bill_template_sections")
-          .select("id, title, sort_order")
-          .in("id", sectionIds)
-          .order("sort_order");
-
-        if (!secsData) {
-          setLoading(false);
-          return;
-        }
-
-        // Group items by section
+        // 4. Group items by section
         const grouped: SectionData[] = secsData.map((sec) => {
-          const secItems = tmplItems.filter((ti) => ti.section_id === sec.id);
+          const secItems = (tmplItems || []).filter((ti) => ti.section_id === sec.id);
           
-          const filledItems: FilledItem[] = secItems.map((ti) => {
-            const billed = billItems.find((bi) => bi.template_item_id === ti.id);
+          let hasFilled = false;
+          
+          const items: FilledItem[] = secItems.map((ti) => {
+            const billed = filledBillItems.find((bi) => bi.template_item_id === ti.id);
             const qty = billed?.quantity || 0;
             const rate = billed?.rate || 0;
+            
+            if (qty > 0) hasFilled = true;
+            
             return {
               id: ti.id,
               label: ti.label,
@@ -104,15 +102,18 @@ export function FieldLaborBillModal({
             };
           }).sort((a, b) => a.sort_order - b.sort_order);
 
+          if (hasFilled) expanded.add(sec.id);
+
           return {
             id: sec.id,
             title: sec.title,
             sort_order: sec.sort_order,
-            items: filledItems,
+            items: items,
           };
-        }).sort((a, b) => a.sort_order - b.sort_order); // Ensure sections are sorted correctly too
+        }).sort((a, b) => a.sort_order - b.sort_order);
 
         setSections(grouped);
+        setExpandedSections(expanded);
       } catch (e) {
         console.error("Failed to load labor bill details:", e);
       } finally {
@@ -121,7 +122,7 @@ export function FieldLaborBillModal({
     }
 
     loadDetails();
-  }, [billId]);
+  }, [billId, templateId]);
 
   const toggleSection = (id: string) => {
     setExpandedSections((prev) => {
@@ -221,33 +222,43 @@ export function FieldLaborBillModal({
                     
                     {isOpen && (
                       <div className="px-3 pb-3 space-y-2">
-                        {sec.items.map((item) => (
-                          <div key={item.id} className="bg-surface-container-high rounded-xl p-3 border border-white/5">
-                            <p className="text-sm font-bold text-on-surface leading-tight mb-1">{item.label}</p>
-                            {item.sub_label && <p className="text-[10px] text-on-surface-variant leading-tight mb-2">{item.sub_label}</p>}
-                            
-                            <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-white/5">
-                              <div>
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Qty</p>
-                                <p className="text-sm font-bold text-on-surface">{item.quantity}</p>
+                        {sec.items.map((item) => {
+                          const isFilled = item.quantity > 0;
+                          return (
+                            <div key={item.id} className={`rounded-xl p-3 border transition-colors ${isFilled ? "bg-primary/5 border-primary/30" : "bg-surface-container-high border-white/5 opacity-50"}`}>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className={`text-sm font-bold leading-tight mb-1 ${isFilled ? "text-primary" : "text-on-surface"}`}>{item.label}</p>
+                                  {item.sub_label && <p className="text-[10px] text-on-surface-variant leading-tight mb-2">{item.sub_label}</p>}
+                                </div>
+                                {isFilled && (
+                                  <span className="material-symbols-outlined text-primary text-[18px]" translate="no">check_circle</span>
+                                )}
                               </div>
-                              <div>
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Unit</p>
-                                <p className="text-sm font-bold text-on-surface">{item.unit}</p>
+                              
+                              <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-white/5">
+                                <div>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Qty</p>
+                                  <p className={`text-sm font-bold ${isFilled ? "text-on-surface" : "text-on-surface-variant"}`}>{item.quantity || "—"}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Unit</p>
+                                  <p className={`text-sm font-bold ${isFilled ? "text-on-surface" : "text-on-surface-variant"}`}>{item.unit || "—"}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Rate</p>
+                                  <p className={`text-sm font-bold ${isFilled ? "text-on-surface" : "text-on-surface-variant"}`}>${item.rate.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Rate</p>
-                                <p className="text-sm font-bold text-on-surface">${item.rate.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
-                              </div>
+                              
+                              {item.lineTotal > 0 && (
+                                <div className="mt-2 text-right">
+                                  <span className="text-xs font-black text-primary">${item.lineTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                                </div>
+                              )}
                             </div>
-                            
-                            {item.lineTotal > 0 && (
-                              <div className="mt-2 text-right">
-                                <span className="text-xs font-black text-primary">${item.lineTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
