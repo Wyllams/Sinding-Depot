@@ -36,6 +36,7 @@ export default function LaborBillsPage() {
   const [bills, setBills] = useState<LaborBill[]>([]);
   const [billsLoading, setBillsLoading] = useState(true);
   const [jobSearch, setJobSearch] = useState("");
+  const [editingBillId, setEditingBillId] = useState<string | null>(null);
 
   // Load templates + jobs + crews + salespersons
   useEffect(() => {
@@ -147,27 +148,119 @@ export default function LaborBillsPage() {
     return sum + q * r;
   }, 0);
 
-  const handleCreate = async () => {
+  const handleEdit = async (bill: LaborBill) => {
+    setEditingBillId(bill.id);
+    setSelectedJob(bill.job_id);
+    setSelectedCrew(bill.crew_id || "");
+    setInstallerName(bill.installer_name || "");
+    setCompletionDate(bill.completion_date ? bill.completion_date.split('T')[0] : "");
+    const tmpl = templates.find(t => t.id === bill.template_id);
+    if (!tmpl) return;
+
+    setSelectedTemplate(tmpl);
+    const { data: secs } = await supabase.from("labor_bill_template_sections").select("id, title, sort_order").eq("template_id", tmpl.id).order("sort_order");
+    if (!secs) return;
+    const sectionsWithItems: Section[] = [];
+    for (const sec of secs) {
+      const { data: items } = await supabase.from("labor_bill_template_items").select("id, label, sub_label, default_qty, default_unit, sort_order").eq("section_id", sec.id).order("sort_order");
+      sectionsWithItems.push({ ...sec, items: items || [] });
+    }
+    setSections(sectionsWithItems);
+    setExpandedSections(new Set());
+
+    // Fetch existing values
+    const { data: existingItems } = await supabase.from("job_labor_bill_items").select("*").eq("labor_bill_id", bill.id);
+    
+    const vals: ItemValues = {};
+    sectionsWithItems.forEach(s => s.items.forEach(it => {
+      const existing = existingItems?.find(ei => ei.template_item_id === it.id);
+      vals[it.id] = { 
+        qty: existing?.quantity?.toString() || "", 
+        unit: existing?.unit || it.default_unit || "", 
+        rate: existing?.rate?.toString() || "" 
+      };
+    }));
+    setItemValues(vals);
+    setTab("create");
+
+    // Filter crews by template discipline
+    const TEMPLATE_TO_SPEC: Record<string, string[]> = {
+      siding: ["siding_installation"],
+      painting: ["painting"],
+      gutters: ["gutters"],
+      roofing: ["roofing"],
+      doors: ["doors"],
+      windows: ["windows"],
+      decks: ["deck_building"],
+    };
+    const tmplCode = tmpl.code.toLowerCase();
+    const specCodes = Object.entries(TEMPLATE_TO_SPEC).find(([key]) => tmplCode.includes(key))?.[1];
+
+    if (specCodes && specCodes.length > 0) {
+      try {
+        const { data: matchedSpecs } = await supabase.from("specialties").select("id").in("code", specCodes);
+        if (matchedSpecs && matchedSpecs.length > 0) {
+          const specIds = matchedSpecs.map(s => s.id);
+          const { data: csRows } = await supabase.from("crew_specialties").select("crew_id").in("specialty_id", specIds);
+          if (csRows && csRows.length > 0) {
+            const matchedCrewIds = new Set(csRows.map((r: any) => r.crew_id));
+            const filtered = crews.filter(c => matchedCrewIds.has(c.id));
+            setFilteredCrews(filtered.length > 0 ? filtered : crews);
+          } else {
+            setFilteredCrews(crews);
+          }
+        } else {
+          setFilteredCrews(crews);
+        }
+      } catch (err) {
+        setFilteredCrews(crews);
+      }
+    } else {
+      setFilteredCrews(crews);
+    }
+  };
+
+  const handleSave = async () => {
     if (!selectedTemplate || !selectedJob) return;
     setSaving(true);
     try {
       const filledItems = Object.entries(itemValues).filter(([, v]) => (parseFloat(v.qty) || 0) > 0 && (parseFloat(v.rate) || 0) > 0);
-      const { data: bill, error } = await supabase.from("job_labor_bills").insert({
-        job_id: selectedJob, template_id: selectedTemplate.id, crew_id: selectedCrew || null,
-        installer_name: installerName || null, completion_date: completionDate || null,
-        status: "draft", total: grandTotal,
-      }).select("id").single();
-      if (error || !bill) { console.error(error); setSaving(false); return; }
-      if (filledItems.length > 0) {
+      let billId = editingBillId;
+
+      if (editingBillId) {
+        // Update existing
+        const { error } = await supabase.from("job_labor_bills").update({
+          job_id: selectedJob, crew_id: selectedCrew || null,
+          installer_name: installerName || null, completion_date: completionDate || null,
+          total: grandTotal,
+        }).eq("id", editingBillId);
+        if (error) { console.error(error); setSaving(false); return; }
+
+        // Delete existing items to recreate
+        await supabase.from("job_labor_bill_items").delete().eq("labor_bill_id", editingBillId);
+      } else {
+        // Create new
+        const { data: bill, error } = await supabase.from("job_labor_bills").insert({
+          job_id: selectedJob, template_id: selectedTemplate.id, crew_id: selectedCrew || null,
+          installer_name: installerName || null, completion_date: completionDate || null,
+          status: "draft", total: grandTotal,
+        }).select("id").single();
+        if (error || !bill) { console.error(error); setSaving(false); return; }
+        billId = bill.id;
+      }
+
+      if (filledItems.length > 0 && billId) {
         const rows = filledItems.map(([itemId, v], idx) => ({
-          labor_bill_id: bill.id, template_item_id: itemId,
+          labor_bill_id: billId, template_item_id: itemId,
           quantity: parseFloat(v.qty) || 0, unit: v.unit, rate: parseFloat(v.rate) || 0, sort_order: idx,
         }));
         await supabase.from("job_labor_bill_items").insert(rows);
       }
+      
       // Reset
       setTab("list"); setSelectedTemplate(null); setSections([]); setItemValues({});
       setSelectedJob(""); setSelectedCrew(""); setInstallerName(""); setCompletionDate("");
+      setEditingBillId(null);
       fetchBills();
     } finally { setSaving(false); }
   };
@@ -195,7 +288,16 @@ export default function LaborBillsPage() {
               <span className="text-primary font-bold">{bills.length}</span> labor bills created
             </p>
           </div>
-          <button onClick={() => setTab(tab === "list" ? "create" : "list")}
+          <button onClick={() => {
+            if (tab === "list") {
+              setEditingBillId(null);
+              setSelectedTemplate(null); setSections([]); setItemValues({});
+              setSelectedJob(""); setSelectedCrew(""); setInstallerName(""); setCompletionDate("");
+              setTab("create");
+            } else {
+              setTab("list");
+            }
+          }}
             className="flex items-center gap-2 px-5 py-2.5 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-sm"
             style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
             <span className="material-symbols-outlined text-[18px]" translate="no">{tab === "list" ? "add" : "arrow_back"}</span>
@@ -365,11 +467,11 @@ export default function LaborBillsPage() {
                     <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Grand Total</p>
                     <p className="text-2xl font-black text-primary tracking-tight">${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
                   </div>
-                  <button onClick={handleCreate} disabled={saving || !selectedJob}
+                  <button onClick={handleSave} disabled={saving || !selectedJob}
                     className="px-8 py-3 bg-primary text-[#3a5400] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                     style={{ fontFamily: "Manrope, system-ui, sans-serif" }}>
                     {saving && <div className="w-4 h-4 border-2 border-[#3a5400]/30 border-t-[#3a5400] rounded-full animate-spin" />}
-                    {saving ? "Saving..." : "Create Labor Bill"}
+                    {saving ? "Saving..." : editingBillId ? "Update Labor Bill" : "Create Labor Bill"}
                   </button>
                 </div>
               </div>
@@ -397,7 +499,7 @@ export default function LaborBillsPage() {
                 <table className="w-full text-left border-collapse min-w-[700px]">
                   <thead>
                     <tr className="bg-surface-container-high/50">
-                      {["Date", "Template", "Project", "Crew / Sales", "Status", "Total"].map(col => (
+                      {["Date", "Template", "Project", "Crew / Sales", "Status", "Total", ""].map(col => (
                         <th key={col} className={`px-5 py-4 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest ${col === "Total" || col === "Status" ? "text-center" : ""}`}>{col}</th>
                       ))}
                     </tr>
@@ -426,6 +528,11 @@ export default function LaborBillsPage() {
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${statusColor(bill.status)}`}>{bill.status}</span>
                           </td>
                           <td className="px-5 py-3 text-center text-sm font-bold text-primary">${Number(bill.total || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
+                          <td className="px-5 py-3 text-right">
+                            <button onClick={() => handleEdit(bill)} className="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant/20 hover:bg-white/10 text-on-surface-variant hover:text-white flex items-center justify-center transition-colors">
+                              <span className="material-symbols-outlined text-[16px]" translate="no">edit</span>
+                            </button>
+                          </td>
                         </tr>
                       );
                     })}
