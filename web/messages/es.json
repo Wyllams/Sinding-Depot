@@ -140,7 +140,7 @@
   },
   "MobileNav": {
     "home": "INICIO",
-    "myJobs": "MIS TRABAJOS",
+    "myJobs": "TRABAJOS",
     "myDeals": "MIS VENTAS",
     "services": "SERVICIOS",
     "profile": "PERFIL",
@@ -154,7 +154,8 @@
     "alerts": "Alertas",
     "photoUploadFailed": "Error al subir la foto: ",
     "dealDetails": "Detalles del Trato",
-    "fieldEdition": "Edición de Campo"
+    "fieldEdition": "Edición de Campo",
+    "partnerFieldCrew": "Socio / Equipo de Campo"
   },
   "CustomerNav": {
     "dashboard": "Panel de Control",
@@ -341,7 +342,13 @@
     "projectId": "ID del Proyecto",
     "na": "N/A",
     "attachments": "Archivos Adjuntos",
-    "doc": "Doc"
+    "doc": "Doc",
+    "startWork": "Iniciar Trabajo",
+    "startRepair": "Iniciar Reparación",
+    "markResolved": "Marcar Resuelto",
+    "resolved": "Resuelto",
+    "report": "Reporte",
+    "inProgressLabel": "En Progreso"
   },
   "FieldJobDetail": {
     "durationFailed": "Error al actualizar la duración.",
@@ -388,7 +395,13 @@
     "paintColors": "Colores de Pintura",
     "customerSelections": "Selecciones del Cliente",
     "noPaint": "Aún no se han seleccionado colores de pintura.",
-    "items": "elementos"
+    "items": "elementos",
+    "addPhotos": "Agregar fotos",
+    "laborBills": "Facturas de Trabajo",
+    "noLaborBills": "No hay facturas de trabajo para este proyecto.",
+    "pending": "Pendiente",
+    "unknownCustomer": "Cliente Desconocido",
+    "unknownRep": "Rep Desconocido"
   },
   "FieldChangeOrderModal": {
     "selectLocation": "Por favor selecciona una ubicación en la casa.",
@@ -449,6 +462,53 @@
     "photos": "Fotos",
     "add": "Agregar",
     "saveDailyLog": "Guardar Registro Diario"
+  },
+  "FieldServiceReport": {
+    "serviceReport": "Reporte de Servicio",
+    "photosAnnotations": "Fotos + Anotaciones",
+    "reportNotes": "Notas del Reporte",
+    "notesPlaceholder": "Describe el estado actual, lo que se hizo y cualquier observación...",
+    "photos": "Fotos",
+    "takePhoto": "Tomar Foto",
+    "chooseFiles": "Elegir Archivos",
+    "photo": "Foto",
+    "annotation": "Anotación",
+    "annotationPlaceholder": "Describe lo que muestra esta foto...",
+    "addNotesOrPhotos": "Por favor agrega notas o al menos una foto.",
+    "submitReportWithPhotos": "Enviar Reporte con {count} Fotos",
+    "submitReportWithPhoto": "Enviar Reporte con 1 Foto",
+    "submitReport": "Enviar Reporte",
+    "sentToOffice": "Reporte y fotos enviados a la Oficina Principal"
+  },
+  "FieldRequests": {
+    "title": "Mis Solicitudes",
+    "subtitle": "Seguimiento de tus Órdenes de Cambio y Materiales.",
+    "loadingProjects": "Cargando proyectos...",
+    "noActiveProjects": "Sin Proyectos Activos",
+    "noActiveProjectsDesc": "Debes estar asignado a un proyecto activo para ver o enviar solicitudes.",
+    "selectProject": "Seleccionar Proyecto",
+    "changeOrders": "Órdenes de Cambio",
+    "extraMaterials": "Material Extra",
+    "requests": "solicitud(es)",
+    "noCO": "No se han solicitado Órdenes de Cambio.",
+    "noEM": "No se ha solicitado Material Extra.",
+    "coDetails": "Detalles de la Orden de Cambio",
+    "emDetails": "Detalles de la Solicitud de Material",
+    "status": "Estado",
+    "date": "Fecha",
+    "titleLabel": "Título",
+    "descriptionNotes": "Descripción / Notas",
+    "photosLabel": "Fotos",
+    "qty": "Cant.",
+    "pieceSize": "Tamaño de Pieza",
+    "notes": "Notas",
+    "items": "elementos",
+    "pending": "Pendiente",
+    "approved": "Aprobado",
+    "ordered": "Pedido",
+    "rejected": "Rechazado",
+    "cancelled": "Cancelado",
+    "delivered": "Entregado"
   },
   "MobileWeatherWidget": {
     "searchCity": "Buscar ciudad...",

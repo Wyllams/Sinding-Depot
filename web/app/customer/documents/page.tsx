@@ -51,17 +51,17 @@ export default function CustomerDocuments(): React.ReactElement {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: customer } = await supabase
+        const { data: customers } = await supabase
           .from("customers")
           .select("id")
-          .eq("profile_id", user.id)
-          .single();
-        if (!customer) return;
+          .eq("profile_id", user.id);
+        if (!customers || customers.length === 0) return;
 
+        const customerIds = customers.map(c => c.id);
         const { data: jobs } = await supabase
           .from("jobs")
           .select("id")
-          .eq("customer_id", customer.id);
+          .in("customer_id", customerIds);
         if (!jobs || jobs.length === 0) return;
 
         const jobIds = jobs.map((j) => j.id);

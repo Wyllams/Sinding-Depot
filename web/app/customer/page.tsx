@@ -43,19 +43,23 @@ export default function CustomerDashboard() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { setError("Not authenticated"); setLoading(false); return; }
 
-        // 2. Get customer by profile_id
-        const { data: customer, error: custErr } = await supabase
+        // 2. Get ALL customer records linked to this profile
+        //    (a user can have multiple customer records if projects were created at different times)
+        const { data: customers, error: custErr } = await supabase
           .from("customers")
           .select("id, full_name")
-          .eq("profile_id", user.id)
-          .single();
-        if (custErr || !customer) { setError("Customer not found"); setLoading(false); return; }
+          .eq("profile_id", user.id);
+        if (custErr || !customers || customers.length === 0) { setError("Customer not found"); setLoading(false); return; }
 
-        // 3. Get the job for this customer
+        // Use the first customer record for name display
+        const customer = customers[0];
+
+        // 3. Get the most recent job across ALL customer records
+        const customerIds = customers.map(c => c.id);
         const { data: job, error: jobErr } = await supabase
           .from("jobs")
           .select("id, job_number, status, service_address_line_1, city, state, contract_amount, contract_signed_at, target_completion_date")
-          .eq("customer_id", customer.id)
+          .in("customer_id", customerIds)
           .order("created_at", { ascending: false })
           .limit(1)
           .single();

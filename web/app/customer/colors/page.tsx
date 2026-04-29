@@ -124,18 +124,18 @@ export default function CustomerColors() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: customer } = await supabase
+        const { data: customers } = await supabase
           .from("customers")
           .select("id, full_name")
-          .eq("profile_id", user.id)
-          .single();
-        if (!customer) return;
-        setCustomerName(customer.full_name);
+          .eq("profile_id", user.id);
+        if (!customers || customers.length === 0) return;
+        setCustomerName(customers[0].full_name);
 
+        const customerIds = customers.map(c => c.id);
         const { data: job } = await supabase
           .from("jobs")
           .select("id, service_address_line_1, color_edit_override_until")
-          .eq("customer_id", customer.id)
+          .in("customer_id", customerIds)
           .order("created_at", { ascending: false })
           .limit(1)
           .single();

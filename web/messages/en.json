@@ -140,11 +140,11 @@
   },
   "MobileNav": {
     "home": "HOME",
-    "myJobs": "MY JOBS",
+    "myJobs": "JOBS",
     "myDeals": "MY DEALS",
     "services": "SERVICES",
     "profile": "PROFILE",
-    "myRequests": "MY REQUESTS",
+    "myRequests": "REQUESTS",
     "fieldCrew": "Field Crew",
     "salesEdition": "Sales Edition",
     "editProfile": "Edit Profile",
@@ -154,7 +154,8 @@
     "alerts": "Alerts",
     "photoUploadFailed": "Failed to upload photo: ",
     "dealDetails": "Deal Details",
-    "fieldEdition": "Field Edition"
+    "fieldEdition": "Field Edition",
+    "partnerFieldCrew": "Partner / Field Crew"
   },
   "CustomerNav": {
     "dashboard": "Dashboard",
@@ -341,7 +342,13 @@
     "projectId": "Project ID",
     "na": "N/A",
     "attachments": "Attachments",
-    "doc": "Doc"
+    "doc": "Doc",
+    "startWork": "Start Work",
+    "startRepair": "Start Repair",
+    "markResolved": "Mark Resolved",
+    "resolved": "Resolved",
+    "report": "Report",
+    "inProgressLabel": "In Progress"
   },
   "FieldJobDetail": {
     "durationFailed": "Failed to update duration.",
@@ -388,7 +395,13 @@
     "paintColors": "Paint Colors",
     "customerSelections": "Customer Selections",
     "noPaint": "No paint colors selected yet.",
-    "items": "items"
+    "items": "items",
+    "addPhotos": "Add photos",
+    "laborBills": "Labor Bills",
+    "noLaborBills": "No labor bills for this job yet.",
+    "pending": "Pending",
+    "unknownCustomer": "Unknown Customer",
+    "unknownRep": "Unknown Rep"
   },
   "FieldChangeOrderModal": {
     "selectLocation": "Please select a location on the house.",
@@ -449,6 +462,53 @@
     "photos": "Photos",
     "add": "Add",
     "saveDailyLog": "Save Daily Log"
+  },
+  "FieldServiceReport": {
+    "serviceReport": "Service Report",
+    "photosAnnotations": "Photos + Annotations",
+    "reportNotes": "Report Notes",
+    "notesPlaceholder": "Describe the current status, what was done, and any observations...",
+    "photos": "Photos",
+    "takePhoto": "Take Photo",
+    "chooseFiles": "Choose Files",
+    "photo": "Photo",
+    "annotation": "Annotation",
+    "annotationPlaceholder": "Describe what this photo shows...",
+    "addNotesOrPhotos": "Please add notes or at least one photo.",
+    "submitReportWithPhotos": "Submit Report with {count} Photos",
+    "submitReportWithPhoto": "Submit Report with 1 Photo",
+    "submitReport": "Submit Report",
+    "sentToOffice": "Report & photos sent to Home Office"
+  },
+  "FieldRequests": {
+    "title": "My Requests",
+    "subtitle": "Track status of your Change Orders and Materials.",
+    "loadingProjects": "Loading projects...",
+    "noActiveProjects": "No Active Projects",
+    "noActiveProjectsDesc": "You must be assigned to an active project to view or send requests.",
+    "selectProject": "Select Project",
+    "changeOrders": "Change Orders",
+    "extraMaterials": "Extra Materials",
+    "requests": "request(s)",
+    "noCO": "No Change Orders requested.",
+    "noEM": "No Extra Materials requested.",
+    "coDetails": "Change Order Details",
+    "emDetails": "Material Request Details",
+    "status": "Status",
+    "date": "Date",
+    "titleLabel": "Title",
+    "descriptionNotes": "Description / Notes",
+    "photosLabel": "Photos",
+    "qty": "Qty",
+    "pieceSize": "Piece Size",
+    "notes": "Notes",
+    "items": "items",
+    "pending": "Pending",
+    "approved": "Approved",
+    "ordered": "Ordered",
+    "rejected": "Rejected",
+    "cancelled": "Cancelled",
+    "delivered": "Delivered"
   },
   "MobileWeatherWidget": {
     "searchCity": "Search city...",
