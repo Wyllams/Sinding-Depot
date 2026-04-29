@@ -628,27 +628,38 @@ export default function ProjectDetailPage() {
       return handleAutoSave("jobs", job.id, "requested_start_date", newStartDate);
     }
 
-    const oldDate = new Date(oldStartDateStr + "T12:00:00");
-    const newDate = new Date(newStartDate + "T12:00:00");
-    const diffMs = newDate.getTime() - oldDate.getTime();
-    
-    if (diffMs === 0) return;
-
-    let newEndDate = null;
-    if (job.target_completion_date) {
-      const eDate = new Date(job.target_completion_date + "T12:00:00");
-      eDate.setTime(eDate.getTime() + diffMs);
-      newEndDate = eDate.toISOString().split("T")[0];
-    }
-
     try {
+      const parseDateStr = (dateStr: string) => {
+        // Strip timezone or time if any, ensure it's a stable parsing
+        const isoParts = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+        return new Date(isoParts + "T12:00:00Z"); // Use UTC to avoid timezone shift weirdness
+      };
+
+      const oldDate = parseDateStr(oldStartDateStr);
+      const newDate = parseDateStr(newStartDate);
+      
+      if (isNaN(oldDate.getTime()) || isNaN(newDate.getTime())) {
+        throw new Error("Invalid date format detected while parsing start dates.");
+      }
+
+      const diffMs = newDate.getTime() - oldDate.getTime();
+      if (diffMs === 0) return;
+
+      let newEndDate: string | null = null;
+      if (job.target_completion_date) {
+        const eDate = parseDateStr(job.target_completion_date);
+        eDate.setTime(eDate.getTime() + diffMs);
+        newEndDate = eDate.toISOString().split("T")[0];
+      }
+
       // 1. Shift job's start and end date at the same time to avoid check constraint failure
       const jobUpdatePayload: any = { requested_start_date: newStartDate };
       if (newEndDate) {
         jobUpdatePayload.target_completion_date = newEndDate;
       }
+
       const { error: jobErr } = await supabase.from("jobs").update(jobUpdatePayload).eq("id", job.id);
-      if (jobErr) throw jobErr;
+      if (jobErr) throw new Error("Job Update DB Error: " + (jobErr.message || JSON.stringify(jobErr)));
 
       // 2. Shift all service_assignments
       for (const svc of (job.services || [])) {
@@ -656,13 +667,18 @@ export default function ProjectDetailPage() {
           if (assignment.scheduled_start_at && assignment.scheduled_end_at) {
             const asDate = new Date(assignment.scheduled_start_at);
             const aeDate = new Date(assignment.scheduled_end_at);
-            asDate.setTime(asDate.getTime() + diffMs);
-            aeDate.setTime(aeDate.getTime() + diffMs);
             
-            await supabase.from("service_assignments").update({
-              scheduled_start_at: asDate.toISOString(),
-              scheduled_end_at: aeDate.toISOString()
-            }).eq("id", assignment.id);
+            if (!isNaN(asDate.getTime()) && !isNaN(aeDate.getTime())) {
+              asDate.setTime(asDate.getTime() + diffMs);
+              aeDate.setTime(aeDate.getTime() + diffMs);
+              
+              const { error: asErr } = await supabase.from("service_assignments").update({
+                scheduled_start_at: asDate.toISOString(),
+                scheduled_end_at: aeDate.toISOString()
+              }).eq("id", assignment.id);
+              
+              if (asErr) throw new Error("Service Assignment Update DB Error: " + (asErr.message || JSON.stringify(asErr)));
+            }
           }
         }
       }
@@ -670,7 +686,7 @@ export default function ProjectDetailPage() {
       fetchJob();
     } catch (e: any) {
       console.error("Start Date Update Error:", e);
-      alert("Failed to update Start Date and shift schedules.");
+      alert("Failed to update Start Date and shift schedules.\nDetails: " + (e.message || JSON.stringify(e)));
     }
   };
 
