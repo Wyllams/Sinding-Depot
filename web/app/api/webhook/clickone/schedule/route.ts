@@ -45,13 +45,31 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     console.log('📅 [Schedule Webhook] Received:', JSON.stringify(payload, null, 2));
 
+    // ── ClickOne sends custom fields in customData, headers, or top-level ──
+    const cd = payload.customData ?? {};
+    const hdrs = req.headers;
+    const h = (name: string): string | null => {
+      const val = hdrs.get(name);
+      if (!val || val === 'undefined' || val === 'null' || val.trim() === '') return null;
+      return val;
+    };
+
     // ── Extract fields ──
     const contactId: string | null =
-      payload.contact_id || payload.ID || payload.id || null;
+      cd.ID || cd.id || cd.contact_id ||
+      payload.contact_id || payload.ID || payload.id ||
+      h('ID') || h('id') || h('contact_id') ||
+      null;
 
     const rawDate: string | null =
+      cd.data_de_inicio || cd.Data_de_inicio || cd.schedule_date ||
+      cd.Agendamento || cd.agendamento || cd.start_date ||
+      payload.data_de_inicio || payload.Data_de_inicio ||
       payload.schedule_date || payload.Agendamento || payload.agendamento ||
-      payload.start_date || payload.appointment_date || null;
+      payload.start_date || payload.appointment_date ||
+      h('data_de_inicio') || h('Data_de_inicio') ||
+      h('schedule_date') || h('Agendamento') ||
+      null;
 
     // Parse the schedule date
     let scheduleDateIso: string | null = null;
