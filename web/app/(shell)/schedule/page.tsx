@@ -1208,7 +1208,7 @@ export default function SchedulePage() {
                                           <span className="font-semibold uppercase tracking-wider text-[8px] truncate" style={{ color: sc.color }}>
                                             {svcName}
                                           </span>
-                                          {qty != null && qty > 0 && (
+                                          {qty != null && qty > 0 && !(job.sq != null && (job.serviceType === "siding" || job.serviceType === "paint")) && (
                                             <span className="text-[8px] font-black tabular-nums shrink-0" style={{ color: `${sc.color}cc` }}>
                                               {qty}
                                             </span>
@@ -1223,7 +1223,7 @@ export default function SchedulePage() {
                                     <span className="font-semibold uppercase tracking-wider text-[8px] truncate" style={{ color: sc.color }}>
                                       {job.serviceNames?.[0] || job.serviceType.replace("_", " ")}
                                     </span>
-                                    {job.serviceQuantities?.[0] != null && job.serviceQuantities[0] > 0 && (
+                                    {job.serviceQuantities?.[0] != null && job.serviceQuantities[0] > 0 && !(job.sq != null && (job.serviceType === "siding" || job.serviceType === "paint")) && (
                                       <span className="text-[8px] font-black tabular-nums shrink-0" style={{ color: `${sc.color}cc` }}>
                                         {job.serviceQuantities[0]}
                                       </span>
