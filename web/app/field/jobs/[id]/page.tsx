@@ -274,7 +274,7 @@ export default function FieldJobDetail({
         const { data } = await supabase
           .from("job_labor_bills")
           .select(`
-            id, status, total, created_at,
+            id, status, total, created_at, template_id,
             labor_bill_templates:labor_bill_templates!job_labor_bills_template_id_fkey(title, code),
             crews(name),
             installer_name
@@ -291,6 +291,7 @@ export default function FieldJobDetail({
               status: b.status,
               total: Number(b.total || 0),
               created_at: b.created_at,
+              template_id: b.template_id,
               templateCode: tmpl?.code || "",
               templateTitle: tmpl?.title || "",
               crewName: crewData?.name || null,
