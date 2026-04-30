@@ -424,7 +424,26 @@ export function FieldLaborBillModal({
                     >
                       <div className="flex items-center gap-3">
                         <span className={`material-symbols-outlined text-lg text-outline-variant transition-transform ${isOpen ? "rotate-180" : ""}`} translate="no">expand_more</span>
-                        <span className="text-[12px] font-extrabold uppercase text-on-surface tracking-tight text-left leading-tight">{sec.title}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] font-extrabold uppercase text-on-surface tracking-tight text-left leading-tight">{sec.title}</span>
+                          {(() => {
+                            const filledCount = sec.items.filter(it => {
+                              const v = itemValues[it.id];
+                              if (!v) return false;
+                              const qOffStr = v.qty_office?.toString().trim();
+                              const qCrewStr = v.qty_crew?.toString().trim();
+                              const qOff = qOffStr !== "" && qOffStr !== undefined ? parseFloat(qOffStr) : NaN;
+                              const qCrew = qCrewStr !== "" && qCrewStr !== undefined ? parseFloat(qCrewStr) : NaN;
+                              const effectiveQty = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
+                              return effectiveQty > 0 || it.isCustom;
+                            }).length;
+                            return filledCount > 0 ? (
+                              <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-black shrink-0">
+                                {filledCount}
+                              </span>
+                            ) : null;
+                          })()}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {/* Section total calc */}
