@@ -26,7 +26,8 @@ interface FilledItem {
   label: string;
   sub_label: string | null;
   sort_order: number;
-  quantity: number;
+  qty_office: number | null;
+  qty_crew: number | null;
   unit: string;
   rate: number;
   lineTotal: number;
@@ -47,6 +48,8 @@ export function FieldLaborBillModal({
   const [itemSearch, setItemSearch] = useState("");
   const [addingLine, setAddingLine] = useState<{ sectionId: string; label: string; qty: string; unit: string } | null>(null);
   const [savingLine, setSavingLine] = useState(false);
+  const [itemValues, setItemValues] = useState<Record<string, { qty_office: string; qty_crew: string; rate: string; unit: string; isCustom: boolean; custom_label?: string; sub_label?: string; sort_order: number }>>({});
+  const [savingAll, setSavingAll] = useState(false);
 
   useEffect(() => {
     async function loadDetails() {
@@ -81,7 +84,6 @@ export function FieldLaborBillModal({
         const filledBillItems = billItems || [];
         const expanded = new Set<string>();
 
-        // 4. Group items by section
         const grouped: SectionData[] = secsData.map((sec, idx) => {
           const secItems = (tmplItems || []).filter((ti) => ti.section_id === sec.id);
           
@@ -89,10 +91,11 @@ export function FieldLaborBillModal({
           
           const items: FilledItem[] = secItems.map((ti) => {
             const billed = filledBillItems.find((bi) => bi.template_item_id === ti.id);
-            const qty = billed?.qty_crew || billed?.quantity || 0;
+            const qOff = billed?.quantity !== undefined && billed?.quantity !== null ? billed.quantity : null;
+            const qCrew = billed?.qty_crew !== undefined && billed?.qty_crew !== null ? billed.qty_crew : null;
             const rate = billed?.rate || 0;
             
-            if (qty > 0) hasFilled = true;
+            if ((qOff !== null && qOff > 0) || (qCrew !== null && qCrew > 0)) hasFilled = true;
             
             return {
               id: ti.id,
@@ -100,10 +103,11 @@ export function FieldLaborBillModal({
               label: ti.label,
               sub_label: ti.sub_label,
               sort_order: ti.sort_order,
-              quantity: qty,
+              qty_office: qOff,
+              qty_crew: qCrew,
               unit: billed?.unit || "",
               rate: rate,
-              lineTotal: qty * rate,
+              lineTotal: (qCrew !== null ? qCrew : (qOff || 0)) * rate,
             };
           }).sort((a, b) => a.sort_order - b.sort_order);
 
@@ -118,10 +122,11 @@ export function FieldLaborBillModal({
                 label: cl.custom_label || "Custom Line",
                 sub_label: "Added by Crew",
                 sort_order: 9999 + (cl.sort_order || 0),
-                quantity: cl.qty_crew || cl.quantity || 0,
+                qty_office: cl.quantity !== undefined && cl.quantity !== null ? cl.quantity : null,
+                qty_crew: cl.qty_crew !== undefined && cl.qty_crew !== null ? cl.qty_crew : null,
                 unit: cl.unit || "",
                 rate: cl.rate || 0,
-                lineTotal: (cl.qty_crew || cl.quantity || 0) * (cl.rate || 0),
+                lineTotal: ((cl.qty_crew !== null ? cl.qty_crew : (cl.quantity || 0)) * (cl.rate || 0)),
               });
             });
           }
@@ -138,6 +143,24 @@ export function FieldLaborBillModal({
 
         setSections(grouped);
         setExpandedSections(expanded);
+
+        // Populate itemValues
+        const vals: typeof itemValues = {};
+        grouped.forEach(sec => {
+          sec.items.forEach(it => {
+            vals[it.id] = {
+              qty_office: it.qty_office !== null ? String(it.qty_office) : "",
+              qty_crew: it.qty_crew !== null ? String(it.qty_crew) : "",
+              rate: String(it.rate),
+              unit: it.unit,
+              isCustom: !!it.isCustom,
+              custom_label: it.isCustom ? it.label : undefined,
+              sub_label: it.isCustom && it.sub_label ? it.sub_label : undefined,
+              sort_order: it.sort_order
+            };
+          });
+        });
+        setItemValues(vals);
       } catch (e) {
         console.error("Failed to load labor bill details:", e);
       } finally {
@@ -217,6 +240,65 @@ export function FieldLaborBillModal({
     }
   };
 
+  const updateItem = (id: string, field: "qty_crew", value: string) => {
+    setItemValues((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSaveAll = async () => {
+    setSavingAll(true);
+    try {
+      // Like the desktop, we drop the existing items and recreate them to sync perfectly.
+      const { error: delError } = await supabase.from("job_labor_bill_items").delete().eq("labor_bill_id", billId);
+      if (delError) throw delError;
+
+      const inserts: any[] = [];
+      
+      Object.entries(itemValues).forEach(([id, v]) => {
+        const qOff = parseFloat(v.qty_office);
+        const qCrew = parseFloat(v.qty_crew);
+        const rate = parseFloat(v.rate) || 0;
+        
+        // If it's not custom and has no qty, we can skip it, but keeping it if either qty exists
+        if (!v.isCustom && isNaN(qOff) && isNaN(qCrew)) return;
+        
+        // Custom lines might have no qty, but we still keep them
+        if (v.isCustom && isNaN(qOff) && isNaN(qCrew)) return;
+
+        const effectiveQty = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
+
+        inserts.push({
+          labor_bill_id: billId,
+          template_item_id: v.isCustom ? null : id,
+          quantity: !isNaN(qOff) ? qOff : null,
+          qty_crew: !isNaN(qCrew) ? qCrew : null,
+          rate: rate,
+          unit: v.unit,
+          line_total: effectiveQty * rate,
+          custom_label: v.isCustom ? v.custom_label : null,
+          sort_order: v.sort_order
+        });
+      });
+
+      if (inserts.length > 0) {
+        const { error: insError } = await supabase.from("job_labor_bill_items").insert(inserts);
+        if (insError) throw insError;
+      }
+
+      onClose(); // Close modal on success
+    } catch (e) {
+      console.error(e);
+      alert("Failed to save updates.");
+    } finally {
+      setSavingAll(false);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
@@ -234,7 +316,7 @@ export function FieldLaborBillModal({
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-2 pb-4 border-b border-white/5">
-          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isSiding ? "bg-[#ff7351]/10" : "bg-[#60b8f5]/10"}`}>
               <span className={`material-symbols-outlined text-lg ${isSiding ? "text-[#ff7351]" : "text-[#60b8f5]"}`} translate="no">
                 {isSiding ? "home_repair_service" : "format_paint"}
@@ -249,7 +331,14 @@ export function FieldLaborBillModal({
                   {billStatus}
                 </span>
                 <span className="text-primary font-black text-sm">
-                  ${billTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  {/* Realtime sum from itemValues */}
+                  ${Object.values(itemValues).reduce((acc, v) => {
+                    const qOff = parseFloat(v.qty_office);
+                    const qCrew = parseFloat(v.qty_crew);
+                    const rate = parseFloat(v.rate) || 0;
+                    const eff = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
+                    return acc + (eff * rate);
+                  }, 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
@@ -319,7 +408,18 @@ export function FieldLaborBillModal({
                         <span className="text-[12px] font-extrabold uppercase text-on-surface tracking-tight text-left leading-tight">{sec.title}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        {sectionTotal > 0 && <span className="text-xs font-black text-primary">${sectionTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>}
+                        {/* Section total calc */}
+                        <span className="text-xs font-black text-primary">
+                          ${sec.items.reduce((s, it) => {
+                            const v = itemValues[it.id];
+                            if (!v) return s;
+                            const qOff = parseFloat(v.qty_office);
+                            const qCrew = parseFloat(v.qty_crew);
+                            const rate = parseFloat(v.rate) || 0;
+                            const eff = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
+                            return s + (eff * rate);
+                          }, 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </span>
                         <span className="text-[9px] text-on-surface-variant uppercase tracking-widest font-bold hidden sm:inline">{sec.items.length} items</span>
                       </div>
                     </button>
@@ -327,7 +427,14 @@ export function FieldLaborBillModal({
                     {isOpen && (
                       <div className="px-3 pb-3 space-y-2">
                         {visibleItems.map((item) => {
-                          const isFilled = item.quantity > 0 || item.isCustom;
+                          const v = itemValues[item.id] || { qty_office: "", qty_crew: "", rate: "0", unit: "" };
+                          const qOff = parseFloat(v.qty_office);
+                          const qCrew = parseFloat(v.qty_crew);
+                          const r = parseFloat(v.rate) || 0;
+                          const effectiveQty = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
+                          const isFilled = effectiveQty > 0 || item.isCustom;
+                          const lineTotal = effectiveQty * r;
+
                           return (
                             <div key={item.id} className={`rounded-xl p-3 border transition-colors ${isFilled ? "bg-primary/5 border-primary/30" : "bg-surface-container-high border-white/5 opacity-50"}`}>
                               <div className="flex justify-between items-start">
@@ -340,26 +447,32 @@ export function FieldLaborBillModal({
                                 )}
                               </div>
                               
-                              <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-white/5">
+                              <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
                                 <div>
-                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Qty</p>
-                                  <p className={`text-sm font-bold ${isFilled ? "text-on-surface" : "text-on-surface-variant"}`}>{item.quantity || "—"}</p>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Qty (Office)</p>
+                                  <p className={`text-sm font-bold ${isFilled ? "text-on-surface" : "text-on-surface-variant"} px-2 py-1 bg-surface-container rounded-lg border border-white/5`}>{!isNaN(qOff) ? qOff : "—"}</p>
                                 </div>
                                 <div>
-                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Unit</p>
-                                  <p className={`text-sm font-bold ${isFilled ? "text-on-surface" : "text-on-surface-variant"}`}>{item.unit || "—"}</p>
-                                </div>
-                                <div>
-                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Rate</p>
-                                  <p className={`text-sm font-bold ${isFilled ? "text-on-surface" : "text-on-surface-variant"}`}>${item.rate.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-[#60b8f5] mb-1">Qty (Crew)</p>
+                                  <input type="number" step="any" value={v.qty_crew} onChange={e => updateItem(item.id, "qty_crew", e.target.value)}
+                                    className="w-full bg-background border border-[#60b8f5]/30 text-on-surface rounded-lg px-2 py-1 text-sm outline-none focus:border-[#60b8f5] transition-colors placeholder:text-on-surface-variant/30"
+                                    placeholder="Enter qty..." />
                                 </div>
                               </div>
-                              
-                              {item.lineTotal > 0 && (
-                                <div className="mt-2 text-right">
-                                  <span className="text-xs font-black text-primary">${item.lineTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                              <div className="grid grid-cols-3 gap-2 mt-2">
+                                <div>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Rate</p>
+                                  <p className={`text-sm font-bold ${isFilled ? "text-on-surface" : "text-on-surface-variant"} px-2 py-1`}>${r.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
                                 </div>
-                              )}
+                                <div>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Uni</p>
+                                  <p className={`text-sm font-bold ${isFilled ? "text-on-surface" : "text-on-surface-variant"} px-2 py-1`}>{v.unit || "—"}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Total</p>
+                                  <p className="text-sm font-black text-primary px-2 py-1">${lineTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+                                </div>
+                              </div>
                             </div>
                           );
                         })}
@@ -400,6 +513,29 @@ export function FieldLaborBillModal({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Save Button */}
+          {!loading && sections.length > 0 && (
+            <div className="mt-6">
+              <button
+                onClick={handleSaveAll}
+                disabled={savingAll}
+                className="w-full bg-primary text-[#1a2e00] font-black uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+              >
+                {savingAll ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin" translate="no">sync</span>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined" translate="no">save</span>
+                    Save Updates
+                  </>
+                )}
+              </button>
             </div>
           )}
         </div>
