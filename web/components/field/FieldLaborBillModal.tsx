@@ -197,7 +197,6 @@ export function FieldLaborBillModal({
         qty_crew: parseFloat(addingLine.qty),
         unit: addingLine.unit.trim(),
         rate: 0,
-        line_total: 0,
         sort_order: 999
       });
       if (error) throw error;
@@ -310,7 +309,6 @@ export function FieldLaborBillModal({
           qty_crew: !isNaN(qCrew) ? qCrew : null,
           rate: rate,
           unit: v.unit || "",
-          line_total: effectiveQty * rate,
           custom_label: v.isCustom ? v.custom_label : null,
           sort_order: v.sort_order
         });

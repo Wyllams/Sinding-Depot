@@ -329,7 +329,6 @@ export default function LaborBillsPage() {
             quantity: effectiveQty, unit: v.unit, rate: parseFloat(v.rate) || 0,
             qty_office: parseFloat(v.qty_office) || null,
             qty_crew: parseFloat(v.qty_crew) || null,
-            line_total: calcLineTotal(v),
             sort_order: idx,
           });
         });
@@ -343,7 +342,6 @@ export default function LaborBillsPage() {
               quantity: effectiveQty, unit: cl.unit, rate: parseFloat(cl.rate) || 0,
               qty_office: parseFloat(cl.qty_office) || null,
               qty_crew: parseFloat(cl.qty_crew) || null,
-              line_total: effectiveQty * (parseFloat(cl.rate) || 0),
               sort_order: filledItems.length + idx,
             });
           }
