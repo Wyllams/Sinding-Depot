@@ -208,6 +208,24 @@ export function FieldLaborBillModal({
       // Actually, better to reload inline:
       const { data: billItems } = await supabase.from("job_labor_bill_items").select("*").eq("labor_bill_id", billId);
       if (billItems) {
+        setItemValues(prev => {
+          const newVals = { ...prev };
+          const customLines = billItems.filter(bi => !bi.template_item_id);
+          customLines.forEach(cl => {
+            newVals[cl.id] = {
+              qty_office: cl.quantity !== null ? String(cl.quantity) : "",
+              qty_crew: cl.qty_crew !== null ? String(cl.qty_crew) : "",
+              rate: String(cl.rate || 0),
+              unit: cl.unit || "",
+              isCustom: true,
+              custom_label: cl.custom_label || "Custom Line",
+              sub_label: "Added by Crew",
+              sort_order: cl.sort_order || 999
+            };
+          });
+          return newVals;
+        });
+
         setSections(prev => {
           const newSecs = [...prev];
           const firstSec = newSecs[0];
@@ -222,10 +240,11 @@ export function FieldLaborBillModal({
                 label: cl.custom_label || "Custom Line",
                 sub_label: "Added by Crew",
                 sort_order: 9999 + (cl.sort_order || 0),
-                quantity: cl.qty_crew || cl.quantity || 0,
+                qty_office: cl.quantity !== undefined && cl.quantity !== null ? cl.quantity : null,
+                qty_crew: cl.qty_crew !== undefined && cl.qty_crew !== null ? cl.qty_crew : null,
                 unit: cl.unit || "",
                 rate: cl.rate || 0,
-                lineTotal: (cl.qty_crew || cl.quantity || 0) * (cl.rate || 0),
+                lineTotal: ((cl.qty_crew !== null ? cl.qty_crew : (cl.quantity || 0)) * (cl.rate || 0)),
               });
             });
           }
