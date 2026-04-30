@@ -21,7 +21,8 @@ interface SectionData {
 }
 
 interface FilledItem {
-  id: string; // template item id
+  id: string; // template item id or custom line id
+  isCustom?: boolean;
   label: string;
   sub_label: string | null;
   sort_order: number;
@@ -43,6 +44,9 @@ export function FieldLaborBillModal({
   const [sections, setSections] = useState<SectionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [itemSearch, setItemSearch] = useState("");
+  const [addingLine, setAddingLine] = useState<{ sectionId: string; label: string; qty: string; unit: string } | null>(null);
+  const [savingLine, setSavingLine] = useState(false);
 
   useEffect(() => {
     async function loadDetails() {
@@ -78,20 +82,21 @@ export function FieldLaborBillModal({
         const expanded = new Set<string>();
 
         // 4. Group items by section
-        const grouped: SectionData[] = secsData.map((sec) => {
+        const grouped: SectionData[] = secsData.map((sec, idx) => {
           const secItems = (tmplItems || []).filter((ti) => ti.section_id === sec.id);
           
           let hasFilled = false;
           
           const items: FilledItem[] = secItems.map((ti) => {
             const billed = filledBillItems.find((bi) => bi.template_item_id === ti.id);
-            const qty = billed?.quantity || 0;
+            const qty = billed?.qty_crew || billed?.quantity || 0;
             const rate = billed?.rate || 0;
             
             if (qty > 0) hasFilled = true;
             
             return {
               id: ti.id,
+              isCustom: false,
               label: ti.label,
               sub_label: ti.sub_label,
               sort_order: ti.sort_order,
@@ -101,6 +106,25 @@ export function FieldLaborBillModal({
               lineTotal: qty * rate,
             };
           }).sort((a, b) => a.sort_order - b.sort_order);
+
+          // Add custom lines to the first section
+          if (idx === 0) {
+            const customLines = filledBillItems.filter(bi => !bi.template_item_id);
+            customLines.forEach((cl) => {
+              hasFilled = true;
+              items.push({
+                id: cl.id,
+                isCustom: true,
+                label: cl.custom_label || "Custom Line",
+                sub_label: "Added by Crew",
+                sort_order: 9999 + (cl.sort_order || 0),
+                quantity: cl.qty_crew || cl.quantity || 0,
+                unit: cl.unit || "",
+                rate: cl.rate || 0,
+                lineTotal: (cl.qty_crew || cl.quantity || 0) * (cl.rate || 0),
+              });
+            });
+          }
 
           if (hasFilled) expanded.add(sec.id);
 
@@ -138,6 +162,60 @@ export function FieldLaborBillModal({
     approved: { bg: "bg-[#22c55e]/15", text: "text-[#22c55e]" },
   };
   const st = statusStyles[billStatus.toLowerCase()] || statusStyles.draft;
+
+  const handleSaveCustomLine = async () => {
+    if (!addingLine || !addingLine.label.trim() || !addingLine.qty) return;
+    setSavingLine(true);
+    try {
+      const { error } = await supabase.from("job_labor_bill_items").insert({
+        labor_bill_id: billId,
+        custom_label: addingLine.label.trim(),
+        quantity: parseFloat(addingLine.qty),
+        qty_crew: parseFloat(addingLine.qty),
+        unit: addingLine.unit.trim(),
+        rate: 0,
+        line_total: 0,
+        sort_order: 999
+      });
+      if (error) throw error;
+      setAddingLine(null);
+      // We should ideally reload the items, but for now we'll just trigger a component remount or let the parent handle it
+      // I'll simulate a quick reload by fetching just the custom line or re-running loadDetails
+      // We can just rely on the effect dependency if we had a trigger, but let's just close and user can reopen
+      // Actually, better to reload inline:
+      const { data: billItems } = await supabase.from("job_labor_bill_items").select("*").eq("labor_bill_id", billId);
+      if (billItems) {
+        setSections(prev => {
+          const newSecs = [...prev];
+          const firstSec = newSecs[0];
+          if (firstSec) {
+            const customLines = billItems.filter(bi => !bi.template_item_id);
+            // remove existing custom lines from firstSec
+            firstSec.items = firstSec.items.filter(it => !it.isCustom);
+            customLines.forEach((cl) => {
+              firstSec.items.push({
+                id: cl.id,
+                isCustom: true,
+                label: cl.custom_label || "Custom Line",
+                sub_label: "Added by Crew",
+                sort_order: 9999 + (cl.sort_order || 0),
+                quantity: cl.qty_crew || cl.quantity || 0,
+                unit: cl.unit || "",
+                rate: cl.rate || 0,
+                lineTotal: (cl.qty_crew || cl.quantity || 0) * (cl.rate || 0),
+              });
+            });
+          }
+          return newSecs;
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to save line");
+    } finally {
+      setSavingLine(false);
+    }
+  };
 
   return (
     <div
@@ -186,6 +264,25 @@ export function FieldLaborBillModal({
 
         {/* Body */}
         <div className="px-4 py-4 pb-12">
+          {/* Search Bar */}
+          <div className="mb-4 bg-surface-container-low rounded-2xl border border-white/5 p-3">
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" translate="no">search</span>
+              <input
+                type="text"
+                value={itemSearch}
+                onChange={(e) => setItemSearch(e.target.value)}
+                placeholder="Search items by name..."
+                className="w-full bg-background border border-white/10 text-on-surface rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-on-surface-variant/50"
+              />
+              {itemSearch && (
+                <button onClick={() => setItemSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface">
+                  <span className="material-symbols-outlined text-sm" translate="no">close</span>
+                </button>
+              )}
+            </div>
+          </div>
+
           {loading ? (
             <div className="flex justify-center py-10">
               <span className="material-symbols-outlined animate-spin text-primary text-3xl" translate="no">sync</span>
@@ -200,8 +297,15 @@ export function FieldLaborBillModal({
           ) : (
             <div className="bg-surface-container-low rounded-2xl border border-white/5 overflow-hidden">
               {sections.map((sec, si) => {
-                const isOpen = expandedSections.has(sec.id);
+                const searchLower = itemSearch.toLowerCase();
+                const visibleItems = itemSearch
+                  ? sec.items.filter(it => it.label.toLowerCase().includes(searchLower) || it.sub_label?.toLowerCase().includes(searchLower))
+                  : sec.items;
+
+                const isOpen = expandedSections.has(sec.id) || (itemSearch.length > 0 && visibleItems.length > 0);
                 const sectionTotal = sec.items.reduce((s, it) => s + it.lineTotal, 0);
+
+                if (visibleItems.length === 0 && !addingLine && itemSearch) return null;
 
                 return (
                   <div key={sec.id}>
@@ -222,8 +326,8 @@ export function FieldLaborBillModal({
                     
                     {isOpen && (
                       <div className="px-3 pb-3 space-y-2">
-                        {sec.items.map((item) => {
-                          const isFilled = item.quantity > 0;
+                        {visibleItems.map((item) => {
+                          const isFilled = item.quantity > 0 || item.isCustom;
                           return (
                             <div key={item.id} className={`rounded-xl p-3 border transition-colors ${isFilled ? "bg-primary/5 border-primary/30" : "bg-surface-container-high border-white/5 opacity-50"}`}>
                               <div className="flex justify-between items-start">
@@ -259,6 +363,38 @@ export function FieldLaborBillModal({
                             </div>
                           );
                         })}
+
+                        {addingLine?.sectionId === sec.id ? (
+                          <div className="bg-surface-container rounded-xl p-3 border border-dashed border-primary/30 space-y-2 mt-2">
+                            <input type="text" value={addingLine.label} onChange={e => setAddingLine({ ...addingLine, label: e.target.value })}
+                              placeholder="Item name..." className="w-full bg-background border border-primary/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary" />
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[9px] font-bold uppercase text-on-surface-variant block mb-1">Qty</label>
+                                <input type="number" step="any" value={addingLine.qty} onChange={e => setAddingLine({ ...addingLine, qty: e.target.value })} className="w-full bg-background border border-primary/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary" />
+                              </div>
+                              <div>
+                                <label className="text-[9px] font-bold uppercase text-on-surface-variant block mb-1">Unit</label>
+                                <input type="text" value={addingLine.unit} onChange={e => setAddingLine({ ...addingLine, unit: e.target.value })} className="w-full bg-background border border-primary/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary" />
+                              </div>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                              <button onClick={() => setAddingLine(null)} className="px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:text-on-surface">Cancel</button>
+                              <button onClick={handleSaveCustomLine} disabled={savingLine} className="px-3 py-1.5 bg-primary text-[#1a2e00] rounded-lg text-xs font-bold flex items-center gap-1 disabled:opacity-50">
+                                {savingLine ? "Saving..." : "Save Line"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setAddingLine({ sectionId: sec.id, label: "", qty: "", unit: "" })}
+                            className="w-full py-2.5 mt-2 rounded-xl border border-dashed border-primary/30 text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/5 hover:border-primary/50 transition-all flex items-center justify-center gap-1.5"
+                          >
+                            <span className="material-symbols-outlined text-sm" translate="no">add</span>
+                            Add Line
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
