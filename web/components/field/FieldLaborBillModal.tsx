@@ -259,7 +259,7 @@ export function FieldLaborBillModal({
     }
   };
 
-  const updateItem = (id: string, field: "qty_crew", value: string) => {
+  const updateItem = (id: string, field: "qty_crew" | "rate", value: string) => {
     setItemValues((prev) => ({
       ...prev,
       [id]: {
@@ -474,8 +474,10 @@ export function FieldLaborBillModal({
                               </div>
                               <div className="grid grid-cols-3 gap-2 mt-2">
                                 <div>
-                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Rate</p>
-                                  <p className={`text-sm font-bold ${isFilled ? "text-on-surface" : "text-on-surface-variant"} px-2 py-1`}>${r.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Rate ($)</p>
+                                  <input type="number" step="any" value={v.rate} onChange={e => updateItem(item.id, "rate", e.target.value)}
+                                    className="w-full bg-background border border-white/10 text-on-surface rounded-lg px-2 py-1 text-sm outline-none focus:border-primary transition-colors placeholder:text-on-surface-variant/30"
+                                    placeholder="Rate" />
                                 </div>
                                 <div>
                                   <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Uni</p>
