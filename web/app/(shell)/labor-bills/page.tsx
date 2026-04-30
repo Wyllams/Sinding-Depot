@@ -173,7 +173,10 @@ export default function LaborBillsPage() {
   const addCustomLine = (sectionId: string) => {
     setCustomLines(prev => ({
       ...prev,
-      [sectionId]: [...(prev[sectionId] || []), { tempId: crypto.randomUUID(), label: "", qty_office: "", qty_crew: "", unit: "", rate: "" }]
+      [sectionId]: [...(prev[sectionId] || []), { 
+        tempId: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substring(2), 
+        label: "", qty_office: "", qty_crew: "", unit: "", rate: "" 
+      }]
     }));
   };
 

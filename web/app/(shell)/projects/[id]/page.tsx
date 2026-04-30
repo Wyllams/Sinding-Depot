@@ -608,16 +608,17 @@ export default function ProjectDetailPage() {
     field: string,
     value: string | number | null
   ) => {
-    if (!recordId) return;
+    if (!recordId || !table) return;
     try {
       const { error } = await supabase.from(table).update({ [field]: value }).eq("id", recordId);
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message || JSON.stringify(error) || "Unknown Supabase Error");
+      }
       // Refresh silently without flashing
-      // We will rely on React input local value and re-fetching on the background to make it perfectly sync
       fetchJob();
     } catch (e: any) {
-      console.error("AutoSave Error:", e);
-      alert("Failed to save " + field);
+      console.error("AutoSave Error details:", e.message || e);
+      alert("Failed to save " + field + ". Reason: " + (e.message || "Invalid input or database rule."));
     }
   };
 
@@ -711,34 +712,19 @@ export default function ProjectDetailPage() {
   const handleStartDateUpdate = async (newStartDate: string) => {
     if (!job || !newStartDate) return;
 
-    const oldStartDateStr = job.requested_start_date;
-    if (!oldStartDateStr) {
-      return handleAutoSave("jobs", job.id, "requested_start_date", newStartDate);
-    }
-
     try {
-      const parseDateStr = (dateStr: string) => {
-        const isoParts = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
-        return new Date(isoParts + "T12:00:00Z");
+      // 1. Update jobs start date AND temporarily push target_completion_date 
+      // to avoid PostgreSQL check constraint "jobs_target_date_chk" failures
+      // The accurate target_completion_date will be assigned immediately after in step 2.
+      const jobUpdatePayload: Record<string, string> = { 
+        requested_start_date: newStartDate,
+        target_completion_date: newStartDate 
       };
-
-      const oldDate = parseDateStr(oldStartDateStr);
-      const newDate = parseDateStr(newStartDate);
       
-      if (isNaN(oldDate.getTime()) || isNaN(newDate.getTime())) {
-        throw new Error("Invalid date format detected while parsing start dates.");
-      }
-
-      const diffMs = newDate.getTime() - oldDate.getTime();
-      if (diffMs === 0) return;
-
-      // 1. Update jobs start date
-      const jobUpdatePayload: Record<string, string> = { requested_start_date: newStartDate };
       const { error: jobErr } = await supabase.from("jobs").update(jobUpdatePayload).eq("id", job.id);
       if (jobErr) throw new Error("Job Update DB Error: " + (jobErr.message || JSON.stringify(jobErr)));
 
       // 2. Recalculate full cascade to properly space out dependent services 
-      //    (fixing the bug where Gutters/Roofing would get stuck on the same day when shifting linearly)
       await recalculateProjectCascade(job, newStartDate);
 
     } catch (e: any) {
