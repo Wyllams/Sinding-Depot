@@ -61,13 +61,15 @@ function ServicesCarousel({
   selected,
   toggle,
   assignedPartners,
-  onAssignClick
+  onAssignClick,
+  serviceExtras
 }: {
   services: Service[];
   selected: string[];
   toggle: (id: string) => void;
   assignedPartners: Record<string, string>;
   onAssignClick: (svc: Service) => void;
+  serviceExtras?: Record<string, string>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -111,10 +113,10 @@ function ServicesCarousel({
                   toggle(svc.id);        // Desliga se tiver logado mas n tem pop-up
                 }
               }}
-              className={`relative flex-shrink-0 w-[calc(25%-12px)] min-w-[140px] px-2 py-5 rounded-xl cursor-pointer transition-all group ${
+              className={`relative flex-shrink-0 w-[calc(25%-12px)] min-w-[140px] px-2 py-5 rounded-xl cursor-pointer transition-[color,background-color,border-color,box-shadow] duration-200 group border-2 ${
                 on
-                  ? "bg-surface-container-highest border-2"
-                  : "bg-surface-container-highest border border-transparent hover:bg-primary/10 hover:border-primary/30"
+                  ? "bg-surface-container-highest"
+                  : "bg-surface-container-highest border-transparent hover:bg-primary/10 hover:border-primary/30"
               }`}
               style={on ? { borderColor: svc.color, boxShadow: `0 0 15px ${svc.color}1A` } : {}}
             >
@@ -133,11 +135,14 @@ function ServicesCarousel({
               
               {/* Box de atribuição visual (assign) se o item for selecionado e tiver parceiros */}
               {on && hasPartnersList && (
-                <div className="mt-3 flex justify-center w-full">
+                <div className="mt-3 flex flex-col items-center w-full gap-1.5">
                    {partner ? (
                        <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider px-2.5 py-1 rounded-md border" style={{ backgroundColor: `${svc.color}33`, borderColor: svc.color }}>{partner}</span>
                    ) : (
                        <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider border px-2.5 py-1 rounded-full transition-colors" style={{ backgroundColor: `${svc.color}1A`, borderColor: `${svc.color}80` }}>Assign Partner</span>
+                   )}
+                   {serviceExtras?.[svc.id] && (
+                     <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded-md">{serviceExtras[svc.id]}</span>
                    )}
                 </div>
               )}
@@ -219,6 +224,14 @@ export default function NewProjectPage() {
   const [deckScope, setDeckScope] = useState("");
   const [decksPrice, setDecksPrice] = useState("");
   const [decksStep, setDecksStep] = useState<"partner" | "config">("partner");
+
+  // ── Roofing service config ──
+  const [roofingSq, setRoofingSq] = useState("");
+  const [roofingStep, setRoofingStep] = useState<"partner" | "config">("partner");
+
+  // ── Gutters service config ──
+  const [guttersSq, setGuttersSq] = useState("");
+  const [guttersStep, setGuttersStep] = useState<"partner" | "config">("partner");
 
   const handleServiceToggle = (id: string) => {
     setSelected(prev => {
@@ -401,8 +414,17 @@ export default function NewProjectPage() {
       const prevEndpoints: Record<string, string> = {}; 
       const { data: allCrews } = await supabase.from("crews").select("id, name, code");
 
+      const cascadeOrder = ["siding", "windows", "doors", "decks", "dumpster", "painting", "gutters", "roofing"];
+      const sortedFinalSelected = [...finalSelected].sort((a, b) => {
+         const idxA = cascadeOrder.indexOf(a);
+         const idxB = cascadeOrder.indexOf(b);
+         if (idxA === -1) return 1;
+         if (idxB === -1) return -1;
+         return idxA - idxB;
+      });
+
       // Seed Job Services & Assignments
-      for (const svcId of finalSelected) {
+      for (const svcId of sortedFinalSelected) {
         const { data: stData } = await supabase.from("service_types").select("id").ilike("code", svcId).maybeSingle();
         let serviceTypeId = stData?.id;
         
@@ -425,8 +447,8 @@ export default function NewProjectPage() {
               job_id: newJob.id,
               service_type_id: serviceTypeId,
               scope_of_work: "Standard exterior work",
-              quantity: (svcId === "siding" || svcId === "painting") && sq ? parseFloat(sq) : null,
-              unit_of_measure: (svcId === "siding" || svcId === "painting") ? "SQ" : null,
+              quantity: svcId === "roofing" && roofingSq && !isNaN(parseFloat(roofingSq)) ? parseFloat(roofingSq) : (svcId === "gutters" && guttersSq && !isNaN(parseFloat(guttersSq)) ? parseFloat(guttersSq) : ((svcId === "siding" || svcId === "painting") && sq && !isNaN(parseFloat(sq)) ? parseFloat(sq) : null)),
+              unit_of_measure: (svcId === "siding" || svcId === "painting" || svcId === "roofing" || svcId === "gutters") ? "SQ" : null,
               contracted_amount: contractedAmount
             }).select("id").single();
 
@@ -758,7 +780,7 @@ export default function NewProjectPage() {
                     <CustomDatePicker value={startDate} onChange={setStartDate} placeholder="dd/mm/yyyy" />
                   </div>
                   <div className="space-y-2">
-                    <label className={labelCls}>SQ</label>
+                    <label className={labelCls}>Siding SQ</label>
                     <input value={sq} onChange={(e)=>setSq(e.target.value)} className={inputCls} placeholder="e.g. 24.5" type="number" step="0.01" />
                   </div>
                 </div>
@@ -773,9 +795,16 @@ export default function NewProjectPage() {
                 selected={selected} 
                 toggle={toggle} 
                 assignedPartners={assignedPartners}
+                serviceExtras={{
+                  ...(roofingSq ? { roofing: `${roofingSq} SQ` } : {}),
+                  ...(guttersSq ? { gutters: `${guttersSq} SQ` } : {}),
+                  ...(windowCount ? { windows: `${windowCount} win${windowTrim === "yes" ? " + trim" : ""}` } : {}),
+                }}
                 onAssignClick={(svc) => {
                   if (svc.id === "windows") setWindowsStep("partner");
                   if (svc.id === "decks") setDecksStep("partner");
+                  if (svc.id === "roofing") setRoofingStep("partner");
+                  if (svc.id === "gutters") setGuttersStep("partner");
                   setOpenPartnerModal(svc);
                 }}
               />
@@ -1032,6 +1061,12 @@ export default function NewProjectPage() {
                             >
                               <span className="material-symbols-outlined text-[12px]" translate="no">{s.icon}</span>
                               {s.label}
+                              {s.id === "roofing" && roofingSq && (
+                                <span className="text-[8px] opacity-80 uppercase ml-0.5">{roofingSq} SQ</span>
+                              )}
+                              {s.id === "gutters" && guttersSq && (
+                                <span className="text-[8px] opacity-80 uppercase ml-0.5">{guttersSq} SQ</span>
+                              )}
                               {partner && (
                                 <span className="text-[8px] bg-white/10 px-1.5 py-0.5 rounded-full ml-0.5 uppercase">
                                   {partner}
@@ -1105,8 +1140,42 @@ export default function NewProjectPage() {
 
                 <div className="grid grid-cols-1 gap-3 max-h-[50vh] overflow-y-auto pr-2" style={{ scrollbarWidth: "none" }}>
 
+                  {/* ── GUTTERS CONFIG STEP ── */}
+                  {openPartnerModal.id === "gutters" && guttersStep === "config" && (
+                    <div className="space-y-4 fade-in max-h-[50vh] overflow-y-auto pr-2" style={{ scrollbarWidth: "none" }}>
+                      <div>
+                        <label className="text-xs font-semibold text-[#8b8d98] uppercase tracking-wider mb-1 block">Gutters SQ</label>
+                        <input
+                          type="number"
+                          placeholder="Ex: 25"
+                          value={guttersSq}
+                          onChange={(e) => setGuttersSq(e.target.value)}
+                          className="w-full h-10 bg-[#16181d] border border-[#2a2d36] rounded-xl px-3 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+                        />
+                        <p className="text-[11px] text-[#8b8d98] mt-1.5 ml-1">
+                          Configurado na se�ao "Main Information" no topo da pagina.
+                        </p>
+                      </div>
+                      
+                      <div className="pt-2 flex gap-2">
+                        <button
+                          onClick={() => setGuttersStep("partner")}
+                          className="flex-1 h-10 bg-[#16181d] hover:bg-[#1f2229] border border-[#2a2d36] text-white rounded-xl text-sm font-medium transition-all"
+                        >
+                          Voltar
+                        </button>
+                        <button
+                          onClick={() => setOpenPartnerModal(null)}
+                          className="flex-1 h-10 bg-white text-black hover:bg-white/90 rounded-xl text-sm font-medium transition-all"
+                        >
+                          Confirmar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* ── STEP 1: Select Partner ── */}
-                  {(openPartnerModal.id !== "windows" || windowsStep === "partner") && (openPartnerModal.id !== "doors" || doorsStep === "partner") && (openPartnerModal.id !== "decks" || decksStep === "partner") && (
+                  {(openPartnerModal.id !== "windows" || windowsStep === "partner") && (openPartnerModal.id !== "doors" || doorsStep === "partner") && (openPartnerModal.id !== "decks" || decksStep === "partner") && (openPartnerModal.id !== "roofing" || roofingStep === "partner") && (openPartnerModal.id !== "gutters" || guttersStep === "partner") && (
                     <>
                       {openPartnerModal.partners?.map((partner) => {
                         const isSelected = assignedPartners[openPartnerModal.id] === partner;
@@ -1150,6 +1219,18 @@ export default function NewProjectPage() {
                               // If Decks → go to scope config step
                               if (openPartnerModal.id === "decks") {
                                 setDecksStep("config");
+                                return;
+                              }
+
+                              // If Roofing → go to SQ config step
+                              if (openPartnerModal.id === "roofing") {
+                                setRoofingStep("config");
+                                return;
+                              }
+
+                              // If Gutters → go to SQ config step
+                              if (openPartnerModal.id === "gutters") {
+                                setGuttersStep("config");
                                 return;
                               }
                               
@@ -1201,6 +1282,14 @@ export default function NewProjectPage() {
                                 setDeckScope("");
                                 setDecksPrice("");
                                 setDecksStep("partner");
+                              }
+                              if (openPartnerModal.id === "roofing") {
+                                setRoofingSq("");
+                                setRoofingStep("partner");
+                              }
+                              if (openPartnerModal.id === "gutters") {
+                                setGuttersSq("");
+                                setGuttersStep("partner");
                               }
                               setOpenPartnerModal(null);
                             }}
@@ -1499,6 +1588,70 @@ export default function NewProjectPage() {
                             setOpenPartnerModal(null);
                           }}
                           className="flex-1 py-2.5 rounded-xl bg-[#f5a623] text-[#000] text-xs font-black uppercase tracking-wider hover:bg-[#d4a106] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── STEP 2: Roofing SQ Config ── */}
+                  {openPartnerModal.id === "roofing" && roofingStep === "config" && (
+                    <div className="space-y-6">
+                      {/* Step indicator */}
+                      <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#ef4444] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-[#000]" translate="no">check</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#ef4444] uppercase tracking-wider">Partner</span>
+                        </div>
+                        <div className="w-8 h-px bg-outline-variant"></div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-[#ef4444]/20 border border-[#ef4444] flex items-center justify-center">
+                            <span className="text-[10px] font-black text-[#ef4444]">2</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-on-surface uppercase tracking-wider">Roofing Config</span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-on-surface-variant">
+                        Assigned to <span className="text-[#ef4444] font-bold uppercase">{assignedPartners["roofing"]}</span>. How many squares for this roofing project?
+                      </p>
+
+                      {/* SQ Input */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                          How many SQ?
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          value={roofingSq}
+                          onChange={(e) => setRoofingSq(e.target.value)}
+                          placeholder="e.g. 30"
+                          className="w-full bg-surface-container-highest border border-transparent rounded-lg py-3 px-4 text-on-surface placeholder:text-outline focus:outline-none focus:border-[#ef4444] focus:ring-1 focus:ring-[#ef4444] transition-all h-[48px] text-[15px]"
+                        />
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setRoofingStep("partner")}
+                          className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!roofingSq}
+                          onClick={() => {
+                            setRoofingStep("partner");
+                            setOpenPartnerModal(null);
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-[#ef4444] text-white text-xs font-black uppercase tracking-wider hover:bg-[#dc2626] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           Confirm
                         </button>

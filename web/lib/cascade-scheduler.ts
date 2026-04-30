@@ -161,6 +161,9 @@ export function computeCascadeShifts(
     const paintStart = computePaintStartDate(sidingEnd, decksEnd);
     const paintJob = findSibling("paint");
 
+    // Track the "last end date" for the downstream chain
+    let chainEndDate = sidingEnd;
+
     if (paintJob && paintStart) {
       shifts.push({
         id: paintJob.id,
@@ -170,48 +173,34 @@ export function computeCascadeShifts(
         serviceType: "paint",
         clientName: paintJob.clientName,
       });
+      chainEndDate = getServiceEndDate(paintStart, paintJob.durationDays);
+    }
 
-      // Gutters starts after Paint ends
-      const guttersJob = findSibling("gutters");
-      if (guttersJob) {
-        const guttersStart = getServiceEndDate(paintStart, paintJob.durationDays);
-        shifts.push({
-          id: guttersJob.id,
-          newStartDate: guttersStart,
-          durationDays: guttersJob.durationDays,
-          crewId: guttersJob.crewId,
-          serviceType: "gutters",
-          clientName: guttersJob.clientName,
-        });
+    // Gutters starts after the chain end (Paint end, or Siding end if no Paint)
+    const guttersJob = findSibling("gutters");
+    if (guttersJob) {
+      shifts.push({
+        id: guttersJob.id,
+        newStartDate: chainEndDate,
+        durationDays: guttersJob.durationDays,
+        crewId: guttersJob.crewId,
+        serviceType: "gutters",
+        clientName: guttersJob.clientName,
+      });
+      chainEndDate = getServiceEndDate(chainEndDate, guttersJob.durationDays);
+    }
 
-        // Roofing starts after Gutters ends
-        const roofJob = findSibling("roofing");
-        if (roofJob) {
-          const roofStart = getServiceEndDate(guttersStart, guttersJob.durationDays);
-          shifts.push({
-            id: roofJob.id,
-            newStartDate: roofStart,
-            durationDays: roofJob.durationDays,
-            crewId: roofJob.crewId,
-            serviceType: "roofing",
-            clientName: roofJob.clientName,
-          });
-        }
-      } else {
-        // No gutters — check if roofing exists and cascade directly from paint
-        const roofJob = findSibling("roofing");
-        if (roofJob) {
-          const roofStart = getServiceEndDate(paintStart, paintJob.durationDays);
-          shifts.push({
-            id: roofJob.id,
-            newStartDate: roofStart,
-            durationDays: roofJob.durationDays,
-            crewId: roofJob.crewId,
-            serviceType: "roofing",
-            clientName: roofJob.clientName,
-          });
-        }
-      }
+    // Roofing starts after Gutters (or Paint/Siding if no Gutters)
+    const roofJob = findSibling("roofing");
+    if (roofJob) {
+      shifts.push({
+        id: roofJob.id,
+        newStartDate: chainEndDate,
+        durationDays: roofJob.durationDays,
+        crewId: roofJob.crewId,
+        serviceType: "roofing",
+        clientName: roofJob.clientName,
+      });
     }
   }
 
@@ -227,6 +216,8 @@ export function computeCascadeShifts(
     const paintStart = computePaintStartDate(sidingEnd, decksEnd);
     const paintJob = findSibling("paint");
 
+    let chainEndDate = decksEnd;
+
     if (paintJob && paintStart) {
       shifts.push({
         id: paintJob.id,
@@ -236,45 +227,32 @@ export function computeCascadeShifts(
         serviceType: "paint",
         clientName: paintJob.clientName,
       });
+      chainEndDate = getServiceEndDate(paintStart, paintJob.durationDays);
+    }
 
-      const guttersJob = findSibling("gutters");
-      if (guttersJob) {
-        const guttersStart = getServiceEndDate(paintStart, paintJob.durationDays);
-        shifts.push({
-          id: guttersJob.id,
-          newStartDate: guttersStart,
-          durationDays: guttersJob.durationDays,
-          crewId: guttersJob.crewId,
-          serviceType: "gutters",
-          clientName: guttersJob.clientName,
-        });
+    const guttersJob = findSibling("gutters");
+    if (guttersJob) {
+      shifts.push({
+        id: guttersJob.id,
+        newStartDate: chainEndDate,
+        durationDays: guttersJob.durationDays,
+        crewId: guttersJob.crewId,
+        serviceType: "gutters",
+        clientName: guttersJob.clientName,
+      });
+      chainEndDate = getServiceEndDate(chainEndDate, guttersJob.durationDays);
+    }
 
-        const roofJob = findSibling("roofing");
-        if (roofJob) {
-          const roofStart = getServiceEndDate(guttersStart, guttersJob.durationDays);
-          shifts.push({
-            id: roofJob.id,
-            newStartDate: roofStart,
-            durationDays: roofJob.durationDays,
-            crewId: roofJob.crewId,
-            serviceType: "roofing",
-            clientName: roofJob.clientName,
-          });
-        }
-      } else {
-        const roofJob = findSibling("roofing");
-        if (roofJob) {
-          const roofStart = getServiceEndDate(paintStart, paintJob.durationDays);
-          shifts.push({
-            id: roofJob.id,
-            newStartDate: roofStart,
-            durationDays: roofJob.durationDays,
-            crewId: roofJob.crewId,
-            serviceType: "roofing",
-            clientName: roofJob.clientName,
-          });
-        }
-      }
+    const roofJob = findSibling("roofing");
+    if (roofJob) {
+      shifts.push({
+        id: roofJob.id,
+        newStartDate: chainEndDate,
+        durationDays: roofJob.durationDays,
+        crewId: roofJob.crewId,
+        serviceType: "roofing",
+        clientName: roofJob.clientName,
+      });
     }
   }
 

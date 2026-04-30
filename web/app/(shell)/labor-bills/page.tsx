@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../../lib/supabase";
 
 import { CustomDropdown } from "../../../components/CustomDropdown";
-import CustomDatePicker from "../../../components/CustomDatePicker";
 
 interface Template { id: string; code: string; title: string; }
 interface Section { id: string; title: string; sort_order: number; items: TemplateItem[]; }
@@ -13,9 +12,10 @@ interface TemplateItem { id: string; label: string; sub_label: string | null; de
 interface JobOption { id: string; title: string; job_number: string; customer_name?: string; }
 interface CrewOption { id: string; name: string; }
 interface SalespersonOption { id: string; full_name: string; }
-interface LaborBill { id: string; job_id: string; template_id: string; crew_id: string | null; installer_name: string | null; status: string; total: number; created_at: string; completion_date: string | null; jobs?: any; crews?: any; labor_bill_templates?: any; }
+interface LaborBill { id: string; job_id: string; template_id: string; crew_id: string | null; installer_name: string | null; status: string; total: number; created_at: string; completion_date: string | null; observations: string | null; jobs?: any; crews?: any; labor_bill_templates?: any; }
 
-type ItemValues = Record<string, { qty: string; unit: string; rate: string }>;
+type ItemValues = Record<string, { qty: string; unit: string; rate: string; qty_office: string; qty_crew: string }>;
+type CustomLine = { tempId: string; label: string; qty_office: string; qty_crew: string; unit: string; rate: string };
 
 export default function LaborBillsPage() {
   const [tab, setTab] = useState<"list" | "create">("list");
@@ -31,13 +31,15 @@ export default function LaborBillsPage() {
   const [selectedJob, setSelectedJob] = useState("");
   const [selectedCrew, setSelectedCrew] = useState("");
   const [installerName, setInstallerName] = useState("");
-  const [completionDate, setCompletionDate] = useState("");
+  const [observations, setObservations] = useState("");
   const [saving, setSaving] = useState(false);
   const [bills, setBills] = useState<LaborBill[]>([]);
   const [billsLoading, setBillsLoading] = useState(true);
   const [jobSearch, setJobSearch] = useState("");
   const [editingBillId, setEditingBillId] = useState<string | null>(null);
   const [billStatus, setBillStatus] = useState("draft");
+  const [itemSearch, setItemSearch] = useState("");
+  const [customLines, setCustomLines] = useState<Record<string, CustomLine[]>>({});
 
   // Load templates + jobs + crews + salespersons
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function LaborBillsPage() {
   // Load labor bills list
   const fetchBills = useCallback(async () => {
     setBillsLoading(true);
-    const { data } = await supabase.from("job_labor_bills").select("id, job_id, template_id, crew_id, installer_name, status, total, created_at, completion_date, jobs(title, job_number), crews(name), labor_bill_templates:labor_bill_templates!job_labor_bills_template_id_fkey(title, code)").order("created_at", { ascending: false });
+    const { data } = await supabase.from("job_labor_bills").select("id, job_id, template_id, crew_id, installer_name, status, total, created_at, completion_date, observations, jobs(title, job_number), crews(name), labor_bill_templates:labor_bill_templates!job_labor_bills_template_id_fkey(title, code)").order("created_at", { ascending: false });
     setBills((data || []) as unknown as LaborBill[]);
     setBillsLoading(false);
   }, []);
@@ -82,9 +84,11 @@ export default function LaborBillsPage() {
     // Init values from defaults
     const vals: ItemValues = {};
     sectionsWithItems.forEach(s => s.items.forEach(it => {
-      vals[it.id] = { qty: it.default_qty?.toString() || "", unit: it.default_unit || "", rate: "" };
+      vals[it.id] = { qty: it.default_qty?.toString() || "", unit: it.default_unit || "", rate: "", qty_office: it.default_qty?.toString() || "", qty_crew: "" };
     }));
     setItemValues(vals);
+    setCustomLines({});
+    setItemSearch("");
 
     // Filter crews by template discipline
     const TEMPLATE_TO_SPEC: Record<string, string[]> = {
@@ -139,15 +143,53 @@ export default function LaborBillsPage() {
     setExpandedSections(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
 
-  const updateItem = (itemId: string, field: "qty" | "unit" | "rate", value: string) => {
-    setItemValues(prev => ({ ...prev, [itemId]: { ...prev[itemId], [field]: value } }));
+  const updateItem = (itemId: string, field: "qty" | "unit" | "rate" | "qty_office" | "qty_crew", value: string) => {
+    setItemValues(prev => {
+      const cur = prev[itemId];
+      const updated = { ...cur, [field]: value };
+      // Keep legacy qty in sync with effective quantity for backward compat
+      if (field === "qty_office" || field === "qty_crew") {
+        updated.qty = (field === "qty_crew" && value) ? value : (field === "qty_office" ? value : cur.qty_office || "");
+      }
+      return { ...prev, [itemId]: updated };
+    });
   };
 
-  const grandTotal = Object.values(itemValues).reduce((sum, v) => {
-    const q = parseFloat(v.qty) || 0;
-    const r = parseFloat(v.rate) || 0;
-    return sum + q * r;
-  }, 0);
+  const calcLineTotal = (v: { qty_office: string; qty_crew: string; rate: string }): number => {
+    const effectiveQty = parseFloat(v.qty_crew) || parseFloat(v.qty_office) || 0;
+    return effectiveQty * (parseFloat(v.rate) || 0);
+  };
+
+  const grandTotal = (() => {
+    let total = Object.values(itemValues).reduce((sum, v) => sum + calcLineTotal(v), 0);
+    // Add custom lines
+    Object.values(customLines).flat().forEach(cl => {
+      const effectiveQty = parseFloat(cl.qty_crew) || parseFloat(cl.qty_office) || 0;
+      total += effectiveQty * (parseFloat(cl.rate) || 0);
+    });
+    return total;
+  })();
+
+  const addCustomLine = (sectionId: string) => {
+    setCustomLines(prev => ({
+      ...prev,
+      [sectionId]: [...(prev[sectionId] || []), { tempId: crypto.randomUUID(), label: "", qty_office: "", qty_crew: "", unit: "", rate: "" }]
+    }));
+  };
+
+  const updateCustomLine = (sectionId: string, tempId: string, field: keyof CustomLine, value: string) => {
+    setCustomLines(prev => ({
+      ...prev,
+      [sectionId]: (prev[sectionId] || []).map(cl => cl.tempId === tempId ? { ...cl, [field]: value } : cl)
+    }));
+  };
+
+  const removeCustomLine = (sectionId: string, tempId: string) => {
+    setCustomLines(prev => ({
+      ...prev,
+      [sectionId]: (prev[sectionId] || []).filter(cl => cl.tempId !== tempId)
+    }));
+  };
 
   const handleEdit = async (bill: LaborBill) => {
     setEditingBillId(bill.id);
@@ -155,7 +197,8 @@ export default function LaborBillsPage() {
     setSelectedJob(bill.job_id);
     setSelectedCrew(bill.crew_id || "");
     setInstallerName(bill.installer_name || "");
-    setCompletionDate(bill.completion_date ? bill.completion_date.split('T')[0] : "");
+    setObservations(bill.observations || "");
+
     const tmpl = templates.find(t => t.id === bill.template_id);
     if (!tmpl) return;
 
@@ -174,15 +217,34 @@ export default function LaborBillsPage() {
     const { data: existingItems } = await supabase.from("job_labor_bill_items").select("*").eq("labor_bill_id", bill.id);
     
     const vals: ItemValues = {};
+    const loadedCustom: Record<string, CustomLine[]> = {};
     sectionsWithItems.forEach(s => s.items.forEach(it => {
       const existing = existingItems?.find(ei => ei.template_item_id === it.id);
       vals[it.id] = { 
         qty: existing?.quantity?.toString() || "", 
         unit: existing?.unit || it.default_unit || "", 
-        rate: existing?.rate?.toString() || "" 
+        rate: existing?.rate?.toString() || "",
+        qty_office: existing?.qty_office?.toString() || existing?.quantity?.toString() || "",
+        qty_crew: existing?.qty_crew?.toString() || ""
       };
     }));
+    // Load custom lines (items with custom_label, no template_item_id)
+    const customItems = existingItems?.filter(ei => ei.custom_label && !ei.template_item_id) || [];
+    // Group by sort_order pattern (we store section id in a deterministic way) — just put them all in first section
+    if (customItems.length > 0 && sectionsWithItems.length > 0) {
+      const sectionId = sectionsWithItems[0].id;
+      loadedCustom[sectionId] = customItems.map(ci => ({
+        tempId: ci.id,
+        label: ci.custom_label || "",
+        qty_office: ci.qty_office?.toString() || ci.quantity?.toString() || "",
+        qty_crew: ci.qty_crew?.toString() || "",
+        unit: ci.unit || "",
+        rate: ci.rate?.toString() || ""
+      }));
+    }
     setItemValues(vals);
+    setCustomLines(loadedCustom);
+    setItemSearch("");
     setTab("create");
 
     // Filter crews by template discipline
@@ -226,14 +288,17 @@ export default function LaborBillsPage() {
     if (!selectedTemplate || !selectedJob) return;
     setSaving(true);
     try {
-      const filledItems = Object.entries(itemValues).filter(([, v]) => (parseFloat(v.qty) || 0) > 0);
+      const filledItems = Object.entries(itemValues).filter(([, v]) => {
+        const effectiveQty = parseFloat(v.qty_crew) || parseFloat(v.qty_office) || 0;
+        return effectiveQty > 0 || parseFloat(v.rate) > 0;
+      });
       let billId = editingBillId;
 
       if (editingBillId) {
         // Update existing
         const { error } = await supabase.from("job_labor_bills").update({
           job_id: selectedJob, crew_id: selectedCrew || null,
-          installer_name: installerName || null, completion_date: completionDate || null,
+          installer_name: installerName || null, observations: observations || null,
           status: billStatus, total: grandTotal,
         }).eq("id", editingBillId);
         if (error) { console.error(error); setSaving(false); return; }
@@ -244,25 +309,51 @@ export default function LaborBillsPage() {
         // Create new
         const { data: bill, error } = await supabase.from("job_labor_bills").insert({
           job_id: selectedJob, template_id: selectedTemplate.id, crew_id: selectedCrew || null,
-          installer_name: installerName || null, completion_date: completionDate || null,
+          installer_name: installerName || null, observations: observations || null,
           status: billStatus, total: grandTotal,
         }).select("id").single();
         if (error || !bill) { console.error(error); setSaving(false); return; }
         billId = bill.id;
       }
 
-      if (filledItems.length > 0 && billId) {
-        const rows = filledItems.map(([itemId, v], idx) => ({
-          labor_bill_id: billId, template_item_id: itemId,
-          quantity: parseFloat(v.qty) || 0, unit: v.unit, rate: parseFloat(v.rate) || 0, sort_order: idx,
-        }));
-        await supabase.from("job_labor_bill_items").insert(rows);
+      if (billId) {
+        const rows: any[] = [];
+        // Template items
+        filledItems.forEach(([itemId, v], idx) => {
+          const effectiveQty = parseFloat(v.qty_crew) || parseFloat(v.qty_office) || 0;
+          rows.push({
+            labor_bill_id: billId, template_item_id: itemId,
+            quantity: effectiveQty, unit: v.unit, rate: parseFloat(v.rate) || 0,
+            qty_office: parseFloat(v.qty_office) || null,
+            qty_crew: parseFloat(v.qty_crew) || null,
+            line_total: calcLineTotal(v),
+            sort_order: idx,
+          });
+        });
+        // Custom lines
+        Object.values(customLines).flat().forEach((cl, idx) => {
+          const effectiveQty = parseFloat(cl.qty_crew) || parseFloat(cl.qty_office) || 0;
+          if (effectiveQty > 0 || parseFloat(cl.rate) > 0 || cl.label) {
+            rows.push({
+              labor_bill_id: billId, template_item_id: null,
+              custom_label: cl.label || "Custom Line",
+              quantity: effectiveQty, unit: cl.unit, rate: parseFloat(cl.rate) || 0,
+              qty_office: parseFloat(cl.qty_office) || null,
+              qty_crew: parseFloat(cl.qty_crew) || null,
+              line_total: effectiveQty * (parseFloat(cl.rate) || 0),
+              sort_order: filledItems.length + idx,
+            });
+          }
+        });
+        if (rows.length > 0) {
+          await supabase.from("job_labor_bill_items").insert(rows);
+        }
       }
       
       // Reset
       setTab("list"); setSelectedTemplate(null); setSections([]); setItemValues({});
-      setSelectedJob(""); setSelectedCrew(""); setInstallerName(""); setCompletionDate("");
-      setEditingBillId(null);
+      setSelectedJob(""); setSelectedCrew(""); setInstallerName(""); setObservations("");
+      setEditingBillId(null); setCustomLines({}); setItemSearch("");
       setBillStatus("draft");
       fetchBills();
     } finally { setSaving(false); }
@@ -296,7 +387,7 @@ export default function LaborBillsPage() {
               setEditingBillId(null);
               setBillStatus("draft");
               setSelectedTemplate(null); setSections([]); setItemValues({});
-              setSelectedJob(""); setSelectedCrew(""); setInstallerName(""); setCompletionDate("");
+              setSelectedJob(""); setSelectedCrew(""); setInstallerName(""); setObservations("");
               setTab("create");
             } else {
               setTab("list");
@@ -387,18 +478,8 @@ export default function LaborBillsPage() {
                       />
                     </div>
                     
-                    {/* Completion Date */}
-                    <div className="flex flex-col gap-1.5 z-20">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Completion Date</label>
-                      <CustomDatePicker
-                        value={completionDate}
-                        onChange={(val: string) => setCompletionDate(val)}
-                        placeholder="Select date"
-                      />
-                    </div>
-
                     {/* Status */}
-                    <div className="flex flex-col gap-1.5 z-10">
+                    <div className="flex flex-col gap-1.5 z-20">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Status</label>
                       <select 
                         value={billStatus} 
@@ -414,15 +495,55 @@ export default function LaborBillsPage() {
                   </div>
                 </div>
 
+                {/* Search Bar */}
+                <div className="bg-surface-container-low rounded-2xl border border-outline-variant/15 p-4">
+                  <div className="relative">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" translate="no">search</span>
+                    <input
+                      type="text"
+                      value={itemSearch}
+                      onChange={(e) => setItemSearch(e.target.value)}
+                      placeholder="Search items by name..."
+                      className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:border-primary transition-colors"
+                    />
+                    {itemSearch && (
+                      <button onClick={() => setItemSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface">
+                        <span className="material-symbols-outlined text-sm" translate="no">close</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {/* Accordion Sections */}
                 <div className="bg-surface-container-low rounded-2xl border border-outline-variant/15 overflow-hidden">
                   {sections.map((sec, si) => {
                     const isOpen = expandedSections.has(sec.id);
+                    const sectionCustomLines = customLines[sec.id] || [];
+                    // Filter items by search
+                    const searchLower = itemSearch.toLowerCase();
+                    const visibleItems = itemSearch
+                      ? sec.items.filter(it => it.label.toLowerCase().includes(searchLower) || it.sub_label?.toLowerCase().includes(searchLower))
+                      : sec.items;
+                    // Section total (template items + custom lines)
                     const sectionTotal = sec.items.reduce((s, it) => {
                       const v = itemValues[it.id];
-                      return s + (parseFloat(v?.qty || "0") * parseFloat(v?.rate || "0"));
+                      return v ? s + calcLineTotal(v) : s;
+                    }, 0) + sectionCustomLines.reduce((s, cl) => {
+                      const effectiveQty = parseFloat(cl.qty_crew) || parseFloat(cl.qty_office) || 0;
+                      return s + effectiveQty * (parseFloat(cl.rate) || 0);
                     }, 0);
-                    const filledCount = sec.items.filter(it => { const v = itemValues[it.id]; return (parseFloat(v?.qty || "0") > 0 && parseFloat(v?.rate || "0") > 0); }).length;
+                    const filledCount = sec.items.filter(it => {
+                      const v = itemValues[it.id];
+                      if (!v) return false;
+                      const effectiveQty = parseFloat(v.qty_crew) || parseFloat(v.qty_office) || 0;
+                      return effectiveQty > 0 && parseFloat(v.rate) > 0;
+                    }).length + sectionCustomLines.filter(cl => {
+                      const effectiveQty = parseFloat(cl.qty_crew) || parseFloat(cl.qty_office) || 0;
+                      return effectiveQty > 0 && parseFloat(cl.rate) > 0;
+                    }).length;
+
+                    // Auto-expand if searching and there are visible results
+                    const effectiveOpen = isOpen || (itemSearch.length > 0 && visibleItems.length > 0);
 
                     return (
                       <div key={sec.id}>
@@ -430,54 +551,159 @@ export default function LaborBillsPage() {
                         <button onClick={() => toggleSection(sec.id)}
                           className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
                           <div className="flex items-center gap-3">
-                            <span className={`material-symbols-outlined text-lg transition-transform ${isOpen ? "rotate-180" : ""}`} translate="no">expand_more</span>
+                            <span className={`material-symbols-outlined text-lg transition-transform ${effectiveOpen ? "rotate-180" : ""}`} translate="no">expand_more</span>
                             <span className="text-sm font-bold text-on-surface text-left">{sec.title}</span>
                           </div>
                           <div className="flex items-center gap-3">
                             {filledCount > 0 && <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-black">{filledCount}</span>}
                             {sectionTotal > 0 && <span className="text-xs font-bold text-primary">${sectionTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>}
-                            <span className="text-[10px] text-on-surface-variant font-bold">{sec.items.length} items</span>
+                            <span className="text-[10px] text-on-surface-variant font-bold">{sec.items.length + sectionCustomLines.length} items</span>
                           </div>
                         </button>
-                        {isOpen && (
+                        {effectiveOpen && (
                           <div className="px-4 pb-4 space-y-2">
-                            {sec.items.map(item => {
-                              const v = itemValues[item.id] || { qty: "", unit: "", rate: "" };
-                              const lineTotal = (parseFloat(v.qty) || 0) * (parseFloat(v.rate) || 0);
+                            {/* Column headers */}
+                            <div className="hidden sm:grid grid-cols-[1fr_80px_80px_80px_60px_80px] gap-2 px-3 pb-1">
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Item</span>
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Qty (Office)</span>
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Qty (Crew)</span>
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Rate ($)</span>
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Uni</span>
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant text-right">Total</span>
+                            </div>
+
+                            {/* Template items */}
+                            {visibleItems.map(item => {
+                              const v = itemValues[item.id] || { qty: "", unit: "", rate: "", qty_office: "", qty_crew: "" };
+                              const lineTotal = calcLineTotal(v);
                               return (
                                 <div key={item.id} className="bg-surface-container rounded-xl p-3 border border-outline-variant/10">
-                                  <p className="text-sm font-semibold text-on-surface mb-0.5">{item.label}</p>
-                                  {item.sub_label && <p className="text-[11px] text-on-surface-variant mb-2">{item.sub_label}</p>}
-                                  <div className="grid grid-cols-3 gap-2 mt-2">
-                                    <div>
-                                      <label className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Qty</label>
-                                      <input type="number" step="any" value={v.qty} onChange={e => updateItem(item.id, "qty", e.target.value)}
-                                        className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors" />
+                                  {/* Mobile: stacked layout */}
+                                  <div className="sm:hidden space-y-2">
+                                    <p className="text-sm font-semibold text-on-surface">{item.label}</p>
+                                    {item.sub_label && <p className="text-[11px] text-on-surface-variant">{item.sub_label}</p>}
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Qty (Office)</label>
+                                        <input type="number" step="any" value={v.qty_office} onChange={e => updateItem(item.id, "qty_office", e.target.value)}
+                                          className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors" />
+                                      </div>
+                                      <div>
+                                        <label className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Qty (Crew)</label>
+                                        <input type="number" step="any" value={v.qty_crew} onChange={e => updateItem(item.id, "qty_crew", e.target.value)}
+                                          className="w-full bg-background border border-[#60b8f5]/30 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-[#60b8f5] transition-colors" />
+                                      </div>
+                                      <div>
+                                        <label className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Rate ($)</label>
+                                        <input type="number" step="0.01" value={v.rate} onChange={e => updateItem(item.id, "rate", e.target.value)}
+                                          className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors" />
+                                      </div>
+                                      <div>
+                                        <label className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Uni</label>
+                                        <input type="text" value={v.unit} onChange={e => updateItem(item.id, "unit", e.target.value)}
+                                          className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors" />
+                                      </div>
                                     </div>
-                                    <div>
-                                      <label className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Unit</label>
-                                      <input type="text" value={v.unit} onChange={e => updateItem(item.id, "unit", e.target.value)}
-                                        className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors" />
-                                    </div>
-                                    <div>
-                                      <label className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Rate ($)</label>
-                                      <input type="number" step="0.01" value={v.rate} onChange={e => updateItem(item.id, "rate", e.target.value)}
-                                        className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary transition-colors" />
-                                    </div>
+                                    {lineTotal > 0 && <div className="text-right"><span className="text-xs font-bold text-primary">${lineTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span></div>}
                                   </div>
-                                  {lineTotal > 0 && (
-                                    <div className="mt-2 text-right">
-                                      <span className="text-xs font-bold text-primary">${lineTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                                  {/* Desktop: single row */}
+                                  <div className="hidden sm:grid grid-cols-[1fr_80px_80px_80px_60px_80px] gap-2 items-center">
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-semibold text-on-surface truncate">{item.label}</p>
+                                      {item.sub_label && <p className="text-[10px] text-on-surface-variant truncate">{item.sub_label}</p>}
                                     </div>
-                                  )}
+                                    <input type="number" step="any" value={v.qty_office} onChange={e => updateItem(item.id, "qty_office", e.target.value)}
+                                      className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary transition-colors text-center" />
+                                    <input type="number" step="any" value={v.qty_crew} onChange={e => updateItem(item.id, "qty_crew", e.target.value)}
+                                      className="w-full bg-background border border-[#60b8f5]/30 text-on-surface rounded-lg px-2 py-1.5 text-sm outline-none focus:border-[#60b8f5] transition-colors text-center"
+                                      placeholder="—" />
+                                    <input type="number" step="0.01" value={v.rate} onChange={e => updateItem(item.id, "rate", e.target.value)}
+                                      className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary transition-colors text-center" />
+                                    <input type="text" value={v.unit} onChange={e => updateItem(item.id, "unit", e.target.value)}
+                                      className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary transition-colors text-center" />
+                                    <span className={`text-sm font-bold text-right ${lineTotal > 0 ? "text-primary" : "text-on-surface-variant/40"}`}>
+                                      ${lineTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
                                 </div>
                               );
                             })}
+
+                            {/* Custom lines */}
+                            {sectionCustomLines.map(cl => {
+                              const clTotal = (parseFloat(cl.qty_crew) || parseFloat(cl.qty_office) || 0) * (parseFloat(cl.rate) || 0);
+                              return (
+                                <div key={cl.tempId} className="bg-surface-container rounded-xl p-3 border border-dashed border-primary/30 relative">
+                                  <button onClick={() => removeCustomLine(sec.id, cl.tempId)}
+                                    className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-error/10 text-error hover:bg-error/20 flex items-center justify-center transition-colors">
+                                    <span className="material-symbols-outlined text-[12px]" translate="no">close</span>
+                                  </button>
+                                  {/* Desktop row */}
+                                  <div className="hidden sm:grid grid-cols-[1fr_80px_80px_80px_60px_80px] gap-2 items-center">
+                                    <input type="text" value={cl.label} onChange={e => updateCustomLine(sec.id, cl.tempId, "label", e.target.value)}
+                                      placeholder="Item name..."
+                                      className="w-full bg-background border border-primary/20 text-on-surface rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary transition-colors" />
+                                    <input type="number" step="any" value={cl.qty_office} onChange={e => updateCustomLine(sec.id, cl.tempId, "qty_office", e.target.value)}
+                                      className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary transition-colors text-center" />
+                                    <input type="number" step="any" value={cl.qty_crew} onChange={e => updateCustomLine(sec.id, cl.tempId, "qty_crew", e.target.value)}
+                                      className="w-full bg-background border border-[#60b8f5]/30 text-on-surface rounded-lg px-2 py-1.5 text-sm outline-none focus:border-[#60b8f5] transition-colors text-center"
+                                      placeholder="—" />
+                                    <input type="number" step="0.01" value={cl.rate} onChange={e => updateCustomLine(sec.id, cl.tempId, "rate", e.target.value)}
+                                      className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary transition-colors text-center" />
+                                    <input type="text" value={cl.unit} onChange={e => updateCustomLine(sec.id, cl.tempId, "unit", e.target.value)}
+                                      className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary transition-colors text-center" />
+                                    <span className={`text-sm font-bold text-right ${clTotal > 0 ? "text-primary" : "text-on-surface-variant/40"}`}>
+                                      ${clTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                  {/* Mobile stacked */}
+                                  <div className="sm:hidden space-y-2 pr-6">
+                                    <input type="text" value={cl.label} onChange={e => updateCustomLine(sec.id, cl.tempId, "label", e.target.value)}
+                                      placeholder="Item name..." className="w-full bg-background border border-primary/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary" />
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div><label className="text-[9px] font-bold uppercase text-on-surface-variant">Qty (Office)</label>
+                                        <input type="number" step="any" value={cl.qty_office} onChange={e => updateCustomLine(sec.id, cl.tempId, "qty_office", e.target.value)} className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary" /></div>
+                                      <div><label className="text-[9px] font-bold uppercase text-on-surface-variant">Qty (Crew)</label>
+                                        <input type="number" step="any" value={cl.qty_crew} onChange={e => updateCustomLine(sec.id, cl.tempId, "qty_crew", e.target.value)} className="w-full bg-background border border-[#60b8f5]/30 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-[#60b8f5]" /></div>
+                                      <div><label className="text-[9px] font-bold uppercase text-on-surface-variant">Rate ($)</label>
+                                        <input type="number" step="0.01" value={cl.rate} onChange={e => updateCustomLine(sec.id, cl.tempId, "rate", e.target.value)} className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary" /></div>
+                                      <div><label className="text-[9px] font-bold uppercase text-on-surface-variant">Uni</label>
+                                        <input type="text" value={cl.unit} onChange={e => updateCustomLine(sec.id, cl.tempId, "unit", e.target.value)} className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary" /></div>
+                                    </div>
+                                    {clTotal > 0 && <div className="text-right"><span className="text-xs font-bold text-primary">${clTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span></div>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+
+                            {/* Add Line button */}
+                            <button
+                              type="button"
+                              onClick={() => addCustomLine(sec.id)}
+                              className="w-full py-2.5 rounded-xl border border-dashed border-primary/30 text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/5 hover:border-primary/50 transition-all flex items-center justify-center gap-1.5"
+                            >
+                              <span className="material-symbols-outlined text-sm" translate="no">add</span>
+                              Add Line
+                            </button>
                           </div>
                         )}
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Observations */}
+                <div className="bg-surface-container-low rounded-2xl border border-outline-variant/15 p-5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                    Observations
+                  </label>
+                  <textarea
+                    value={observations}
+                    onChange={(e) => setObservations(e.target.value)}
+                    placeholder="Add notes, instructions, or observations about this labor bill..."
+                    rows={4}
+                    className="w-full bg-background border border-outline-variant/20 text-on-surface rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-colors resize-y min-h-[80px]"
+                  />
                 </div>
 
                 {/* Footer: Total + Save */}

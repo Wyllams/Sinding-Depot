@@ -1208,7 +1208,7 @@ export default function SchedulePage() {
                                           <span className="font-semibold uppercase tracking-wider text-[8px] truncate" style={{ color: sc.color }}>
                                             {svcName}
                                           </span>
-                                          {qty != null && qty > 0 && !(job.sq != null && (job.serviceType === "siding" || job.serviceType === "paint")) && (
+                                          {qty != null && qty > 0 && !(job.sq != null && (job.serviceType === "siding" || job.serviceType === "paint" || job.serviceType === "gutters" || job.serviceType === "roofing")) && (
                                             <span className="text-[8px] font-black tabular-nums shrink-0" style={{ color: `${sc.color}cc` }}>
                                               {qty}
                                             </span>
@@ -1223,7 +1223,7 @@ export default function SchedulePage() {
                                     <span className="font-semibold uppercase tracking-wider text-[8px] truncate" style={{ color: sc.color }}>
                                       {job.serviceNames?.[0] || job.serviceType.replace("_", " ")}
                                     </span>
-                                    {job.serviceQuantities?.[0] != null && job.serviceQuantities[0] > 0 && !(job.sq != null && (job.serviceType === "siding" || job.serviceType === "paint")) && (
+                                    {job.serviceQuantities?.[0] != null && job.serviceQuantities[0] > 0 && !(job.sq != null && (job.serviceType === "siding" || job.serviceType === "paint" || job.serviceType === "gutters" || job.serviceType === "roofing")) && (
                                       <span className="text-[8px] font-black tabular-nums shrink-0" style={{ color: `${sc.color}cc` }}>
                                         {job.serviceQuantities[0]}
                                       </span>
@@ -1231,7 +1231,7 @@ export default function SchedulePage() {
                                   </div>
                                 )}
                                 <div className="flex items-center justify-end gap-1 mt-1 w-full">
-                                  {job.sq != null && (job.serviceType === "siding" || job.serviceType === "paint") && (
+                                  {job.sq != null && (job.serviceType === "siding" || job.serviceType === "paint" || job.serviceType === "gutters" || job.serviceType === "roofing") && (
                                     <span className="px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest rounded-sm border shrink-0 bg-black/20 text-white border-white/20">
                                       {job.sq} SQ
                                     </span>

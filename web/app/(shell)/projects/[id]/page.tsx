@@ -621,6 +621,92 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const recalculateProjectCascade = async (jobToRecalc: JobDetail, baseStartDate: string) => {
+    try {
+      // Find the first valid working day for the start
+      const newEffectiveStart = (() => {
+         const d = fromIso(baseStartDate);
+         if (d.getDay() === 0) return shiftDate(baseStartDate, 1);
+         return baseStartDate;
+      })();
+
+      const order = ["siding", "windows", "decks", "dumpster", "painting", "gutters", "roofing"];
+      const sortedServices = [...(jobToRecalc.services || [])].sort((a: any, b: any) => {
+         const codeA = (a.service_type?.name || "").toLowerCase();
+         const codeB = (b.service_type?.name || "").toLowerCase();
+         const idxA = order.indexOf(codeA);
+         const idxB = order.indexOf(codeB);
+         if (idxA === -1) return 1;
+         if (idxB === -1) return -1;
+         return idxA - idxB;
+      });
+
+      const CASCADE_PREDECESSORS: Record<string, string[]> = {
+         painting: ["siding", "decks"],
+         gutters:  ["painting", "siding"],
+         roofing:  ["gutters", "painting", "siding"],
+      };
+
+      const prevEndpoints: Record<string, string> = {};
+      const sqVal = jobToRecalc.sq ? Number(jobToRecalc.sq) : 0;
+
+      for (const svc of sortedServices) {
+         const svcCode = (svc as any).service_type?.name?.toLowerCase();
+         if (!svcCode) continue;
+
+         for (const assignment of ((svc as any).assignments || [])) {
+            const crewName = assignment.crew?.name || "SIDING DEPOT";
+            const duration = calculateServiceDuration(crewName, svcCode, sqVal);
+
+            let startIso = newEffectiveStart;
+
+            if (svcCode === "windows" || svcCode === "doors" || svcCode === "decks" || svcCode === "dumpster") {
+               // Runs parallel with job start
+            } else {
+               const predecessors = CASCADE_PREDECESSORS[svcCode] || [];
+               let latestNextDay = "";
+               for (const pred of predecessors) {
+                  if (prevEndpoints[pred]) {
+                     const nextDay = shiftDate(prevEndpoints[pred], 1);
+                     if (nextDay > latestNextDay) {
+                        latestNextDay = nextDay;
+                     }
+                  }
+               }
+               if (latestNextDay) {
+                  startIso = latestNextDay;
+               }
+            }
+
+            const edIso = shiftDate(startIso, duration - 1);
+            prevEndpoints[svcCode] = edIso;
+
+            const startAt = new Date(startIso + "T08:00:00");
+            const endAt = new Date(edIso + "T17:00:00");
+
+            const { error: asErr } = await supabase.from("service_assignments").update({
+              scheduled_start_at: startAt.toISOString(),
+              scheduled_end_at: endAt.toISOString()
+            }).eq("id", assignment.id);
+            
+            if (asErr) {
+               console.error(`[Cascade Recalc] error updating ${svcCode} assignment:`, asErr);
+            }
+         }
+      }
+
+      // Update target_completion_date of the job
+      const allEndDates = Object.values(prevEndpoints).sort();
+      const latestEnd = allEndDates.length > 0 ? allEndDates[allEndDates.length - 1] : null;
+      if (latestEnd) {
+         await supabase.from("jobs").update({ target_completion_date: latestEnd }).eq("id", jobToRecalc.id);
+      }
+    } catch (e) {
+      console.error("[recalculateProjectCascade] error:", e);
+      throw e;
+    }
+  };
+
   // ─── Start Date Shift Handler ───
   const handleStartDateUpdate = async (newStartDate: string) => {
     if (!job || !newStartDate) return;
@@ -632,9 +718,8 @@ export default function ProjectDetailPage() {
 
     try {
       const parseDateStr = (dateStr: string) => {
-        // Strip timezone or time if any, ensure it's a stable parsing
         const isoParts = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
-        return new Date(isoParts + "T12:00:00Z"); // Use UTC to avoid timezone shift weirdness
+        return new Date(isoParts + "T12:00:00Z");
       };
 
       const oldDate = parseDateStr(oldStartDateStr);
@@ -647,97 +732,61 @@ export default function ProjectDetailPage() {
       const diffMs = newDate.getTime() - oldDate.getTime();
       if (diffMs === 0) return;
 
-      let newEndDate: string | null = null;
-      if (job.estimated_end_date) {
-        const eDate = parseDateStr(job.estimated_end_date);
-        eDate.setTime(eDate.getTime() + diffMs);
-        newEndDate = eDate.toISOString().split("T")[0];
-      }
-
-      // 1. Shift job's start and end date at the same time to avoid check constraint failure
-      const jobUpdatePayload: any = { requested_start_date: newStartDate };
-      if (newEndDate) {
-        jobUpdatePayload.target_completion_date = newEndDate;
-      }
-
+      // 1. Update jobs start date
+      const jobUpdatePayload: Record<string, string> = { requested_start_date: newStartDate };
       const { error: jobErr } = await supabase.from("jobs").update(jobUpdatePayload).eq("id", job.id);
       if (jobErr) throw new Error("Job Update DB Error: " + (jobErr.message || JSON.stringify(jobErr)));
 
-      // 2. Shift all service_assignments
-      for (const svc of (job.services || [])) {
-        for (const assignment of (svc.assignments || [])) {
-          if (assignment.scheduled_start_at && assignment.scheduled_end_at) {
-            const asDate = new Date(assignment.scheduled_start_at);
-            const aeDate = new Date(assignment.scheduled_end_at);
-            
-            if (!isNaN(asDate.getTime()) && !isNaN(aeDate.getTime())) {
-              asDate.setTime(asDate.getTime() + diffMs);
-              aeDate.setTime(aeDate.getTime() + diffMs);
-              
-              const { error: asErr } = await supabase.from("service_assignments").update({
-                scheduled_start_at: asDate.toISOString(),
-                scheduled_end_at: aeDate.toISOString()
-              }).eq("id", assignment.id);
-              
-              if (asErr) throw new Error("Service Assignment Update DB Error: " + (asErr.message || JSON.stringify(asErr)));
-            }
-          }
-        }
-      }
-      
-      fetchJob();
+      // 2. Recalculate full cascade to properly space out dependent services 
+      //    (fixing the bug where Gutters/Roofing would get stuck on the same day when shifting linearly)
+      await recalculateProjectCascade(job, newStartDate);
+
     } catch (e: any) {
       console.error("Start Date Update Error:", e);
-      alert("Failed to update Start Date and shift schedules.\nDetails: " + (e.message || JSON.stringify(e)));
+      alert("Failed to update Start Date.\nDetails: " + (e.message || JSON.stringify(e)));
+    } finally {
+      fetchJob();
     }
   };
 
   // ─── SQ Update Handler (bidirectional sync with schedule popup) ───
   const handleSqUpdate = async (newValue: string): Promise<void> => {
+    if (!job) return;
     const raw = newValue.replace(/[^0-9.]/g, '');
     const num = parseFloat(raw);
     const sqValue = isNaN(num) ? 0 : num;
 
-    // 1. Save to jobs.sq
-    const { error: jobErr } = await supabase.from("jobs").update({ sq: sqValue }).eq("id", job.id);
-    if (jobErr) console.error("[SQ Sync] jobs.sq update error:", jobErr);
+    try {
+      // 1. Save to jobs.sq
+      const { error: jobErr } = await supabase.from("jobs").update({ sq: sqValue }).eq("id", job.id);
+      if (jobErr) console.error("[SQ Sync] jobs.sq update error:", jobErr);
 
-    // 2. Update job_services.quantity and recalculate durations for SQ-based services
-    const sqServiceNames = ["siding", "painting"];
-    for (const svc of (job.services ?? [])) {
-      const svcName: string = (svc as any).service_type?.name?.toLowerCase() ?? "";
-      if (!svcName || !sqServiceNames.includes(svcName)) continue;
+      // 2. Update job_services.quantity
+      const sqServiceNames = ["siding", "painting"];
+      for (const svc of (job.services ?? [])) {
+        const svcName: string = (svc as any).service_type?.name?.toLowerCase() ?? "";
+        if (!svcName || !sqServiceNames.includes(svcName)) continue;
 
-      // Update job_services.quantity
-      const { error: jsErr } = await supabase.from("job_services").update({
-        quantity: sqValue,
-        unit_of_measure: "SQ",
-      }).eq("id", svc.id);
-      if (jsErr) console.error("[SQ Sync] job_services update error:", jsErr);
-
-      // Recalculate duration for each service_assignment
-      const assignments: any[] = (svc as any).assignments ?? [];
-      for (const assignment of assignments) {
-        if (!assignment.scheduled_start_at) continue;
-
-        const crewName: string = assignment.crew?.name || "SIDING DEPOT";
-        const newDuration = calculateServiceDuration(crewName, svcName, sqValue);
-
-        // Calculate new end date from start date + new duration (inclusive boundary)
-        const startIso = new Date(assignment.scheduled_start_at).toISOString().split("T")[0];
-        const endAt = new Date(startIso + "T12:00:00");
-        let remDays = newDuration - 1;
-        while (remDays > 0) { endAt.setDate(endAt.getDate() + 1); if (endAt.getDay() !== 0) remDays--; }
-
-        const { error: saErr } = await supabase.from("service_assignments").update({
-          scheduled_end_at: endAt.toISOString(),
-        }).eq("id", assignment.id);
-        if (saErr) console.error("[SQ Sync] service_assignment duration update error:", saErr);
+        const { error: jsErr } = await supabase.from("job_services").update({
+          quantity: sqValue,
+          unit_of_measure: "SQ",
+        }).eq("id", svc.id);
+        if (jsErr) console.error("[SQ Sync] job_services update error:", jsErr);
       }
-    }
 
-    // Re-fetch to update UI
-    fetchJob();
+      // 3. Mutate the local job object so recalculateProjectCascade uses the new SQ
+      const jobCopy = { ...job, sq: sqValue };
+      
+      // 4. Recalculate full cascade (if SQ increases, duration of siding increases, pushing gutters/roofing back)
+      if (jobCopy.requested_start_date) {
+        await recalculateProjectCascade(jobCopy, jobCopy.requested_start_date);
+      }
+
+    } catch (e: any) {
+      console.error("SQ Update Error:", e);
+    } finally {
+      fetchJob();
+    }
   };
 
   // Fetch crews whose specialties match this project's services
@@ -1388,6 +1437,24 @@ export default function ProjectDetailPage() {
         });
         if (error) console.error("[persistPartner] insert error:", error);
         else console.log(`[persistPartner] Created assignment for ${svcCode} → ${partnerName}`);
+      }
+
+      // 5. Always recalculate the full cascade to ensure strict order is preserved
+      // (e.g. if Roofing was created first, and Gutters is created second, Gutters must shift Roofing forward)
+      const { data: latestJob } = await supabase.from("jobs").select(`
+        *,
+        services:job_services (
+          *,
+          service_type:service_types (*),
+          assignments:service_assignments (
+            *,
+            crew:crews (*)
+          )
+        )
+      `).eq("id", job.id).single();
+
+      if (latestJob) {
+        await recalculateProjectCascade(latestJob, latestJob.requested_start_date || toIso(new Date()));
       }
 
       fetchJob();
