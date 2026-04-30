@@ -272,6 +272,19 @@ export function FieldLaborBillModal({
   const handleSaveAll = async () => {
     setSavingAll(true);
     try {
+      const grandTotal = Object.values(itemValues).reduce((acc, v) => {
+        const qOffStr = v.qty_office?.toString().trim();
+        const qCrewStr = v.qty_crew?.toString().trim();
+        const qOff = qOffStr !== "" && qOffStr !== undefined ? parseFloat(qOffStr) : NaN;
+        const qCrew = qCrewStr !== "" && qCrewStr !== undefined ? parseFloat(qCrewStr) : NaN;
+        const rate = parseFloat(v.rate) || 0;
+        const eff = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
+        return acc + (eff * rate);
+      }, 0);
+
+      const { error: billError } = await supabase.from("job_labor_bills").update({ total: grandTotal }).eq("id", billId);
+      if (billError) throw billError;
+
       // Like the desktop, we drop the existing items and recreate them to sync perfectly.
       const { error: delError } = await supabase.from("job_labor_bill_items").delete().eq("labor_bill_id", billId);
       if (delError) throw delError;
@@ -279,25 +292,24 @@ export function FieldLaborBillModal({
       const inserts: any[] = [];
       
       Object.entries(itemValues).forEach(([id, v]) => {
-        const qOff = parseFloat(v.qty_office);
-        const qCrew = parseFloat(v.qty_crew);
+        const qOffStr = v.qty_office?.toString().trim();
+        const qCrewStr = v.qty_crew?.toString().trim();
+        const qOff = qOffStr !== "" && qOffStr !== undefined ? parseFloat(qOffStr) : NaN;
+        const qCrew = qCrewStr !== "" && qCrewStr !== undefined ? parseFloat(qCrewStr) : NaN;
         const rate = parseFloat(v.rate) || 0;
         
-        // If it's not custom and has no qty, we can skip it, but keeping it if either qty exists
-        if (!v.isCustom && isNaN(qOff) && isNaN(qCrew)) return;
-        
-        // Custom lines might have no qty, but we still keep them
-        if (v.isCustom && isNaN(qOff) && isNaN(qCrew)) return;
-
         const effectiveQty = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
+
+        if (effectiveQty === 0 && rate === 0 && !v.isCustom) return;
 
         inserts.push({
           labor_bill_id: billId,
           template_item_id: v.isCustom ? null : id,
-          quantity: !isNaN(qOff) ? qOff : null,
+          quantity: effectiveQty,
+          qty_office: !isNaN(qOff) ? qOff : null,
           qty_crew: !isNaN(qCrew) ? qCrew : null,
           rate: rate,
-          unit: v.unit,
+          unit: v.unit || "",
           line_total: effectiveQty * rate,
           custom_label: v.isCustom ? v.custom_label : null,
           sort_order: v.sort_order
@@ -310,9 +322,9 @@ export function FieldLaborBillModal({
       }
 
       onClose(); // Close modal on success
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Failed to save updates.");
+      alert("Failed to save updates: " + (e.message || JSON.stringify(e)));
     } finally {
       setSavingAll(false);
     }
