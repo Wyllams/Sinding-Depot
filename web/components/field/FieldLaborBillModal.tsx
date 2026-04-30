@@ -349,16 +349,6 @@ export function FieldLaborBillModal({
                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${st.bg} ${st.text}`}>
                   {billStatus}
                 </span>
-                <span className="text-primary font-black text-sm">
-                  {/* Realtime sum from itemValues */}
-                  ${Object.values(itemValues).reduce((acc, v) => {
-                    const qOff = parseFloat(v.qty_office);
-                    const qCrew = parseFloat(v.qty_crew);
-                    const rate = parseFloat(v.rate) || 0;
-                    const eff = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
-                    return acc + (eff * rate);
-                  }, 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </span>
               </div>
             </div>
           </div>
@@ -432,8 +422,10 @@ export function FieldLaborBillModal({
                           ${sec.items.reduce((s, it) => {
                             const v = itemValues[it.id];
                             if (!v) return s;
-                            const qOff = parseFloat(v.qty_office);
-                            const qCrew = parseFloat(v.qty_crew);
+                            const qOffStr = v.qty_office?.toString().trim();
+                            const qCrewStr = v.qty_crew?.toString().trim();
+                            const qOff = qOffStr !== "" && qOffStr !== undefined ? parseFloat(qOffStr) : NaN;
+                            const qCrew = qCrewStr !== "" && qCrewStr !== undefined ? parseFloat(qCrewStr) : NaN;
                             const rate = parseFloat(v.rate) || 0;
                             const eff = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
                             return s + (eff * rate);
@@ -447,8 +439,10 @@ export function FieldLaborBillModal({
                       <div className="px-3 pb-3 space-y-2">
                         {visibleItems.map((item) => {
                           const v = itemValues[item.id] || { qty_office: "", qty_crew: "", rate: "0", unit: "" };
-                          const qOff = parseFloat(v.qty_office);
-                          const qCrew = parseFloat(v.qty_crew);
+                          const qOffStr = v.qty_office?.toString().trim();
+                          const qCrewStr = v.qty_crew?.toString().trim();
+                          const qOff = qOffStr !== "" && qOffStr !== undefined ? parseFloat(qOffStr) : NaN;
+                          const qCrew = qCrewStr !== "" && qCrewStr !== undefined ? parseFloat(qCrewStr) : NaN;
                           const r = parseFloat(v.rate) || 0;
                           const effectiveQty = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
                           const isFilled = effectiveQty > 0 || item.isCustom;
@@ -535,9 +529,23 @@ export function FieldLaborBillModal({
             </div>
           )}
 
-          {/* Save Button */}
+          {/* Sticky Footer (Total + Save Button) */}
           {!loading && sections.length > 0 && (
-            <div className="mt-6">
+            <div className="mt-6 sticky bottom-4 bg-surface-container-low border border-white/10 p-4 rounded-2xl shadow-xl z-10 flex flex-col gap-3">
+              <div className="flex justify-between items-center px-1">
+                 <span className="text-sm font-bold text-on-surface-variant uppercase tracking-widest">Grand Total</span>
+                 <span className="text-2xl font-black text-primary">
+                    ${Object.values(itemValues).reduce((acc, v) => {
+                      const qOffStr = v.qty_office?.toString().trim();
+                      const qCrewStr = v.qty_crew?.toString().trim();
+                      const qOff = qOffStr !== "" && qOffStr !== undefined ? parseFloat(qOffStr) : NaN;
+                      const qCrew = qCrewStr !== "" && qCrewStr !== undefined ? parseFloat(qCrewStr) : NaN;
+                      const rate = parseFloat(v.rate) || 0;
+                      const eff = !isNaN(qCrew) ? qCrew : (!isNaN(qOff) ? qOff : 0);
+                      return acc + (eff * rate);
+                    }, 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                 </span>
+              </div>
               <button
                 onClick={handleSaveAll}
                 disabled={savingAll}
